@@ -10,12 +10,15 @@ export default function Layout({ children, currentPageName }) {
 
   // 앱 로드 시 루트 경로면 홈 페이지로 강제 리다이렉트
   React.useEffect(() => {
-    // 정확한 루트 경로 체크
-    const isRootPath = location.pathname === '/' || 
-                      location.pathname === '' || 
-                      location.pathname === '/index.html';
-    
     const homeUrl = createPageUrl("Home");
+    
+    // 정확한 루트 경로 체크 - 더 포괄적으로
+    const isRootPath = 
+      location.pathname === '/' || 
+      location.pathname === '' || 
+      location.pathname === '/index.html' ||
+      location.pathname === '/pages' ||
+      !location.pathname.includes('/pages/');
     
     if (isRootPath && location.pathname !== homeUrl) {
       console.log('🏠 Redirecting to Home from:', location.pathname);
@@ -25,8 +28,9 @@ export default function Layout({ children, currentPageName }) {
 
   // 추가: 페이지 이름이 없거나 잘못된 경우에도 홈으로
   React.useEffect(() => {
-    if (!currentPageName || currentPageName === 'Index') {
-      const homeUrl = createPageUrl("Home");
+    const homeUrl = createPageUrl("Home");
+    
+    if (!currentPageName || currentPageName === 'Index' || currentPageName === '') {
       if (location.pathname !== homeUrl) {
         console.log('🏠 Redirecting to Home - invalid page:', currentPageName);
         navigate(homeUrl, { replace: true });
