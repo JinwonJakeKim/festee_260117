@@ -8,35 +8,21 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 앱 로드 시 루트 경로면 홈 페이지로 강제 리다이렉트
+  // 앱 초기 로드 시 루트 경로에서만 홈으로 리다이렉트
   React.useEffect(() => {
     const homeUrl = createPageUrl("Home");
     
-    // 정확한 루트 경로 체크 - 더 포괄적으로
+    // 정확한 루트 경로만 체크 (프리뷰 초기 로드 시)
     const isRootPath = 
       location.pathname === '/' || 
-      location.pathname === '' || 
-      location.pathname === '/index.html' ||
-      location.pathname === '/pages' ||
-      !location.pathname.includes('/pages/');
+      location.pathname === '' ||
+      location.pathname === '/index.html';
     
     if (isRootPath && location.pathname !== homeUrl) {
       console.log('🏠 Redirecting to Home from:', location.pathname);
       navigate(homeUrl, { replace: true });
     }
   }, [location.pathname, navigate]);
-
-  // 추가: 페이지 이름이 없거나 잘못된 경우에도 홈으로
-  React.useEffect(() => {
-    const homeUrl = createPageUrl("Home");
-    
-    if (!currentPageName || currentPageName === 'Index' || currentPageName === '') {
-      if (location.pathname !== homeUrl) {
-        console.log('🏠 Redirecting to Home - invalid page:', currentPageName);
-        navigate(homeUrl, { replace: true });
-      }
-    }
-  }, [currentPageName, location.pathname, navigate]);
 
   const isMessageDetail = currentPageName === "MessageDetail";
 
@@ -415,7 +401,7 @@ export default function Layout({ children, currentPageName }) {
         }
 
         /* 오늘 날짜 */
-        .rdp-day_today:not(.rdp-day_selected):not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_range_middle) button {
+        .rdp-day_today:not(.rdp-day_selected):not(.rdp-day_disabled):not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_range_middle) button {
           border: 2px solid #ff006e !important;
           color: #ff006e !important;
           font-weight: bold !important;
