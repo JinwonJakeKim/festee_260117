@@ -1,0 +1,525 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { ArrowLeft, Globe, CheckCircle, Loader, MapPin, Calendar, Check, AlertCircle, Database, RefreshCw, Eye, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+
+const safeFormatDate = (dateString, formatString) => {
+  if (!dateString) return '날짜 미정';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '날짜 미정';
+    return format(date, formatString, { locale: ko });
+  } catch (e) {
+    return '날짜 미정';
+  }
+};
+
+export default function AdminTourAPI() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [selectedTab, setSelectedTab] = useState("fetch");
+  const [areaCode, setAreaCode] = useState("all");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [numOfRows, setNumOfRows] = useState(20);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchResults, setFetchResults] = useState(null);
+  const [selectedRawData, setSelectedRawData] = useState([]);
+  const [isTransforming, setIsTransforming] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== 'admin')) {
+      alert('관리자 권한이 필요합니다');
+      navigate(createPageUrl("AdminDashboard"));
+    }
+  }, [user, isLoading, navigate]);
+
+  const { data: rawDataList = [], refetch: refetchRawData } = useQuery({
+    queryKey: ['tourApiRawData'],
+    queryFn: () => base44.entities.TourApiRawData.list('-created_date', 100),
+    initialData: [],
+  });
+
+  const handleFetch = async () => {
+    setIsFetching(true);
+    
+    try {
+      console.log('[AdminTourAPI] Calling fetchTourFestivals...');
+      const response = await base44.functions.invoke('fetchTourFestivals', {
+        areaCode: areaCode === "all" ? null : areaCode,
+        year: parseInt(selectedYear),
+        month: parseInt(selectedMonth),
+        numOfRows: numOfRows
+      });
+
+      console.log('[AdminTourAPI] Response:', response.data);
+
+      if (response.data.success) {
+        alert(`✅ ${response.data.raw_data_saved}개의 원본 데이터를 저장했습니다.\n- 새로 생성: ${response.data.new_records}개\n- 업데이트: ${response.data.updated_records}개\n\n이제 "원본 데이터 관리" 탭에서 변환 작업을 진행하세요.`);
+        setFetchResults(response.data);
+        refetchRawData();
+        setSelectedTab("manage");
+      } else {
+        alert(`조회 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error || '알 수 없는 오류'}`);
+      }
+    } catch (error) {
+      console.error('[AdminTourAPI] Fetch error:', error);
+      alert(`조회 중 오류가 발생했습니다:\n\n${error.message}`);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleTransform = async (rawDataIds) => {
+    if (rawDataIds.length === 0) {
+      alert('변환할 데이터를 선택해주세요');
+      return;
+    }
+
+    setIsTransforming(true);
+    
+    try {
+      console.log('[AdminTourAPI] Calling transformTourApiData...');
+      const response = await base44.functions.invoke('transformTourApiData', {
+        rawDataIds: rawDataIds
+      });
+
+      console.log('[AdminTourAPI] Transform response:', response.data);
+
+      if (response.data.success) {
+        alert(`✅ ${response.data.festivals_created}개의 축제가 생성되었습니다!`);
+        refetchRawData();
+        queryClient.invalidateQueries({ queryKey: ['festivals'] });
+        setSelectedRawData([]);
+      } else {
+        alert(`변환 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error}`);
+      }
+    } catch (error) {
+      console.error('[AdminTourAPI] Transform error:', error);
+      alert(`변환 중 오류가 발생했습니다:\n\n${error.message}`);
+    } finally {
+      setIsTransforming(false);
+    }
+  };
+
+  const toggleRawData = (id) => {
+    setSelectedRawData(prev =>
+      prev.includes(id)
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    );
+  };
+
+  const deleteRawDataMutation = useMutation({
+    mutationFn: async (id) => {
+      await base44.entities.TourApiRawData.delete(id);
+    },
+    onSuccess: () => {
+      refetchRawData();
+      alert('원본 데이터가 삭제되었습니다');
+    },
+  });
+
+  const areaCodes = [
+    { value: "all", label: "전체" },
+    { value: "1", label: "서울" },
+    { value: "2", label: "인천" },
+    { value: "3", label: "대전" },
+    { value: "4", label: "대구" },
+    { value: "5", label: "광주" },
+    { value: "6", label: "부산" },
+    { value: "7", label: "울산" },
+    { value: "8", label: "세종" },
+    { value: "31", label: "경기도" },
+    { value: "32", label: "강원도" },
+    { value: "33", label: "충청북도" },
+    { value: "34", label: "충청남도" },
+    { value: "35", label: "경상북도" },
+    { value: "36", label: "경상남도" },
+    { value: "37", label: "전라북도" },
+    { value: "38", label: "전라남도" },
+    { value: "39", label: "제주도" },
+  ];
+
+  const years = [2024, 2025, 2026, 2027].map(y => y.toString());
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `${i + 1}월`
+  }));
+
+  const pendingData = rawDataList.filter(r => r.processing_status === 'pending');
+  const processedData = rawDataList.filter(r => r.processing_status === 'processed');
+  const failedData = rawDataList.filter(r => r.processing_status === 'failed');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400" />
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-black pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(createPageUrl("AdminDashboard"))}
+            className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-white">TourAPI 국내 축제 연동</h1>
+            <p className="text-gray-400 text-sm">2단계 프로세스: 원본 저장 → 변환</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-6">
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="w-full bg-gray-900 grid grid-cols-2 mb-6">
+            <TabsTrigger value="fetch" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+              1. 데이터 가져오기
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+              2. 원본 데이터 관리
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 데이터 가져오기 탭 */}
+          <TabsContent value="fetch" className="space-y-4">
+            <Card className="bg-gradient-to-r from-green-900/20 to-teal-900/20 border-green-400/30 p-4">
+              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-green-400" />
+                1단계: TourAPI에서 원본 데이터 가져오기
+              </h3>
+              <ul className="text-gray-300 text-sm space-y-1 mb-3">
+                <li>✓ API에서 축제 목록을 가져와 원본 그대로 저장</li>
+                <li>✓ 데이터 손실 없이 모든 정보 보관</li>
+                <li>✓ 언제든지 재처리 가능</li>
+              </ul>
+            </Card>
+
+            <Card className="bg-gray-900 border-gray-800 p-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">지역 선택</label>
+                  <Select value={areaCode} onValueChange={setAreaCode}>
+                    <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                      <SelectValue placeholder="전체 지역" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-800">
+                      {areaCodes.map((area) => (
+                        <SelectItem 
+                          key={area.value} 
+                          value={area.value} 
+                          className="text-white hover:bg-gray-800 focus:bg-gray-800"
+                        >
+                          {area.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">년도</label>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                      <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-900 border-gray-800">
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year} className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                            {year}년
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">월</label>
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                      <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-900 border-gray-800">
+                        {months.map((month) => (
+                          <SelectItem key={month.value} value={month.value} className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                            {month.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleFetch}
+                  disabled={isFetching}
+                  className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 h-12"
+                >
+                  {isFetching ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      원본 데이터 가져오는 중...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-5 h-5 mr-2" />
+                      1단계: 원본 데이터 가져오기
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* 원본 데이터 관리 탭 */}
+          <TabsContent value="manage" className="space-y-4">
+            <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
+              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                <RefreshCw className="w-5 h-5 text-purple-400" />
+                2단계: 원본 데이터를 Festival로 변환
+              </h3>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>✓ 저장된 원본 데이터를 Festival 엔티티로 변환</li>
+                <li>✓ 실패한 데이터는 언제든지 재처리 가능</li>
+                <li>✓ 원본 데이터는 보관되므로 안전</li>
+              </ul>
+            </Card>
+
+            {/* 통계 카드 */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400">{pendingData.length}</div>
+                  <div className="text-xs text-gray-400">대기 중</div>
+                </div>
+              </Card>
+              <Card className="bg-green-900/20 border-green-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{processedData.length}</div>
+                  <div className="text-xs text-gray-400">완료</div>
+                </div>
+              </Card>
+              <Card className="bg-red-900/20 border-red-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">{failedData.length}</div>
+                  <div className="text-xs text-gray-400">실패</div>
+                </div>
+              </Card>
+            </div>
+
+            {/* 액션 버튼 */}
+            {pendingData.length > 0 && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    const allPendingIds = pendingData.map(r => r.id);
+                    setSelectedRawData(allPendingIds);
+                  }}
+                  variant="outline"
+                  className="flex-1 border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
+                >
+                  대기 중 전체 선택
+                </Button>
+                <Button
+                  onClick={() => handleTransform(selectedRawData)}
+                  disabled={selectedRawData.length === 0 || isTransforming}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                >
+                  {isTransforming ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      변환 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      {selectedRawData.length}개 변환하기
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* 원본 데이터 목록 */}
+            <div className="space-y-3">
+              {rawDataList.map((raw) => {
+                const isSelected = selectedRawData.includes(raw.id);
+                const statusColors = {
+                  pending: 'bg-yellow-500/20 border-yellow-500/50',
+                  processing: 'bg-blue-500/20 border-blue-500/50',
+                  processed: 'bg-green-500/20 border-green-500/50',
+                  failed: 'bg-red-500/20 border-red-500/50',
+                };
+                const statusLabels = {
+                  pending: '대기 중',
+                  processing: '처리 중',
+                  processed: '완료',
+                  failed: '실패',
+                };
+                
+                return (
+                  <Card
+                    key={raw.id}
+                    className={`border-2 transition-all ${
+                      isSelected && raw.processing_status === 'pending'
+                        ? 'bg-purple-900/30 border-purple-400'
+                        : statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'
+                    }`}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        {/* 체크박스 (대기 중인 것만) */}
+                        {raw.processing_status === 'pending' && (
+                          <div className="flex-shrink-0 mt-1">
+                            <div 
+                              onClick={() => toggleRawData(raw.id)}
+                              className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
+                                isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-4 h-4 text-black" />}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 이미지 */}
+                        {raw.firstimage && (
+                          <div className="flex-shrink-0">
+                            <img
+                              src={raw.firstimage}
+                              alt={raw.title}
+                              className="w-20 h-20 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* 정보 */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-white font-bold text-base">{raw.title}</h3>
+                            <Badge className={statusColors[raw.processing_status]}>
+                              {statusLabels[raw.processing_status]}
+                            </Badge>
+                          </div>
+
+                          <div className="text-gray-400 text-sm space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-green-400" />
+                              <span>
+                                {raw.eventstartdate ? 
+                                  `${raw.eventstartdate.substring(0,4)}-${raw.eventstartdate.substring(4,6)}-${raw.eventstartdate.substring(6,8)}` : 
+                                  '시작일 없음'
+                                } ~ {raw.eventenddate ? 
+                                  `${raw.eventenddate.substring(0,4)}-${raw.eventenddate.substring(4,6)}-${raw.eventenddate.substring(6,8)}` : 
+                                  '종료일 없음'
+                                }
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-teal-400" />
+                              <span>{raw.addr1 || '주소 없음'}</span>
+                            </div>
+
+                            <p className="text-xs text-gray-500">
+                              ContentID: {raw.contentid} · 수집: {safeFormatDate(raw.fetch_date || raw.created_date, 'yy-MM-dd HH:mm')}
+                            </p>
+
+                            {raw.processing_status === 'failed' && raw.error_message && (
+                              <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded">
+                                <p className="text-red-400 text-xs">
+                                  <AlertCircle className="w-3 h-3 inline mr-1" />
+                                  {raw.error_message}
+                                </p>
+                              </div>
+                            )}
+
+                            {raw.processing_status === 'processed' && raw.festival_id && (
+                              <div className="mt-2">
+                                <Badge variant="outline" className="text-green-400 border-green-400">
+                                  ✓ Festival ID: {raw.festival_id}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 액션 버튼 */}
+                        <div className="flex flex-col gap-2">
+                          {raw.processing_status === 'failed' && (
+                            <Button
+                              onClick={() => handleTransform([raw.id])}
+                              disabled={isTransforming}
+                              size="sm"
+                              className="bg-orange-500 hover:bg-orange-600"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => {
+                              if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
+                                deleteRawDataMutation.mutate(raw.id);
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-700 text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+
+              {rawDataList.length === 0 && (
+                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                  <Database className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-2">저장된 원본 데이터가 없습니다</p>
+                  <p className="text-gray-600 text-sm">먼저 "데이터 가져오기" 탭에서 데이터를 가져오세요</p>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
