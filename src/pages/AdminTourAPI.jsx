@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ export default function AdminTourAPI() {
   const [areaCode, setAreaCode] = useState("all");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
-  const [numOfRows, setNumOfRows] = useState(20);
+  const [numOfRows, setNumOfRows] = useState(100); // Changed initial value from 20 to 100
   const [isFetching, setIsFetching] = useState(false);
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
@@ -166,6 +167,14 @@ export default function AdminTourAPI() {
     label: `${i + 1}월`
   }));
 
+  // New: Options for numOfRows
+  const rowOptions = [
+    { value: 20, label: "20개" },
+    { value: 30, label: "30개" },
+    { value: 50, label: "50개" },
+    { value: 100, label: "100개 (최대)" },
+  ];
+
   const pendingData = rawDataList.filter(r => r.processing_status === 'pending');
   const processedData = rawDataList.filter(r => r.processing_status === 'processed');
   const failedData = rawDataList.filter(r => r.processing_status === 'failed');
@@ -279,6 +288,30 @@ export default function AdminTourAPI() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* New: Select for numOfRows */}
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">가져올 개수</label>
+                  <Select value={numOfRows.toString()} onValueChange={(value) => setNumOfRows(parseInt(value))}>
+                    <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-800">
+                      {rowOptions.map((option) => (
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value.toString()} 
+                          className="text-white hover:bg-gray-800 focus:bg-gray-800"
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-gray-500 text-xs mt-1">
+                    💡 최대 100개까지 한 번에 가져올 수 있습니다
+                  </p>
                 </div>
 
                 <Button
