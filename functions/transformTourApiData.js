@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         let detailData = {};
         let introData = {};
         
-        // detailCommon2 호출 시도 - 문제가 되는 파라미터 제거
+        // detailCommon2 호출 시도 - defaultYN 파라미터도 제거
         if (apiKey && rawData.contentid) {
           try {
             const detailParams = new URLSearchParams({
@@ -117,7 +117,6 @@ Deno.serve(async (req) => {
               MobileOS: "ETC",
               MobileApp: "Festee",
               _type: "json",
-              defaultYN: "Y",
               overviewYN: "Y",
             });
             
