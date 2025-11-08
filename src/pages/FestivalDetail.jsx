@@ -454,6 +454,10 @@ export default function FestivalDetail() {
     );
   }
 
+  // 디버깅: 축제 데이터 확인
+  console.log('Festival Data:', festival);
+  console.log('Image Gallery URLs:', festival.image_gallery_urls);
+
   const starRating = getStarRating(festival);
   const currentMedia = mediaItems[mediaIndex];
   const dateStatus = festival.date_status || 'confirmed';
