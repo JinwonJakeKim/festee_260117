@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         let detailData = {};
         let introData = {};
         
-        // detailCommon2 호출 시도
+        // detailCommon2 호출 시도 - 문제가 되는 파라미터들 제거
         if (apiKey && rawData.contentid) {
           try {
             const detailParams = new URLSearchParams({
@@ -118,10 +118,6 @@ Deno.serve(async (req) => {
               MobileApp: "Festee",
               _type: "json",
               defaultYN: "Y",
-              firstImageYN: "Y",
-              areacodeYN: "Y",
-              addrinfoYN: "Y",
-              mapinfoYN: "Y",
               overviewYN: "Y",
             });
             
@@ -132,7 +128,6 @@ Deno.serve(async (req) => {
             const detailText = await detailResponse.text();
             
             console.log(`[Transform] detailCommon2 response status: ${detailResponse.status}`);
-            console.log(`[Transform] detailCommon2 response (first 500 chars): ${detailText.substring(0, 500)}`);
             
             if (detailResponse.ok) {
               try {
@@ -144,7 +139,6 @@ Deno.serve(async (req) => {
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = detailJson.response?.body?.items;
-                  console.log(`[Transform] detailCommon2 items structure:`, JSON.stringify(items).substring(0, 200));
                   
                   if (items && items.item) {
                     detailData = Array.isArray(items.item) ? items.item[0] : items.item;
@@ -195,7 +189,6 @@ Deno.serve(async (req) => {
             const introText = await introResponse.text();
             
             console.log(`[Transform] detailIntro2 response status: ${introResponse.status}`);
-            console.log(`[Transform] detailIntro2 response (first 500 chars): ${introText.substring(0, 500)}`);
             
             if (introResponse.ok) {
               try {
@@ -207,7 +200,6 @@ Deno.serve(async (req) => {
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = introJson.response?.body?.items;
-                  console.log(`[Transform] detailIntro2 items structure:`, JSON.stringify(items).substring(0, 200));
                   
                   if (items && items.item) {
                     introData = Array.isArray(items.item) ? items.item[0] : items.item;
