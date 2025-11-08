@@ -102,6 +102,109 @@ Deno.serve(async (req) => {
           if (!text) return '';
           return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
         };
+
+        // 중복 문장 제거 함수 (NEW)
+        const removeDuplicateSentences = (text) => {
+          if (!text) return '';
+          
+          // 문장 단위로 분리 (마침표, 느낌표, 물음표 기준)
+          const sentences = text.split(/([.!?]\s+)/).filter(s => s.trim());
+          const uniqueSentences = [];
+          const seen = new Set();
+          
+          for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i].trim();
+            // 구두점이 아닌 문장만 체크
+            if (sentence && sentence.length > 5 && !/^[.!?,\s]+$/.test(sentence)) {
+              // 문장을 정규화 (공백, 특수문자 제거)
+              const normalized = sentence.replace(/\s+/g, '').toLowerCase();
+              if (!seen.has(normalized)) {
+                seen.add(normalized);
+                uniqueSentences.push(sentence);
+                // 다음이 구두점이면 함께 추가
+                if (i + 1 < sentences.length && /^[.!?,\s]+$/.test(sentences[i + 1])) {
+                  uniqueSentences.push(sentences[i + 1]);
+                  i++;
+                }
+              }
+            }
+          }
+          
+          return uniqueSentences.join('').trim();
+        };
+
+        // 텍스트 단락 정리 함수 (NEW)
+        const formatParagraphs = (text) => {
+          if (!text) return '';
+          
+          // 중복 제거 먼저
+          text = removeDuplicateSentences(text);
+          
+          // 여러 개행을 2개로 통일
+          text = text.replace(/\n{3,}/g, '\n\n');
+          
+          // 숫자로 시작하는 항목들 (1. 2. 등) 앞에 개행 추가
+          text = text.replace(/([^\n])(\d+\.)/g, '$1\n\n$2');
+          
+          // ○, -, * 등의 리스트 마커 앞에 개행 추가
+          text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
+          
+          // 괄호로 묶인 제목 형태 앞뒤로 개행 (예: [행사내용])
+          text = text.replace(/([^\n])(\[.+?\])/g, '$1\n\n$2\n');
+          text = text.replace(/([^\n])(【.+?】)/g, '$1\n\n$2\n');
+          
+          // 특정 키워드 뒤에 개행 추가 (행사내용, 부대행사 등)
+          const keywords = ['행사내용:', '행사 내용:', '부대행사:', '프로그램:', '주요 프로그램:', '주요내용:', '주요 내용:'];
+          keywords.forEach(keyword => {
+            text = text.replace(new RegExp(`([^\n])(${keyword})`, 'g'), '$1\n\n$2\n');
+          });
+          
+          // 여러 공백을 하나로
+          text = text.replace(/ {2,}/g, ' ');
+          
+          // 시작과 끝 공백 제거
+          return text.trim();
+        };
+
+        // 스마트 요약 생성 함수 (NEW)
+        const createSmartSummary = (text, maxLength = 300) => {
+          if (!text) return '';
+          
+          // HTML 태그 제거
+          text = cleanHtml(text);
+          
+          // 중복 제거
+          text = removeDuplicateSentences(text);
+          
+          // 이미 짧으면 그대로 반환
+          if (text.length <= maxLength) {
+            return text;
+          }
+          
+          // 문장 단위로 분리
+          const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+          
+          // 첫 2-3 문장으로 요약
+          let summary = '';
+          for (const sentence of sentences) {
+            if ((summary + sentence).length <= maxLength) {
+              summary += sentence;
+            } else {
+              break;
+            }
+          }
+          
+          // 여전히 너무 길면 자르되 마지막 완전한 단어까지만
+          if (summary.length > maxLength) {
+            summary = summary.substring(0, maxLength);
+            const lastSpace = summary.lastIndexOf(' ');
+            if (lastSpace > 0) {
+              summary = summary.substring(0, lastSpace) + '...';
+            }
+          }
+          
+          return summary.trim();
+        };
         
         let formattedStartDate = formatDate(rawData.eventstartdate);
         let formattedEndDate = formatDate(rawData.eventenddate);
@@ -110,7 +213,7 @@ Deno.serve(async (req) => {
         let infoData = [];
         let imageGallery = [];
         
-        // detailCommon2 호출 시도 - 모든 YN 파라미터 제거, 필수 파라미터만 사용
+        // detailCommon2 호출 시도
         if (apiKey && rawData.contentid) {
           try {
             const detailParams = new URLSearchParams({
@@ -377,65 +480,85 @@ Deno.serve(async (req) => {
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
         const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
         
-        // 상세 설명 구성
+        // 상세 설명 구성 (개선됨 - NEW)
         let fullDescription = '';
+        const sections = [];
         
         // overview가 있으면 메인 설명으로 사용
         if (detailData.overview || rawData.overview) {
-          fullDescription += cleanHtml(detailData.overview || rawData.overview) + '\n\n';
+          const overview = cleanHtml(detailData.overview || rawData.overview);
+          sections.push(formatParagraphs(overview));
         }
         
         // 행사 프로그램 추가
         if (introData.program) {
-          fullDescription += '📋 행사 프로그램\n' + cleanHtml(introData.program) + '\n\n';
+          const program = cleanHtml(introData.program);
+          // overview와 중복되지 않는 경우만 추가
+          if (!sections.some(s => s.includes(program.substring(0, 50)))) {
+            sections.push('📋 행사 프로그램\n' + formatParagraphs(program));
+          }
         }
         
         // 부대행사 추가
         if (introData.subevent) {
-          fullDescription += '🎪 부대행사\n' + cleanHtml(introData.subevent) + '\n\n';
+          const subevent = cleanHtml(introData.subevent);
+          if (!sections.some(s => s.includes(subevent.substring(0, 50)))) {
+            sections.push('🎪 부대행사\n' + formatParagraphs(subevent));
+          }
         }
         
         // 행사장 위치 안내 추가
         if (introData.placeinfo) {
-          fullDescription += '📍 행사장 안내\n' + cleanHtml(introData.placeinfo) + '\n\n';
+          const placeinfo = cleanHtml(introData.placeinfo);
+          if (!sections.some(s => s.includes(placeinfo.substring(0, 50)))) {
+            sections.push('📍 행사장 안내\n' + formatParagraphs(placeinfo));
+          }
         }
         
         // 할인 정보 추가
         if (introData.discountinfofestival) {
-          fullDescription += '💰 할인 정보\n' + cleanHtml(introData.discountinfofestival) + '\n\n';
+          const discount = cleanHtml(introData.discountinfofestival);
+          if (!sections.some(s => s.includes(discount.substring(0, 50)))) {
+            sections.push('💰 할인 정보\n' + formatParagraphs(discount));
+          }
         }
         
         // detailInfo2에서 가져온 추가 정보 반영
         if (infoData && infoData.length > 0) {
           console.log(`[Transform] Processing ${infoData.length} detailInfo2 items`);
           
-          // detailInfo2는 반복 정보를 제공하므로 각 항목을 처리
           const infoSections = {};
           
           infoData.forEach(item => {
-            // infoname과 infotext를 사용하여 정보 구성
             const infoName = cleanHtml(item.infoname || '');
             const infoText = cleanHtml(item.infotext || '');
             
             if (infoName && infoText) {
-              if (!infoSections[infoName]) {
-                infoSections[infoName] = [];
+              // 이미 포함된 내용인지 확인
+              const isDuplicate = sections.some(s => s.includes(infoText.substring(0, 50)));
+              
+              if (!isDuplicate) {
+                if (!infoSections[infoName]) {
+                  infoSections[infoName] = [];
+                }
+                infoSections[infoName].push(infoText);
               }
-              infoSections[infoName].push(infoText);
             }
           });
           
           // 섹션별로 description에 추가
           Object.keys(infoSections).forEach(sectionName => {
             const sectionContent = infoSections[sectionName].join('\n');
-            fullDescription += `\n📌 ${sectionName}\n${sectionContent}\n`;
+            sections.push(`📌 ${sectionName}\n${formatParagraphs(sectionContent)}`);
           });
           
           if (Object.keys(infoSections).length > 0) {
-            fullDescription += '\n';
-            console.log(`[Transform] ✓ Added ${Object.keys(infoSections).length} sections from detailInfo2`);
+            console.log(`[Transform] ✓ Added ${Object.keys(infoSections).length} unique sections from detailInfo2`);
           }
         }
+        
+        // 모든 섹션을 결합 (2줄 개행으로 구분)
+        fullDescription = sections.filter(s => s).join('\n\n');
         
         // fallback: 제목만 있으면 제목 사용
         if (!fullDescription.trim()) {
@@ -444,6 +567,9 @@ Deno.serve(async (req) => {
         } else {
           console.log(`[Transform] ✓ Built description with ${fullDescription.length} characters`);
         }
+        
+        // 스마트 요약 생성 (NEW)
+        const smartSummary = createSmartSummary(detailData.overview || rawData.overview || fullDescription, 300);
         
         // 웹사이트 결정 (eventhomepage 우선, 없으면 homepage 사용)
         const websiteUrl = cleanHomepage(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
@@ -463,8 +589,8 @@ Deno.serve(async (req) => {
         // Festival 엔티티 생성
         const festival = {
           name: detailData.title || rawData.title,
-          description: fullDescription.trim(),
-          summary: (detailData.overview || rawData.overview) ? cleanHtml(detailData.overview || rawData.overview).substring(0, 200) : rawData.title,
+          description: fullDescription,
+          summary: smartSummary,
           country: '대한민국',
           city: extractCity(detailData.addr1 || rawData.addr1),
           category: mapCategory(rawData.cat3),
