@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         }
         
         const rawData = rawDataList[0];
-        console.log(`[Transform] Processing: ${rawData.title}`);
+        console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
         // processing 상태로 변경
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
         
         // Rate limit 방지를 위한 딜레이
         if (i > 0) {
-          console.log(`[Transform] Waiting 300ms...`);
-          await new Promise(resolve => setTimeout(resolve, 300));
+          console.log(`[Transform] Waiting 500ms...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
         
         // 헬퍼 함수들
@@ -79,7 +79,11 @@ Deno.serve(async (req) => {
             'A0207': '음악',
             'A0208': '문화',
             'A02070': '음악',
+            'A02070200': '지역축제',
             'A02080': '문화',
+            'A02080600': '문화',
+            'A02081000': '문화',
+            'A02081300': '문화',
           };
           return categoryMap[cat3code] || '지역축제';
         };
@@ -105,7 +109,7 @@ Deno.serve(async (req) => {
         let introData = {};
         
         // detailCommon2 호출 시도
-        if (apiKey) {
+        if (apiKey && rawData.contentid) {
           try {
             const detailParams = new URLSearchParams({
               serviceKey: apiKey,
@@ -122,37 +126,56 @@ Deno.serve(async (req) => {
             });
             
             const detailUrl = `${baseUrl}/detailCommon2?${detailParams.toString()}`;
-            console.log(`[Transform] Calling detailCommon2...`);
+            console.log(`[Transform] Calling detailCommon2 for contentId: ${rawData.contentid}`);
+            
             const detailResponse = await fetch(detailUrl);
+            const detailText = await detailResponse.text();
+            
+            console.log(`[Transform] detailCommon2 response status: ${detailResponse.status}`);
+            console.log(`[Transform] detailCommon2 response (first 500 chars): ${detailText.substring(0, 500)}`);
             
             if (detailResponse.ok) {
-              const detailText = await detailResponse.text();
-              const detailJson = JSON.parse(detailText);
-              
-              if (detailJson.response?.header?.resultCode === "0000" || detailJson.response?.header?.resultCode === "00") {
-                detailData = detailJson.response?.body?.items?.item?.[0] || detailJson.response?.body?.items?.item || {};
+              try {
+                const detailJson = JSON.parse(detailText);
+                const resultCode = detailJson.response?.header?.resultCode;
+                const resultMsg = detailJson.response?.header?.resultMsg;
                 
-                // TourApiRawData에 모든 detailCommon2 정보 저장
-                await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-                  overview: cleanHtml(detailData.overview || ''),
-                  homepage: cleanHomepage(detailData.homepage || ''),
-                  telname: detailData.telname || '',
-                  zipcode: detailData.zipcode || '',
-                  firstimage2: detailData.firstimage2 || '',
-                  raw_detail_json: JSON.stringify(detailData)
-                });
+                console.log(`[Transform] detailCommon2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
                 
-                console.log(`[Transform] ✓ detailCommon2 success - overview length: ${(detailData.overview || '').length}`);
-              } else {
-                console.log(`[Transform] detailCommon2 failed: ${detailJson.response?.header?.resultMsg}`);
+                if (resultCode === "0000" || resultCode === "00") {
+                  const items = detailJson.response?.body?.items;
+                  console.log(`[Transform] detailCommon2 items structure:`, JSON.stringify(items).substring(0, 200));
+                  
+                  if (items && items.item) {
+                    detailData = Array.isArray(items.item) ? items.item[0] : items.item;
+                    
+                    console.log(`[Transform] ✓ detailCommon2 success - overview length: ${(detailData.overview || '').length}`);
+                    
+                    // TourApiRawData에 모든 detailCommon2 정보 저장
+                    await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
+                      overview: cleanHtml(detailData.overview || ''),
+                      homepage: cleanHomepage(detailData.homepage || ''),
+                      telname: detailData.telname || '',
+                      zipcode: detailData.zipcode || '',
+                      firstimage2: detailData.firstimage2 || '',
+                      raw_detail_json: JSON.stringify(detailData)
+                    });
+                  } else {
+                    console.log(`[Transform] ⚠ detailCommon2 returned no items`);
+                  }
+                } else {
+                  console.log(`[Transform] ✗ detailCommon2 failed with code: ${resultCode}, message: ${resultMsg}`);
+                }
+              } catch (parseError) {
+                console.error(`[Transform] detailCommon2 JSON parse error:`, parseError.message);
               }
             }
           } catch (e) {
-            console.log(`[Transform] detailCommon2 error: ${e.message}`);
+            console.error(`[Transform] detailCommon2 error: ${e.message}`);
           }
           
           // 딜레이
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // detailIntro2 호출 시도
           try {
@@ -166,52 +189,71 @@ Deno.serve(async (req) => {
             });
             
             const introUrl = `${baseUrl}/detailIntro2?${introParams.toString()}`;
-            console.log(`[Transform] Calling detailIntro2...`);
+            console.log(`[Transform] Calling detailIntro2 for contentId: ${rawData.contentid}`);
+            
             const introResponse = await fetch(introUrl);
+            const introText = await introResponse.text();
+            
+            console.log(`[Transform] detailIntro2 response status: ${introResponse.status}`);
+            console.log(`[Transform] detailIntro2 response (first 500 chars): ${introText.substring(0, 500)}`);
             
             if (introResponse.ok) {
-              const introText = await introResponse.text();
-              const introJson = JSON.parse(introText);
-              
-              if (introJson.response?.header?.resultCode === "0000" || introJson.response?.header?.resultCode === "00") {
-                introData = introJson.response?.body?.items?.item?.[0] || introJson.response?.body?.items?.item || {};
+              try {
+                const introJson = JSON.parse(introText);
+                const resultCode = introJson.response?.header?.resultCode;
+                const resultMsg = introJson.response?.header?.resultMsg;
                 
-                // 날짜 업데이트
-                if (introData.eventstartdate) {
-                  formattedStartDate = formatDate(introData.eventstartdate) || formattedStartDate;
+                console.log(`[Transform] detailIntro2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
+                
+                if (resultCode === "0000" || resultCode === "00") {
+                  const items = introJson.response?.body?.items;
+                  console.log(`[Transform] detailIntro2 items structure:`, JSON.stringify(items).substring(0, 200));
+                  
+                  if (items && items.item) {
+                    introData = Array.isArray(items.item) ? items.item[0] : items.item;
+                    
+                    console.log(`[Transform] ✓ detailIntro2 success - program length: ${(introData.program || '').length}`);
+                    
+                    // 날짜 업데이트
+                    if (introData.eventstartdate) {
+                      formattedStartDate = formatDate(introData.eventstartdate) || formattedStartDate;
+                    }
+                    if (introData.eventenddate) {
+                      formattedEndDate = formatDate(introData.eventenddate) || formattedEndDate;
+                    }
+                    
+                    // TourApiRawData에 모든 detailIntro2 정보 저장
+                    await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
+                      playtime: cleanHtml(introData.playtime || ''),
+                      eventplace: cleanHtml(introData.eventplace || ''),
+                      eventhomepage: cleanHomepage(introData.eventhomepage || ''),
+                      sponsor1: introData.sponsor1 || '',
+                      sponsor1tel: introData.sponsor1tel || '',
+                      sponsor2: introData.sponsor2 || '',
+                      sponsor2tel: introData.sponsor2tel || '',
+                      agelimit: introData.agelimit || '',
+                      bookingplace: cleanHtml(introData.bookingplace || ''),
+                      discountinfofestival: cleanHtml(introData.discountinfofestival || ''),
+                      festivalgrade: introData.festivalgrade || '',
+                      placeinfo: cleanHtml(introData.placeinfo || ''),
+                      program: cleanHtml(introData.program || ''),
+                      spendtimefestival: introData.spendtimefestival || '',
+                      subevent: cleanHtml(introData.subevent || ''),
+                      usetimefestival: cleanHtml(introData.usetimefestival || ''),
+                      raw_intro_json: JSON.stringify(introData)
+                    });
+                  } else {
+                    console.log(`[Transform] ⚠ detailIntro2 returned no items`);
+                  }
+                } else {
+                  console.log(`[Transform] ✗ detailIntro2 failed with code: ${resultCode}, message: ${resultMsg}`);
                 }
-                if (introData.eventenddate) {
-                  formattedEndDate = formatDate(introData.eventenddate) || formattedEndDate;
-                }
-                
-                // TourApiRawData에 모든 detailIntro2 정보 저장
-                await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-                  playtime: cleanHtml(introData.playtime || ''),
-                  eventplace: cleanHtml(introData.eventplace || ''),
-                  eventhomepage: cleanHomepage(introData.eventhomepage || ''),
-                  sponsor1: introData.sponsor1 || '',
-                  sponsor1tel: introData.sponsor1tel || '',
-                  sponsor2: introData.sponsor2 || '',
-                  sponsor2tel: introData.sponsor2tel || '',
-                  agelimit: introData.agelimit || '',
-                  bookingplace: cleanHtml(introData.bookingplace || ''),
-                  discountinfofestival: cleanHtml(introData.discountinfofestival || ''),
-                  festivalgrade: introData.festivalgrade || '',
-                  placeinfo: cleanHtml(introData.placeinfo || ''),
-                  program: cleanHtml(introData.program || ''),
-                  spendtimefestival: introData.spendtimefestival || '',
-                  subevent: cleanHtml(introData.subevent || ''),
-                  usetimefestival: cleanHtml(introData.usetimefestival || ''),
-                  raw_intro_json: JSON.stringify(introData)
-                });
-                
-                console.log(`[Transform] ✓ detailIntro2 success - program length: ${(introData.program || '').length}`);
-              } else {
-                console.log(`[Transform] detailIntro2 failed: ${introJson.response?.header?.resultMsg}`);
+              } catch (parseError) {
+                console.error(`[Transform] detailIntro2 JSON parse error:`, parseError.message);
               }
             }
           } catch (e) {
-            console.log(`[Transform] detailIntro2 error: ${e.message}`);
+            console.error(`[Transform] detailIntro2 error: ${e.message}`);
           }
         }
         
@@ -264,6 +306,9 @@ Deno.serve(async (req) => {
         // fallback: 제목만 있으면 제목 사용
         if (!fullDescription.trim()) {
           fullDescription = rawData.title;
+          console.log(`[Transform] ⚠ No detailed description available, using title only`);
+        } else {
+          console.log(`[Transform] ✓ Built description with ${fullDescription.length} characters`);
         }
         
         // 웹사이트 결정 (eventhomepage 우선, 없으면 homepage 사용)
@@ -326,7 +371,7 @@ Deno.serve(async (req) => {
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description length: ${fullDescription.length})`);
+        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description: ${fullDescription.length} chars)`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
