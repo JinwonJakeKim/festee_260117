@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
         let formattedEndDate = formatDate(rawData.eventenddate);
         let detailData = {};
         let introData = {};
+        let infoData = [];
         
         // detailCommon2 호출 시도 - 모든 YN 파라미터 제거, 필수 파라미터만 사용
         if (apiKey && rawData.contentid) {
@@ -126,7 +127,6 @@ Deno.serve(async (req) => {
             const detailText = await detailResponse.text();
             
             console.log(`[Transform] detailCommon2 response status: ${detailResponse.status}`);
-            console.log(`[Transform] detailCommon2 response (first 500 chars): ${detailText.substring(0, 500)}`);
             
             if (detailResponse.ok) {
               try {
@@ -138,7 +138,6 @@ Deno.serve(async (req) => {
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = detailJson.response?.body?.items;
-                  console.log(`[Transform] detailCommon2 items structure:`, JSON.stringify(items).substring(0, 200));
                   
                   if (items && items.item) {
                     detailData = Array.isArray(items.item) ? items.item[0] : items.item;
@@ -189,7 +188,6 @@ Deno.serve(async (req) => {
             const introText = await introResponse.text();
             
             console.log(`[Transform] detailIntro2 response status: ${introResponse.status}`);
-            console.log(`[Transform] detailIntro2 response (first 500 chars): ${introText.substring(0, 500)}`);
             
             if (introResponse.ok) {
               try {
@@ -201,7 +199,6 @@ Deno.serve(async (req) => {
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = introJson.response?.body?.items;
-                  console.log(`[Transform] detailIntro2 items structure:`, JSON.stringify(items).substring(0, 200));
                   
                   if (items && items.item) {
                     introData = Array.isArray(items.item) ? items.item[0] : items.item;
@@ -249,6 +246,58 @@ Deno.serve(async (req) => {
           } catch (e) {
             console.error(`[Transform] detailIntro2 error: ${e.message}`);
           }
+          
+          // 딜레이
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // detailInfo2 호출 시도 (추가 상세 정보)
+          try {
+            const infoParams = new URLSearchParams({
+              serviceKey: apiKey,
+              contentId: rawData.contentid,
+              contentTypeId: "15",
+              MobileOS: "ETC",
+              MobileApp: "Festee",
+              _type: "json",
+            });
+            
+            const infoUrl = `${baseUrl}/detailInfo2?${infoParams.toString()}`;
+            console.log(`[Transform] Calling detailInfo2 for contentId: ${rawData.contentid}`);
+            
+            const infoResponse = await fetch(infoUrl);
+            const infoText = await infoResponse.text();
+            
+            console.log(`[Transform] detailInfo2 response status: ${infoResponse.status}`);
+            
+            if (infoResponse.ok) {
+              try {
+                const infoJson = JSON.parse(infoText);
+                const resultCode = infoJson.response?.header?.resultCode;
+                const resultMsg = infoJson.response?.header?.resultMsg;
+                
+                console.log(`[Transform] detailInfo2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
+                
+                if (resultCode === "0000" || resultCode === "00") {
+                  const items = infoJson.response?.body?.items;
+                  
+                  if (items && items.item) {
+                    infoData = Array.isArray(items.item) ? items.item : [items.item];
+                    
+                    console.log(`[Transform] ✓ detailInfo2 success - ${infoData.length} detail items found`);
+                    console.log(`[Transform] detailInfo2 sample:`, JSON.stringify(infoData[0] || {}).substring(0, 300));
+                  } else {
+                    console.log(`[Transform] ⚠ detailInfo2 returned no items`);
+                  }
+                } else {
+                  console.log(`[Transform] ✗ detailInfo2 failed with code: ${resultCode}, message: ${resultMsg}`);
+                }
+              } catch (parseError) {
+                console.error(`[Transform] detailInfo2 JSON parse error:`, parseError.message);
+              }
+            }
+          } catch (e) {
+            console.error(`[Transform] detailInfo2 error: ${e.message}`);
+          }
         }
         
         // 날짜 검증
@@ -295,6 +344,38 @@ Deno.serve(async (req) => {
         // 할인 정보 추가
         if (introData.discountinfofestival) {
           fullDescription += '💰 할인 정보\n' + cleanHtml(introData.discountinfofestival) + '\n\n';
+        }
+        
+        // detailInfo2에서 가져온 추가 정보 반영
+        if (infoData && infoData.length > 0) {
+          console.log(`[Transform] Processing ${infoData.length} detailInfo2 items`);
+          
+          // detailInfo2는 반복 정보를 제공하므로 각 항목을 처리
+          const infoSections = {};
+          
+          infoData.forEach(item => {
+            // infoname과 infotext를 사용하여 정보 구성
+            const infoName = cleanHtml(item.infoname || '');
+            const infoText = cleanHtml(item.infotext || '');
+            
+            if (infoName && infoText) {
+              if (!infoSections[infoName]) {
+                infoSections[infoName] = [];
+              }
+              infoSections[infoName].push(infoText);
+            }
+          });
+          
+          // 섹션별로 description에 추가
+          Object.keys(infoSections).forEach(sectionName => {
+            const sectionContent = infoSections[sectionName].join('\n');
+            fullDescription += `\n📌 ${sectionName}\n${sectionContent}\n`;
+          });
+          
+          if (Object.keys(infoSections).length > 0) {
+            fullDescription += '\n';
+            console.log(`[Transform] ✓ Added ${Object.keys(infoSections).length} sections from detailInfo2`);
+          }
         }
         
         // fallback: 제목만 있으면 제목 사용
