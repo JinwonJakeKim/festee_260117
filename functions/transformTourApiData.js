@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
         let detailData = {};
         let introData = {};
         let infoData = [];
+        let imageGallery = [];
         
         // detailCommon2 호출 시도 - 모든 YN 파라미터 제거, 필수 파라미터만 사용
         if (apiKey && rawData.contentid) {
@@ -298,6 +299,64 @@ Deno.serve(async (req) => {
           } catch (e) {
             console.error(`[Transform] detailInfo2 error: ${e.message}`);
           }
+          
+          // 딜레이
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // detailImage1 호출 시도 (이미지 갤러리)
+          try {
+            const imageParams = new URLSearchParams({
+              serviceKey: apiKey,
+              contentId: rawData.contentid,
+              MobileOS: "ETC",
+              MobileApp: "Festee",
+              _type: "json",
+              imageYN: "Y",
+              subImageYN: "Y"
+            });
+            
+            const imageUrl = `${baseUrl}/detailImage1?${imageParams.toString()}`;
+            console.log(`[Transform] Calling detailImage1 for contentId: ${rawData.contentid}`);
+            
+            const imageResponse = await fetch(imageUrl);
+            const imageText = await imageResponse.text();
+            
+            console.log(`[Transform] detailImage1 response status: ${imageResponse.status}`);
+            
+            if (imageResponse.ok) {
+              try {
+                const imageJson = JSON.parse(imageText);
+                const resultCode = imageJson.response?.header?.resultCode;
+                const resultMsg = imageJson.response?.header?.resultMsg;
+                
+                console.log(`[Transform] detailImage1 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
+                
+                if (resultCode === "0000" || resultCode === "00") {
+                  const items = imageJson.response?.body?.items;
+                  
+                  if (items && items.item) {
+                    const imageItems = Array.isArray(items.item) ? items.item : [items.item];
+                    
+                    imageGallery = imageItems.map(img => ({
+                      originimgurl: img.originimgurl || '',
+                      smallimageurl: img.smallimageurl || img.originimgurl || '',
+                      imgname: cleanHtml(img.imgname || '')
+                    })).filter(img => img.originimgurl); // URL이 있는 것만 필터링
+                    
+                    console.log(`[Transform] ✓ detailImage1 success - ${imageGallery.length} images found`);
+                  } else {
+                    console.log(`[Transform] ⚠ detailImage1 returned no items`);
+                  }
+                } else {
+                  console.log(`[Transform] ✗ detailImage1 failed with code: ${resultCode}, message: ${resultMsg}`);
+                }
+              } catch (parseError) {
+                console.error(`[Transform] detailImage1 JSON parse error:`, parseError.message);
+              }
+            }
+          } catch (e) {
+            console.error(`[Transform] detailImage1 error: ${e.message}`);
+          }
         }
         
         // 날짜 검증
@@ -432,7 +491,8 @@ Deno.serve(async (req) => {
           likes_count: 0,
           catches_count: 0,
           restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
-          recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : []
+          recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
+          image_gallery_urls: imageGallery
         };
         
         // Festival 생성
@@ -446,7 +506,7 @@ Deno.serve(async (req) => {
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description: ${fullDescription.length} chars)`);
+        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description: ${fullDescription.length} chars, images: ${imageGallery.length})`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
