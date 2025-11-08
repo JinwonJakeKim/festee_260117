@@ -58,6 +58,8 @@ export default function FestivalDetail() {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -726,9 +728,10 @@ export default function FestivalDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="summary" className="px-4">
-        <TabsList className="w-full bg-gray-900 grid grid-cols-6">
+        <TabsList className="w-full bg-gray-900 grid grid-cols-7">
           <TabsTrigger value="summary" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">요약</TabsTrigger>
-          <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문정보</TabsTrigger>
+          <TabsTrigger value="photos" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">사진</TabsTrigger>
+          <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문</TabsTrigger>
           <TabsTrigger value="lineup" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">라인업</TabsTrigger>
           <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">일정</TabsTrigger>
           <TabsTrigger value="map" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">위치</TabsTrigger>
@@ -848,6 +851,51 @@ export default function FestivalDetail() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        {/* 사진 갤러리 탭 - NEW */}
+        <TabsContent value="photos" className="text-white mt-4">
+          {festival.image_gallery_urls && festival.image_gallery_urls.length > 0 ? (
+            <div>
+              <div className="mb-4">
+                <h3 className="text-lg font-bold mb-1">축제 갤러리</h3>
+                <p className="text-gray-400 text-sm">{festival.image_gallery_urls.length}개의 사진</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {festival.image_gallery_urls.map((image, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSelectedGalleryIndex(idx);
+                      setShowGalleryModal(true);
+                    }}
+                    className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative group"
+                  >
+                    <img
+                      src={image.smallimageurl || image.originimgurl}
+                      alt={image.imgname || `축제 사진 ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${idx}/400/400`;
+                      }}
+                    />
+                    {image.imgname && (
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                        <p className="text-white text-xs line-clamp-2">{image.imgname}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📸</div>
+              <p className="text-gray-400 mb-2">축제 갤러리가 준비 중입니다</p>
+              <p className="text-gray-500 text-sm">곧 다양한 사진이 추가될 예정입니다</p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="visit" className="text-white mt-4">
@@ -1274,6 +1322,118 @@ export default function FestivalDetail() {
                 background-color: #374151 !important;
               }
             `}</style>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Gallery Lightbox Modal - NEW */}
+      <AnimatePresence>
+        {showGalleryModal && festival.image_gallery_urls && festival.image_gallery_urls.length > 0 && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGalleryModal(false)}
+              className="fixed inset-0 bg-black/95 z-[100] backdrop-blur-sm"
+            />
+
+            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="w-full max-w-4xl relative pointer-events-auto"
+              >
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowGalleryModal(false);
+                  }}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+
+                {/* 이전 버튼 */}
+                {selectedGalleryIndex > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedGalleryIndex(prev => prev - 1);
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white rotate-180" />
+                  </button>
+                )}
+
+                {/* 다음 버튼 */}
+                {selectedGalleryIndex < festival.image_gallery_urls.length - 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedGalleryIndex(prev => prev + 1);
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white" />
+                  </button>
+                )}
+
+                {/* 이미지 */}
+                <div className="bg-black rounded-lg overflow-hidden">
+                  <img
+                    src={festival.image_gallery_urls[selectedGalleryIndex].originimgurl}
+                    alt={festival.image_gallery_urls[selectedGalleryIndex].imgname || `축제 사진 ${selectedGalleryIndex + 1}`}
+                    className="w-full max-h-[80vh] object-contain"
+                    onError={(e) => {
+                      e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${selectedGalleryIndex}/1200/800`;
+                    }}
+                  />
+                  
+                  {/* 이미지 정보 */}
+                  <div className="bg-black/80 backdrop-blur-sm p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-white font-bold">
+                        {selectedGalleryIndex + 1} / {festival.image_gallery_urls.length}
+                      </p>
+                    </div>
+                    {festival.image_gallery_urls[selectedGalleryIndex].imgname && (
+                      <p className="text-gray-300 text-sm">
+                        {festival.image_gallery_urls[selectedGalleryIndex].imgname}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 썸네일 네비게이션 */}
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {festival.image_gallery_urls.map((image, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGalleryIndex(idx);
+                      }}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        idx === selectedGalleryIndex
+                          ? 'border-cyan-400 scale-110'
+                          : 'border-gray-700 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={image.smallimageurl || image.originimgurl}
+                        alt={`썸네일 ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
