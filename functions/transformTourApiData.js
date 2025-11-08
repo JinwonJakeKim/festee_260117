@@ -31,13 +31,152 @@ Deno.serve(async (req) => {
     const festivals = [];
     const errors = [];
     
+    // ========== 유틸리티 함수들 ==========
+    
+    const cleanHtml = (text) => {
+      if (!text) return '';
+      return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
+    };
+    
+    const cleanHomepage = (homepage) => {
+      if (!homepage) return '';
+      return homepage.replace(/<[^>]*>/g, '').trim();
+    };
+    
+    // 중복 문장 제거 (개선됨)
+    const removeDuplicates = (text) => {
+      if (!text) return '';
+      
+      // 먼저 문장들을 분리 (마침표, 느낌표, 물음표 기준)
+      const sentences = text.split(/(?<=[.!?])\s+/);
+      const seen = new Set();
+      const result = [];
+      
+      for (const sentence of sentences) {
+        const trimmed = sentence.trim();
+        if (!trimmed) continue;
+        
+        // 문장을 정규화 (공백, 구두점 제거 후 소문자화)
+        const normalized = trimmed
+          .replace(/[\s,.!?;:()[\]{}'"]/g, '')
+          .toLowerCase();
+        
+        // 최소 길이 체크 (너무 짧은 문장은 중복 체크 안함)
+        if (normalized.length < 10) {
+          result.push(trimmed);
+          continue;
+        }
+        
+        // 중복 체크
+        let isDuplicate = false;
+        for (const existing of seen) {
+          // 유사도 체크 (80% 이상 같으면 중복으로 간주)
+          if (normalized === existing || 
+              normalized.includes(existing) || 
+              existing.includes(normalized)) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        
+        if (!isDuplicate) {
+          seen.add(normalized);
+          result.push(trimmed);
+        } else {
+          console.log(`[Transform] 🗑️ Removed duplicate: ${trimmed.substring(0, 50)}...`);
+        }
+      }
+      
+      return result.join(' ');
+    };
+    
+    // 텍스트 포맷팅 (개선됨)
+    const formatText = (text) => {
+      if (!text) return '';
+      
+      // 1. HTML 태그 제거
+      text = cleanHtml(text);
+      
+      // 2. 중복 문장 제거
+      text = removeDuplicates(text);
+      
+      // 3. 여러 개행을 2개로 통일
+      text = text.replace(/\n{3,}/g, '\n\n');
+      
+      // 4. 숫자 목록 앞에 개행 추가 (1. 2. 3. 등)
+      text = text.replace(/([^\n])(\d+\.\s)/g, '$1\n\n$2');
+      
+      // 5. 불렛 포인트 앞에 개행 추가 (○, -, *, • 등)
+      text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
+      
+      // 6. 괄호로 묶인 제목 앞뒤로 개행
+      text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
+      
+      // 7. 주요 키워드 뒤에 개행
+      const keywords = [
+        '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
+        '프로그램:', '주요 프로그램:', '주요프로그램:',
+        '주요내용:', '주요 내용:', '공연시간:', '운영시간:',
+        '참가대상:', '참여대상:', '행사장소:', '행사 장소:'
+      ];
+      
+      keywords.forEach(keyword => {
+        const regex = new RegExp(`([^\n])(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        text = text.replace(regex, '$1\n\n$2\n');
+      });
+      
+      // 8. 여러 공백을 하나로
+      text = text.replace(/ {2,}/g, ' ');
+      
+      // 9. 줄 끝 공백 제거
+      text = text.split('\n').map(line => line.trim()).join('\n');
+      
+      // 10. 시작과 끝 공백 제거
+      return text.trim();
+    };
+    
+    // 스마트 요약 생성 (개선됨)
+    const createSummary = (text, maxLength = 350) => {
+      if (!text) return '';
+      
+      // HTML 제거 및 중복 제거
+      text = cleanHtml(text);
+      text = removeDuplicates(text);
+      
+      // 이미 짧으면 그대로
+      if (text.length <= maxLength) {
+        return text.trim();
+      }
+      
+      // 문장 단위로 분리
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+      
+      let summary = '';
+      for (const sentence of sentences) {
+        const trimmed = sentence.trim();
+        if ((summary + ' ' + trimmed).length <= maxLength) {
+          summary += (summary ? ' ' : '') + trimmed;
+        } else {
+          break;
+        }
+      }
+      
+      // 최소 하나의 문장은 포함
+      if (!summary && sentences.length > 0) {
+        summary = sentences[0].substring(0, maxLength - 3) + '...';
+      }
+      
+      return summary.trim() || text.substring(0, maxLength - 3).trim() + '...';
+    };
+    
+    // ========== 메인 처리 로직 ==========
+    
     for (let i = 0; i < rawDataIds.length; i++) {
       const rawDataId = rawDataIds[i];
       
       try {
         console.log(`[Transform] ========== Processing ${i + 1}/${rawDataIds.length} ==========`);
         
-        // TourApiRawData 가져오기
         const rawDataList = await base44.asServiceRole.entities.TourApiRawData.filter({ id: rawDataId });
         
         if (rawDataList.length === 0) {
@@ -49,18 +188,15 @@ Deno.serve(async (req) => {
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
-        // processing 상태로 변경
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
           processing_status: 'processing'
         });
         
-        // Rate limit 방지를 위한 딜레이
         if (i > 0) {
-          console.log(`[Transform] Waiting 500ms...`);
           await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // 헬퍼 함수들
+        // ===== 보조 함수들 =====
         const extractCity = (addr) => {
           if (!addr) return '서울';
           const match = addr.match(/(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/);
@@ -76,14 +212,9 @@ Deno.serve(async (req) => {
         
         const mapCategory = (cat3code) => {
           const categoryMap = {
-            'A0207': '음악',
-            'A0208': '문화',
-            'A02070': '음악',
-            'A02070200': '지역축제',
-            'A02080': '문화',
-            'A02080600': '문화',
-            'A02081000': '문화',
-            'A02081300': '문화',
+            'A0207': '음악', 'A0208': '문화', 'A02070': '음악',
+            'A02070200': '지역축제', 'A02080': '문화',
+            'A02080600': '문화', 'A02081000': '문화', 'A02081300': '문화',
           };
           return categoryMap[cat3code] || '지역축제';
         };
@@ -93,119 +224,6 @@ Deno.serve(async (req) => {
           return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
         };
         
-        const cleanHomepage = (homepage) => {
-          if (!homepage) return '';
-          return homepage.replace(/<[^>]*>/g, '').trim();
-        };
-        
-        const cleanHtml = (text) => {
-          if (!text) return '';
-          return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
-        };
-
-        // 중복 문장 제거 함수 (NEW)
-        const removeDuplicateSentences = (text) => {
-          if (!text) return '';
-          
-          // 문장 단위로 분리 (마침표, 느낌표, 물음표 기준)
-          const sentences = text.split(/([.!?]\s+)/).filter(s => s.trim());
-          const uniqueSentences = [];
-          const seen = new Set();
-          
-          for (let i = 0; i < sentences.length; i++) {
-            const sentence = sentences[i].trim();
-            // 구두점이 아닌 문장만 체크
-            if (sentence && sentence.length > 5 && !/^[.!?,\s]+$/.test(sentence)) {
-              // 문장을 정규화 (공백, 특수문자 제거)
-              const normalized = sentence.replace(/\s+/g, '').toLowerCase();
-              if (!seen.has(normalized)) {
-                seen.add(normalized);
-                uniqueSentences.push(sentence);
-                // 다음이 구두점이면 함께 추가
-                if (i + 1 < sentences.length && /^[.!?,\s]+$/.test(sentences[i + 1])) {
-                  uniqueSentences.push(sentences[i + 1]);
-                  i++;
-                }
-              }
-            }
-          }
-          
-          return uniqueSentences.join('').trim();
-        };
-
-        // 텍스트 단락 정리 함수 (NEW)
-        const formatParagraphs = (text) => {
-          if (!text) return '';
-          
-          // 중복 제거 먼저
-          text = removeDuplicateSentences(text);
-          
-          // 여러 개행을 2개로 통일
-          text = text.replace(/\n{3,}/g, '\n\n');
-          
-          // 숫자로 시작하는 항목들 (1. 2. 등) 앞에 개행 추가
-          text = text.replace(/([^\n])(\d+\.)/g, '$1\n\n$2');
-          
-          // ○, -, * 등의 리스트 마커 앞에 개행 추가
-          text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
-          
-          // 괄호로 묶인 제목 형태 앞뒤로 개행 (예: [행사내용])
-          text = text.replace(/([^\n])(\[.+?\])/g, '$1\n\n$2\n');
-          text = text.replace(/([^\n])(【.+?】)/g, '$1\n\n$2\n');
-          
-          // 특정 키워드 뒤에 개행 추가 (행사내용, 부대행사 등)
-          const keywords = ['행사내용:', '행사 내용:', '부대행사:', '프로그램:', '주요 프로그램:', '주요내용:', '주요 내용:'];
-          keywords.forEach(keyword => {
-            text = text.replace(new RegExp(`([^\n])(${keyword})`, 'g'), '$1\n\n$2\n');
-          });
-          
-          // 여러 공백을 하나로
-          text = text.replace(/ {2,}/g, ' ');
-          
-          // 시작과 끝 공백 제거
-          return text.trim();
-        };
-
-        // 스마트 요약 생성 함수 (NEW)
-        const createSmartSummary = (text, maxLength = 300) => {
-          if (!text) return '';
-          
-          // HTML 태그 제거
-          text = cleanHtml(text);
-          
-          // 중복 제거
-          text = removeDuplicateSentences(text);
-          
-          // 이미 짧으면 그대로 반환
-          if (text.length <= maxLength) {
-            return text;
-          }
-          
-          // 문장 단위로 분리
-          const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-          
-          // 첫 2-3 문장으로 요약
-          let summary = '';
-          for (const sentence of sentences) {
-            if ((summary + sentence).length <= maxLength) {
-              summary += sentence;
-            } else {
-              break;
-            }
-          }
-          
-          // 여전히 너무 길면 자르되 마지막 완전한 단어까지만
-          if (summary.length > maxLength) {
-            summary = summary.substring(0, maxLength);
-            const lastSpace = summary.lastIndexOf(' ');
-            if (lastSpace > 0) {
-              summary = summary.substring(0, lastSpace) + '...';
-            }
-          }
-          
-          return summary.trim();
-        };
-        
         let formattedStartDate = formatDate(rawData.eventstartdate);
         let formattedEndDate = formatDate(rawData.eventenddate);
         let detailData = {};
@@ -213,7 +231,9 @@ Deno.serve(async (req) => {
         let infoData = [];
         let imageGallery = [];
         
-        // detailCommon2 호출 시도
+        // ===== API 호출들 =====
+        
+        // detailCommon2
         if (apiKey && rawData.contentid) {
           try {
             const detailParams = new URLSearchParams({
@@ -225,56 +245,38 @@ Deno.serve(async (req) => {
             });
             
             const detailUrl = `${baseUrl}/detailCommon2?${detailParams.toString()}`;
-            console.log(`[Transform] Calling detailCommon2 for contentId: ${rawData.contentid}`);
-            
             const detailResponse = await fetch(detailUrl);
             const detailText = await detailResponse.text();
-            
-            console.log(`[Transform] detailCommon2 response status: ${detailResponse.status}`);
             
             if (detailResponse.ok) {
               try {
                 const detailJson = JSON.parse(detailText);
                 const resultCode = detailJson.response?.header?.resultCode;
-                const resultMsg = detailJson.response?.header?.resultMsg;
-                
-                console.log(`[Transform] detailCommon2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = detailJson.response?.body?.items;
-                  
                   if (items && items.item) {
                     detailData = Array.isArray(items.item) ? items.item[0] : items.item;
+                    console.log(`[Transform] ✓ detailCommon2 success`);
                     
-                    console.log(`[Transform] ✓ detailCommon2 success - overview length: ${(detailData.overview || '').length}`);
-                    
-                    // TourApiRawData에 모든 detailCommon2 정보 저장
                     await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
                       overview: cleanHtml(detailData.overview || ''),
                       homepage: cleanHomepage(detailData.homepage || ''),
-                      telname: detailData.telname || '',
-                      zipcode: detailData.zipcode || '',
-                      firstimage2: detailData.firstimage2 || '',
                       raw_detail_json: JSON.stringify(detailData)
                     });
-                  } else {
-                    console.log(`[Transform] ⚠ detailCommon2 returned no items`);
                   }
-                } else {
-                  console.log(`[Transform] ✗ detailCommon2 failed with code: ${resultCode}, message: ${resultMsg}`);
                 }
-              } catch (parseError) {
-                console.error(`[Transform] detailCommon2 JSON parse error:`, parseError.message);
+              } catch (e) {
+                console.error(`[Transform] detailCommon2 parse error:`, e.message);
               }
             }
           } catch (e) {
-            console.error(`[Transform] detailCommon2 error: ${e.message}`);
+            console.error(`[Transform] detailCommon2 error:`, e.message);
           }
           
-          // 딜레이
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // detailIntro2 호출 시도
+          // detailIntro2
           try {
             const introParams = new URLSearchParams({
               serviceKey: apiKey,
@@ -286,30 +288,20 @@ Deno.serve(async (req) => {
             });
             
             const introUrl = `${baseUrl}/detailIntro2?${introParams.toString()}`;
-            console.log(`[Transform] Calling detailIntro2 for contentId: ${rawData.contentid}`);
-            
             const introResponse = await fetch(introUrl);
             const introText = await introResponse.text();
-            
-            console.log(`[Transform] detailIntro2 response status: ${introResponse.status}`);
             
             if (introResponse.ok) {
               try {
                 const introJson = JSON.parse(introText);
                 const resultCode = introJson.response?.header?.resultCode;
-                const resultMsg = introJson.response?.header?.resultMsg;
-                
-                console.log(`[Transform] detailIntro2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = introJson.response?.body?.items;
-                  
                   if (items && items.item) {
                     introData = Array.isArray(items.item) ? items.item[0] : items.item;
+                    console.log(`[Transform] ✓ detailIntro2 success`);
                     
-                    console.log(`[Transform] ✓ detailIntro2 success - program length: ${(introData.program || '').length}`);
-                    
-                    // 날짜 업데이트
                     if (introData.eventstartdate) {
                       formattedStartDate = formatDate(introData.eventstartdate) || formattedStartDate;
                     }
@@ -317,44 +309,24 @@ Deno.serve(async (req) => {
                       formattedEndDate = formatDate(introData.eventenddate) || formattedEndDate;
                     }
                     
-                    // TourApiRawData에 모든 detailIntro2 정보 저장
                     await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
                       playtime: cleanHtml(introData.playtime || ''),
-                      eventplace: cleanHtml(introData.eventplace || ''),
-                      eventhomepage: cleanHomepage(introData.eventhomepage || ''),
-                      sponsor1: introData.sponsor1 || '',
-                      sponsor1tel: introData.sponsor1tel || '',
-                      sponsor2: introData.sponsor2 || '',
-                      sponsor2tel: introData.sponsor2tel || '',
-                      agelimit: introData.agelimit || '',
-                      bookingplace: cleanHtml(introData.bookingplace || ''),
-                      discountinfofestival: cleanHtml(introData.discountinfofestival || ''),
-                      festivalgrade: introData.festivalgrade || '',
-                      placeinfo: cleanHtml(introData.placeinfo || ''),
                       program: cleanHtml(introData.program || ''),
-                      spendtimefestival: introData.spendtimefestival || '',
-                      subevent: cleanHtml(introData.subevent || ''),
-                      usetimefestival: cleanHtml(introData.usetimefestival || ''),
                       raw_intro_json: JSON.stringify(introData)
                     });
-                  } else {
-                    console.log(`[Transform] ⚠ detailIntro2 returned no items`);
                   }
-                } else {
-                  console.log(`[Transform] ✗ detailIntro2 failed with code: ${resultCode}, message: ${resultMsg}`);
                 }
-              } catch (parseError) {
-                console.error(`[Transform] detailIntro2 JSON parse error:`, parseError.message);
+              } catch (e) {
+                console.error(`[Transform] detailIntro2 parse error:`, e.message);
               }
             }
           } catch (e) {
-            console.error(`[Transform] detailIntro2 error: ${e.message}`);
+            console.error(`[Transform] detailIntro2 error:`, e.message);
           }
           
-          // 딜레이
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // detailInfo2 호출 시도 (추가 상세 정보)
+          // detailInfo2
           try {
             const infoParams = new URLSearchParams({
               serviceKey: apiKey,
@@ -366,47 +338,32 @@ Deno.serve(async (req) => {
             });
             
             const infoUrl = `${baseUrl}/detailInfo2?${infoParams.toString()}`;
-            console.log(`[Transform] Calling detailInfo2 for contentId: ${rawData.contentid}`);
-            
             const infoResponse = await fetch(infoUrl);
             const infoText = await infoResponse.text();
-            
-            console.log(`[Transform] detailInfo2 response status: ${infoResponse.status}`);
             
             if (infoResponse.ok) {
               try {
                 const infoJson = JSON.parse(infoText);
                 const resultCode = infoJson.response?.header?.resultCode;
-                const resultMsg = infoJson.response?.header?.resultMsg;
-                
-                console.log(`[Transform] detailInfo2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = infoJson.response?.body?.items;
-                  
                   if (items && items.item) {
                     infoData = Array.isArray(items.item) ? items.item : [items.item];
-                    
-                    console.log(`[Transform] ✓ detailInfo2 success - ${infoData.length} detail items found`);
-                    console.log(`[Transform] detailInfo2 sample:`, JSON.stringify(infoData[0] || {}).substring(0, 300));
-                  } else {
-                    console.log(`[Transform] ⚠ detailInfo2 returned no items`);
+                    console.log(`[Transform] ✓ detailInfo2 success - ${infoData.length} items`);
                   }
-                } else {
-                  console.log(`[Transform] ✗ detailInfo2 failed with code: ${resultCode}, message: ${resultMsg}`);
                 }
-              } catch (parseError) {
-                console.error(`[Transform] detailInfo2 JSON parse error:`, parseError.message);
+              } catch (e) {
+                console.error(`[Transform] detailInfo2 parse error:`, e.message);
               }
             }
           } catch (e) {
-            console.error(`[Transform] detailInfo2 error: ${e.message}`);
+            console.error(`[Transform] detailInfo2 error:`, e.message);
           }
           
-          // 딜레이
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // detailImage1 호출 시도 (이미지 갤러리)
+          // detailImage1
           try {
             const imageParams = new URLSearchParams({
               serviceKey: apiKey,
@@ -419,162 +376,153 @@ Deno.serve(async (req) => {
             });
             
             const imageUrl = `${baseUrl}/detailImage1?${imageParams.toString()}`;
-            console.log(`[Transform] Calling detailImage1 for contentId: ${rawData.contentid}`);
-            
             const imageResponse = await fetch(imageUrl);
             const imageText = await imageResponse.text();
-            
-            console.log(`[Transform] detailImage1 response status: ${imageResponse.status}`);
             
             if (imageResponse.ok) {
               try {
                 const imageJson = JSON.parse(imageText);
                 const resultCode = imageJson.response?.header?.resultCode;
-                const resultMsg = imageJson.response?.header?.resultMsg;
-                
-                console.log(`[Transform] detailImage1 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
                 
                 if (resultCode === "0000" || resultCode === "00") {
                   const items = imageJson.response?.body?.items;
-                  
                   if (items && items.item) {
                     const imageItems = Array.isArray(items.item) ? items.item : [items.item];
+                    imageGallery = imageItems
+                      .map(img => ({
+                        originimgurl: img.originimgurl || '',
+                        smallimageurl: img.smallimageurl || img.originimgurl || '',
+                        imgname: cleanHtml(img.imgname || '')
+                      }))
+                      .filter(img => img.originimgurl);
                     
-                    imageGallery = imageItems.map(img => ({
-                      originimgurl: img.originimgurl || '',
-                      smallimageurl: img.smallimageurl || img.originimgurl || '',
-                      imgname: cleanHtml(img.imgname || '')
-                    })).filter(img => img.originimgurl); // URL이 있는 것만 필터링
-                    
-                    console.log(`[Transform] ✓ detailImage1 success - ${imageGallery.length} images found`);
-                  } else {
-                    console.log(`[Transform] ⚠ detailImage1 returned no items`);
+                    console.log(`[Transform] ✓ detailImage1 success - ${imageGallery.length} images`);
                   }
-                } else {
-                  console.log(`[Transform] ✗ detailImage1 failed with code: ${resultCode}, message: ${resultMsg}`);
                 }
-              } catch (parseError) {
-                console.error(`[Transform] detailImage1 JSON parse error:`, parseError.message);
+              } catch (e) {
+                console.error(`[Transform] detailImage1 parse error:`, e.message);
               }
             }
           } catch (e) {
-            console.error(`[Transform] detailImage1 error: ${e.message}`);
+            console.error(`[Transform] detailImage1 error:`, e.message);
           }
         }
         
-        // 날짜 검증
+        // ===== 날짜 검증 =====
         if (!formattedStartDate || !formattedEndDate) {
           console.error(`[Transform] ✗ REJECTED: ${rawData.title} - Missing dates`);
           await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
             processing_status: 'failed',
             error_message: 'Missing start_date or end_date'
           });
-          errors.push({ 
-            id: rawDataId, 
-            festival: rawData.title, 
-            error: 'Missing dates' 
-          });
+          errors.push({ id: rawDataId, festival: rawData.title, error: 'Missing dates' });
           continue;
         }
         
-        const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
-        const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
-        
-        // 상세 설명 구성 (개선됨 - NEW)
-        let fullDescription = '';
+        // ===== 설명 구성 (중복 제거 강화) =====
         const sections = [];
+        const usedContent = new Set();
         
-        // overview가 있으면 메인 설명으로 사용
-        if (detailData.overview || rawData.overview) {
-          const overview = cleanHtml(detailData.overview || rawData.overview);
-          sections.push(formatParagraphs(overview));
-        }
-        
-        // 행사 프로그램 추가
-        if (introData.program) {
-          const program = cleanHtml(introData.program);
-          // overview와 중복되지 않는 경우만 추가
-          if (!sections.some(s => s.includes(program.substring(0, 50)))) {
-            sections.push('📋 행사 프로그램\n' + formatParagraphs(program));
-          }
-        }
-        
-        // 부대행사 추가
-        if (introData.subevent) {
-          const subevent = cleanHtml(introData.subevent);
-          if (!sections.some(s => s.includes(subevent.substring(0, 50)))) {
-            sections.push('🎪 부대행사\n' + formatParagraphs(subevent));
-          }
-        }
-        
-        // 행사장 위치 안내 추가
-        if (introData.placeinfo) {
-          const placeinfo = cleanHtml(introData.placeinfo);
-          if (!sections.some(s => s.includes(placeinfo.substring(0, 50)))) {
-            sections.push('📍 행사장 안내\n' + formatParagraphs(placeinfo));
-          }
-        }
-        
-        // 할인 정보 추가
-        if (introData.discountinfofestival) {
-          const discount = cleanHtml(introData.discountinfofestival);
-          if (!sections.some(s => s.includes(discount.substring(0, 50)))) {
-            sections.push('💰 할인 정보\n' + formatParagraphs(discount));
-          }
-        }
-        
-        // detailInfo2에서 가져온 추가 정보 반영
-        if (infoData && infoData.length > 0) {
-          console.log(`[Transform] Processing ${infoData.length} detailInfo2 items`);
+        // 콘텐츠 추가 헬퍼 (중복 체크)
+        const addSection = (title, content) => {
+          if (!content) return false;
           
+          const formatted = formatText(content);
+          if (!formatted || formatted.length < 20) return false;
+          
+          // 정규화된 버전으로 중복 체크
+          const normalized = formatted
+            .replace(/[\s,.!?;:()[\]{}'"]/g, '')
+            .toLowerCase()
+            .substring(0, 100); // 첫 100자로 비교
+          
+          // 이미 사용된 내용인지 확인
+          for (const used of usedContent) {
+            if (normalized === used || 
+                normalized.includes(used) || 
+                used.includes(normalized)) {
+              console.log(`[Transform] 🗑️ Skipped duplicate section: ${title}`);
+              return false;
+            }
+          }
+          
+          usedContent.add(normalized);
+          
+          if (title) {
+            sections.push(`${title}\n${formatted}`);
+          } else {
+            sections.push(formatted);
+          }
+          
+          return true;
+        };
+        
+        // 1. Overview (메인 설명)
+        const overview = detailData.overview || rawData.overview;
+        if (overview) {
+          addSection('', overview);
+        }
+        
+        // 2. 프로그램
+        if (introData.program) {
+          addSection('📋 행사 프로그램', introData.program);
+        }
+        
+        // 3. 부대행사
+        if (introData.subevent) {
+          addSection('🎪 부대행사', introData.subevent);
+        }
+        
+        // 4. 행사장 안내
+        if (introData.placeinfo) {
+          addSection('📍 행사장 안내', introData.placeinfo);
+        }
+        
+        // 5. 할인 정보
+        if (introData.discountinfofestival) {
+          addSection('💰 할인 정보', introData.discountinfofestival);
+        }
+        
+        // 6. detailInfo2 정보
+        if (infoData && infoData.length > 0) {
           const infoSections = {};
           
           infoData.forEach(item => {
             const infoName = cleanHtml(item.infoname || '');
             const infoText = cleanHtml(item.infotext || '');
             
-            if (infoName && infoText) {
-              // 이미 포함된 내용인지 확인
-              const isDuplicate = sections.some(s => s.includes(infoText.substring(0, 50)));
-              
-              if (!isDuplicate) {
-                if (!infoSections[infoName]) {
-                  infoSections[infoName] = [];
-                }
-                infoSections[infoName].push(infoText);
+            if (infoName && infoText && infoText.length > 10) {
+              if (!infoSections[infoName]) {
+                infoSections[infoName] = [];
               }
+              infoSections[infoName].push(infoText);
             }
           });
           
-          // 섹션별로 description에 추가
           Object.keys(infoSections).forEach(sectionName => {
-            const sectionContent = infoSections[sectionName].join('\n');
-            sections.push(`📌 ${sectionName}\n${formatParagraphs(sectionContent)}`);
+            const content = infoSections[sectionName].join('\n');
+            addSection(`📌 ${sectionName}`, content);
           });
-          
-          if (Object.keys(infoSections).length > 0) {
-            console.log(`[Transform] ✓ Added ${Object.keys(infoSections).length} unique sections from detailInfo2`);
-          }
         }
         
-        // 모든 섹션을 결합 (2줄 개행으로 구분)
-        fullDescription = sections.filter(s => s).join('\n\n');
+        // 최종 설명 결합
+        let fullDescription = sections.join('\n\n');
         
-        // fallback: 제목만 있으면 제목 사용
         if (!fullDescription.trim()) {
           fullDescription = rawData.title;
-          console.log(`[Transform] ⚠ No detailed description available, using title only`);
-        } else {
-          console.log(`[Transform] ✓ Built description with ${fullDescription.length} characters`);
         }
         
-        // 스마트 요약 생성 (NEW)
-        const smartSummary = createSmartSummary(detailData.overview || rawData.overview || fullDescription, 300);
+        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars, ${sections.length} sections`);
         
-        // 웹사이트 결정 (eventhomepage 우선, 없으면 homepage 사용)
+        // ===== 요약 생성 =====
+        const summary = createSummary(overview || fullDescription, 350);
+        console.log(`[Transform] ✓ Summary: ${summary.length} chars`);
+        
+        // ===== 기타 정보 =====
+        const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
+        const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
         const websiteUrl = cleanHomepage(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
         
-        // 주최자 정보 구성
         let organizerInfo = '';
         if (introData.sponsor1 || rawData.sponsor1) {
           organizerInfo = introData.sponsor1 || rawData.sponsor1;
@@ -583,14 +531,13 @@ Deno.serve(async (req) => {
           }
         }
         
-        // 연락처 구성
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
-        // Festival 엔티티 생성
+        // ===== Festival 엔티티 생성 =====
         const festival = {
           name: detailData.title || rawData.title,
           description: fullDescription,
-          summary: smartSummary,
+          summary: summary,
           country: '대한민국',
           city: extractCity(detailData.addr1 || rawData.addr1),
           category: mapCategory(rawData.cat3),
@@ -602,9 +549,9 @@ Deno.serve(async (req) => {
           video_url: '',
           website: websiteUrl,
           price: 0,
-          opening_hours: cleanHtml(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
+          opening_hours: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
           access_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
-          parking_info: cleanHtml(introData.parkingfee || introData.parkingfestival || ''),
+          parking_info: formatText(introData.parkingfee || introData.parkingfestival || ''),
           organizer: organizerInfo,
           contact: {
             phone: phoneNumber,
@@ -621,18 +568,16 @@ Deno.serve(async (req) => {
           image_gallery_urls: imageGallery
         };
         
-        // Festival 생성
         const createdFestival = await base44.asServiceRole.entities.Festival.create(festival);
         festivals.push(createdFestival);
         
-        // TourApiRawData 상태 업데이트
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
           processing_status: 'processed',
           festival_id: createdFestival.id,
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description: ${fullDescription.length} chars, images: ${imageGallery.length})`);
+        console.log(`[Transform] ✓ SUCCESS: ${festival.name}`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
@@ -646,17 +591,14 @@ Deno.serve(async (req) => {
           console.error(`[Transform] Failed to update error status:`, updateError);
         }
         
-        errors.push({ 
-          id: rawDataId, 
-          error: error.message 
-        });
+        errors.push({ id: rawDataId, error: error.message });
       }
     }
     
     console.log(`[Transform] ========== SUMMARY ==========`);
-    console.log(`[Transform] Processed: ${rawDataIds.length} raw data records`);
-    console.log(`[Transform] Successfully created: ${festivals.length} festivals`);
-    console.log(`[Transform] Failed: ${errors.length} records`);
+    console.log(`[Transform] Processed: ${rawDataIds.length}`);
+    console.log(`[Transform] Success: ${festivals.length}`);
+    console.log(`[Transform] Failed: ${errors.length}`);
     
     return Response.json({
       success: true,
@@ -671,9 +613,7 @@ Deno.serve(async (req) => {
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류',
-      message: '데이터 변환 중 오류가 발생했습니다.',
-      details: error.toString(),
-      stack: error.stack
+      message: '데이터 변환 중 오류가 발생했습니다.'
     }, { status: 500 });
   }
 });
