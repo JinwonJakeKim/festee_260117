@@ -105,74 +105,13 @@ Deno.serve(async (req) => {
         
         let formattedStartDate = formatDate(rawData.eventstartdate);
         let formattedEndDate = formatDate(rawData.eventenddate);
-        let detailData = {};
         let introData = {};
         
-        // detailCommon2 호출 시도 - defaultYN 파라미터도 제거
+        // detailCommon2는 YN 파라미터를 모두 거부하므로 생략
+        // detailIntro2만 호출하여 가능한 정보를 가져옴
+        
+        // detailIntro2 호출
         if (apiKey && rawData.contentid) {
-          try {
-            const detailParams = new URLSearchParams({
-              serviceKey: apiKey,
-              contentId: rawData.contentid,
-              MobileOS: "ETC",
-              MobileApp: "Festee",
-              _type: "json",
-              overviewYN: "Y",
-            });
-            
-            const detailUrl = `${baseUrl}/detailCommon2?${detailParams.toString()}`;
-            console.log(`[Transform] Calling detailCommon2 for contentId: ${rawData.contentid}`);
-            
-            const detailResponse = await fetch(detailUrl);
-            const detailText = await detailResponse.text();
-            
-            console.log(`[Transform] detailCommon2 response status: ${detailResponse.status}`);
-            console.log(`[Transform] detailCommon2 response (first 500 chars): ${detailText.substring(0, 500)}`);
-            
-            if (detailResponse.ok) {
-              try {
-                const detailJson = JSON.parse(detailText);
-                const resultCode = detailJson.response?.header?.resultCode;
-                const resultMsg = detailJson.response?.header?.resultMsg;
-                
-                console.log(`[Transform] detailCommon2 resultCode: ${resultCode}, resultMsg: ${resultMsg}`);
-                
-                if (resultCode === "0000" || resultCode === "00") {
-                  const items = detailJson.response?.body?.items;
-                  console.log(`[Transform] detailCommon2 items structure:`, JSON.stringify(items).substring(0, 200));
-                  
-                  if (items && items.item) {
-                    detailData = Array.isArray(items.item) ? items.item[0] : items.item;
-                    
-                    console.log(`[Transform] ✓ detailCommon2 success - overview length: ${(detailData.overview || '').length}`);
-                    
-                    // TourApiRawData에 모든 detailCommon2 정보 저장
-                    await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-                      overview: cleanHtml(detailData.overview || ''),
-                      homepage: cleanHomepage(detailData.homepage || ''),
-                      telname: detailData.telname || '',
-                      zipcode: detailData.zipcode || '',
-                      firstimage2: detailData.firstimage2 || '',
-                      raw_detail_json: JSON.stringify(detailData)
-                    });
-                  } else {
-                    console.log(`[Transform] ⚠ detailCommon2 returned no items`);
-                  }
-                } else {
-                  console.log(`[Transform] ✗ detailCommon2 failed with code: ${resultCode}, message: ${resultMsg}`);
-                }
-              } catch (parseError) {
-                console.error(`[Transform] detailCommon2 JSON parse error:`, parseError.message);
-              }
-            }
-          } catch (e) {
-            console.error(`[Transform] detailCommon2 error: ${e.message}`);
-          }
-          
-          // 딜레이
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // detailIntro2 호출 시도
           try {
             const introParams = new URLSearchParams({
               serviceKey: apiKey,
@@ -267,47 +206,105 @@ Deno.serve(async (req) => {
           continue;
         }
         
-        const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
-        const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
+        const longitude = rawData.mapx ? parseFloat(rawData.mapx) : null;
+        const latitude = rawData.mapy ? parseFloat(rawData.mapy) : null;
         
-        // 상세 설명 구성
+        // 상세 설명 구성 - detailIntro2 정보 위주로
         let fullDescription = '';
         
-        // overview가 있으면 메인 설명으로 사용
-        if (detailData.overview || rawData.overview) {
-          fullDescription += cleanHtml(detailData.overview || rawData.overview) + '\n\n';
+        // 행사 장소 정보
+        if (introData.eventplace || rawData.addr1) {
+          fullDescription += '📍 행사 장소\n';
+          if (introData.eventplace) {
+            fullDescription += cleanHtml(introData.eventplace) + '\n';
+          }
+          if (rawData.addr1 && rawData.addr1 !== introData.eventplace) {
+            fullDescription += `주소: ${rawData.addr1} ${rawData.addr2 || ''}`.trim() + '\n';
+          }
+          fullDescription += '\n';
         }
         
-        // 행사 프로그램 추가
+        // 운영 시간
+        if (introData.playtime) {
+          fullDescription += '🕐 운영 시간\n' + cleanHtml(introData.playtime) + '\n\n';
+        }
+        
+        // 행사 프로그램
         if (introData.program) {
           fullDescription += '📋 행사 프로그램\n' + cleanHtml(introData.program) + '\n\n';
         }
         
-        // 부대행사 추가
+        // 부대행사
         if (introData.subevent) {
           fullDescription += '🎪 부대행사\n' + cleanHtml(introData.subevent) + '\n\n';
         }
         
-        // 행사장 위치 안내 추가
+        // 행사장 위치 안내
         if (introData.placeinfo) {
           fullDescription += '📍 행사장 안내\n' + cleanHtml(introData.placeinfo) + '\n\n';
         }
         
-        // 할인 정보 추가
+        // 이용 요금
+        if (introData.usetimefestival) {
+          fullDescription += '💰 이용 요금\n' + cleanHtml(introData.usetimefestival) + '\n\n';
+        }
+        
+        // 할인 정보
         if (introData.discountinfofestival) {
-          fullDescription += '💰 할인 정보\n' + cleanHtml(introData.discountinfofestival) + '\n\n';
+          fullDescription += '💳 할인 정보\n' + cleanHtml(introData.discountinfofestival) + '\n\n';
         }
         
-        // fallback: 제목만 있으면 제목 사용
+        // 예약 안내
+        if (introData.bookingplace) {
+          fullDescription += '📞 예약 안내\n' + cleanHtml(introData.bookingplace) + '\n\n';
+        }
+        
+        // 주최/주관 정보
+        if (introData.sponsor1) {
+          fullDescription += '🏢 주최/주관\n';
+          fullDescription += `주최: ${introData.sponsor1}`;
+          if (introData.sponsor1tel) {
+            fullDescription += ` (${introData.sponsor1tel})`;
+          }
+          fullDescription += '\n';
+          if (introData.sponsor2) {
+            fullDescription += `주관: ${introData.sponsor2}`;
+            if (introData.sponsor2tel) {
+              fullDescription += ` (${introData.sponsor2tel})`;
+            }
+            fullDescription += '\n';
+          }
+          fullDescription += '\n';
+        }
+        
+        // fallback: 제목과 기본 정보만 있으면 간단한 설명 생성
         if (!fullDescription.trim()) {
-          fullDescription = rawData.title;
-          console.log(`[Transform] ⚠ No detailed description available, using title only`);
-        } else {
-          console.log(`[Transform] ✓ Built description with ${fullDescription.length} characters`);
+          fullDescription = `${rawData.title}\n\n`;
+          if (rawData.addr1) {
+            fullDescription += `📍 ${rawData.addr1}\n`;
+          }
+          if (introData.playtime) {
+            fullDescription += `🕐 ${cleanHtml(introData.playtime)}\n`;
+          }
+          if (introData.usetimefestival) {
+            fullDescription += `💰 ${cleanHtml(introData.usetimefestival)}\n`;
+          }
+          console.log(`[Transform] ⚠ Limited info available, created basic description`);
         }
         
-        // 웹사이트 결정 (eventhomepage 우선, 없으면 homepage 사용)
-        const websiteUrl = cleanHomepage(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
+        console.log(`[Transform] ✓ Built description: ${fullDescription.length} characters`);
+        
+        // 요약 생성
+        let summary = rawData.title;
+        if (introData.eventplace) {
+          summary += ` - ${cleanHtml(introData.eventplace)}에서 개최`;
+        }
+        if (introData.usetimefestival && introData.usetimefestival.includes('무료')) {
+          summary += ' (무료 입장)';
+        }
+        
+        // 웹사이트 결정
+        const websiteUrl = cleanHomepage(introData.eventhomepage || rawData.homepage || '');
         
         // 주최자 정보 구성
         let organizerInfo = '';
@@ -319,26 +316,26 @@ Deno.serve(async (req) => {
         }
         
         // 연락처 구성
-        const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
+        const phoneNumber = rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
         // Festival 엔티티 생성
         const festival = {
-          name: detailData.title || rawData.title,
+          name: rawData.title,
           description: fullDescription.trim(),
-          summary: (detailData.overview || rawData.overview) ? cleanHtml(detailData.overview || rawData.overview).substring(0, 200) : rawData.title,
+          summary: summary.substring(0, 200),
           country: '대한민국',
-          city: extractCity(detailData.addr1 || rawData.addr1),
+          city: extractCity(rawData.addr1),
           category: mapCategory(rawData.cat3),
           start_date: formattedStartDate,
           end_date: formattedEndDate,
           latitude: latitude,
           longitude: longitude,
-          thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+          thumbnail_url: rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           video_url: '',
           website: websiteUrl,
           price: 0,
           opening_hours: cleanHtml(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
-          access_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
+          access_info: rawData.addr1 ? `${rawData.addr1} ${rawData.addr2 || ''}`.trim() : '',
           parking_info: cleanHtml(introData.parkingfee || introData.parkingfestival || ''),
           organizer: organizerInfo,
           contact: {
@@ -347,7 +344,7 @@ Deno.serve(async (req) => {
           },
           highlights: [],
           lineup: [],
-          tags: ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)],
+          tags: ['국내축제', '한국관광공사', extractCity(rawData.addr1)],
           star_rating: 0,
           likes_count: 0,
           catches_count: 0,
