@@ -94,6 +94,11 @@ Deno.serve(async (req) => {
           return homepage.replace(/<[^>]*>/g, '').trim();
         };
         
+        const cleanHtml = (text) => {
+          if (!text) return '';
+          return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
+        };
+        
         let formattedStartDate = formatDate(rawData.eventstartdate);
         let formattedEndDate = formatDate(rawData.eventenddate);
         let detailData = {};
@@ -117,6 +122,7 @@ Deno.serve(async (req) => {
             });
             
             const detailUrl = `${baseUrl}/detailCommon2?${detailParams.toString()}`;
+            console.log(`[Transform] Calling detailCommon2...`);
             const detailResponse = await fetch(detailUrl);
             
             if (detailResponse.ok) {
@@ -126,14 +132,19 @@ Deno.serve(async (req) => {
               if (detailJson.response?.header?.resultCode === "0000" || detailJson.response?.header?.resultCode === "00") {
                 detailData = detailJson.response?.body?.items?.item?.[0] || detailJson.response?.body?.items?.item || {};
                 
-                // TourApiRawData에 저장
+                // TourApiRawData에 모든 detailCommon2 정보 저장
                 await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-                  overview: detailData.overview || '',
-                  homepage: detailData.homepage || '',
+                  overview: cleanHtml(detailData.overview || ''),
+                  homepage: cleanHomepage(detailData.homepage || ''),
+                  telname: detailData.telname || '',
+                  zipcode: detailData.zipcode || '',
+                  firstimage2: detailData.firstimage2 || '',
                   raw_detail_json: JSON.stringify(detailData)
                 });
                 
-                console.log(`[Transform] ✓ detailCommon2 success`);
+                console.log(`[Transform] ✓ detailCommon2 success - overview length: ${(detailData.overview || '').length}`);
+              } else {
+                console.log(`[Transform] detailCommon2 failed: ${detailJson.response?.header?.resultMsg}`);
               }
             }
           } catch (e) {
@@ -155,6 +166,7 @@ Deno.serve(async (req) => {
             });
             
             const introUrl = `${baseUrl}/detailIntro2?${introParams.toString()}`;
+            console.log(`[Transform] Calling detailIntro2...`);
             const introResponse = await fetch(introUrl);
             
             if (introResponse.ok) {
@@ -172,16 +184,30 @@ Deno.serve(async (req) => {
                   formattedEndDate = formatDate(introData.eventenddate) || formattedEndDate;
                 }
                 
-                // TourApiRawData에 저장
+                // TourApiRawData에 모든 detailIntro2 정보 저장
                 await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-                  playtime: introData.playtime || '',
-                  eventplace: introData.eventplace || '',
+                  playtime: cleanHtml(introData.playtime || ''),
+                  eventplace: cleanHtml(introData.eventplace || ''),
+                  eventhomepage: cleanHomepage(introData.eventhomepage || ''),
                   sponsor1: introData.sponsor1 || '',
                   sponsor1tel: introData.sponsor1tel || '',
+                  sponsor2: introData.sponsor2 || '',
+                  sponsor2tel: introData.sponsor2tel || '',
+                  agelimit: introData.agelimit || '',
+                  bookingplace: cleanHtml(introData.bookingplace || ''),
+                  discountinfofestival: cleanHtml(introData.discountinfofestival || ''),
+                  festivalgrade: introData.festivalgrade || '',
+                  placeinfo: cleanHtml(introData.placeinfo || ''),
+                  program: cleanHtml(introData.program || ''),
+                  spendtimefestival: introData.spendtimefestival || '',
+                  subevent: cleanHtml(introData.subevent || ''),
+                  usetimefestival: cleanHtml(introData.usetimefestival || ''),
                   raw_intro_json: JSON.stringify(introData)
                 });
                 
-                console.log(`[Transform] ✓ detailIntro2 success`);
+                console.log(`[Transform] ✓ detailIntro2 success - program length: ${(introData.program || '').length}`);
+              } else {
+                console.log(`[Transform] detailIntro2 failed: ${introJson.response?.header?.resultMsg}`);
               }
             }
           } catch (e) {
@@ -207,10 +233,59 @@ Deno.serve(async (req) => {
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
         const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
         
+        // 상세 설명 구성
+        let fullDescription = '';
+        
+        // overview가 있으면 메인 설명으로 사용
+        if (detailData.overview || rawData.overview) {
+          fullDescription += cleanHtml(detailData.overview || rawData.overview) + '\n\n';
+        }
+        
+        // 행사 프로그램 추가
+        if (introData.program) {
+          fullDescription += '📋 행사 프로그램\n' + cleanHtml(introData.program) + '\n\n';
+        }
+        
+        // 부대행사 추가
+        if (introData.subevent) {
+          fullDescription += '🎪 부대행사\n' + cleanHtml(introData.subevent) + '\n\n';
+        }
+        
+        // 행사장 위치 안내 추가
+        if (introData.placeinfo) {
+          fullDescription += '📍 행사장 안내\n' + cleanHtml(introData.placeinfo) + '\n\n';
+        }
+        
+        // 할인 정보 추가
+        if (introData.discountinfofestival) {
+          fullDescription += '💰 할인 정보\n' + cleanHtml(introData.discountinfofestival) + '\n\n';
+        }
+        
+        // fallback: 제목만 있으면 제목 사용
+        if (!fullDescription.trim()) {
+          fullDescription = rawData.title;
+        }
+        
+        // 웹사이트 결정 (eventhomepage 우선, 없으면 homepage 사용)
+        const websiteUrl = cleanHomepage(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
+        
+        // 주최자 정보 구성
+        let organizerInfo = '';
+        if (introData.sponsor1 || rawData.sponsor1) {
+          organizerInfo = introData.sponsor1 || rawData.sponsor1;
+          if (introData.sponsor2) {
+            organizerInfo += ` / ${introData.sponsor2}`;
+          }
+        }
+        
+        // 연락처 구성
+        const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
+        
         // Festival 엔티티 생성
         const festival = {
           name: detailData.title || rawData.title,
-          description: detailData.overview || rawData.overview || rawData.title,
+          description: fullDescription.trim(),
+          summary: (detailData.overview || rawData.overview) ? cleanHtml(detailData.overview || rawData.overview).substring(0, 200) : rawData.title,
           country: '대한민국',
           city: extractCity(detailData.addr1 || rawData.addr1),
           category: mapCategory(rawData.cat3),
@@ -220,14 +295,14 @@ Deno.serve(async (req) => {
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           video_url: '',
-          website: cleanHomepage(detailData.homepage || rawData.homepage || ''),
+          website: websiteUrl,
           price: 0,
-          opening_hours: introData.playtime || rawData.playtime || introData.usetimefestival || '',
+          opening_hours: cleanHtml(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
           access_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
-          parking_info: introData.parkingfee || introData.parkingfestival || '',
-          organizer: introData.sponsor1 || rawData.sponsor1 || introData.sponsor2 || '',
+          parking_info: cleanHtml(introData.parkingfee || introData.parkingfestival || ''),
+          organizer: organizerInfo,
           contact: {
-            phone: detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '',
+            phone: phoneNumber,
             email: ''
           },
           highlights: [],
@@ -235,7 +310,9 @@ Deno.serve(async (req) => {
           tags: ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)],
           star_rating: 0,
           likes_count: 0,
-          catches_count: 0
+          catches_count: 0,
+          restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
+          recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : []
         };
         
         // Festival 생성
@@ -249,7 +326,7 @@ Deno.serve(async (req) => {
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created`);
+        console.log(`[Transform] ✓ SUCCESS: ${festival.name} created (description length: ${fullDescription.length})`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
