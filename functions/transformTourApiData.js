@@ -43,38 +43,49 @@ Deno.serve(async (req) => {
       return homepage.replace(/<[^>]*>/g, '').trim();
     };
     
-    // 중복 문장 제거 (개선됨)
+    // 중복 문장 제거 (더 정교하게)
     const removeDuplicates = (text) => {
       if (!text) return '';
       
-      // 먼저 문장들을 분리 (마침표, 느낌표, 물음표 기준)
+      // 문장 분리 (마침표, 느낌표, 물음표 + 공백/개행 기준)
       const sentences = text.split(/(?<=[.!?])\s+/);
       const seen = new Set();
       const result = [];
       
       for (const sentence of sentences) {
         const trimmed = sentence.trim();
-        if (!trimmed) continue;
-        
-        // 문장을 정규화 (공백, 구두점 제거 후 소문자화)
-        const normalized = trimmed
-          .replace(/[\s,.!?;:()[\]{}'"]/g, '')
-          .toLowerCase();
-        
-        // 최소 길이 체크 (너무 짧은 문장은 중복 체크 안함)
-        if (normalized.length < 10) {
+        if (!trimmed || trimmed.length < 5) {
           result.push(trimmed);
           continue;
         }
         
-        // 중복 체크
+        // 정규화 (공백, 구두점 제거 후 소문자화)
+        const normalized = trimmed
+          .replace(/[\s,.!?;:()[\]{}'"]/g, '')
+          .toLowerCase();
+        
+        // 너무 짧은 문장은 중복 체크하지 않음
+        if (normalized.length < 15) {
+          result.push(trimmed);
+          continue;
+        }
+        
+        // 중복 체크 (90% 이상 같아야 중복으로 간주 - 덜 공격적)
         let isDuplicate = false;
         for (const existing of seen) {
-          // 유사도 체크 (80% 이상 같으면 중복으로 간주)
-          if (normalized === existing || 
-              normalized.includes(existing) || 
-              existing.includes(normalized)) {
+          const similarity = normalized.length / existing.length;
+          
+          // 정확히 같거나, 한쪽이 다른 쪽을 완전히 포함하는 경우만 중복
+          if (normalized === existing) {
             isDuplicate = true;
+            console.log(`[Transform] 🗑️ Exact duplicate: ${trimmed.substring(0, 40)}...`);
+            break;
+          }
+          
+          // 한 문장이 다른 문장을 95% 이상 포함하는 경우
+          if (similarity > 0.95 && (normalized.includes(existing) || existing.includes(normalized))) {
+            isDuplicate = true;
+            console.log(`[Transform] 🗑️ Similar duplicate: ${trimmed.substring(0, 40)}...`);
             break;
           }
         }
@@ -82,15 +93,13 @@ Deno.serve(async (req) => {
         if (!isDuplicate) {
           seen.add(normalized);
           result.push(trimmed);
-        } else {
-          console.log(`[Transform] 🗑️ Removed duplicate: ${trimmed.substring(0, 50)}...`);
         }
       }
       
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 (개선됨)
+    // 텍스트 포맷팅 (개선 - 날짜 보호)
     const formatText = (text) => {
       if (!text) return '';
       
@@ -103,25 +112,28 @@ Deno.serve(async (req) => {
       // 3. 여러 개행을 2개로 통일
       text = text.replace(/\n{3,}/g, '\n\n');
       
-      // 4. 숫자 목록 앞에 개행 추가 (1. 2. 3. 등)
-      text = text.replace(/([^\n])(\d+\.\s)/g, '$1\n\n$2');
+      // 4. 숫자 목록 앞에 개행 추가 (단, 날짜가 아닌 경우만)
+      // "1. " 형태인데 앞에 숫자+월/일이 없는 경우만 처리
+      text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
       
-      // 5. 불렛 포인트 앞에 개행 추가 (○, -, *, • 등)
+      // 5. 불렛 포인트 앞에 개행 추가
       text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
       
       // 6. 괄호로 묶인 제목 앞뒤로 개행
       text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
       
-      // 7. 주요 키워드 뒤에 개행
+      // 7. 주요 키워드 뒤에 개행 (정확한 패턴만)
       const keywords = [
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
         '주요내용:', '주요 내용:', '공연시간:', '운영시간:',
-        '참가대상:', '참여대상:', '행사장소:', '행사 장소:'
+        '참가대상:', '참여대상:', '행사장소:', '행사 장소:',
+        '📋', '🎪', '📍', '💰', '📌'
       ];
       
       keywords.forEach(keyword => {
-        const regex = new RegExp(`([^\n])(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`([^\n])(${escapedKeyword})`, 'gi');
         text = text.replace(regex, '$1\n\n$2\n');
       });
       
@@ -135,33 +147,60 @@ Deno.serve(async (req) => {
       return text.trim();
     };
     
-    // 스마트 요약 생성 (개선됨)
-    const createSummary = (text, maxLength = 350) => {
+    // 스마트 요약 생성 (문장 단위로 정확하게)
+    const createSummary = (text, maxLength = 300) => {
       if (!text) return '';
       
-      // HTML 제거 및 중복 제거
+      // HTML 제거
       text = cleanHtml(text);
-      text = removeDuplicates(text);
       
       // 이미 짧으면 그대로
       if (text.length <= maxLength) {
         return text.trim();
       }
       
-      // 문장 단위로 분리
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+      // 문장 단위로 분리 (마침표, 느낌표, 물음표 기준)
+      const sentences = [];
+      let currentSentence = '';
       
+      for (let i = 0; i < text.length; i++) {
+        currentSentence += text[i];
+        
+        // 문장 종결 부호를 만나면
+        if (['.', '!', '?'].includes(text[i])) {
+          // 다음 문자가 공백이거나 문자열 끝이면 문장 완성
+          if (i === text.length - 1 || text[i + 1] === ' ' || text[i + 1] === '\n') {
+            sentences.push(currentSentence.trim());
+            currentSentence = '';
+          }
+        }
+      }
+      
+      // 남은 문장 추가
+      if (currentSentence.trim()) {
+        sentences.push(currentSentence.trim());
+      }
+      
+      console.log(`[Transform] Found ${sentences.length} sentences`);
+      
+      // 문장을 하나씩 추가하면서 길이 체크
       let summary = '';
+      let addedCount = 0;
+      
       for (const sentence of sentences) {
-        const trimmed = sentence.trim();
-        if ((summary + ' ' + trimmed).length <= maxLength) {
-          summary += (summary ? ' ' : '') + trimmed;
+        const testLength = summary ? (summary + ' ' + sentence).length : sentence.length;
+        
+        if (testLength <= maxLength) {
+          summary += (summary ? ' ' : '') + sentence;
+          addedCount++;
         } else {
           break;
         }
       }
       
-      // 최소 하나의 문장은 포함
+      console.log(`[Transform] Summary: ${addedCount}/${sentences.length} sentences, ${summary.length} chars`);
+      
+      // 최소한 첫 문장은 포함 (잘라서라도)
       if (!summary && sentences.length > 0) {
         summary = sentences[0].substring(0, maxLength - 3) + '...';
       }
@@ -419,29 +458,53 @@ Deno.serve(async (req) => {
           continue;
         }
         
-        // ===== 설명 구성 (중복 제거 강화) =====
+        // ===== 설명 구성 (섹션별 중복 방지) =====
+        const overview = detailData.overview || rawData.overview || '';
+        
+        // Overview를 원본 그대로 사용 (중복 제거만)
+        let cleanedOverview = cleanHtml(overview);
+        cleanedOverview = removeDuplicates(cleanedOverview);
+        
+        console.log(`[Transform] Overview length: ${cleanedOverview.length} chars`);
+        
         const sections = [];
         const usedContent = new Set();
         
-        // 콘텐츠 추가 헬퍼 (중복 체크)
+        // Overview 정규화 버전 저장
+        if (cleanedOverview) {
+          const normalizedOverview = cleanedOverview
+            .replace(/[\s,.!?;:()[\]{}'"]/g, '')
+            .toLowerCase()
+            .substring(0, 150);
+          usedContent.add(normalizedOverview);
+        }
+        
+        // 콘텐츠 추가 헬퍼
         const addSection = (title, content) => {
           if (!content) return false;
           
-          const formatted = formatText(content);
-          if (!formatted || formatted.length < 20) return false;
+          const cleaned = cleanHtml(content);
+          if (!cleaned || cleaned.length < 20) return false;
           
-          // 정규화된 버전으로 중복 체크
-          const normalized = formatted
+          // 정규화
+          const normalized = cleaned
             .replace(/[\s,.!?;:()[\]{}'"]/g, '')
             .toLowerCase()
-            .substring(0, 100); // 첫 100자로 비교
+            .substring(0, 150);
           
-          // 이미 사용된 내용인지 확인
+          // Overview와 너무 비슷하면 스킵
           for (const used of usedContent) {
-            if (normalized === used || 
-                normalized.includes(used) || 
-                used.includes(normalized)) {
-              console.log(`[Transform] 🗑️ Skipped duplicate section: ${title}`);
+            if (normalized === used) {
+              console.log(`[Transform] 🗑️ Exact duplicate section: ${title}`);
+              return false;
+            }
+            
+            // 90% 이상 겹치면 스킵
+            const longer = normalized.length > used.length ? normalized : used;
+            const shorter = normalized.length > used.length ? used : normalized;
+            
+            if (longer.includes(shorter) && shorter.length / longer.length > 0.9) {
+              console.log(`[Transform] 🗑️ Similar section skipped: ${title}`);
               return false;
             }
           }
@@ -449,41 +512,35 @@ Deno.serve(async (req) => {
           usedContent.add(normalized);
           
           if (title) {
-            sections.push(`${title}\n${formatted}`);
+            sections.push(`${title}\n${cleaned}`);
           } else {
-            sections.push(formatted);
+            sections.push(cleaned);
           }
           
           return true;
         };
         
-        // 1. Overview (메인 설명)
-        const overview = detailData.overview || rawData.overview;
-        if (overview) {
-          addSection('', overview);
-        }
-        
-        // 2. 프로그램
+        // 프로그램 정보 추가
         if (introData.program) {
           addSection('📋 행사 프로그램', introData.program);
         }
         
-        // 3. 부대행사
+        // 부대행사
         if (introData.subevent) {
           addSection('🎪 부대행사', introData.subevent);
         }
         
-        // 4. 행사장 안내
+        // 행사장 안내
         if (introData.placeinfo) {
           addSection('📍 행사장 안내', introData.placeinfo);
         }
         
-        // 5. 할인 정보
+        // 할인 정보
         if (introData.discountinfofestival) {
           addSection('💰 할인 정보', introData.discountinfofestival);
         }
         
-        // 6. detailInfo2 정보
+        // detailInfo2 정보
         if (infoData && infoData.length > 0) {
           const infoSections = {};
           
@@ -505,17 +562,24 @@ Deno.serve(async (req) => {
           });
         }
         
-        // 최종 설명 결합
-        let fullDescription = sections.join('\n\n');
+        // 최종 설명: Overview + 추가 섹션들
+        let fullDescription = cleanedOverview;
+        
+        if (sections.length > 0) {
+          fullDescription += '\n\n' + sections.join('\n\n');
+        }
+        
+        // 포맷팅 적용 (날짜 보호하면서)
+        fullDescription = formatText(fullDescription);
         
         if (!fullDescription.trim()) {
           fullDescription = rawData.title;
         }
         
-        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars, ${sections.length} sections`);
+        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars, ${sections.length + 1} sections`);
         
         // ===== 요약 생성 =====
-        const summary = createSummary(overview || fullDescription, 350);
+        const summary = createSummary(cleanedOverview || fullDescription, 300);
         console.log(`[Transform] ✓ Summary: ${summary.length} chars`);
         
         // ===== 기타 정보 =====
@@ -578,6 +642,8 @@ Deno.serve(async (req) => {
         });
         
         console.log(`[Transform] ✓ SUCCESS: ${festival.name}`);
+        console.log(`[Transform] Summary preview: ${summary.substring(0, 100)}...`);
+        console.log(`[Transform] Description preview: ${fullDescription.substring(0, 100)}...`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
