@@ -43,11 +43,10 @@ Deno.serve(async (req) => {
       return homepage.replace(/<[^>]*>/g, '').trim();
     };
     
-    // 중복 문장 제거 (더 정교하게)
+    // 중복 문장 제거
     const removeDuplicates = (text) => {
       if (!text) return '';
       
-      // 문장 분리 (마침표, 느낌표, 물음표 + 공백/개행 기준)
       const sentences = text.split(/(?<=[.!?])\s+/);
       const seen = new Set();
       const result = [];
@@ -59,30 +58,25 @@ Deno.serve(async (req) => {
           continue;
         }
         
-        // 정규화 (공백, 구두점 제거 후 소문자화)
         const normalized = trimmed
           .replace(/[\s,.!?;:()[\]{}'"]/g, '')
           .toLowerCase();
         
-        // 너무 짧은 문장은 중복 체크하지 않음
         if (normalized.length < 15) {
           result.push(trimmed);
           continue;
         }
         
-        // 중복 체크 (90% 이상 같아야 중복으로 간주 - 덜 공격적)
         let isDuplicate = false;
         for (const existing of seen) {
           const similarity = normalized.length / existing.length;
           
-          // 정확히 같거나, 한쪽이 다른 쪽을 완전히 포함하는 경우만 중복
           if (normalized === existing) {
             isDuplicate = true;
             console.log(`[Transform] 🗑️ Exact duplicate: ${trimmed.substring(0, 40)}...`);
             break;
           }
           
-          // 한 문장이 다른 문장을 95% 이상 포함하는 경우
           if (similarity > 0.95 && (normalized.includes(existing) || existing.includes(normalized))) {
             isDuplicate = true;
             console.log(`[Transform] 🗑️ Similar duplicate: ${trimmed.substring(0, 40)}...`);
@@ -99,30 +93,17 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 (개선 - 날짜 보호)
+    // 텍스트 포맷팅
     const formatText = (text) => {
       if (!text) return '';
       
-      // 1. HTML 태그 제거
       text = cleanHtml(text);
-      
-      // 2. 중복 문장 제거
       text = removeDuplicates(text);
-      
-      // 3. 여러 개행을 2개로 통일
       text = text.replace(/\n{3,}/g, '\n\n');
-      
-      // 4. 숫자 목록 앞에 개행 추가 (단, 날짜가 아닌 경우만)
-      // "1. " 형태인데 앞에 숫자+월/일이 없는 경우만 처리
       text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
-      
-      // 5. 불렛 포인트 앞에 개행 추가
       text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
-      
-      // 6. 괄호로 묶인 제목 앞뒤로 개행
       text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
       
-      // 7. 주요 키워드 뒤에 개행 (정확한 패턴만)
       const keywords = [
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
@@ -137,75 +118,74 @@ Deno.serve(async (req) => {
         text = text.replace(regex, '$1\n\n$2\n');
       });
       
-      // 8. 여러 공백을 하나로
       text = text.replace(/ {2,}/g, ' ');
-      
-      // 9. 줄 끝 공백 제거
       text = text.split('\n').map(line => line.trim()).join('\n');
       
-      // 10. 시작과 끝 공백 제거
       return text.trim();
     };
     
-    // 스마트 요약 생성 (문장 단위로 정확하게)
-    const createSummary = (text, maxLength = 300) => {
-      if (!text) return '';
-      
-      // HTML 제거
-      text = cleanHtml(text);
-      
-      // 이미 짧으면 그대로
-      if (text.length <= maxLength) {
-        return text.trim();
-      }
-      
-      // 문장 단위로 분리 (마침표, 느낌표, 물음표 기준)
-      const sentences = [];
-      let currentSentence = '';
-      
-      for (let i = 0; i < text.length; i++) {
-        currentSentence += text[i];
+    // AI 기반 요약 및 하이라이트 생성
+    const generateSummaryAndHighlights = async (festivalName, overview, additionalInfo) => {
+      try {
+        console.log(`[Transform] 🤖 Generating AI summary and highlights...`);
         
-        // 문장 종결 부호를 만나면
-        if (['.', '!', '?'].includes(text[i])) {
-          // 다음 문자가 공백이거나 문자열 끝이면 문장 완성
-          if (i === text.length - 1 || text[i + 1] === ' ' || text[i + 1] === '\n') {
-            sentences.push(currentSentence.trim());
-            currentSentence = '';
+        // 컨텍스트 구성
+        let context = `축제명: ${festivalName}\n\n`;
+        context += `상세 설명:\n${overview}\n\n`;
+        
+        if (additionalInfo.program) {
+          context += `프로그램:\n${additionalInfo.program}\n\n`;
+        }
+        if (additionalInfo.placeinfo) {
+          context += `행사장 정보:\n${additionalInfo.placeinfo}\n\n`;
+        }
+        
+        const prompt = `다음은 한국 축제에 대한 정보입니다. 이 축제를 사용자에게 매력적으로 소개하기 위해:
+
+1. **요약**: 축제의 핵심을 1-2문장으로 간결하고 매력적으로 요약해주세요. (최대 120자)
+2. **하이라이트**: 이 축제의 주요 특징이나 볼거리를 3-4개의 짧은 포인트로 정리해주세요. 각 포인트는 한 문장으로 간결하게 작성해주세요.
+
+${context}
+
+응답 형식은 반드시 다음 JSON 스키마를 따라주세요.`;
+
+        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: prompt,
+          add_context_from_internet: false,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              summary: {
+                type: "string",
+                description: "1-2문장의 축제 요약 (최대 120자)"
+              },
+              highlights: {
+                type: "array",
+                items: { type: "string" },
+                description: "3-4개의 하이라이트 포인트"
+              }
+            },
+            required: ["summary", "highlights"]
           }
-        }
-      }
-      
-      // 남은 문장 추가
-      if (currentSentence.trim()) {
-        sentences.push(currentSentence.trim());
-      }
-      
-      console.log(`[Transform] Found ${sentences.length} sentences`);
-      
-      // 문장을 하나씩 추가하면서 길이 체크
-      let summary = '';
-      let addedCount = 0;
-      
-      for (const sentence of sentences) {
-        const testLength = summary ? (summary + ' ' + sentence).length : sentence.length;
+        });
         
-        if (testLength <= maxLength) {
-          summary += (summary ? ' ' : '') + sentence;
-          addedCount++;
-        } else {
-          break;
-        }
+        console.log(`[Transform] ✓ AI generated summary: ${result.summary?.substring(0, 60)}...`);
+        console.log(`[Transform] ✓ AI generated ${result.highlights?.length || 0} highlights`);
+        
+        return {
+          summary: result.summary || overview.substring(0, 120),
+          highlights: result.highlights || []
+        };
+        
+      } catch (error) {
+        console.error(`[Transform] AI generation error:`, error.message);
+        // AI 실패 시 폴백: 기존 방식
+        const fallbackSummary = overview.substring(0, 120) + (overview.length > 120 ? '...' : '');
+        return {
+          summary: fallbackSummary,
+          highlights: []
+        };
       }
-      
-      console.log(`[Transform] Summary: ${addedCount}/${sentences.length} sentences, ${summary.length} chars`);
-      
-      // 최소한 첫 문장은 포함 (잘라서라도)
-      if (!summary && sentences.length > 0) {
-        summary = sentences[0].substring(0, maxLength - 3) + '...';
-      }
-      
-      return summary.trim() || text.substring(0, maxLength - 3).trim() + '...';
     };
     
     // ========== 메인 처리 로직 ==========
@@ -458,15 +438,27 @@ Deno.serve(async (req) => {
           continue;
         }
         
-        // ===== 설명 구성 (섹션별 중복 방지) =====
+        // ===== Overview 처리 =====
         const overview = detailData.overview || rawData.overview || '';
-        
-        // Overview를 원본 그대로 사용 (중복 제거만)
         let cleanedOverview = cleanHtml(overview);
         cleanedOverview = removeDuplicates(cleanedOverview);
         
         console.log(`[Transform] Overview length: ${cleanedOverview.length} chars`);
         
+        // ===== AI 기반 요약 및 하이라이트 생성 =====
+        const aiResult = await generateSummaryAndHighlights(
+          rawData.title,
+          cleanedOverview,
+          {
+            program: introData.program,
+            placeinfo: introData.placeinfo
+          }
+        );
+        
+        const summary = aiResult.summary;
+        const highlights = aiResult.highlights;
+        
+        // ===== 설명 구성 (섹션별) =====
         const sections = [];
         const usedContent = new Set();
         
@@ -486,20 +478,17 @@ Deno.serve(async (req) => {
           const cleaned = cleanHtml(content);
           if (!cleaned || cleaned.length < 20) return false;
           
-          // 정규화
           const normalized = cleaned
             .replace(/[\s,.!?;:()[\]{}'"]/g, '')
             .toLowerCase()
             .substring(0, 150);
           
-          // Overview와 너무 비슷하면 스킵
           for (const used of usedContent) {
             if (normalized === used) {
               console.log(`[Transform] 🗑️ Exact duplicate section: ${title}`);
               return false;
             }
             
-            // 90% 이상 겹치면 스킵
             const longer = normalized.length > used.length ? normalized : used;
             const shorter = normalized.length > used.length ? used : normalized;
             
@@ -569,18 +558,17 @@ Deno.serve(async (req) => {
           fullDescription += '\n\n' + sections.join('\n\n');
         }
         
-        // 포맷팅 적용 (날짜 보호하면서)
+        // 포맷팅 적용
         fullDescription = formatText(fullDescription);
         
         if (!fullDescription.trim()) {
           fullDescription = rawData.title;
         }
         
-        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars, ${sections.length + 1} sections`);
-        
-        // ===== 요약 생성 =====
-        const summary = createSummary(cleanedOverview || fullDescription, 300);
-        console.log(`[Transform] ✓ Summary: ${summary.length} chars`);
+        console.log(`[Transform] ✓ Summary: ${summary.length} chars - "${summary}"`);
+        console.log(`[Transform] ✓ Highlights: ${highlights.length} items`);
+        highlights.forEach((h, idx) => console.log(`[Transform]   ${idx + 1}. ${h}`));
+        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars`);
         
         // ===== 기타 정보 =====
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
@@ -621,7 +609,7 @@ Deno.serve(async (req) => {
             phone: phoneNumber,
             email: ''
           },
-          highlights: [],
+          highlights: highlights,
           lineup: [],
           tags: ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)],
           star_rating: 0,
@@ -642,8 +630,6 @@ Deno.serve(async (req) => {
         });
         
         console.log(`[Transform] ✓ SUCCESS: ${festival.name}`);
-        console.log(`[Transform] Summary preview: ${summary.substring(0, 100)}...`);
-        console.log(`[Transform] Description preview: ${fullDescription.substring(0, 100)}...`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
