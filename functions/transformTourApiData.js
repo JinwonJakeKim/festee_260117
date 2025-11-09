@@ -93,17 +93,29 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅
+    // 텍스트 포맷팅 - 모바일 가독성 개선
     const formatText = (text) => {
       if (!text) return '';
       
+      // HTML 태그 제거
       text = cleanHtml(text);
+      
+      // 중복 제거
       text = removeDuplicates(text);
+      
+      // 1. 과도한 개행 정리
       text = text.replace(/\n{3,}/g, '\n\n');
+      
+      // 2. 숫자 리스트 앞에 개행 추가
       text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
+      
+      // 3. 불렛 포인트 앞에 개행 추가
       text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
+      
+      // 4. 섹션 제목 (대괄호, 특수문자 등) 앞뒤 개행
       text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
       
+      // 5. 주요 키워드 앞에 개행 추가
       const keywords = [
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
@@ -118,8 +130,21 @@ Deno.serve(async (req) => {
         text = text.replace(regex, '$1\n\n$2\n');
       });
       
+      // 6. 문장 끝 개행 추가 (모바일 가독성 핵심!)
+      // 마침표, 물음표, 느낌표 뒤에 공백이 있고 다음이 대문자/한글이면 개행
+      text = text.replace(/([.!?])\s+([가-힣A-Z])/g, '$1\n\n$2');
+      
+      // 7. "다."로 끝나는 문장 뒤에 개행 (한국어 특성)
+      text = text.replace(/(다\.)\s+([가-힣])/g, '$1\n\n$2');
+      
+      // 8. 연속된 공백 제거
       text = text.replace(/ {2,}/g, ' ');
+      
+      // 9. 각 줄 trim
       text = text.split('\n').map(line => line.trim()).join('\n');
+      
+      // 10. 3개 이상 연속 개행을 2개로 제한
+      text = text.replace(/\n{3,}/g, '\n\n');
       
       return text.trim();
     };
@@ -552,14 +577,16 @@ ${context}
         }
         
         // 최종 설명: Overview + 추가 섹션들
-        let fullDescription = cleanedOverview;
+        // Overview는 포맷팅 적용
+        let formattedOverview = formatText(cleanedOverview);
+        
+        let fullDescription = formattedOverview;
         
         if (sections.length > 0) {
-          fullDescription += '\n\n' + sections.join('\n\n');
+          // 각 섹션도 포맷팅 적용
+          const formattedSections = sections.map(section => formatText(section));
+          fullDescription += '\n\n' + formattedSections.join('\n\n');
         }
-        
-        // 포맷팅 적용
-        fullDescription = formatText(fullDescription);
         
         if (!fullDescription.trim()) {
           fullDescription = rawData.title;
