@@ -769,17 +769,11 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* 소개 (상세 설명) - 단일 줄바꿈도 보존하도록 수정 */}
+            {/* 소개 (상세 설명) - 모든 줄바꿈 보존 */}
             <div>
               <h3 className="text-xl font-bold mb-3 text-cyan-400">소개</h3>
-              <div className="text-gray-300 leading-relaxed space-y-4 text-base">
-                {localizedDescription.split('\n\n').map((paragraph, idx) => (
-                  paragraph.trim() && (
-                    <p key={idx} className="leading-relaxed whitespace-pre-line">
-                      {paragraph}
-                    </p>
-                  )
-                ))}
+              <div className="text-gray-300 text-base whitespace-pre-wrap leading-relaxed">
+                {localizedDescription}
               </div>
             </div>
 
