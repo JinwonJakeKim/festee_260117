@@ -1,3 +1,4 @@
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
@@ -93,22 +94,20 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 - 모바일 가독성 개선 (강화된 버전)
+    // 텍스트 포맷팅 - 완전히 새로운 접근 방식
     const formatText = (text) => {
       if (!text) return '';
       
       console.log(`[FormatText] 📝 Input length: ${text.length} chars`);
+      console.log(`[FormatText] Input preview: ${text.substring(0, 100)}...`);
       
-      // HTML 태그 제거 (br은 \n으로 변환)
-      text = cleanHtml(text);
+      // 1. 모든 개행을 공백으로 변환 (처음부터 다시 시작)
+      text = text.replace(/\n+/g, ' ');
       
-      // 중복 제거
-      text = removeDuplicates(text);
+      // 2. 연속 공백 제거
+      text = text.replace(/\s{2,}/g, ' ');
       
-      // 1. 과도한 개행 정리 (3개 이상 -> 2개)
-      text = text.replace(/\n{3,}/g, '\n\n');
-      
-      // 2. 이모지 및 특수 키워드 앞뒤로 확실한 개행 추가
+      // 3. 이모지 및 특수 키워드 앞뒤로 개행 추가
       const specialKeywords = [
         '📋', '🎪', '📍', '💰', '📌', '🎉', '🎊', '🎭', '🎨', '🎵',
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
@@ -120,46 +119,45 @@ Deno.serve(async (req) => {
       
       specialKeywords.forEach(keyword => {
         const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // 앞에 개행이 없으면 추가
-        const regexBefore = new RegExp(`([^\n])(${escapedKeyword})`, 'gi');
-        text = text.replace(regexBefore, '$1\n\n$2');
-        // 뒤에 개행이 없으면 추가
-        const regexAfter = new RegExp(`(${escapedKeyword})([^\n])`, 'gi');
-        text = text.replace(regexAfter, '$1\n$2');
+        const regex = new RegExp(`\\s*(${escapedKeyword})\\s*`, 'gi');
+        text = text.replace(regex, '\n\n$1\n');
       });
       
-      // 3. 숫자 리스트 앞에 개행 추가
-      text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
+      // 4. 한국어 문장 끝 감지 및 개행 추가 (핵심!)
+      // "다.", "요.", "니다.", "습니다." 뒤에 한글이 오면 개행
+      text = text.replace(/(다\.|요\.|니다\.|습니다\.|요!\s|다!\s|까\?)\s+([가-힣A-Z0-9])/g, '$1\n\n$2');
       
-      // 4. 불렛 포인트 앞에 개행 추가
-      text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
+      // 5. 마침표, 느낌표, 물음표 뒤에 대문자나 한글이 오면 개행
+      text = text.replace(/([.!?])\s+([가-힣A-Z][가-힣a-z])/g, '$1\n\n$2');
       
-      // 5. 섹션 제목 (대괄호, 특수문자 등) 앞뒤 개행
-      text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
+      // 6. 숫자 리스트 앞에 개행 추가
+      text = text.replace(/\s+(\d+\.\s+[가-힣])/g, '\n\n$1');
       
-      // 6. 문장 끝 개행 추가 - 강화된 버전
-      // 마침표, 물음표, 느낌표 뒤에 한글/영문 대문자가 오면 개행
-      text = text.replace(/([.!?])\s+([가-힣A-Z가])/g, '$1\n\n$2');
+      // 7. 불렛 포인트 앞에 개행 추가
+      text = text.replace(/\s+(○|-|\*|•)\s+/g, '\n$1 ');
       
-      // 7. "다.", "요.", "니다." 등으로 끝나는 문장 뒤 개행 (한국어 특성)
-      text = text.replace(/(다\.|요\.|니다\.|습니다\.)\s*([가-힣A-Z])/g, '$1\n\n$2');
+      // 8. 섹션 제목 (대괄호 등) 앞뒤 개행
+      text = text.replace(/\s*(\[.+?\]|【.+?】)\s*/g, '\n\n$1\n\n');
       
-      // 8. 날짜 형식 (2025년, 11월 등) 앞에 개행
-      text = text.replace(/([^\n])(\d{4}년|\d{1,2}월\s*\d{1,2}일)/g, '$1\n\n$2');
+      // 9. 날짜 형식 앞에 개행
+      text = text.replace(/\s+(\d{4}년|\d{1,2}월\s*\d{1,2}일)/g, '\n\n$1');
       
-      // 9. 연속된 공백 제거
-      text = text.replace(/ {2,}/g, ' ');
-      
-      // 10. 각 줄 trim (앞뒤 공백 제거)
-      text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
-      
-      // 11. 3개 이상 연속 개행을 2개로 제한
+      // 10. 과도한 개행 정리
       text = text.replace(/\n{3,}/g, '\n\n');
       
+      // 11. 각 줄 trim
+      const lines = text.split('\n');
+      const trimmedLines = lines.map(line => line.trim()).filter(line => line.length > 0);
+      text = trimmedLines.join('\n');
+      
       const outputText = text.trim();
+      const paragraphBreaks = (outputText.match(/\n\n/g) || []).length;
+      const singleBreaks = (outputText.match(/\n(?![\n])/g) || []).length; // Count single line breaks, not including second \n of \n\n
+      
       console.log(`[FormatText] ✓ Output length: ${outputText.length} chars`);
-      console.log(`[FormatText] ✓ Line breaks (\\n\\n): ${(outputText.match(/\n\n/g) || []).length}`);
-      console.log(`[FormatText] ✓ Single breaks (\\n): ${(outputText.match(/\n/g) || []).length}`);
+      console.log(`[FormatText] ✓ Paragraph breaks (\\n\\n): ${paragraphBreaks}`);
+      console.log(`[FormatText] ✓ Single breaks (\\n): ${singleBreaks}`);
+      console.log(`[FormatText] Output preview: ${outputText.substring(0, 150)}...`);
       
       return outputText;
     };
@@ -620,7 +618,7 @@ ${context}
         console.log(`[Transform] ✅ FINAL Description:`);
         console.log(`[Transform]   - Total length: ${fullDescription.length} chars`);
         console.log(`[Transform]   - Paragraph breaks (\\n\\n): ${(fullDescription.match(/\n\n/g) || []).length}`);
-        console.log(`[Transform]   - Single breaks (\\n): ${(fullDescription.match(/\n/g) || []).length}`);
+        console.log(`[Transform]   - Single breaks (\\n): ${(fullDescription.match(/\n(?![\n])/g) || []).length}`);
         console.log(`[Transform]   - Preview: ${fullDescription.substring(0, 200)}...`);
         
         console.log(`[Transform] ✓ Summary: ${summary.length} chars - "${summary}"`);
