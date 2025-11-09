@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { ko } = from "date-fns/locale";
+import { ko } from "date-fns/locale"; // Corrected syntax here
 import { motion, AnimatePresence } from "framer-motion";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
