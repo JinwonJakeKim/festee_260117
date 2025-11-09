@@ -93,60 +93,75 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 - 모바일 가독성 개선
+    // 텍스트 포맷팅 - 모바일 가독성 개선 (강화된 버전)
     const formatText = (text) => {
       if (!text) return '';
       
-      // HTML 태그 제거
+      console.log(`[FormatText] 📝 Input length: ${text.length} chars`);
+      
+      // HTML 태그 제거 (br은 \n으로 변환)
       text = cleanHtml(text);
       
       // 중복 제거
       text = removeDuplicates(text);
       
-      // 1. 과도한 개행 정리
+      // 1. 과도한 개행 정리 (3개 이상 -> 2개)
       text = text.replace(/\n{3,}/g, '\n\n');
       
-      // 2. 숫자 리스트 앞에 개행 추가
-      text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
-      
-      // 3. 불렛 포인트 앞에 개행 추가
-      text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
-      
-      // 4. 섹션 제목 (대괄호, 특수문자 등) 앞뒤 개행
-      text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
-      
-      // 5. 주요 키워드 앞에 개행 추가
-      const keywords = [
+      // 2. 이모지 및 특수 키워드 앞뒤로 확실한 개행 추가
+      const specialKeywords = [
+        '📋', '🎪', '📍', '💰', '📌', '🎉', '🎊', '🎭', '🎨', '🎵',
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
         '주요내용:', '주요 내용:', '공연시간:', '운영시간:',
         '참가대상:', '참여대상:', '행사장소:', '행사 장소:',
-        '📋', '🎪', '📍', '💰', '📌'
+        '행사일정:', '일정:', '시간:', '장소:'
       ];
       
-      keywords.forEach(keyword => {
+      specialKeywords.forEach(keyword => {
         const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`([^\n])(${escapedKeyword})`, 'gi');
-        text = text.replace(regex, '$1\n\n$2\n');
+        // 앞에 개행이 없으면 추가
+        const regexBefore = new RegExp(`([^\n])(${escapedKeyword})`, 'gi');
+        text = text.replace(regexBefore, '$1\n\n$2');
+        // 뒤에 개행이 없으면 추가
+        const regexAfter = new RegExp(`(${escapedKeyword})([^\n])`, 'gi');
+        text = text.replace(regexAfter, '$1\n$2');
       });
       
-      // 6. 문장 끝 개행 추가 (모바일 가독성 핵심!)
-      // 마침표, 물음표, 느낌표 뒤에 공백이 있고 다음이 대문자/한글이면 개행
-      text = text.replace(/([.!?])\s+([가-힣A-Z])/g, '$1\n\n$2');
+      // 3. 숫자 리스트 앞에 개행 추가
+      text = text.replace(/([^\n\d])(\d+\.\s+[가-힣])/g, '$1\n\n$2');
       
-      // 7. "다."로 끝나는 문장 뒤에 개행 (한국어 특성)
-      text = text.replace(/(다\.)\s+([가-힣])/g, '$1\n\n$2');
+      // 4. 불렛 포인트 앞에 개행 추가
+      text = text.replace(/([^\n])(○|-|\*|•)\s/g, '$1\n$2 ');
       
-      // 8. 연속된 공백 제거
+      // 5. 섹션 제목 (대괄호, 특수문자 등) 앞뒤 개행
+      text = text.replace(/([^\n])(\[.+?\]|【.+?】)/g, '$1\n\n$2\n');
+      
+      // 6. 문장 끝 개행 추가 - 강화된 버전
+      // 마침표, 물음표, 느낌표 뒤에 한글/영문 대문자가 오면 개행
+      text = text.replace(/([.!?])\s+([가-힣A-Z가])/g, '$1\n\n$2');
+      
+      // 7. "다.", "요.", "니다." 등으로 끝나는 문장 뒤 개행 (한국어 특성)
+      text = text.replace(/(다\.|요\.|니다\.|습니다\.)\s*([가-힣A-Z])/g, '$1\n\n$2');
+      
+      // 8. 날짜 형식 (2025년, 11월 등) 앞에 개행
+      text = text.replace(/([^\n])(\d{4}년|\d{1,2}월\s*\d{1,2}일)/g, '$1\n\n$2');
+      
+      // 9. 연속된 공백 제거
       text = text.replace(/ {2,}/g, ' ');
       
-      // 9. 각 줄 trim
-      text = text.split('\n').map(line => line.trim()).join('\n');
+      // 10. 각 줄 trim (앞뒤 공백 제거)
+      text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
       
-      // 10. 3개 이상 연속 개행을 2개로 제한
+      // 11. 3개 이상 연속 개행을 2개로 제한
       text = text.replace(/\n{3,}/g, '\n\n');
       
-      return text.trim();
+      const outputText = text.trim();
+      console.log(`[FormatText] ✓ Output length: ${outputText.length} chars`);
+      console.log(`[FormatText] ✓ Line breaks (\\n\\n): ${(outputText.match(/\n\n/g) || []).length}`);
+      console.log(`[FormatText] ✓ Single breaks (\\n): ${(outputText.match(/\n/g) || []).length}`);
+      
+      return outputText;
     };
     
     // AI 기반 요약 및 하이라이트 생성
@@ -577,14 +592,24 @@ ${context}
         }
         
         // 최종 설명: Overview + 추가 섹션들
+        console.log(`[Transform] 📄 Building final description...`);
+        
         // Overview는 포맷팅 적용
         let formattedOverview = formatText(cleanedOverview);
+        console.log(`[Transform] ✓ Formatted overview: ${formattedOverview.length} chars`);
         
         let fullDescription = formattedOverview;
         
         if (sections.length > 0) {
-          // 각 섹션도 포맷팅 적용
-          const formattedSections = sections.map(section => formatText(section));
+          console.log(`[Transform] 📋 Adding ${sections.length} additional sections...`);
+          // 각 섹션도 포맷팅 적용하고, 섹션 간 확실한 구분을 위해 \n\n 사용
+          const formattedSections = sections.map((section, idx) => {
+            const formatted = formatText(section);
+            console.log(`[Transform]   Section ${idx + 1}: ${formatted.length} chars`);
+            return formatted;
+          });
+          
+          // 섹션들을 \n\n으로 확실하게 구분하여 연결
           fullDescription += '\n\n' + formattedSections.join('\n\n');
         }
         
@@ -592,10 +617,15 @@ ${context}
           fullDescription = rawData.title;
         }
         
+        console.log(`[Transform] ✅ FINAL Description:`);
+        console.log(`[Transform]   - Total length: ${fullDescription.length} chars`);
+        console.log(`[Transform]   - Paragraph breaks (\\n\\n): ${(fullDescription.match(/\n\n/g) || []).length}`);
+        console.log(`[Transform]   - Single breaks (\\n): ${(fullDescription.match(/\n/g) || []).length}`);
+        console.log(`[Transform]   - Preview: ${fullDescription.substring(0, 200)}...`);
+        
         console.log(`[Transform] ✓ Summary: ${summary.length} chars - "${summary}"`);
         console.log(`[Transform] ✓ Highlights: ${highlights.length} items`);
         highlights.forEach((h, idx) => console.log(`[Transform]   ${idx + 1}. ${h}`));
-        console.log(`[Transform] ✓ Description: ${fullDescription.length} chars`);
         
         // ===== 기타 정보 =====
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
