@@ -19,8 +19,6 @@ export const useFestivalLocalizedContent = () => {
     if (!festival) return fallback;
 
     // 사용자의 선호 언어 결정
-    // 1. 사용자의 preferred_language 설정 확인
-    // 2. home_country가 대한민국이면 ko, 그 외는 en
     let preferredLang = 'ko'; // 기본값은 한국어
 
     if (user?.preferred_language) {
@@ -35,23 +33,78 @@ export const useFestivalLocalizedContent = () => {
     // 배열 필드 처리 (highlights, restrictions, recommendations 등)
     if (Array.isArray(festival[field])) {
       if (preferredLang === 'ko') {
-        localizedField = festival[`${field}_ko`] || festival[`${field}_original`] || festival[`${field}_en`] || festival[field];
+        localizedField = festival[`${field}_ko`];
+        // 빈 배열이거나 없으면 다음으로 폴백
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_original`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_en`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[field];
+        }
       } else if (preferredLang === 'en') {
-        localizedField = festival[`${field}_en`] || festival[`${field}_original`] || festival[`${field}_ko`] || festival[field];
+        localizedField = festival[`${field}_en`];
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_original`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_ko`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[field];
+        }
       } else {
-        localizedField = festival[`${field}_original`] || festival[`${field}_ko`] || festival[`${field}_en`] || festival[field];
+        localizedField = festival[`${field}_original`];
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_ko`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[`${field}_en`];
+        }
+        if (!localizedField || localizedField.length === 0) {
+          localizedField = festival[field];
+        }
       }
       return localizedField || [];
     }
     
     // 문자열 필드 처리
     if (preferredLang === 'ko') {
-      localizedField = festival[`${field}_ko`] || festival[`${field}_original`] || festival[`${field}_en`] || festival[field];
+      localizedField = festival[`${field}_ko`];
+      // 빈 문자열이거나 없으면 다음으로 폴백
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_original`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_en`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[field];
+      }
     } else if (preferredLang === 'en') {
-      localizedField = festival[`${field}_en`] || festival[`${field}_original`] || festival[`${field}_ko`] || festival[field];
+      localizedField = festival[`${field}_en`];
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_original`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_ko`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[field];
+      }
     } else {
-      // 다른 언어는 원본 우선, 없으면 영어, 그 다음 한국어
-      localizedField = festival[`${field}_original`] || festival[`${field}_en`] || festival[`${field}_ko`] || festival[field];
+      localizedField = festival[`${field}_original`];
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_en`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[`${field}_ko`];
+      }
+      if (!localizedField || localizedField.trim() === '') {
+        localizedField = festival[field];
+      }
     }
 
     return localizedField || fallback;
