@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ko } = from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -769,13 +769,13 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* 소개 (상세 설명) - 수정된 부분 */}
+            {/* 소개 (상세 설명) - 단일 줄바꿈도 보존하도록 수정 */}
             <div>
               <h3 className="text-xl font-bold mb-3 text-cyan-400">소개</h3>
-              <div className="text-gray-300 leading-relaxed space-y-3 text-base">
+              <div className="text-gray-300 leading-relaxed space-y-4 text-base">
                 {localizedDescription.split('\n\n').map((paragraph, idx) => (
                   paragraph.trim() && (
-                    <p key={idx} className="leading-relaxed">
+                    <p key={idx} className="leading-relaxed whitespace-pre-line">
                       {paragraph}
                     </p>
                   )
