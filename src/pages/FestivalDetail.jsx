@@ -769,12 +769,18 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* 소개 (상세 설명) */}
+            {/* 소개 (상세 설명) - 수정된 부분 */}
             <div>
               <h3 className="text-xl font-bold mb-3 text-cyan-400">소개</h3>
-              <p className="text-gray-300 leading-relaxed whitespace-pre-line text-base">
-                {localizedDescription}
-              </p>
+              <div className="text-gray-300 leading-relaxed space-y-3 text-base">
+                {localizedDescription.split('\n\n').map((paragraph, idx) => (
+                  paragraph.trim() && (
+                    <p key={idx} className="leading-relaxed">
+                      {paragraph}
+                    </p>
+                  )
+                ))}
+              </div>
             </div>
 
             {/* 주최 정보 */}
