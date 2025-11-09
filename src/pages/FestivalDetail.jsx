@@ -473,6 +473,12 @@ export default function FestivalDetail() {
   const localizedRestrictions = getLocalizedContent(festival, 'restrictions');
   const localizedRecommendations = getLocalizedContent(festival, 'recommendations');
 
+  // DEBUG: 설명 내용 확인
+  console.log('📝 Description Debug:');
+  console.log('Raw:', localizedDescription);
+  console.log('Has \\n\\n:', localizedDescription.includes('\n\n'));
+  console.log('Has \\n:', localizedDescription.includes('\n'));
+
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Login Prompt Modal */}
@@ -769,12 +775,12 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* 소개 (상세 설명) - 모든 줄바꿈 보존 */}
+            {/* 소개 (상세 설명) - 줄바꿈 완전 보존 */}
             <div>
               <h3 className="text-xl font-bold mb-3 text-cyan-400">소개</h3>
-              <div className="text-gray-300 text-base whitespace-pre-wrap leading-relaxed">
+              <pre className="text-gray-300 text-base font-sans leading-relaxed whitespace-pre-wrap">
                 {localizedDescription}
-              </div>
+              </pre>
             </div>
 
             {/* 주최 정보 */}
