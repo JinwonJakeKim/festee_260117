@@ -1,19 +1,62 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
+  console.log('[TourAPI] ========== FUNCTION STARTED ==========');
+  
   try {
+    // 1. SDK 초기화
+    console.log('[TourAPI] Step 1: Initialize SDK');
     const base44 = createClientFromRequest(req);
     
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // 2. 사용자 인증
+    console.log('[TourAPI] Step 2: Check user authentication');
+    let user;
+    try {
+      user = await base44.auth.me();
+    } catch (authError) {
+      console.error('[TourAPI] Auth error:', authError);
       return Response.json({ 
         success: false,
-        error: 'Unauthorized - Admin only' 
+        error: 'Authentication failed',
+        message: '인증에 실패했습니다.',
+        details: authError.message
       }, { status: 401 });
     }
-
-    const { areaCode, year, month, numOfRows = 20 } = await req.json();
     
+    if (!user || user.role !== 'admin') {
+      console.error('[TourAPI] User is not admin:', user);
+      return Response.json({ 
+        success: false,
+        error: 'Unauthorized - Admin only',
+        message: '관리자 권한이 필요합니다.'
+      }, { status: 401 });
+    }
+    
+    console.log('[TourAPI] ✓ User authenticated:', user.email, 'Role:', user.role);
+
+    // 3. Request body 파싱
+    console.log('[TourAPI] Step 3: Parse request body');
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      console.log('[TourAPI] Request body text:', bodyText);
+      requestBody = JSON.parse(bodyText);
+      console.log('[TourAPI] Parsed request body:', requestBody);
+    } catch (parseError) {
+      console.error('[TourAPI] Request body parse error:', parseError);
+      return Response.json({
+        success: false,
+        error: 'Invalid request body',
+        message: '요청 데이터 형식이 올바르지 않습니다.',
+        details: parseError.message
+      }, { status: 400 });
+    }
+    
+    const { areaCode, year, month, numOfRows = 20 } = requestBody;
+    console.log('[TourAPI] Request params:', { areaCode, year, month, numOfRows });
+    
+    // 4. API 키 확인
+    console.log('[TourAPI] Step 4: Check API key');
     const apiKey = Deno.env.get("TOUR_API_KEY");
     
     if (!apiKey) {
@@ -25,13 +68,12 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
     
+    console.log('[TourAPI] ✓ API Key found');
+    
     const baseUrl = "https://apis.data.go.kr/B551011/KorService2";
     
-    console.log(`[TourAPI] ========== NEW REQUEST ==========`);
-    console.log(`[TourAPI] Step 1: Fetch and Store Raw Data`);
-    console.log(`[TourAPI] Params:`, { areaCode, year, month, numOfRows });
-    
-    // 선택한 월의 범위 계산
+    // 5. 날짜 범위 계산
+    console.log('[TourAPI] Step 5: Calculate date range');
     let startDateFilter = null;
     let endDateFilter = null;
     let apiEventStartDate = "20200101";
@@ -49,10 +91,11 @@ Deno.serve(async (req) => {
       console.log(`[TourAPI] Filter range: ${startDateFilter} ~ ${endDateFilter}`);
     }
     
-    // API 요청 - numOfRows 파라미터 수정
+    // 6. API 요청 준비
+    console.log('[TourAPI] Step 6: Prepare API request');
     const searchParams = new URLSearchParams({
       serviceKey: apiKey,
-      numOfRows: numOfRows.toString(), // 수정: 전달받은 파라미터 사용
+      numOfRows: numOfRows.toString(),
       pageNo: "1",
       MobileOS: "ETC",
       MobileApp: "Festee",
@@ -63,23 +106,29 @@ Deno.serve(async (req) => {
     
     if (areaCode && areaCode !== "all") {
       searchParams.append("areaCode", areaCode.toString());
+      console.log(`[TourAPI] Area code filter: ${areaCode}`);
     }
     
     const searchUrl = `${baseUrl}/searchFestival2?${searchParams.toString()}`;
-    console.log(`[TourAPI] Request URL:`, searchUrl);
+    console.log(`[TourAPI] Request URL: ${searchUrl.substring(0, 200)}...`);
     
+    // 7. API 호출
+    console.log('[TourAPI] Step 7: Call TourAPI');
     let searchResponse;
     let responseText;
     
     try {
       searchResponse = await fetch(searchUrl);
-      responseText = await searchResponse.text();
+      console.log(`[TourAPI] Response status: ${searchResponse.status}`);
+      console.log(`[TourAPI] Response status text: ${searchResponse.statusText}`);
       
-      console.log(`[TourAPI] Response Status: ${searchResponse.status}`);
-      console.log(`[TourAPI] Response Length: ${responseText.length} bytes`);
+      responseText = await searchResponse.text();
+      console.log(`[TourAPI] Response length: ${responseText.length} bytes`);
+      console.log(`[TourAPI] Response preview: ${responseText.substring(0, 500)}...`);
       
     } catch (fetchError) {
       console.error('[TourAPI] Fetch error:', fetchError);
+      console.error('[TourAPI] Fetch error stack:', fetchError.stack);
       return Response.json({
         success: false,
         error: 'Network error',
@@ -88,8 +137,10 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
     
+    // 8. 응답 형식 확인
+    console.log('[TourAPI] Step 8: Validate response format');
     if (responseText.trim().startsWith('<?xml') || responseText.trim().startsWith('<!DOCTYPE')) {
-      console.error('[TourAPI] Invalid response format');
+      console.error('[TourAPI] Invalid response format: XML/HTML');
       return Response.json({
         success: false,
         error: 'Invalid Response',
@@ -98,12 +149,16 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
     
+    // 9. JSON 파싱
+    console.log('[TourAPI] Step 9: Parse JSON response');
     let searchData;
     try {
       searchData = JSON.parse(responseText);
       console.log(`[TourAPI] ✓ JSON parsed successfully`);
+      console.log(`[TourAPI] Response structure:`, Object.keys(searchData));
     } catch (parseError) {
       console.error('[TourAPI] JSON parse error:', parseError);
+      console.error('[TourAPI] Failed to parse:', responseText.substring(0, 1000));
       return Response.json({
         success: false,
         error: 'Invalid JSON response',
@@ -112,11 +167,13 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
     
+    // 10. API 응답 코드 확인
+    console.log('[TourAPI] Step 10: Check API response code');
     const resultCode = searchData.response?.header?.resultCode || searchData.resultCode;
     const resultMsg = searchData.response?.header?.resultMsg || searchData.resultMsg;
     
-    console.log(`[TourAPI] Result Code:`, resultCode);
-    console.log(`[TourAPI] Result Message:`, resultMsg);
+    console.log(`[TourAPI] Result Code: ${resultCode}`);
+    console.log(`[TourAPI] Result Message: ${resultMsg}`);
     
     if (resultCode !== "0000" && resultCode !== "00") {
       const errorMessages = {
@@ -132,6 +189,7 @@ Deno.serve(async (req) => {
         '33': '서비스키 등록 해지',
       };
       
+      console.error(`[TourAPI] API Error: ${resultCode} - ${errorMessages[resultCode] || resultMsg}`);
       return Response.json({
         success: false,
         error: `API Error: ${resultCode}`,
@@ -140,8 +198,10 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
     
+    // 11. 데이터 확인
+    console.log('[TourAPI] Step 11: Check festival data');
     if (!searchData.response?.body?.items?.item) {
-      console.log('[TourAPI] No festivals found');
+      console.log('[TourAPI] No festivals found in response');
       return Response.json({
         success: true,
         raw_data_saved: 0,
@@ -157,11 +217,13 @@ Deno.serve(async (req) => {
     
     console.log(`[TourAPI] Found ${festivalItems.length} festivals from API`);
     
-    // 월 범위 필터링
+    // 12. 월 범위 필터링
+    console.log('[TourAPI] Step 12: Filter by date range');
     if (startDateFilter && endDateFilter) {
       const monthStart = parseInt(startDateFilter);
       const monthEnd = parseInt(endDateFilter);
       
+      const beforeFilter = festivalItems.length;
       festivalItems = festivalItems.filter(item => {
         if (!item.eventstartdate || !item.eventenddate) return false;
         const festivalStart = parseInt(item.eventstartdate);
@@ -169,11 +231,11 @@ Deno.serve(async (req) => {
         return festivalEnd >= monthStart && festivalStart <= monthEnd;
       });
       
-      console.log(`[TourAPI] After filtering: ${festivalItems.length} festivals`);
+      console.log(`[TourAPI] Filtered: ${beforeFilter} → ${festivalItems.length} festivals`);
     }
     
-    // 원본 데이터를 TourApiRawData에 저장
-    console.log(`[TourAPI] ========== STORING RAW DATA ==========`);
+    // 13. 데이터베이스에 저장
+    console.log('[TourAPI] Step 13: Store raw data in database');
     const savedRawData = [];
     const errors = [];
     let newCount = 0;
@@ -183,7 +245,7 @@ Deno.serve(async (req) => {
       const item = festivalItems[i];
       
       try {
-        console.log(`[TourAPI] Storing ${i + 1}/${festivalItems.length}: ${item.title}`);
+        console.log(`[TourAPI] [${i + 1}/${festivalItems.length}] Processing: ${item.title}`);
         
         // contentId로 기존 데이터 확인
         const existing = await base44.asServiceRole.entities.TourApiRawData.filter({ 
@@ -217,30 +279,31 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.TourApiRawData.update(existing[0].id, rawData);
           savedRawData.push({ ...rawData, id: existing[0].id, isNew: false });
           updatedCount++;
-          console.log(`[TourAPI] ✓ Updated existing: ${item.title}`);
+          console.log(`[TourAPI] ✓ Updated: ${item.title}`);
         } else {
           // 새로 생성
           const created = await base44.asServiceRole.entities.TourApiRawData.create(rawData);
           savedRawData.push({ ...rawData, id: created.id, isNew: true });
           newCount++;
-          console.log(`[TourAPI] ✓ Created new: ${item.title}`);
+          console.log(`[TourAPI] ✓ Created: ${item.title}`);
         }
         
-      } catch (error) {
-        console.error(`[TourAPI] Error storing ${item.title}:`, error);
+      } catch (dbError) {
+        console.error(`[TourAPI] DB error for ${item.title}:`, dbError);
+        console.error(`[TourAPI] DB error stack:`, dbError.stack);
         errors.push({ 
           festival: item.title, 
-          error: error.message 
+          error: dbError.message 
         });
       }
     }
     
-    console.log(`[TourAPI] ========== SUMMARY ==========`);
+    // 14. 최종 결과
+    console.log('[TourAPI] ========== SUMMARY ==========');
     console.log(`[TourAPI] API returned: ${festivalItems.length} festivals`);
-    console.log(`[TourAPI] Successfully saved: ${savedRawData.length} raw data records`);
-    console.log(`[TourAPI] Failed: ${errors.length} records`);
-    console.log(`[TourAPI] New records: ${newCount}`);
-    console.log(`[TourAPI] Updated records: ${updatedCount}`);
+    console.log(`[TourAPI] Successfully saved: ${savedRawData.length} records`);
+    console.log(`[TourAPI] New: ${newCount}, Updated: ${updatedCount}, Failed: ${errors.length}`);
+    console.log('[TourAPI] ========== FUNCTION COMPLETED ==========');
     
     return Response.json({
       success: true,
@@ -253,11 +316,16 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('[TourAPI] Function error:', error);
+    console.error('[TourAPI] ========== FATAL ERROR ==========');
+    console.error('[TourAPI] Error type:', error.constructor.name);
+    console.error('[TourAPI] Error message:', error.message);
     console.error('[TourAPI] Error stack:', error.stack);
+    console.error('[TourAPI] ========================================');
+    
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류',
+      error_type: error.constructor.name,
       message: 'TourAPI 연동 중 오류가 발생했습니다.',
       details: error.toString(),
       stack: error.stack
