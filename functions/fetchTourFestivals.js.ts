@@ -49,10 +49,10 @@ Deno.serve(async (req) => {
       console.log(`[TourAPI] Filter range: ${startDateFilter} ~ ${endDateFilter}`);
     }
     
-    // API 요청
+    // API 요청 - numOfRows 파라미터 수정
     const searchParams = new URLSearchParams({
       serviceKey: apiKey,
-      numOfRows: "100",
+      numOfRows: numOfRows.toString(), // 수정: 전달받은 파라미터 사용
       pageNo: "1",
       MobileOS: "ETC",
       MobileApp: "Festee",
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         error: 'Network error',
         message: 'TourAPI 서버에 연결할 수 없습니다.',
         details: fetchError.message
-      });
+      }, { status: 500 });
     }
     
     if (responseText.trim().startsWith('<?xml') || responseText.trim().startsWith('<!DOCTYPE')) {
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
         error: 'Invalid Response',
         message: 'API가 XML 또는 HTML로 응답했습니다. API 키를 확인해주세요.',
         raw_response: responseText.substring(0, 1000)
-      });
+      }, { status: 500 });
     }
     
     let searchData;
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         error: 'Invalid JSON response',
         message: 'API 응답을 JSON으로 파싱할 수 없습니다.',
         raw_response: responseText.substring(0, 1000)
-      });
+      }, { status: 500 });
     }
     
     const resultCode = searchData.response?.header?.resultCode || searchData.resultCode;
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
         error: `API Error: ${resultCode}`,
         message: `TourAPI 오류 [${resultCode}]: ${errorMessages[resultCode] || resultMsg}`,
         result_msg: resultMsg
-      });
+      }, { status: 400 });
     }
     
     if (!searchData.response?.body?.items?.item) {
@@ -145,6 +145,8 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         raw_data_saved: 0,
+        new_records: 0,
+        updated_records: 0,
         message: '조건에 맞는 축제를 찾을 수 없습니다.'
       });
     }
@@ -174,6 +176,8 @@ Deno.serve(async (req) => {
     console.log(`[TourAPI] ========== STORING RAW DATA ==========`);
     const savedRawData = [];
     const errors = [];
+    let newCount = 0;
+    let updatedCount = 0;
     
     for (let i = 0; i < festivalItems.length; i++) {
       const item = festivalItems[i];
@@ -212,11 +216,13 @@ Deno.serve(async (req) => {
           // 업데이트
           await base44.asServiceRole.entities.TourApiRawData.update(existing[0].id, rawData);
           savedRawData.push({ ...rawData, id: existing[0].id, isNew: false });
+          updatedCount++;
           console.log(`[TourAPI] ✓ Updated existing: ${item.title}`);
         } else {
           // 새로 생성
           const created = await base44.asServiceRole.entities.TourApiRawData.create(rawData);
           savedRawData.push({ ...rawData, id: created.id, isNew: true });
+          newCount++;
           console.log(`[TourAPI] ✓ Created new: ${item.title}`);
         }
         
@@ -233,14 +239,14 @@ Deno.serve(async (req) => {
     console.log(`[TourAPI] API returned: ${festivalItems.length} festivals`);
     console.log(`[TourAPI] Successfully saved: ${savedRawData.length} raw data records`);
     console.log(`[TourAPI] Failed: ${errors.length} records`);
-    console.log(`[TourAPI] New records: ${savedRawData.filter(r => r.isNew).length}`);
-    console.log(`[TourAPI] Updated records: ${savedRawData.filter(r => !r.isNew).length}`);
+    console.log(`[TourAPI] New records: ${newCount}`);
+    console.log(`[TourAPI] Updated records: ${updatedCount}`);
     
     return Response.json({
       success: true,
       raw_data_saved: savedRawData.length,
-      new_records: savedRawData.filter(r => r.isNew).length,
-      updated_records: savedRawData.filter(r => !r.isNew).length,
+      new_records: newCount,
+      updated_records: updatedCount,
       raw_data_ids: savedRawData.map(r => r.id),
       message: `${savedRawData.length}개의 원본 데이터를 저장했습니다. 이제 변환 작업을 진행하세요.`,
       errors: errors.length > 0 ? errors : undefined
@@ -248,6 +254,7 @@ Deno.serve(async (req) => {
     
   } catch (error) {
     console.error('[TourAPI] Function error:', error);
+    console.error('[TourAPI] Error stack:', error.stack);
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류',
