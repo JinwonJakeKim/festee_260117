@@ -67,7 +67,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "FestivalMap",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: Layout,
 };
