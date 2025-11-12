@@ -4,10 +4,9 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, Search, MessageCircle, Bell, Star, MapPin, Calendar, ChevronRight, Plane, Globe, Tag, Send, Play } from "lucide-react";
+import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -82,20 +81,6 @@ const getRankColor = (index) => {
   return "bg-gray-700";
 };
 
-const getStarRating = (festival) => {
-  if (festival.star_rating) {
-    return Math.min(5, Math.max(1, festival.star_rating));
-  }
-  
-  let hash = 0;
-  const id = festival.id || festival.name || '0';
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  return Math.abs(hash % 5) + 1;
-};
-
 export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
@@ -143,22 +128,20 @@ export default function Home() {
   });
 
   const { data: rawFestivals, isLoading } = useQuery({
-    queryKey: ['rawFestivals'], // Changed queryKey
+    queryKey: ['rawFestivals'],
     queryFn: async () => {
       const allFestivals = await base44.entities.Festival.list('-likes_count', 200);
-      return allFestivals; // No deduplication here
+      return allFestivals;
     },
-    staleTime: 0, // Always stale to refetch on mount
-    refetchOnMount: 'always', // Always refetch when component mounts
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  // Client-side deduplication and re-sorting
   const festivals = useMemo(() => {
     if (!rawFestivals) return [];
     
     const deduplicated = removeDuplicateFestivals(rawFestivals);
     
-    // likes_count 기준으로 다시 정렬 (내림차순)
     return deduplicated.sort((a, b) => {
       const aLikes = a.likes_count || 0;
       const bLikes = b.likes_count || 0;
@@ -185,11 +168,15 @@ export default function Home() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: topRankers = [] } = useQuery({
-    queryKey: ['topRankers'],
+  // 실제 유저 데이터 기반 상위 5명
+  const { data: topUsers = [] } = useQuery({
+    queryKey: ['topUsers'],
     queryFn: async () => {
-      const rankers = await base44.entities.Ranker.list('-catches_count', 5);
-      return rankers;
+      const users = await base44.entities.User.list();
+      return users
+        .filter(u => (u.catches_count || 0) > 0)
+        .sort((a, b) => (b.catches_count || 0) - (a.catches_count || 0))
+        .slice(0, 5);
     },
     staleTime: 1000 * 60 * 10,
   });
@@ -252,7 +239,6 @@ export default function Home() {
       }
     },
     onSuccess: () => {
-      // Invalidate rawFestivals to trigger re-fetch and re-memoization of 'festivals'
       queryClient.invalidateQueries({ queryKey: ['rawFestivals'] }); 
       queryClient.invalidateQueries({ queryKey: ['myLikes'] });
     },
@@ -451,7 +437,6 @@ export default function Home() {
     base44.auth.redirectToLogin(window.location.pathname);
   };
 
-  // 로딩 중일 때 스켈레톤 UI 표시
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black pb-20">
@@ -624,6 +609,7 @@ export default function Home() {
       )}
 
       <div className="px-4 pt-4">
+        {/* Top Festival Section - FesteeStar 제거 */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white text-2xl font-bold">Top Festival</h2>
@@ -772,10 +758,10 @@ export default function Home() {
             </div>
           )}
 
+          {/* Festival List - FesteeStar 제거됨 */}
           <div className="space-y-3">
             {filteredFestivals.slice(0, 5).map((festival, index) => {
               const isLiked = myLikes.some(like => like.festival_id === festival.id);
-              const starRating = getStarRating(festival);
               const dateStatus = festival.date_status || 'confirmed';
               const localizedName = getLocalizedContent(festival, 'name');
               
@@ -797,14 +783,6 @@ export default function Home() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 mb-1">
-                        <div className="flex items-center">
-                          {Array.from({ length: starRating }).map((_, i) => (
-                            <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          ))}
-                        </div>
-                        <span className="text-cyan-400 text-xs font-bold ml-1">{starRating}</span>
-                      </div>
                       <h3 className="text-white font-bold text-sm truncate mb-1">
                         {localizedName}
                       </h3>
@@ -919,36 +897,37 @@ export default function Home() {
           </Card>
         )}
 
-        {topRankers.length > 0 && (
+        {/* Festival Ranker - 실제 유저 기반으로 변경 */}
+        {topUsers.length > 0 && (
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4">Festival Ranker</h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
-                {topRankers.slice(0, 5).map((ranker) => (
+                {topUsers.map((user) => (
                   <Link 
-                    key={ranker.id}
-                    to={createPageUrl(`UserProfile?email=${ranker.user_email}`)}
+                    key={user.id}
+                    to={createPageUrl(`UserProfile?email=${user.email}`)}
                     className="flex-shrink-0"
                   >
                     <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 w-32">
                       <div className="text-center">
                         <div className="relative w-20 h-20 mx-auto mb-3">
                           <img
-                            src={ranker.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ranker.user_email}`}
-                            alt={ranker.nickname}
+                            src={user.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+                            alt={user.full_name}
                             className="w-full h-full rounded-full object-cover border-2 border-cyan-400"
                           />
                           <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center border-2 border-black">
                             <span className="text-black font-bold text-xs">
-                              {ranker.catches_count || 0}
+                              {user.catches_count || 0}
                             </span>
                           </div>
                         </div>
                         <h3 className="text-white font-bold text-sm mb-1 truncate">
-                          {ranker.nickname}
+                          {user.full_name}
                         </h3>
                         <p className="text-gray-500 text-xs truncate">
-                          {ranker.catches_count || 0} catches
+                          {user.catches_count || 0} catches
                         </p>
                       </div>
                     </Card>
