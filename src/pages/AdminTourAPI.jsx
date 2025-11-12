@@ -31,11 +31,14 @@ export default function AdminTourAPI() {
   const [areaCode, setAreaCode] = useState("all");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
-  const [numOfRows, setNumOfRows] = useState(100); // Changed initial value from 20 to 100
+  const [numOfRows, setNumOfRows] = useState(100);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
   const [isTransforming, setIsTransforming] = useState(false);
+
+  // 최대 변환 개수 제한
+  const MAX_TRANSFORM_COUNT = 10;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -96,6 +99,18 @@ export default function AdminTourAPI() {
       return;
     }
 
+    // 최대 개수 체크
+    if (rawDataIds.length > MAX_TRANSFORM_COUNT) {
+      alert(`⚠️ 한 번에 최대 ${MAX_TRANSFORM_COUNT}개까지만 변환할 수 있습니다.\n\n현재 선택: ${rawDataIds.length}개\n\n서버 안정성을 위해 더 작은 단위로 나누어 변환해주세요.`);
+      return;
+    }
+
+    const confirmMessage = `${rawDataIds.length}개의 데이터를 Festival로 변환하시겠습니까?\n\n⏱️ 예상 소요 시간: 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
     setIsTransforming(true);
     
     try {
@@ -123,11 +138,19 @@ export default function AdminTourAPI() {
   };
 
   const toggleRawData = (id) => {
-    setSelectedRawData(prev =>
-      prev.includes(id)
+    setSelectedRawData(prev => {
+      const newSelection = prev.includes(id)
         ? prev.filter(i => i !== id)
-        : [...prev, id]
-    );
+        : [...prev, id];
+      
+      // 최대 개수 초과 체크
+      if (newSelection.length > MAX_TRANSFORM_COUNT) {
+        alert(`⚠️ 최대 ${MAX_TRANSFORM_COUNT}개까지만 선택할 수 있습니다.`);
+        return prev;
+      }
+      
+      return newSelection;
+    });
   };
 
   const deleteRawDataMutation = useMutation({
@@ -167,7 +190,6 @@ export default function AdminTourAPI() {
     label: `${i + 1}월`
   }));
 
-  // New: Options for numOfRows
   const rowOptions = [
     { value: 20, label: "20개" },
     { value: 30, label: "30개" },
@@ -290,7 +312,6 @@ export default function AdminTourAPI() {
                   </div>
                 </div>
 
-                {/* New: Select for numOfRows */}
                 <div>
                   <label className="text-gray-400 text-sm mb-2 block">가져올 개수</label>
                   <Select value={numOfRows.toString()} onValueChange={(value) => setNumOfRows(parseInt(value))}>
@@ -346,6 +367,7 @@ export default function AdminTourAPI() {
                 <li>✓ 저장된 원본 데이터를 Festival 엔티티로 변환</li>
                 <li>✓ 실패한 데이터는 언제든지 재처리 가능</li>
                 <li>✓ 원본 데이터는 보관되므로 안전</li>
+                <li className="text-yellow-400 font-medium">⚠️ 한 번에 최대 {MAX_TRANSFORM_COUNT}개까지만 변환 가능</li>
               </ul>
             </Card>
 
@@ -376,13 +398,16 @@ export default function AdminTourAPI() {
               <div className="flex gap-2">
                 <Button
                   onClick={() => {
-                    const allPendingIds = pendingData.map(r => r.id);
+                    const allPendingIds = pendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
                     setSelectedRawData(allPendingIds);
+                    if (pendingData.length > MAX_TRANSFORM_COUNT) {
+                      alert(`⚠️ 대기 중인 데이터가 ${pendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                    }
                   }}
                   variant="outline"
                   className="flex-1 border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
                 >
-                  대기 중 전체 선택
+                  대기 중 {Math.min(pendingData.length, MAX_TRANSFORM_COUNT)}개 선택
                 </Button>
                 <Button
                   onClick={() => handleTransform(selectedRawData)}
@@ -402,6 +427,24 @@ export default function AdminTourAPI() {
                   )}
                 </Button>
               </div>
+            )}
+
+            {/* 선택 개수 경고 */}
+            {selectedRawData.length > 0 && (
+              <Card className={`p-3 ${
+                selectedRawData.length > MAX_TRANSFORM_COUNT 
+                  ? 'bg-red-900/20 border-red-400/30' 
+                  : 'bg-blue-900/20 border-blue-400/30'
+              }`}>
+                <p className={`text-sm text-center ${
+                  selectedRawData.length > MAX_TRANSFORM_COUNT ? 'text-red-400' : 'text-blue-400'
+                }`}>
+                  {selectedRawData.length > MAX_TRANSFORM_COUNT 
+                    ? `⚠️ ${selectedRawData.length}개 선택됨 - 최대 ${MAX_TRANSFORM_COUNT}개까지만 가능합니다.`
+                    : `✓ ${selectedRawData.length}개 선택됨 (예상 소요시간: 약 ${Math.ceil(selectedRawData.length * 30 / 60)}초)`
+                  }
+                </p>
+              </Card>
             )}
 
             {/* 원본 데이터 목록 */}
