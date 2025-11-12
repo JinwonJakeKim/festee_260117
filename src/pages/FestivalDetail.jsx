@@ -736,19 +736,18 @@ export default function FestivalDetail() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="summary" className="px-4">
-        <TabsList className="w-full bg-gray-900 grid grid-cols-7">
-          <TabsTrigger value="summary" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">요약</TabsTrigger>
+      {/* Tabs - 탭 수정 */}
+      <Tabs defaultValue="intro" className="px-4">
+        <TabsList className="w-full bg-gray-900 grid grid-cols-5">
+          <TabsTrigger value="intro" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">소개</TabsTrigger>
           <TabsTrigger value="photos" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">사진</TabsTrigger>
           <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문</TabsTrigger>
           <TabsTrigger value="lineup" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">라인업</TabsTrigger>
           <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">일정</TabsTrigger>
-          <TabsTrigger value="map" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">위치</TabsTrigger>
-          <TabsTrigger value="nearby" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">근처</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="summary" className="text-white mt-4">
+        {/* 소개 탭 (기존 summary) */}
+        <TabsContent value="intro" className="text-white mt-4">
           <div className="space-y-6">
             {/* 축제 요약 */}
             {localizedSummary && (
@@ -908,8 +907,37 @@ export default function FestivalDetail() {
           )}
         </TabsContent>
 
+        {/* 방문 탭 - 위치 정보 통합 */}
         <TabsContent value="visit" className="text-white mt-4">
           <div className="space-y-4">
+            {/* 위치 정보 섹션 추가 */}
+            {festival.latitude && festival.longitude && (
+              <div className="bg-gray-900 rounded-lg p-4 mb-4">
+                <h3 className="font-bold mb-3 flex items-center gap-2 text-white">
+                  <MapPin className="w-5 h-5 text-pink-500" />
+                  위치
+                </h3>
+                <p className="text-white font-bold mb-2">{festival.city}, {festival.country}</p>
+                <p className="text-gray-400 text-sm mb-4">
+                  {festival.latitude.toFixed(4)}, {festival.longitude.toFixed(4)}
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Link to={createPageUrl("FestivalMap")}>
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
+                      <Map className="w-5 h-5 mr-2" />
+                      지도에서 보기
+                    </Button>
+                  </Link>
+                  <Link to={createPageUrl(`FestivalVenueMap?id=${festival.id}&name=${encodeURIComponent(festival.name)}`)}>
+                    <Button className="w-full bg-pink-500 hover:bg-pink-600">
+                      <Map className="w-5 h-5 mr-2" />
+                      행사장 내부 지도
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* 운영 시간 */}
             {localizedOpeningHours && (
               <div className="bg-gray-900 rounded-lg p-4">
@@ -970,6 +998,7 @@ export default function FestivalDetail() {
           </div>
         </TabsContent>
 
+        {/* 라인업 탭 */}
         <TabsContent value="lineup" className="text-white mt-4">
           {festival.lineup && festival.lineup.length > 0 ? (
             <div className="space-y-4">
@@ -985,10 +1014,11 @@ export default function FestivalDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400">라인업 정보가 곧 공개됩니다.</p>
+            <p className="text-gray-400">라인업 정보가 없습니다.</p>
           )}
         </TabsContent>
 
+        {/* 일정 탭 */}
         <TabsContent value="schedule" className="text-white mt-4">
           {festival.schedule && festival.schedule.length > 0 ? (
             <div className="space-y-3">
@@ -1008,56 +1038,6 @@ export default function FestivalDetail() {
             </div>
           ) : (
             <p className="text-gray-400">상세 일정이 곧 공개됩니다.</p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="map" className="text-white mt-4">
-          <div className="bg-gray-900 rounded-lg p-4 text-center">
-            <MapPin className="w-12 h-12 text-cyan-400 mx-auto mb-3" />
-            <p className="text-white font-bold mb-1">{festival.city}, {festival.country}</p>
-            {festival.latitude && festival.longitude && (
-              <>
-                <p className="text-gray-400 text-sm mb-4">
-                  {festival.latitude.toFixed(4)}, {festival.longitude.toFixed(4)}
-                </p>
-                <Link to={createPageUrl("FestivalMap")}>
-                  <Button className="w-full bg-cyan-500 hover:bg-cyan-600 mb-3">
-                    <Map className="w-5 h-5 mr-2" />
-                    지도에서 보기
-                  </Button>
-                </Link>
-                <Link to={createPageUrl(`FestivalVenueMap?id=${festival.id}&name=${encodeURIComponent(festival.name)}`)}>
-                  <Button className="w-full bg-pink-500 hover:bg-pink-600">
-                    <Map className="w-5 h-5 mr-2" />
-                    행사장 내부 지도
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="nearby" className="text-white mt-4">
-          {festival.nearby_attractions && festival.nearby_attractions.length > 0 ? (
-            <div className="space-y-3">
-              {festival.nearby_attractions.map((attraction, idx) => (
-                <div key={idx} className="bg-gray-900 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-bold">{attraction.name}</h4>
-                    {attraction.distance && (
-                      <Badge variant="outline" className="text-cyan-400 border-cyan-400">
-                        {attraction.distance}
-                      </Badge>
-                    )}
-                  </div>
-                  {attraction.description && (
-                    <p className="text-gray-400 text-sm">{attraction.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400">근처 명소 정보가 없습니다.</p>
           )}
         </TabsContent>
       </Tabs>
