@@ -32,6 +32,13 @@ const safeFormatDate = (dateString, formatString) => {
   }
 };
 
+// 짧은 ID 생성 함수
+const generateShortId = (fullId) => {
+  if (!fullId) return '';
+  // ID의 앞 8자리만 사용 (충분히 고유함)
+  return fullId.substring(0, 8);
+};
+
 // Custom red marker icon for festivals - 수정된 버전
 const festivalIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -251,38 +258,86 @@ export default function FestivalDetail() {
   };
 
   const handleShare = async () => {
-    // 커스텀 도메인을 사용한 간소화된 URL 생성
-    const shareUrl = `https://festee.org/festival?id=${festivalId}`;
-    const shareTitle = festival.name;
-    const shareText = `${festival.name} - ${festival.city}, ${festival.country}에서 열리는 축제를 확인해보세요!`;
+    // 1. 축약된 URL 생성 - 현재 도메인 + 짧은 ID
+    const shortId = generateShortId(festivalId);
+    const shareUrl = `${window.location.origin}${createPageUrl(`FestivalDetail?id=${festivalId}`)}`;
+    
+    // 2. 날짜 정보 포맷팅
+    const dateInfo = festival.start_date && festival.end_date
+      ? `📅 ${safeFormatDate(festival.start_date, 'yyyy년 M월 d일')} - ${safeFormatDate(festival.end_date, 'M월 d일')}`
+      : '📅 날짜 추후 공지';
+    
+    // 3. 가격 정보
+    const priceInfo = festival.price 
+      ? `💰 ₩${festival.price.toLocaleString()}`
+      : '💰 무료 입장';
+    
+    // 4. 풍부한 공유 텍스트 구성
+    const shareTitle = `🎪 ${localizedName}`;
+    const shareText = `${localizedName}
 
+${dateInfo}
+📍 ${festival.city}, ${festival.country}
+${priceInfo}
+${festival.category ? `🎭 ${festival.category}` : ''}
+
+${localizedSummary ? localizedSummary.substring(0, 100) + (localizedSummary.length > 100 ? '...' : '') : ''}
+
+FESTEE에서 더 자세히 확인하세요 👉`;
+
+    // 5. Share Data 구성 - 이미지 URL 포함 (일부 플랫폼 지원)
     const shareData = {
       title: shareTitle,
       text: shareText,
       url: shareUrl,
     };
 
-    // Web Share API 지원 여부 및 환경 확인
+    // 6. 이미지 파일이 있는 경우 files 배열에 추가 시도 (일부 플랫폼만 지원)
+    if (festival.thumbnail_url && navigator.canShare) {
+      try {
+        // 썸네일 이미지를 Blob으로 가져오기
+        const imageResponse = await fetch(festival.thumbnail_url);
+        const imageBlob = await imageResponse.blob();
+        const imageFile = new File([imageBlob], `${localizedName}.jpg`, { type: imageBlob.type });
+        
+        // files 포함한 shareData
+        const shareDataWithImage = {
+          ...shareData,
+          files: [imageFile],
+        };
+        
+        // canShare로 이미지 포함 공유 가능 여부 확인
+        if (navigator.canShare(shareDataWithImage)) {
+          console.log('✅ 이미지 포함 공유 가능');
+          await navigator.share(shareDataWithImage);
+          console.log('Web Share API 성공 (이미지 포함)');
+          return;
+        } else {
+          console.log('⚠️ 이미지 포함 공유 불가능 - 텍스트만 공유');
+        }
+      } catch (error) {
+        console.log('이미지 fetch 실패:', error.message);
+        // 이미지 실패해도 텍스트는 공유
+      }
+    }
+
+    // 7. Web Share API (텍스트만)
     if (navigator.share) {
       try {
-        // canShare로 공유 가능 여부 먼저 확인
         if (navigator.canShare && !navigator.canShare(shareData)) {
           console.log('Web Share API: 이 데이터는 공유할 수 없습니다. 클립보드로 전환합니다.');
           throw new Error('Cannot share this data');
         }
 
-        // Web Share API 실행
         await navigator.share(shareData);
         console.log('Web Share API 성공');
         return;
       } catch (error) {
-        // 사용자가 공유를 취소한 경우는 조용히 처리
         if (error.name === 'AbortError') {
           console.log('사용자가 공유를 취소했습니다.');
           return;
         }
         
-        // 다른 에러는 로그 출력 후 클립보드 복사로 폴백
         console.log('Web Share API 실패:', error.name, error.message);
         console.log('클립보드 복사로 전환합니다.');
       }
@@ -290,9 +345,11 @@ export default function FestivalDetail() {
       console.log('Web Share API가 지원되지 않는 환경입니다. 클립보드 복사를 시도합니다.');
     }
     
-    // Web Share API 미지원 또는 실패 시 URL 클립보드 복사
+    // 8. 클립보드에 풍부한 텍스트 복사
+    const clipboardText = `${shareText}\n\n${shareUrl}`;
+    
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(clipboardText);
       setShowShareCopied(true);
       setTimeout(() => {
         setShowShareCopied(false);
@@ -303,7 +360,7 @@ export default function FestivalDetail() {
       // 클립보드 API도 실패한 경우 대체 방법
       try {
         const textArea = document.createElement('textarea');
-        textArea.value = shareUrl;
+        textArea.value = clipboardText;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '0';
