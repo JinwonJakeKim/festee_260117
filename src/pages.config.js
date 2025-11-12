@@ -29,6 +29,8 @@ import AdminFestivalResearch from './pages/AdminFestivalResearch';
 import AdminFestivalExtract from './pages/AdminFestivalExtract';
 import Home from './pages/Home';
 import AdminTourAPI from './pages/AdminTourAPI';
+import MyCatches from './pages/MyCatches';
+import FesteeMagazine from './pages/FesteeMagazine';
 import Layout from './Layout.jsx';
 
 
@@ -64,6 +66,8 @@ export const PAGES = {
     "AdminFestivalExtract": AdminFestivalExtract,
     "Home": Home,
     "AdminTourAPI": AdminTourAPI,
+    "MyCatches": MyCatches,
+    "FesteeMagazine": FesteeMagazine,
 }
 
 export const pagesConfig = {

@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Heart, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X } from "lucide-react";
+import { User, Camera, Heart, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,12 +40,6 @@ export default function MyFestee() {
     retry: false,
   });
 
-  const { data: festivals } = useQuery({
-    queryKey: ['festivals'],
-    queryFn: () => base44.entities.Festival.list(),
-    initialData: [],
-  });
-
   const { data: myCatches } = useQuery({
     queryKey: ['myCatches', user?.email],
     queryFn: () => user ? base44.entities.Catch.filter({ user_email: user.email }) : [],
@@ -68,23 +61,20 @@ export default function MyFestee() {
     initialData: [],
   });
 
-  const { data: unreadMessagesCount } = useQuery({
-    queryKey: ['unreadMessagesCount', user?.email],
-    queryFn: async () => {
-      if (!user) return 0;
-      const messages = await base44.entities.Message.filter({ 
-        receiver_email: user.email,
-        is_read: false 
-      });
-      return messages.length;
-    },
+  // 팔로워/팔로잉 데이터 가져오기
+  const { data: myFollowers = [] } = useQuery({
+    queryKey: ['myFollowers', user?.email],
+    queryFn: () => user ? base44.entities.Follow.filter({ following_email: user.email }) : [],
     enabled: !!user,
-    initialData: 0,
+    initialData: [],
   });
 
-  const likedFestivals = festivals.filter(f => 
-    myLikes.some(like => like.festival_id === f.id)
-  );
+  const { data: myFollowing = [] } = useQuery({
+    queryKey: ['myFollowing', user?.email],
+    queryFn: () => user ? base44.entities.Follow.filter({ follower_email: user.email }) : [],
+    enabled: !!user,
+    initialData: [],
+  });
 
   const uploadProfileImageMutation = useMutation({
     mutationFn: async (file) => {
@@ -411,123 +401,38 @@ export default function MyFestee() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <p className="text-white text-2xl font-bold">{user.catches_count || 0}</p>
+        {/* Profile Stats - 실제 데이터 반영 */}
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <Link to={createPageUrl("MyCatches")} className="text-center">
+            <p className="text-white text-2xl font-bold">{myCatches.length}</p>
             <p className="text-gray-400 text-xs">캐치</p>
-          </div>
+          </Link>
           <div className="text-center">
-            <p className="text-white text-2xl font-bold">1.2K</p>
+            <p className="text-white text-2xl font-bold">{myFollowers.length}</p>
             <p className="text-gray-400 text-xs">팔로워</p>
           </div>
           <div className="text-center">
-            <p className="text-white text-2xl font-bold">77</p>
+            <p className="text-white text-2xl font-bold">{myFollowing.length}</p>
             <p className="text-gray-400 text-xs">팔로잉</p>
           </div>
-        </div>
-
-        {/* External Links */}
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-gray-400 border-gray-700">
-            🎥 youtube.com/@username
-          </Badge>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="px-4 py-6 grid grid-cols-3 gap-4">
-        <Card className="bg-gray-900 border-gray-800 p-4 text-center">
-          <Camera className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{user?.catches_count || 0}</p>
-          <p className="text-xs text-gray-500">Catches</p>
-        </Card>
-        <Card className="bg-gray-900 border-gray-800 p-4 text-center">
-          <Heart className="w-6 h-6 text-pink-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{myLikes.length}</p>
-          <p className="text-xs text-gray-500">Likes</p>
-        </Card>
-        <Card className="bg-gray-900 border-gray-800 p-4 text-center">
-          <MessageCircle className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{myComments.length}</p>
-          <p className="text-xs text-gray-500">Comments</p>
-        </Card>
-      </div>
-
-      {/* Recommended Festivals */}
-      {user?.recommended_festivals && user.recommended_festivals.length > 0 && (
-        <div className="px-4 mb-6">
-          <h2 className="text-white font-bold text-xl mb-4">내가 추천하는 축제 Top 3</h2>
-          <div className="space-y-3">
-            {user.recommended_festivals.map((rec) => {
-              const festival = festivals.find(f => f.id === rec.festival_id);
-              if (!festival) return null;
-              
-              return (
-                <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-                  <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4">
-                    <div className="flex gap-3">
-                      <img
-                        src={festival.thumbnail_url}
-                        alt={festival.name}
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-white font-bold mb-1">{festival.name}</h3>
-                        <p className="text-gray-400 text-sm mb-2">
-                          {festival.city}, {festival.country}
-                        </p>
-                        <p className="text-gray-500 text-xs mb-2">
-                          {safeFormatDate(festival.start_date, 'yyyy.MM.dd')}
-                        </p>
-                        {rec.comment && (
-                          <p className="text-cyan-400 text-sm italic">"{rec.comment}"</p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* My Catches */}
-      <div className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-bold text-xl">내 Catch</h2>
-          <Link to={createPageUrl("Catch")}>
-            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
-              더보기 →
-            </Button>
+          <Link to={createPageUrl("MyLikes")} className="text-center">
+            <p className="text-white text-2xl font-bold">{myLikes.length}</p>
+            <p className="text-gray-400 text-xs">좋아요</p>
           </Link>
         </div>
 
-        {myCatches.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
-            {myCatches.slice(0, 6).map((catchItem) => (
-              <div key={catchItem.id} className="aspect-square rounded-lg overflow-hidden relative">
-                <img
-                  src={catchItem.image_url}
-                  alt={catchItem.festival_name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
-                  <p className="text-white text-xs font-bold truncate">{catchItem.festival_name}</p>
-                </div>
-              </div>
-            ))}
+        {/* External Links */}
+        {user.youtube_url && (
+          <div className="flex gap-2">
+            <Badge variant="outline" className="text-gray-400 border-gray-700">
+              🎥 {user.youtube_url}
+            </Badge>
           </div>
-        ) : (
-          <Card className="bg-gray-900 border-gray-800 p-8 text-center">
-            <Camera className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">아직 인증한 축제가 없습니다</p>
-          </Card>
         )}
       </div>
 
       {/* Menu Items */}
-      <div className="px-4 space-y-2">
+      <div className="px-4 py-6 space-y-2">
         {menuItems.map((item) => (
           <Link key={item.label} to={item.link}>
             <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 flex items-center justify-between">
