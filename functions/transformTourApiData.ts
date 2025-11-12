@@ -1,4 +1,3 @@
-
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
@@ -42,6 +41,29 @@ Deno.serve(async (req) => {
     const cleanHomepage = (homepage) => {
       if (!homepage) return '';
       return homepage.replace(/<[^>]*>/g, '').trim();
+    };
+    
+    // 웹사이트 URL 파싱 - 여러 개의 링크 분리
+    const parseWebsiteUrls = (homepage) => {
+      if (!homepage) return '';
+      
+      // HTML 태그 제거
+      let cleaned = homepage.replace(/<[^>]*>/g, '').trim();
+      
+      // 여러 URL 패턴 찾기
+      const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
+      const matches = cleaned.match(urlPattern);
+      
+      if (matches && matches.length > 1) {
+        // 여러 개의 URL이 있는 경우 첫 번째만 반환
+        console.log(`[Transform] 📎 Found ${matches.length} URLs, using first one: ${matches[0]}`);
+        return matches[0].trim();
+      } else if (matches && matches.length === 1) {
+        return matches[0].trim();
+      }
+      
+      // URL 패턴이 없으면 원본 반환
+      return cleaned;
     };
     
     // 중복 문장 제거
@@ -94,20 +116,23 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 - 완전히 새로운 접근 방식
+    // 텍스트 포맷팅 - 숫자 뒤 줄바꿈 제거 개선
     const formatText = (text) => {
       if (!text) return '';
       
       console.log(`[FormatText] 📝 Input length: ${text.length} chars`);
-      console.log(`[FormatText] Input preview: ${text.substring(0, 100)}...`);
       
-      // 1. 모든 개행을 공백으로 변환 (처음부터 다시 시작)
+      // 1. 모든 개행을 공백으로 변환
       text = text.replace(/\n+/g, ' ');
       
       // 2. 연속 공백 제거
       text = text.replace(/\s{2,}/g, ' ');
       
-      // 3. 이모지 및 특수 키워드 앞뒤로 개행 추가
+      // 3. '숫자.' 바로 뒤의 불필요한 공백/줄바꿈 정리
+      // '1. 메인프로그램' 형태로 만들기
+      text = text.replace(/(\d+)\.\s+/g, '$1. ');
+      
+      // 4. 이모지 및 특수 키워드 앞뒤로 개행 추가
       const specialKeywords = [
         '📋', '🎪', '📍', '💰', '📌', '🎉', '🎊', '🎭', '🎨', '🎵',
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
@@ -123,49 +148,84 @@ Deno.serve(async (req) => {
         text = text.replace(regex, '\n\n$1\n');
       });
       
-      // 4. 한국어 문장 끝 감지 및 개행 추가 (핵심!)
-      // "다.", "요.", "니다.", "습니다." 뒤에 한글이 오면 개행
+      // 5. 한국어 문장 끝 감지 및 개행 추가
       text = text.replace(/(다\.|요\.|니다\.|습니다\.|요!\s|다!\s|까\?)\s+([가-힣A-Z0-9])/g, '$1\n\n$2');
       
-      // 5. 마침표, 느낌표, 물음표 뒤에 대문자나 한글이 오면 개행
+      // 6. 마침표, 느낌표, 물음표 뒤에 대문자나 한글이 오면 개행
       text = text.replace(/([.!?])\s+([가-힣A-Z][가-힣a-z])/g, '$1\n\n$2');
       
-      // 6. 숫자 리스트 앞에 개행 추가
-      text = text.replace(/\s+(\d+\.\s+[가-힣])/g, '\n\n$1');
+      // 7. 숫자 리스트 앞에 개행 추가 (하지만 숫자 뒤는 한 칸만)
+      text = text.replace(/([^\d])\s*(\d+\.\s+)/g, '$1\n\n$2');
       
-      // 7. 불렛 포인트 앞에 개행 추가
+      // 8. 불렛 포인트 앞에 개행 추가
       text = text.replace(/\s+(○|-|\*|•)\s+/g, '\n$1 ');
       
-      // 8. 섹션 제목 (대괄호 등) 앞뒤 개행
+      // 9. 섹션 제목 (대괄호 등) 앞뒤 개행
       text = text.replace(/\s*(\[.+?\]|【.+?】)\s*/g, '\n\n$1\n\n');
       
-      // 9. 날짜 형식 앞에 개행
+      // 10. 날짜 형식 앞에 개행
       text = text.replace(/\s+(\d{4}년|\d{1,2}월\s*\d{1,2}일)/g, '\n\n$1');
       
-      // 10. 과도한 개행 정리
+      // 11. 과도한 개행 정리
       text = text.replace(/\n{3,}/g, '\n\n');
       
-      // 11. 각 줄 trim
+      // 12. 각 줄 trim
       const lines = text.split('\n');
       const trimmedLines = lines.map(line => line.trim()).filter(line => line.length > 0);
       text = trimmedLines.join('\n');
       
       const outputText = text.trim();
-      const paragraphBreaks = (outputText.match(/\n\n/g) || []).length;
-      const singleBreaks = (outputText.match(/\n(?![\n])/g) || []).length; // Count single line breaks, not including second \n of \n\n
-      
       console.log(`[FormatText] ✓ Output length: ${outputText.length} chars`);
-      console.log(`[FormatText] ✓ Paragraph breaks (\\n\\n): ${paragraphBreaks}`);
-      console.log(`[FormatText] ✓ Single breaks (\\n): ${singleBreaks}`);
-      console.log(`[FormatText] Output preview: ${outputText.substring(0, 150)}...`);
       
       return outputText;
     };
     
-    // AI 기반 요약 및 하이라이트 생성
-    const generateSummaryAndHighlights = async (festivalName, overview, additionalInfo) => {
+    // 일정 추출 함수
+    const extractSchedule = (text) => {
+      if (!text) return [];
+      
+      const schedule = [];
+      
+      // 시간 패턴 찾기: "10:00~12:00", "오전 10시", "14:00" 등
+      const timePatterns = [
+        /(\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2})\s*[:\-]?\s*([^\n]+)/g,
+        /(오전|오후)\s*(\d{1,2})\s*시\s*[:\-]?\s*([^\n]+)/g,
+        /(\d{1,2}:\d{2})\s*[:\-]?\s*([^\n]+)/g
+      ];
+      
+      timePatterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          if (match[1] && match[2]) {
+            schedule.push({
+              time: match[1].trim(),
+              activity: match[2].trim().substring(0, 100)
+            });
+          }
+        }
+      });
+      
+      // 중복 제거
+      const uniqueSchedule = [];
+      const seen = new Set();
+      
+      schedule.forEach(item => {
+        const key = `${item.time}-${item.activity}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueSchedule.push(item);
+        }
+      });
+      
+      console.log(`[Transform] 📅 Extracted ${uniqueSchedule.length} schedule items`);
+      
+      return uniqueSchedule;
+    };
+    
+    // AI 기반 요약, 하이라이트, 태그 생성
+    const generateAIContent = async (festivalName, overview, additionalInfo) => {
       try {
-        console.log(`[Transform] 🤖 Generating AI summary and highlights...`);
+        console.log(`[Transform] 🤖 Generating AI content (summary, highlights, tags)...`);
         
         // 컨텍스트 구성
         let context = `축제명: ${festivalName}\n\n`;
@@ -177,11 +237,16 @@ Deno.serve(async (req) => {
         if (additionalInfo.placeinfo) {
           context += `행사장 정보:\n${additionalInfo.placeinfo}\n\n`;
         }
+        if (additionalInfo.category) {
+          context += `카테고리: ${additionalInfo.category}\n\n`;
+        }
         
         const prompt = `다음은 한국 축제에 대한 정보입니다. 이 축제를 사용자에게 매력적으로 소개하기 위해:
 
 1. **요약**: 축제의 핵심을 1-2문장으로 간결하고 매력적으로 요약해주세요. (최대 120자)
 2. **하이라이트**: 이 축제의 주요 특징이나 볼거리를 3-4개의 짧은 포인트로 정리해주세요. 각 포인트는 한 문장으로 간결하게 작성해주세요.
+3. **태그**: 이 축제를 잘 설명하는 태그 5-7개를 생성해주세요. 태그는 간결하게 2-4글자로, 축제의 특징, 대상, 분위기 등을 나타내는 키워드여야 합니다.
+   예시 태그: "가족친화적", "음악", "전통문화", "먹거리", "체험행사", "무료입장", "야간행사" 등
 
 ${context}
 
@@ -201,27 +266,35 @@ ${context}
                 type: "array",
                 items: { type: "string" },
                 description: "3-4개의 하이라이트 포인트"
+              },
+              tags: {
+                type: "array",
+                items: { type: "string" },
+                description: "5-7개의 축제 태그"
               }
             },
-            required: ["summary", "highlights"]
+            required: ["summary", "highlights", "tags"]
           }
         });
         
         console.log(`[Transform] ✓ AI generated summary: ${result.summary?.substring(0, 60)}...`);
         console.log(`[Transform] ✓ AI generated ${result.highlights?.length || 0} highlights`);
+        console.log(`[Transform] ✓ AI generated ${result.tags?.length || 0} tags: ${result.tags?.join(', ')}`);
         
         return {
           summary: result.summary || overview.substring(0, 120),
-          highlights: result.highlights || []
+          highlights: result.highlights || [],
+          tags: result.tags || []
         };
         
       } catch (error) {
         console.error(`[Transform] AI generation error:`, error.message);
-        // AI 실패 시 폴백: 기존 방식
+        // AI 실패 시 폴백
         const fallbackSummary = overview.substring(0, 120) + (overview.length > 120 ? '...' : '');
         return {
           summary: fallbackSummary,
-          highlights: []
+          highlights: [],
+          tags: []
         };
       }
     };
@@ -483,18 +556,23 @@ ${context}
         
         console.log(`[Transform] Overview length: ${cleanedOverview.length} chars`);
         
-        // ===== AI 기반 요약 및 하이라이트 생성 =====
-        const aiResult = await generateSummaryAndHighlights(
+        // ===== 카테고리 정보 =====
+        const festivalCategory = mapCategory(rawData.cat3);
+        
+        // ===== AI 기반 요약, 하이라이트, 태그 생성 =====
+        const aiResult = await generateAIContent(
           rawData.title,
           cleanedOverview,
           {
             program: introData.program,
-            placeinfo: introData.placeinfo
+            placeinfo: introData.placeinfo,
+            category: festivalCategory
           }
         );
         
         const summary = aiResult.summary;
         const highlights = aiResult.highlights;
+        const aiTags = aiResult.tags || [];
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
@@ -600,14 +678,12 @@ ${context}
         
         if (sections.length > 0) {
           console.log(`[Transform] 📋 Adding ${sections.length} additional sections...`);
-          // 각 섹션도 포맷팅 적용하고, 섹션 간 확실한 구분을 위해 \n\n 사용
           const formattedSections = sections.map((section, idx) => {
             const formatted = formatText(section);
             console.log(`[Transform]   Section ${idx + 1}: ${formatted.length} chars`);
             return formatted;
           });
           
-          // 섹션들을 \n\n으로 확실하게 구분하여 연결
           fullDescription += '\n\n' + formattedSections.join('\n\n');
         }
         
@@ -617,18 +693,21 @@ ${context}
         
         console.log(`[Transform] ✅ FINAL Description:`);
         console.log(`[Transform]   - Total length: ${fullDescription.length} chars`);
-        console.log(`[Transform]   - Paragraph breaks (\\n\\n): ${(fullDescription.match(/\n\n/g) || []).length}`);
-        console.log(`[Transform]   - Single breaks (\\n): ${(fullDescription.match(/\n(?![\n])/g) || []).length}`);
-        console.log(`[Transform]   - Preview: ${fullDescription.substring(0, 200)}...`);
         
-        console.log(`[Transform] ✓ Summary: ${summary.length} chars - "${summary}"`);
+        // ===== 일정 추출 =====
+        const scheduleItems = extractSchedule(fullDescription + ' ' + (introData.program || ''));
+        
+        console.log(`[Transform] ✓ Summary: ${summary.length} chars`);
         console.log(`[Transform] ✓ Highlights: ${highlights.length} items`);
-        highlights.forEach((h, idx) => console.log(`[Transform]   ${idx + 1}. ${h}`));
+        console.log(`[Transform] ✓ AI Tags: ${aiTags.length} items - ${aiTags.join(', ')}`);
+        console.log(`[Transform] ✓ Schedule: ${scheduleItems.length} items`);
         
         // ===== 기타 정보 =====
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
         const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
-        const websiteUrl = cleanHomepage(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
+        
+        // 웹사이트 URL 파싱 개선
+        const websiteUrl = parseWebsiteUrls(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
         
         let organizerInfo = '';
         if (introData.sponsor1 || rawData.sponsor1) {
@@ -640,6 +719,19 @@ ${context}
         
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
+        // ===== media_urls 구성 (여러 이미지) =====
+        const mediaUrls = imageGallery.map(img => ({
+          type: 'image',
+          url: img.originimgurl,
+          caption: img.imgname || rawData.title
+        }));
+        
+        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items`);
+        
+        // ===== 최종 태그 구성 =====
+        const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
+        const finalTags = [...new Set([...baseTagsArray, ...aiTags])]; // 중복 제거
+        
         // ===== Festival 엔티티 생성 =====
         const festival = {
           name: detailData.title || rawData.title,
@@ -647,13 +739,14 @@ ${context}
           summary: summary,
           country: '대한민국',
           city: extractCity(detailData.addr1 || rawData.addr1),
-          category: mapCategory(rawData.cat3),
+          category: festivalCategory,
           start_date: formattedStartDate,
           end_date: formattedEndDate,
           latitude: latitude,
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           video_url: '',
+          media_urls: mediaUrls, // 여러 이미지
           website: websiteUrl,
           price: 0,
           opening_hours: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
@@ -666,12 +759,13 @@ ${context}
           },
           highlights: highlights,
           lineup: [],
-          tags: ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)],
+          tags: finalTags,
           star_rating: 0,
           likes_count: 0,
           catches_count: 0,
           restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
           recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
+          schedule: scheduleItems,
           image_gallery_urls: imageGallery
         };
         
