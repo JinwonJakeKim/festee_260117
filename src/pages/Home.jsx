@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar } from "lucide-react";
+import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +96,7 @@ export default function Home() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
+  const [showBetaBanner, setShowBetaBanner] = useState(true);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { getLocalizedContent } = useFestivalLocalizedContent();
@@ -120,6 +120,19 @@ export default function Home() {
     const randomPlaceholder = placeholders[Math.floor(Math.random() * placeholders.length)];
     setSearchPlaceholder(randomPlaceholder);
   }, []);
+
+  // 베타 배너 localStorage 체크
+  useEffect(() => {
+    const betaBannerDismissed = localStorage.getItem('betaBannerDismissed');
+    if (betaBannerDismissed === 'true') {
+      setShowBetaBanner(false);
+    }
+  }, []);
+
+  const handleCloseBetaBanner = () => {
+    setShowBetaBanner(false);
+    localStorage.setItem('betaBannerDismissed', 'true');
+  };
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -539,6 +552,39 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* Beta Banner */}
+      <AnimatePresence>
+        {showBetaBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="sticky top-[73px] z-40 bg-gradient-to-r from-cyan-900/80 to-purple-900/80 backdrop-blur-sm border-b border-cyan-400/30"
+          >
+            <div className="px-4 py-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <AlertCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">
+                    현재 베타 서비스 중입니다 🚀
+                  </p>
+                  <p className="text-cyan-300 text-xs truncate">
+                    피드백을 남겨 더 나은 서비스를 만들어주세요!
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseBetaBanner}
+                className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0 ml-2"
+                aria-label="배너 닫기"
+              >
+                <X className="w-4 h-4 text-gray-300" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {banners.length > 0 && (
         <div className="px-4 py-4">
