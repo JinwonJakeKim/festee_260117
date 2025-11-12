@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Search, Link as LinkIcon, Globe, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Search, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { createPageUrl } from "@/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -31,6 +33,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState("festivals");
   const [selectedFestivals, setSelectedFestivals] = useState(new Set());
+  const [deletionProgress, setDeletionProgress] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -104,39 +107,86 @@ export default function AdminDashboard() {
       console.log('[Admin] Starting deletion of festivals:', festivalIds);
       
       const count = festivalIds.length;
-      const confirmed = confirm(`선택한 ${count}개의 축제를 삭제하시겠습니까?`);
+      const confirmed = confirm(`선택한 ${count}개의 축제를 삭제하시겠습니까?\n\n삭제 진행 상황을 확인할 수 있습니다.`);
       
       if (!confirmed) {
         console.log('[Admin] Deletion cancelled by user');
-        throw new Error('CANCELLED'); // 취소를 에러로 처리하여 onSuccess가 실행되지 않도록
+        throw new Error('CANCELLED');
       }
       
       console.log('[Admin] User confirmed deletion');
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
+      
+      // 진행 상황 초기화
+      setDeletionProgress({
+        total: count,
+        current: 0,
+        success: 0,
+        failed: 0,
+        errors: [],
+        items: []
+      });
       
       // 각 축제 삭제
-      for (const id of festivalIds) {
+      for (let i = 0; i < festivalIds.length; i++) {
+        const id = festivalIds[i];
+        const festivalName = festivals.find(f => f.id === id)?.name || id;
+        
         try {
-          console.log(`[Admin] Deleting festival ${id}...`);
+          console.log(`[Admin] Deleting festival ${i + 1}/${count}: ${festivalName}...`);
+          
+          // 진행 상황 업데이트 - 시작
+          setDeletionProgress(prev => ({
+            ...prev,
+            current: i + 1,
+            items: [...prev.items, { name: festivalName, status: 'deleting' }]
+          }));
+          
           await base44.entities.Festival.delete(id);
-          successCount++;
-          console.log(`[Admin] ✓ Festival ${id} deleted successfully`);
+          
+          console.log(`[Admin] ✓ Festival ${festivalName} deleted successfully`);
+          
+          // 진행 상황 업데이트 - 성공
+          setDeletionProgress(prev => ({
+            ...prev,
+            success: prev.success + 1,
+            items: prev.items.map((item, idx) => 
+              idx === prev.items.length - 1 
+                ? { ...item, status: 'success' }
+                : item
+            )
+          }));
+          
         } catch (error) {
-          errorCount++;
-          console.error(`[Admin] ✗ Failed to delete festival ${id}:`, error);
-          errors.push({ id, error: error.message });
+          console.error(`[Admin] ✗ Failed to delete festival ${festivalName}:`, error);
+          
+          // 진행 상황 업데이트 - 실패
+          setDeletionProgress(prev => ({
+            ...prev,
+            failed: prev.failed + 1,
+            errors: [...prev.errors, { id, name: festivalName, error: error.message }],
+            items: prev.items.map((item, idx) => 
+              idx === prev.items.length - 1 
+                ? { ...item, status: 'failed', error: error.message }
+                : item
+            )
+          }));
+        }
+        
+        // 각 삭제 사이에 짧은 딜레이 (UI 업데이트를 위해)
+        if (i < festivalIds.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
       
-      console.log(`[Admin] Deletion complete: ${successCount} success, ${errorCount} errors`);
+      const finalResult = {
+        total: count,
+        success: count - (deletionProgress?.errors?.length || 0), // Use the final count of errors, assuming deletionProgress is updated correctly
+        failed: (deletionProgress?.errors?.length || 0)
+      };
       
-      if (errorCount > 0) {
-        console.error('[Admin] Errors during deletion:', errors);
-      }
+      console.log(`[Admin] Deletion complete:`, finalResult);
       
-      return { successCount, errorCount, errors };
+      return finalResult;
     },
     onSuccess: (result) => {
       console.log('[Admin] onSuccess called with result:', result);
@@ -144,11 +194,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['festivals'] });
       setSelectedFestivals(new Set());
       
-      if (result.errorCount === 0) {
-        alert(`${result.successCount}개의 축제가 삭제되었습니다`);
-      } else {
-        alert(`${result.successCount}개 삭제 성공, ${result.errorCount}개 실패\n\n실패한 항목은 콘솔을 확인해주세요.`);
-      }
+      // 진행 모달은 사용자가 닫을 때까지 유지
     },
     onError: (error) => {
       console.error('[Admin] Mutation error:', error);
@@ -157,6 +203,8 @@ export default function AdminDashboard() {
       if (error.message !== 'CANCELLED') {
         alert('축제 삭제 중 오류가 발생했습니다.\n\n' + error.message);
       }
+      
+      setDeletionProgress(null); // Close the progress modal if an unexpected error occurs or it's cancelled
     },
   });
 
@@ -195,6 +243,11 @@ export default function AdminDashboard() {
     deleteSelectedFestivalsMutation.mutate(Array.from(selectedFestivals));
   };
 
+  // 삭제 진행 모달 닫기
+  const handleCloseProgress = () => {
+    setDeletionProgress(null);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -208,9 +261,157 @@ export default function AdminDashboard() {
   }
 
   const allSelected = festivals.length > 0 && selectedFestivals.size === festivals.length;
+  const isDeleting = deleteSelectedFestivalsMutation.isLoading;
+  const isDeletionComplete = deletionProgress && deletionProgress.current === deletionProgress.total;
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      {/* 삭제 진행 상황 모달 */}
+      <AnimatePresence>
+        {deletionProgress && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+            />
+
+            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-gray-900 rounded-2xl border border-gray-800 p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+              >
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-white text-xl font-bold flex items-center gap-2">
+                      {isDeletionComplete ? (
+                        <>
+                          <CheckCircle2 className="w-6 h-6 text-green-400" />
+                          삭제 완료
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                          삭제 진행 중
+                        </>
+                      )}
+                    </h3>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {deletionProgress.current} / {deletionProgress.total} 처리됨
+                    </p>
+                  </div>
+                  {isDeletionComplete && (
+                    <button
+                      onClick={handleCloseProgress}
+                      className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                </div>
+
+                {/* 진행률 바 */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400 text-sm">진행률</span>
+                    <span className="text-white font-bold">
+                      {Math.round((deletionProgress.current / deletionProgress.total) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: `${(deletionProgress.current / deletionProgress.total) * 100}%` 
+                      }}
+                      className="h-full bg-gradient-to-r from-cyan-500 to-pink-500"
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </div>
+
+                {/* 통계 */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <Card className="bg-gray-800 border-gray-700 p-3 text-center">
+                    <div className="text-2xl font-bold text-white">{deletionProgress.total}</div>
+                    <div className="text-xs text-gray-400">전체</div>
+                  </Card>
+                  <Card className="bg-green-900/20 border-green-400/30 p-3 text-center">
+                    <div className="text-2xl font-bold text-green-400">{deletionProgress.success}</div>
+                    <div className="text-xs text-green-400">성공</div>
+                  </Card>
+                  <Card className="bg-red-900/20 border-red-400/30 p-3 text-center">
+                    <div className="text-2xl font-bold text-red-400">{deletionProgress.failed}</div>
+                    <div className="text-xs text-red-400">실패</div>
+                  </Card>
+                </div>
+
+                {/* 항목 목록 */}
+                <div className="flex-1 overflow-y-auto space-y-2">
+                  {deletionProgress.items.map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`flex items-center gap-3 p-3 rounded-lg ${
+                        item.status === 'success' 
+                          ? 'bg-green-900/20 border border-green-400/30'
+                          : item.status === 'failed'
+                          ? 'bg-red-900/20 border border-red-400/30'
+                          : 'bg-gray-800 border border-gray-700'
+                      }`}
+                    >
+                      {item.status === 'deleting' && (
+                        <Loader2 className="w-5 h-5 text-cyan-400 animate-spin flex-shrink-0" />
+                      )}
+                      {item.status === 'success' && (
+                        <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                      )}
+                      {item.status === 'failed' && (
+                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium truncate ${
+                          item.status === 'success' ? 'text-green-400'
+                          : item.status === 'failed' ? 'text-red-400'
+                          : 'text-white'
+                        }`}>
+                          {item.name}
+                        </p>
+                        {item.error && (
+                          <p className="text-xs text-red-300 mt-1 truncate">
+                            {item.error}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* 완료 버튼 */}
+                {isDeletionComplete && (
+                  <div className="mt-6">
+                    <Button
+                      onClick={handleCloseProgress}
+                      className="w-full bg-cyan-500 hover:bg-cyan-600"
+                    >
+                      확인
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -307,11 +508,11 @@ export default function AdminDashboard() {
                         </span>
                         <Button
                           onClick={handleDeleteSelected}
-                          disabled={deleteSelectedFestivalsMutation.isLoading}
+                          disabled={isDeleting}
                           className="bg-red-500 hover:bg-red-600 text-white"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          {deleteSelectedFestivalsMutation.isLoading ? '삭제 중...' : '선택 삭제'}
+                          {isDeleting ? '삭제 중...' : '선택 삭제'}
                         </Button>
                       </div>
                     )}
