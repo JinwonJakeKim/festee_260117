@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -121,9 +122,9 @@ export default function Home() {
     setSearchPlaceholder(randomPlaceholder);
   }, []);
 
-  // 베타 배너 localStorage 체크
+  // 베타 배너 sessionStorage 체크 (세션 단위로만 저장)
   useEffect(() => {
-    const betaBannerDismissed = localStorage.getItem('betaBannerDismissed');
+    const betaBannerDismissed = sessionStorage.getItem('betaBannerDismissed');
     if (betaBannerDismissed === 'true') {
       setShowBetaBanner(false);
     }
@@ -131,7 +132,8 @@ export default function Home() {
 
   const handleCloseBetaBanner = () => {
     setShowBetaBanner(false);
-    localStorage.setItem('betaBannerDismissed', 'true');
+    // sessionStorage 사용: 브라우저 탭을 닫으면 다시 초기화됨
+    sessionStorage.setItem('betaBannerDismissed', 'true');
   };
 
   const { data: user } = useQuery({
