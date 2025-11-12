@@ -574,12 +574,13 @@ export default function FestivalDetail() {
       </div>
 
       {/* Hero Media Carousel - 수정된 버전 */}
-      <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+      <div className="relative w-full bg-black" style={{ paddingTop: '56.25%' }}>
         <div 
-          className="absolute top-0 left-0 w-full h-full overflow-hidden" 
+          className="absolute top-0 left-0 w-full h-full overflow-hidden cursor-pointer bg-black" 
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onClick={handleGalleryClick}
         >
           {currentMedia?.type === 'youtube' ? (
             (() => {
@@ -610,7 +611,7 @@ export default function FestivalDetail() {
           ) : currentMedia?.type === 'video' ? (
             <video
               src={currentMedia.url}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               muted
               loop
@@ -625,7 +626,7 @@ export default function FestivalDetail() {
             <img
               src={currentMedia?.url || festival.thumbnail_url}
               alt={currentMedia?.caption || festival.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onError={(e) => {
                 console.error('Image load error:', e.target.src);
                 // Fallback to a placeholder image if the image fails to load
@@ -636,18 +637,9 @@ export default function FestivalDetail() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
           
-          {/* Caption (Adjusted position, if still desired) */}
-          {currentMedia?.caption && (
-            <div className="absolute bottom-[72px] left-4 right-4 z-10 hidden md:block"> {/* Adjusted bottom to make space, hidden on mobile for cleaner look */}
-              <p className="text-white text-sm bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
-                {currentMedia.caption}
-              </p>
-            </div>
-          )}
-
           {/* 컨텐츠 번호 표시 - 왼쪽 아래 */}
           {mediaItems.length > 0 && (
-            <div className="absolute bottom-4 left-4 z-10">
+            <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
               <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5">
                 <span className="text-white font-bold text-sm">
                   {mediaIndex + 1}/{mediaItems.length}
@@ -659,8 +651,11 @@ export default function FestivalDetail() {
           {/* 갤러리 버튼 - 오른쪽 아래 */}
           {allGalleryItems.length > 0 && (
             <button
-              onClick={handleGalleryClick}
-              className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGalleryClick();
+              }}
+              className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors pointer-events-auto"
             >
               <Images className="w-4 h-4 text-white" />
               <span className="text-white font-medium text-sm">갤러리</span>
@@ -674,7 +669,10 @@ export default function FestivalDetail() {
             {mediaItems.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setMediaIndex(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMediaIndex(idx);
+                }}
                 className={`h-2 rounded-full transition-all ${
                   idx === mediaIndex ? 'bg-cyan-400 w-4' : 'bg-gray-600 w-2'
                 }`}
@@ -687,13 +685,19 @@ export default function FestivalDetail() {
         {mediaItems.length > 1 && (
           <>
             <button
-              onClick={() => setMediaIndex(prev => (prev - 1 + mediaItems.length) % mediaItems.length)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMediaIndex(prev => (prev - 1 + mediaItems.length) % mediaItems.length);
+              }}
               className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-10"
             >
               <ChevronRight className="w-6 h-6 text-white rotate-180" />
             </button>
             <button
-              onClick={() => setMediaIndex(prev => (prev + 1) % mediaItems.length)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMediaIndex(prev => (prev + 1) % mediaItems.length);
+              }}
               className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-10"
             >
               <ChevronRight className="w-6 h-6 text-white" />
@@ -752,7 +756,7 @@ export default function FestivalDetail() {
                 {festival.category === "음식" && <Utensils className="w-3.5 h-3.5" />}
                 {festival.category === "스포츠" && <Trophy className="w-3.5 h-3.5" />}
                 {festival.category === "지역축제" && <MapPin className="w-3.5 h-3.5" />}
-                {!["음악", "문화", "예술", "음식", "스포츠", "지역축제"].includes(festival.category) && <Star className="w-3.5 h-3.5" />}
+                {!["음악", "문화", "예술", "음식", "스포츠", "지역축제"].includes(festival.category) && <MapPin className="w-3.5 h-3.5" />}
                 {festival.category}
               </Badge>
             )}
@@ -808,7 +812,7 @@ export default function FestivalDetail() {
       <Tabs defaultValue="intro" className="px-4">
         <TabsList className="w-full bg-gray-900 grid grid-cols-4">
           <TabsTrigger value="intro" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">소개</TabsTrigger>
-          <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문</TabsTrigger>
+          <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문정보</TabsTrigger>
           <TabsTrigger value="lineup" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">라인업</TabsTrigger>
           <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">일정</TabsTrigger>
         </TabsList>
@@ -939,10 +943,7 @@ export default function FestivalDetail() {
                   <MapPin className="w-5 h-5 text-pink-500" />
                   위치
                 </h3>
-                <p className="text-white font-bold mb-2">{festival.city}, {festival.country}</p>
-                <p className="text-gray-400 text-sm mb-4">
-                  {festival.latitude.toFixed(4)}, {festival.longitude.toFixed(4)}
-                </p>
+                <p className="text-white font-bold mb-4">{festival.city}, {festival.country}</p>
                 <div className="flex flex-col gap-2">
                   <Link to={createPageUrl("FestivalMap")}>
                     <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
@@ -1203,10 +1204,10 @@ export default function FestivalDetail() {
                           <span className="text-cyan-400 font-bold text-base">
                             ₩{platform.price.toLocaleString()}
                           </span>
-                          <Badge variant="outline" className="text-xs border-gray-700 text-gray-400 px-1.5 py-0 h-4">
+                          {/* <Badge variant="outline" className="text-xs border-gray-700 text-gray-400 px-1.5 py-0 h-4">
                             <Eye className="w-3 h-3 mr-1 inline" />
                             {platform.views.toLocaleString()}
-                          </Badge>
+                          </Badge> */}
                         </div>
                         <p className="text-gray-400 text-xs">✓ {platform.benefit}</p>
                       </div>
