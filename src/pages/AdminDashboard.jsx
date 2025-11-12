@@ -101,23 +101,61 @@ export default function AdminDashboard() {
 
   const deleteSelectedFestivalsMutation = useMutation({
     mutationFn: async (festivalIds) => {
+      console.log('[Admin] Starting deletion of festivals:', festivalIds);
+      
       const count = festivalIds.length;
-      if (!confirm(`선택한 ${count}개의 축제를 삭제하시겠습니까?`)) {
-        return;
+      const confirmed = confirm(`선택한 ${count}개의 축제를 삭제하시겠습니까?`);
+      
+      if (!confirmed) {
+        console.log('[Admin] Deletion cancelled by user');
+        throw new Error('CANCELLED'); // 취소를 에러로 처리하여 onSuccess가 실행되지 않도록
       }
+      
+      console.log('[Admin] User confirmed deletion');
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
       
       // 각 축제 삭제
       for (const id of festivalIds) {
-        await base44.entities.Festival.delete(id);
+        try {
+          console.log(`[Admin] Deleting festival ${id}...`);
+          await base44.entities.Festival.delete(id);
+          successCount++;
+          console.log(`[Admin] ✓ Festival ${id} deleted successfully`);
+        } catch (error) {
+          errorCount++;
+          console.error(`[Admin] ✗ Failed to delete festival ${id}:`, error);
+          errors.push({ id, error: error.message });
+        }
       }
       
-      return count;
+      console.log(`[Admin] Deletion complete: ${successCount} success, ${errorCount} errors`);
+      
+      if (errorCount > 0) {
+        console.error('[Admin] Errors during deletion:', errors);
+      }
+      
+      return { successCount, errorCount, errors };
     },
-    onSuccess: (count) => {
-      if (count) {
-        queryClient.invalidateQueries({ queryKey: ['festivals'] });
-        setSelectedFestivals(new Set());
-        alert(`${count}개의 축제가 삭제되었습니다`);
+    onSuccess: (result) => {
+      console.log('[Admin] onSuccess called with result:', result);
+      
+      queryClient.invalidateQueries({ queryKey: ['festivals'] });
+      setSelectedFestivals(new Set());
+      
+      if (result.errorCount === 0) {
+        alert(`${result.successCount}개의 축제가 삭제되었습니다`);
+      } else {
+        alert(`${result.successCount}개 삭제 성공, ${result.errorCount}개 실패\n\n실패한 항목은 콘솔을 확인해주세요.`);
+      }
+    },
+    onError: (error) => {
+      console.error('[Admin] Mutation error:', error);
+      
+      // 취소된 경우는 에러 메시지 표시하지 않음
+      if (error.message !== 'CANCELLED') {
+        alert('축제 삭제 중 오류가 발생했습니다.\n\n' + error.message);
       }
     },
   });
@@ -152,6 +190,8 @@ export default function AdminDashboard() {
       alert('삭제할 축제를 선택해주세요');
       return;
     }
+    
+    console.log('[Admin] handleDeleteSelected called with:', Array.from(selectedFestivals));
     deleteSelectedFestivalsMutation.mutate(Array.from(selectedFestivals));
   };
 
