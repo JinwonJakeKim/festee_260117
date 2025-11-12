@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Eye, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -662,7 +662,7 @@ export default function FestivalDetail() {
               onClick={handleGalleryClick}
               className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors"
             >
-              <Eye className="w-4 h-4 text-white" />
+              <Images className="w-4 h-4 text-white" />
               <span className="text-white font-medium text-sm">갤러리</span>
             </button>
           )}
@@ -1478,7 +1478,7 @@ export default function FestivalDetail() {
                     >
                       {item.type === 'youtube' || item.type === 'video' ? (
                         <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                          <Eye className="w-6 h-6 text-white" />
+                          <Play className="w-6 h-6 text-white" />
                         </div>
                       ) : (
                         <img
