@@ -3,16 +3,16 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, Search, ArrowLeft, Star, Calendar as CalendarIcon, Globe, Tag } from "lucide-react";
+import { Heart, ArrowLeft, Calendar as CalendarIcon, Globe, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
+import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
 
 const removeDuplicateFestivals = (festivals) => {
   const seen = new Set();
@@ -21,15 +21,6 @@ const removeDuplicateFestivals = (festivals) => {
     seen.add(festival.id);
     return !duplicate;
   });
-};
-
-const calculateInfoScore = (festival) => {
-  let score = 0;
-  const fields = ['name', 'description', 'start_date', 'end_date', 'location', 'venue', 'price_info', 'website', 'contact', 'image_url'];
-  fields.forEach(field => {
-    if (festival[field]) score++;
-  });
-  return (score / fields.length) * 5;
 };
 
 const safeFormatDate = (dateString, formatStr) => {
@@ -49,16 +40,10 @@ const formatNumber = (num) => {
 };
 
 const getRankColor = (index) => {
-  if (index === 0) return 'bg-gradient-to-r from-yellow-400 to-yellow-600';
-  if (index === 1) return 'bg-gradient-to-r from-gray-300 to-gray-400';
-  if (index === 2) return 'bg-gradient-to-r from-orange-400 to-orange-600';
-  return 'bg-gray-700';
-};
-
-const getStarRating = (festival) => {
-  const infoScore = calculateInfoScore(festival);
-  const popularityScore = Math.min((festival.likes_count || 0) / 100, 5);
-  return Math.min(Math.round((infoScore * 0.6 + popularityScore * 0.4) * 2) / 2, 5);
+  if (index === 0) return "bg-gradient-to-r from-yellow-400 to-orange-500";
+  if (index === 1) return "bg-gradient-to-r from-gray-300 to-gray-400";
+  if (index === 2) return "bg-gradient-to-r from-amber-600 to-amber-700";
+  return "bg-gray-700";
 };
 
 export default function FestivalMore() {
@@ -72,6 +57,7 @@ export default function FestivalMore() {
   const [selectedTags, setSelectedTags] = useState([]);
   const queryClient = useQueryClient();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const { getLocalizedContent } = useFestivalLocalizedContent();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -155,7 +141,7 @@ export default function FestivalMore() {
     const categoryMatch = categoryFilter === "all" || festival.category === categoryFilter;
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     const searchMatch = !searchQuery ||
-      festival.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getLocalizedContent(festival, 'name').toLowerCase().includes(searchQuery.toLowerCase()) ||
       festival.city.toLowerCase().includes(searchQuery.toLowerCase());
 
     let dateMatch = true;
@@ -189,6 +175,7 @@ export default function FestivalMore() {
         message="축제에 좋아요를 누르려면 로그인이 필요합니다"
       />
 
+      {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
@@ -213,6 +200,7 @@ export default function FestivalMore() {
       <div className="px-4 py-4">
         <h2 className="text-white text-2xl font-bold mb-4">Top Festival</h2>
 
+        {/* Filters */}
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
           <Select value={countryFilter} onValueChange={setCountryFilter}>
             <SelectTrigger className="w-auto min-w-[100px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
@@ -276,158 +264,173 @@ export default function FestivalMore() {
           </Popover>
         </div>
 
+        {/* Quick Filters */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-          {quickFilters.map(tag => (
-            <Badge
-              key={tag}
-              variant={selectedTags.includes(tag) ? "default" : "outline"}
-              className={`cursor-pointer whitespace-nowrap ${
-                selectedTags.includes(tag)
-                  ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0'
-                  : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-cyan-500'
+          {quickFilters.map(filter => (
+            <Button
+              key={filter}
+              onClick={() => toggleTag(filter)}
+              variant="outline"
+              size="sm"
+              className={`rounded-full whitespace-nowrap h-8 text-xs transition-all ${
+                selectedTags.includes(filter)
+                  ? 'bg-cyan-400 text-black border-cyan-400 hover:bg-cyan-500 hover:text-black'
+                  : 'border-gray-700 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-600 hover:text-white'
               }`}
-              onClick={() => toggleTag(tag)}
             >
-              {tag}
-            </Badge>
+              {filter}
+            </Button>
           ))}
         </div>
 
+        {/* Active Filters */}
         {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to)) && (
-          <div className="mb-4 p-3 bg-gray-900 rounded-lg flex items-center justify-between">
-            <div className="flex gap-2 flex-wrap">
-              <span className="text-gray-400 text-sm">활성 필터:</span>
-              {countryFilter !== "all" && (
-                <Badge variant="outline" className="bg-cyan-900 text-cyan-300 border-cyan-600">
-                  {countryFilter}
-                </Badge>
-              )}
-              {categoryFilter !== "all" && (
-                <Badge variant="outline" className="bg-purple-900 text-purple-300 border-purple-600">
-                  {categoryFilter}
-                </Badge>
-              )}
-              {dateRange.from && dateRange.to && (
-                <Badge variant="outline" className="bg-pink-900 text-pink-300 border-pink-600">
-                  {format(dateRange.from, 'M/d', { locale: ko })} - {format(dateRange.to, 'M/d', { locale: ko })}
-                </Badge>
-              )}
-              {selectedTags.map(tag => (
-                <Badge key={tag} variant="outline" className="bg-orange-900 text-orange-300 border-orange-600">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
+            <span className="text-gray-400 text-xs">활성 필터:</span>
+            {categoryFilter !== "all" && (
+              <Badge 
+                variant="outline" 
+                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
+                onClick={() => setCategoryFilter("all")}
+              >
+                {categoryFilter} ✕
+              </Badge>
+            )}
+            {countryFilter !== "all" && (
+              <Badge 
+                variant="outline" 
+                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
+                onClick={() => setCountryFilter("all")}
+              >
+                {countryFilter} ✕
+              </Badge>
+            )}
+            {dateRange.from && dateRange.to && (
+              <Badge 
+                variant="outline" 
+                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
+                onClick={() => setDateRange({ from: null, to: null })}
+              >
+                {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')} ✕
+              </Badge>
+            )}
+            {selectedTags.map(tag => (
+              <Badge 
+                key={tag}
+                variant="outline" 
+                className="bg-pink-900/30 text-pink-400 border-pink-400/50 cursor-pointer"
+                onClick={() => toggleTag(tag)}
+              >
+                {tag} ✕
+              </Badge>
+            ))}
             <Button
-              variant="ghost"
-              size="sm"
               onClick={() => {
                 setCategoryFilter("all");
                 setCountryFilter("all");
+                setDateRange({ from: null, to: null });
                 setSearchQuery("");
                 setSelectedTags([]);
-                setDateRange({ from: null, to: null });
-                setTempDateRange({ from: null, to: null });
               }}
-              className="text-gray-400 hover:text-white text-xs"
+              variant="ghost"
+              size="sm"
+              className="text-xs text-gray-400 hover:text-white h-6"
             >
-              초기화
+              모두 지우기
             </Button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4">
+        {/* Festival List - 홈화면 스타일 */}
+        <div className="space-y-3">
           {filteredFestivals.map((festival, index) => {
             const isLiked = myLikes.some(like => like.festival_id === festival.id);
-            const rating = getStarRating(festival);
+            const dateStatus = festival.date_status || 'confirmed';
+            const localizedName = getLocalizedContent(festival, 'name');
 
             return (
-              <div
-                key={festival.id}
-                className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700 hover:border-cyan-500 transition-all duration-300 shadow-lg hover:shadow-cyan-500/20"
-              >
-                <Link to={createPageUrl("FestivalDetail") + `?id=${festival.id}`}>
-                  <div className="relative">
+              <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
+                  {/* Rank Badge */}
+                  <div className="flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-lg ${getRankColor(index)} flex items-center justify-center font-bold text-sm ${index < 3 ? 'text-black' : 'text-white'}`}>
+                      {index + 1}
+                    </div>
+                  </div>
+
+                  {/* Thumbnail */}
+                  <div className="flex-shrink-0">
                     <img
-                      src={festival.image_url || "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800"}
-                      alt={festival.name}
-                      className="w-full h-48 object-cover"
+                      src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
+                      alt={localizedName}
+                      className="w-16 h-16 rounded-xl object-cover"
                     />
-                    {index < 3 && (
-                      <div className={`absolute top-3 left-3 ${getRankColor(index)} text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1`}>
-                        <span className="text-lg">#{index + 1}</span>
-                      </div>
-                    )}
                   </div>
-                </Link>
 
-                <div className="p-4">
-                  <Link to={createPageUrl("FestivalDetail") + `?id=${festival.id}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="text-white font-bold text-lg mb-1 line-clamp-1">
-                          {festival.name}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                          <span className="flex items-center gap-1">
-                            <Globe className="w-4 h-4" />
-                            {festival.country}, {festival.city}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 mb-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
-                            />
-                          ))}
-                          <span className="text-gray-400 text-sm ml-1">{rating.toFixed(1)}</span>
-                        </div>
-                      </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-bold text-sm truncate mb-1">
+                      {localizedName}
+                    </h3>
+                    <div className="text-gray-400 text-xs">
+                      {festival.country} {festival.city}
                     </div>
-
-                    <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
-                      <span>{safeFormatDate(festival.start_date, 'yyyy.MM.dd')} - {safeFormatDate(festival.end_date, 'yyyy.MM.dd')}</span>
+                    <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
+                      <span>
+                        {safeFormatDate(festival.start_date, 'yyyy.MM.dd')} - {safeFormatDate(festival.end_date, 'MM.dd')}
+                      </span>
+                      {dateStatus === 'tentative' && (
+                        <Badge variant="outline" className="text-[10px] h-4 px-1 border-yellow-500 text-yellow-500">
+                          미확정
+                        </Badge>
+                      )}
                     </div>
-
-                    {festival.tags && festival.tags.length > 0 && (
-                      <div className="flex gap-2 flex-wrap mb-3">
-                        {festival.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="outline" className="bg-gray-800 text-cyan-400 border-cyan-500/30">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </Link>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-700">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        likeMutation.mutate(festival.id);
-                      }}
-                      className="flex items-center gap-2 text-gray-400 hover:text-pink-500 transition-colors"
-                    >
-                      <Heart className={`w-5 h-5 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
-                      <span className="text-sm font-medium">{formatNumber(festival.likes_count || 0)}</span>
-                    </button>
-
-                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0">
-                      {festival.category || '기타'}
-                    </Badge>
                   </div>
+
+                  {/* Like Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      likeMutation.mutate(festival.id);
+                    }}
+                    className="flex-shrink-0 flex flex-col items-center gap-1"
+                  >
+                    <Heart
+                      className={`w-6 h-6 transition-all ${
+                        isLiked
+                          ? 'fill-pink-500 text-pink-500'
+                          : 'text-gray-500'
+                      }`}
+                    />
+                    <span className={`text-xs font-medium ${isLiked ? 'text-pink-500' : 'text-gray-500'}`}>
+                      {formatNumber(festival.likes_count || 0)}
+                    </span>
+                  </button>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
 
+        {/* Empty State */}
         {filteredFestivals.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🎪</div>
-            <p className="text-gray-400 text-lg">검색 결과가 없습니다</p>
-            <p className="text-gray-500 text-sm mt-2">다른 필터를 시도해보세요</p>
+            <p className="text-gray-400 text-lg mb-2">검색 결과가 없습니다</p>
+            <p className="text-gray-500 text-sm">다른 필터를 시도해보세요</p>
+            <Button
+              onClick={() => {
+                setCategoryFilter("all");
+                setCountryFilter("all");
+                setDateRange({ from: null, to: null });
+                setSearchQuery("");
+                setSelectedTags([]);
+              }}
+              variant="outline"
+              className="mt-4 bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
+            >
+              필터 초기화
+            </Button>
           </div>
         )}
       </div>
