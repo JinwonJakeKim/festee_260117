@@ -11,13 +11,13 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale"; // Corrected syntax here
+import { ko } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent"; // Added import for localization hook
+import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
 
 // 안전한 날짜 포맷팅 함수 추가
 const safeFormatDate = (dateString, formatString) => {
@@ -47,7 +47,7 @@ export default function FestivalDetail() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
-  const { getLocalizedContent } = useFestivalLocalizedContent(); // Initialize localization hook
+  const { getLocalizedContent } = useFestivalLocalizedContent();
   const [commentText, setCommentText] = useState("");
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showFreeEntryAlert, setShowFreeEntryAlert] = useState(false);
@@ -58,8 +58,10 @@ export default function FestivalDetail() {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
-  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0);
+  
+  // New states for the unified gallery popup
+  const [showGalleryPopup, setShowGalleryPopup] = useState(false);
+  const [galleryPopupIndex, setGalleryPopupIndex] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -388,14 +390,7 @@ export default function FestivalDetail() {
         caption: festival.name
       });
       addedUrls.add(festival.thumbnail_url);
-    } else if (items.length > 0 && festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
-      // If there are other media items, but thumbnail_url is not among them, add it as a fallback image
-      // This case is slightly redundant with the above, but ensures thumbnail is present if others fail or are not suitable.
-      // For now, let's prioritize explicit media_urls and video_url.
-      // If no media_urls or video_url, thumbnail_url acts as the primary.
-      // If there are media_urls/video_url, thumbnail_url is used for poster on video, or not explicitly added if other images exist.
-      // A more robust logic might be needed if thumbnail should always be part of the carousel.
-    }
+    } 
     
     // Final fallback if absolutely no media is found
     if (items.length === 0 && festival?.thumbnail_url) {
@@ -411,6 +406,57 @@ export default function FestivalDetail() {
     return items;
   }, [festival]);
 
+  // 갤러리 팝업용 미디어 아이템 (모든 미디어 + 갤러리 이미지)
+  const allGalleryItems = React.useMemo(() => {
+    const items = [];
+    const addedUrls = new Set();
+
+    // Add all items from mediaItems first
+    mediaItems.forEach(item => {
+      if (item.url && !addedUrls.has(item.url)) {
+        items.push(item);
+        addedUrls.add(item.url);
+      }
+    });
+
+    // Add image_gallery_urls, avoiding duplicates
+    if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
+      festival.image_gallery_urls.forEach(image => {
+        const imageUrl = image.originimgurl || image.smallimageurl;
+        if (imageUrl && !addedUrls.has(imageUrl)) {
+          items.push({
+            type: 'image',
+            url: imageUrl,
+            caption: image.imgname || festival.name
+          });
+          addedUrls.add(imageUrl);
+        }
+      });
+    }
+    
+    // Fallback if no media at all (unlikely given mediaItems logic, but good for safety)
+    if (items.length === 0 && festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
+        items.push({ type: 'image', url: festival.thumbnail_url, caption: festival.name });
+        addedUrls.add(festival.thumbnail_url);
+    }
+
+    return items;
+  }, [mediaItems, festival]);
+
+  // 갤러리 버튼 클릭 핸들러
+  const handleGalleryClick = () => {
+    // Find the index of the current mediaItems item within allGalleryItems
+    const currentMediaUrl = mediaItems[mediaIndex]?.url;
+    let initialGalleryIndex = 0;
+    if (currentMediaUrl) {
+      const foundIndex = allGalleryItems.findIndex(item => item.url === currentMediaUrl);
+      if (foundIndex !== -1) {
+        initialGalleryIndex = foundIndex;
+      }
+    }
+    setGalleryPopupIndex(initialGalleryIndex); // Start from the currently visible hero media
+    setShowGalleryPopup(true);
+  };
 
   const handleTouchStart = (e) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -527,7 +573,7 @@ export default function FestivalDetail() {
         </div>
       </div>
 
-      {/* Hero Media Carousel */}
+      {/* Hero Media Carousel - 수정된 버전 */}
       <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
         <div 
           className="absolute top-0 left-0 w-full h-full overflow-hidden" 
@@ -590,13 +636,35 @@ export default function FestivalDetail() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
           
-          {/* Caption */}
+          {/* Caption (Adjusted position, if still desired) */}
           {currentMedia?.caption && (
-            <div className="absolute bottom-4 left-4 right-4">
+            <div className="absolute bottom-[72px] left-4 right-4 z-10 hidden md:block"> {/* Adjusted bottom to make space, hidden on mobile for cleaner look */}
               <p className="text-white text-sm bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
                 {currentMedia.caption}
               </p>
             </div>
+          )}
+
+          {/* 컨텐츠 번호 표시 - 왼쪽 아래 */}
+          {mediaItems.length > 0 && (
+            <div className="absolute bottom-4 left-4 z-10">
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                <span className="text-white font-bold text-sm">
+                  {mediaIndex + 1}/{mediaItems.length}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 갤러리 버튼 - 오른쪽 아래 */}
+          {allGalleryItems.length > 0 && (
+            <button
+              onClick={handleGalleryClick}
+              className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors"
+            >
+              <Eye className="w-4 h-4 text-white" />
+              <span className="text-white font-medium text-sm">갤러리</span>
+            </button>
           )}
         </div>
         
@@ -738,9 +806,8 @@ export default function FestivalDetail() {
 
       {/* Tabs - 탭 수정 */}
       <Tabs defaultValue="intro" className="px-4">
-        <TabsList className="w-full bg-gray-900 grid grid-cols-5">
+        <TabsList className="w-full bg-gray-900 grid grid-cols-4">
           <TabsTrigger value="intro" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">소개</TabsTrigger>
-          <TabsTrigger value="photos" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">사진</TabsTrigger>
           <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문</TabsTrigger>
           <TabsTrigger value="lineup" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">라인업</TabsTrigger>
           <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">일정</TabsTrigger>
@@ -860,51 +927,6 @@ export default function FestivalDetail() {
               </div>
             )}
           </div>
-        </TabsContent>
-
-        {/* 사진 갤러리 탭 - NEW */}
-        <TabsContent value="photos" className="text-white mt-4">
-          {festival.image_gallery_urls && festival.image_gallery_urls.length > 0 ? (
-            <div>
-              <div className="mb-4">
-                <h3 className="text-lg font-bold mb-1">축제 갤러리</h3>
-                <p className="text-gray-400 text-sm">{festival.image_gallery_urls.length}개의 사진</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                {festival.image_gallery_urls.map((image, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      setSelectedGalleryIndex(idx);
-                      setShowGalleryModal(true);
-                    }}
-                    className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative group"
-                  >
-                    <img
-                      src={image.smallimageurl || image.originimgurl}
-                      alt={image.imgname || `축제 사진 ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${idx}/400/400`;
-                      }}
-                    />
-                    {image.imgname && (
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                        <p className="text-white text-xs line-clamp-2">{image.imgname}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📸</div>
-              <p className="text-gray-400 mb-2">축제 갤러리가 준비 중입니다</p>
-              <p className="text-gray-500 text-sm">곧 다양한 사진이 추가될 예정입니다</p>
-            </div>
-          )}
         </TabsContent>
 
         {/* 방문 탭 - 위치 정보 통합 */}
@@ -1236,7 +1258,7 @@ export default function FestivalDetail() {
                     center={[festival.latitude, festival.longitude]}
                     zoom={15}
                     className="w-full h-full"
-                    style={{ background: '#f0f0f0', zIndex: 1 }} // Changed background to a light color
+                    style={{ background: '#f0f0f0', zIndex: 1 }}
                     zoomControl={true}
                     scrollWheelZoom={true}
                     dragging={true}
@@ -1244,7 +1266,7 @@ export default function FestivalDetail() {
                     doubleClickZoom={true}
                   >
                     <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Changed to OpenStreetMap standard tile layer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; OpenStreetMap contributors'
                     />
                     <Marker
@@ -1316,15 +1338,15 @@ export default function FestivalDetail() {
         )}
       </AnimatePresence>
 
-      {/* Gallery Lightbox Modal - NEW */}
+      {/* 갤러리 팝업 모달 - 새로운 버전 */}
       <AnimatePresence>
-        {showGalleryModal && festival.image_gallery_urls && festival.image_gallery_urls.length > 0 && (
+        {showGalleryPopup && allGalleryItems.length > 0 && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowGalleryModal(false)}
+              onClick={() => setShowGalleryPopup(false)}
               className="fixed inset-0 bg-black/95 z-[100] backdrop-blur-sm"
             />
 
@@ -1340,7 +1362,7 @@ export default function FestivalDetail() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowGalleryModal(false);
+                    setShowGalleryPopup(false);
                   }}
                   className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
                 >
@@ -1348,11 +1370,11 @@ export default function FestivalDetail() {
                 </button>
 
                 {/* 이전 버튼 */}
-                {selectedGalleryIndex > 0 && (
+                {galleryPopupIndex > 0 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedGalleryIndex(prev => prev - 1);
+                      setGalleryPopupIndex(prev => prev - 1);
                     }}
                     className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
                   >
@@ -1361,11 +1383,11 @@ export default function FestivalDetail() {
                 )}
 
                 {/* 다음 버튼 */}
-                {selectedGalleryIndex < festival.image_gallery_urls.length - 1 && (
+                {galleryPopupIndex < allGalleryItems.length - 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedGalleryIndex(prev => prev + 1);
+                      setGalleryPopupIndex(prev => prev + 1);
                     }}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-black/80 hover:bg-black flex items-center justify-center transition-colors border-2 border-white shadow-xl z-10"
                   >
@@ -1373,27 +1395,67 @@ export default function FestivalDetail() {
                   </button>
                 )}
 
-                {/* 이미지 */}
+                {/* 미디어 컨텐츠 */}
                 <div className="bg-black rounded-lg overflow-hidden">
-                  <img
-                    src={festival.image_gallery_urls[selectedGalleryIndex].originimgurl}
-                    alt={festival.image_gallery_urls[selectedGalleryIndex].imgname || `축제 사진 ${selectedGalleryIndex + 1}`}
-                    className="w-full max-h-[80vh] object-contain"
-                    onError={(e) => {
-                      e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${selectedGalleryIndex}/1200/800`;
-                    }}
-                  />
+                  {allGalleryItems[galleryPopupIndex]?.type === 'youtube' ? (
+                    (() => {
+                      const embedUrl = getYoutubeEmbedUrl(allGalleryItems[galleryPopupIndex].url);
+                      if (!embedUrl) {
+                        return (
+                          <div className="w-full aspect-video flex items-center justify-center bg-gray-900">
+                            <div className="text-center">
+                              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-2" />
+                              <p className="text-white">영상을 불러올 수 없습니다</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="w-full aspect-video">
+                          <iframe
+                            src={embedUrl}
+                            className="w-full h-full"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={allGalleryItems[galleryPopupIndex].caption}
+                          />
+                        </div>
+                      );
+                    })()
+                  ) : allGalleryItems[galleryPopupIndex]?.type === 'video' ? (
+                    <video
+                      src={allGalleryItems[galleryPopupIndex].url}
+                      className="w-full max-h-[80vh] object-contain"
+                      controls
+                      autoPlay
+                    />
+                  ) : (
+                    <img
+                      src={allGalleryItems[galleryPopupIndex]?.url}
+                      alt={allGalleryItems[galleryPopupIndex]?.caption || `미디어 ${galleryPopupIndex + 1}`}
+                      className="w-full max-h-[80vh] object-contain"
+                      onError={(e) => {
+                        e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${galleryPopupIndex}/1200/800`;
+                      }}
+                    />
+                  )}
                   
-                  {/* 이미지 정보 */}
+                  {/* 미디어 정보 */}
                   <div className="bg-black/80 backdrop-blur-sm p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-white font-bold">
-                        {selectedGalleryIndex + 1} / {festival.image_gallery_urls.length}
+                        {galleryPopupIndex + 1} / {allGalleryItems.length}
                       </p>
+                      <Badge className="bg-gray-800 text-gray-300 border-gray-700">
+                        {allGalleryItems[galleryPopupIndex]?.type === 'youtube' && '영상'}
+                        {allGalleryItems[galleryPopupIndex]?.type === 'video' && '동영상'}
+                        {allGalleryItems[galleryPopupIndex]?.type === 'image' && '사진'}
+                      </Badge>
                     </div>
-                    {festival.image_gallery_urls[selectedGalleryIndex].imgname && (
+                    {allGalleryItems[galleryPopupIndex]?.caption && (
                       <p className="text-gray-300 text-sm">
-                        {festival.image_gallery_urls[selectedGalleryIndex].imgname}
+                        {allGalleryItems[galleryPopupIndex].caption}
                       </p>
                     )}
                   </div>
@@ -1401,24 +1463,33 @@ export default function FestivalDetail() {
 
                 {/* 썸네일 네비게이션 */}
                 <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {festival.image_gallery_urls.map((image, idx) => (
+                  {allGalleryItems.map((item, idx) => (
                     <button
                       key={idx}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedGalleryIndex(idx);
+                        setGalleryPopupIndex(idx);
                       }}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                        idx === selectedGalleryIndex
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
+                        idx === galleryPopupIndex
                           ? 'border-cyan-400 scale-110'
                           : 'border-gray-700 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img
-                        src={image.smallimageurl || image.originimgurl}
-                        alt={`썸네일 ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      {item.type === 'youtube' || item.type === 'video' ? (
+                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                          <Eye className="w-6 h-6 text-white" />
+                        </div>
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={`썸네일 ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = `https://picsum.photos/seed/thumb-${festival.name}-${idx}/100/100`; // Fallback for broken thumbnails
+                          }}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
