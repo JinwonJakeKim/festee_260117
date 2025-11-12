@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Search, Link as LinkIcon, Globe } from "lucide-react"; // Added Globe icon
+import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Search, Link as LinkIcon, Globe, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { createPageUrl } from "@/utils"; // Import the utility function
+import { createPageUrl } from "@/utils";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -31,6 +30,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState("festivals");
+  const [selectedFestivals, setSelectedFestivals] = useState(new Set());
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -99,8 +99,60 @@ export default function AdminDashboard() {
     },
   });
 
+  const deleteSelectedFestivalsMutation = useMutation({
+    mutationFn: async (festivalIds) => {
+      const count = festivalIds.length;
+      if (!confirm(`선택한 ${count}개의 축제를 삭제하시겠습니까?`)) {
+        return;
+      }
+      
+      // 각 축제 삭제
+      for (const id of festivalIds) {
+        await base44.entities.Festival.delete(id);
+      }
+      
+      return count;
+    },
+    onSuccess: (count) => {
+      if (count) {
+        queryClient.invalidateQueries({ queryKey: ['festivals'] });
+        setSelectedFestivals(new Set());
+        alert(`${count}개의 축제가 삭제되었습니다`);
+      }
+    },
+  });
+
   const handleStarRatingChange = (festivalId, newRating) => {
     updateFestivalStarMutation.mutate({ festivalId, starRating: parseInt(newRating) });
+  };
+
+  // 전체 선택/해제
+  const handleSelectAll = () => {
+    if (selectedFestivals.size === festivals.length) {
+      setSelectedFestivals(new Set());
+    } else {
+      setSelectedFestivals(new Set(festivals.map(f => f.id)));
+    }
+  };
+
+  // 개별 선택/해제
+  const handleSelectFestival = (festivalId) => {
+    const newSelected = new Set(selectedFestivals);
+    if (newSelected.has(festivalId)) {
+      newSelected.delete(festivalId);
+    } else {
+      newSelected.add(festivalId);
+    }
+    setSelectedFestivals(newSelected);
+  };
+
+  // 선택된 축제 삭제
+  const handleDeleteSelected = () => {
+    if (selectedFestivals.size === 0) {
+      alert('삭제할 축제를 선택해주세요');
+      return;
+    }
+    deleteSelectedFestivalsMutation.mutate(Array.from(selectedFestivals));
   };
 
   if (isLoading) {
@@ -114,6 +166,8 @@ export default function AdminDashboard() {
   if (!user || user.role !== 'admin') {
     return null;
   }
+
+  const allSelected = festivals.length > 0 && selectedFestivals.size === festivals.length;
 
   return (
     <div className="min-h-screen bg-black pb-20">
@@ -187,53 +241,115 @@ export default function AdminDashboard() {
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {festivals.map((festival) => (
-                <Card key={festival.id} className="bg-gray-900 border-gray-800 p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={festival.thumbnail_url}
-                      alt={festival.name}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-white font-bold mb-1">{festival.name}</h3>
-                      <p className="text-gray-400 text-sm mb-1">
-                        {festival.city}, {festival.country}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {festival.star_rating && (
-                          <Badge className="bg-yellow-500 text-black">
-                            <Star className="w-3 h-3 mr-1" fill="currentColor" />
-                            {festival.star_rating}
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="text-gray-400 border-gray-700">
-                          ❤️ {festival.likes_count || 0}
-                        </Badge>
+            {/* 선택 컨트롤 */}
+            {festivals.length > 0 && (
+              <div className="mb-4 space-y-2">
+                <Card className="bg-gray-900 border-gray-800 p-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleSelectAll}
+                      className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
+                    >
+                      {allSelected ? (
+                        <CheckSquare className="w-5 h-5 text-cyan-400" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                      <span className="font-medium">
+                        {allSelected ? '전체 해제' : '전체 선택'}
+                      </span>
+                    </button>
+                    
+                    {selectedFestivals.size > 0 && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-cyan-400 text-sm">
+                          {selectedFestivals.size}개 선택됨
+                        </span>
+                        <Button
+                          onClick={handleDeleteSelected}
+                          disabled={deleteSelectedFestivalsMutation.isLoading}
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {deleteSelectedFestivalsMutation.isLoading ? '삭제 중...' : '선택 삭제'}
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(createPageUrl(`AdminFestivalForm?id=${festival.id}`))}
-                        className="border-gray-700 text-cyan-400"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteFestivalMutation.mutate(festival.id)}
-                        className="border-gray-700 text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 </Card>
-              ))}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {festivals.map((festival) => {
+                const isSelected = selectedFestivals.has(festival.id);
+                
+                return (
+                  <Card 
+                    key={festival.id} 
+                    className={`border p-4 transition-all ${
+                      isSelected 
+                        ? 'bg-cyan-900/20 border-cyan-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* 체크박스 */}
+                      <button
+                        onClick={() => handleSelectFestival(festival.id)}
+                        className="flex-shrink-0"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-6 h-6 text-cyan-400" />
+                        ) : (
+                          <Square className="w-6 h-6 text-gray-600 hover:text-gray-400" />
+                        )}
+                      </button>
+
+                      <img
+                        src={festival.thumbnail_url}
+                        alt={festival.name}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-white font-bold mb-1">{festival.name}</h3>
+                        <p className="text-gray-400 text-sm mb-1">
+                          {festival.city}, {festival.country}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {festival.star_rating && (
+                            <Badge className="bg-yellow-500 text-black">
+                              <Star className="w-3 h-3 mr-1" fill="currentColor" />
+                              {festival.star_rating}
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-gray-400 border-gray-700">
+                            ❤️ {festival.likes_count || 0}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(createPageUrl(`AdminFestivalForm?id=${festival.id}`))}
+                          className="border-gray-700 text-cyan-400"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteFestivalMutation.mutate(festival.id)}
+                          className="border-gray-700 text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
