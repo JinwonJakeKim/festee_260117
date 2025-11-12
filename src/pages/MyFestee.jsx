@@ -401,21 +401,21 @@ export default function MyFestee() {
           </div>
         </div>
 
-        {/* Profile Stats - 실제 데이터 반영 */}
+        {/* Profile Stats - 실제 데이터 반영 + 클릭 가능 */}
         <div className="grid grid-cols-4 gap-4 mb-4">
-          <Link to={createPageUrl("MyCatches")} className="text-center">
+          <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myCatches.length}</p>
             <p className="text-gray-400 text-xs">캐치</p>
           </Link>
-          <div className="text-center">
+          <Link to={createPageUrl("MyFollowers")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myFollowers.length}</p>
             <p className="text-gray-400 text-xs">팔로워</p>
-          </div>
-          <div className="text-center">
+          </Link>
+          <Link to={createPageUrl("MyFollowing")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myFollowing.length}</p>
             <p className="text-gray-400 text-xs">팔로잉</p>
-          </div>
-          <Link to={createPageUrl("MyLikes")} className="text-center">
+          </Link>
+          <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myLikes.length}</p>
             <p className="text-gray-400 text-xs">좋아요</p>
           </Link>

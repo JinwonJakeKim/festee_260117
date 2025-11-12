@@ -31,6 +31,8 @@ import Home from './pages/Home';
 import AdminTourAPI from './pages/AdminTourAPI';
 import MyCatches from './pages/MyCatches';
 import FesteeMagazine from './pages/FesteeMagazine';
+import MyFollowers from './pages/MyFollowers';
+import MyFollowing from './pages/MyFollowing';
 import Layout from './Layout.jsx';
 
 
@@ -68,6 +70,8 @@ export const PAGES = {
     "AdminTourAPI": AdminTourAPI,
     "MyCatches": MyCatches,
     "FesteeMagazine": FesteeMagazine,
+    "MyFollowers": MyFollowers,
+    "MyFollowing": MyFollowing,
 }
 
 export const pagesConfig = {
