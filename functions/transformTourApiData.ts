@@ -1,3 +1,4 @@
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
@@ -128,8 +129,7 @@ Deno.serve(async (req) => {
       // 2. 연속 공백 제거
       text = text.replace(/\s{2,}/g, ' ');
       
-      // 3. '숫자.' 바로 뒤의 불필요한 공백/줄바꿈 정리
-      // '1. 메인프로그램' 형태로 만들기
+      // 3. '숫자.' 바로 뒤의 불필요한 공백/줄바꿈 정리 (내용과 한 줄에 유지)
       text = text.replace(/(\d+)\.\s+/g, '$1. ');
       
       // 4. 특수 키워드(텍스트) 앞뒤로 개행 추가 - 이모지 제외
@@ -153,8 +153,9 @@ Deno.serve(async (req) => {
       // 6. 마침표, 느낌표, 물음표 뒤에 대문자나 한글이 오면 개행
       text = text.replace(/([.!?])\s+([가-힣A-Z][가-힣a-z])/g, '$1\n\n$2');
       
-      // 7. 숫자 리스트 앞에 개행 추가 (하지만 숫자 뒤는 한 칸만)
-      text = text.replace(/([^\d])\s*(\d+\.\s+)/g, '$1\n\n$2');
+      // 7. 숫자 리스트 앞에만 개행 추가 (숫자와 내용은 같은 줄 유지!)
+      // "1. 메인프로그램..." → "\n\n1. 메인프로그램..."
+      text = text.replace(/([^\d\n])(\d+\.\s+)([가-힣A-Za-z])/g, '$1\n\n$2$3');
       
       // 8. 불렛 포인트 앞에 개행 추가
       text = text.replace(/\s+(○|-|\*|•)\s+/g, '\n$1 ');
@@ -212,16 +213,6 @@ Deno.serve(async (req) => {
         /(\d+)일차/
       ];
       
-      // 시간 패턴 매칭
-      const timePatterns = [
-        // "10:00~12:00", "14:00 - 16:00"
-        /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
-        // "오전 10시", "오후 3시"
-        /(오전|오후)\s*(\d{1,2})시/,
-        // "14:00"
-        /(\d{1,2}:\d{2})/
-      ];
-      
       let currentDate = null;
       let dateIndex = 1;
       
@@ -260,6 +251,15 @@ Deno.serve(async (req) => {
         let timeMatch = null;
         let matchedPattern = null;
         
+        const timePatterns = [
+          // "10:00~12:00", "14:00 - 16:00"
+          /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
+          // "오전 10시", "오후 3시"
+          /(오전|오후)\s*(\d{1,2})시(\s*\d{1,2}분)?/, // Add optional minutes
+          // "14:00"
+          /(\d{1,2}:\d{2})/
+        ];
+        
         for (const pattern of timePatterns) {
           timeMatch = line.match(pattern);
           if (timeMatch) {
@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
             time = `${timeMatch[1]}~${timeMatch[2]}`;
           } else if (matchedPattern === timePatterns[1]) {
             // "오전 10시"
-            time = `${timeMatch[1]} ${timeMatch[2]}시`;
+            time = `${timeMatch[1]} ${timeMatch[2]}시${timeMatch[3] || ''}`;
           } else {
             // "14:00"
             time = timeMatch[1];
