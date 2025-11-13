@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
       }, { status: 401 });
     }
 
-    const { rawDataIds } = await req.json();
+    const { rawDataIds, retransform = false } = await req.json();
     
     if (!rawDataIds || rawDataIds.length === 0) {
       return Response.json({
@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
     }
     
     console.log(`[Transform] ========== START TRANSFORMATION ==========`);
+    console.log(`[Transform] Mode: ${retransform ? 'RETRANSFORM (재변환)' : 'NEW (신규 변환)'}`);
     console.log(`[Transform] Processing ${rawDataIds.length} raw data records`);
     
     const apiKey = Deno.env.get("TOUR_API_KEY");
@@ -210,6 +211,16 @@ Deno.serve(async (req) => {
         /(\d+)일차/
       ];
       
+      // 시간 패턴 매칭
+      const timePatterns = [
+        // "10:00~12:00", "14:00 - 16:00"
+        /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
+        // "오전 10시", "오후 3시"
+        /(오전|오후)\s*(\d{1,2})시(\s*\d{1,2}분)?/, // Add optional minutes
+        // "14:00"
+        /(\d{1,2}:\d{2})/
+      ];
+      
       let currentDate = null;
       let dateIndex = 1;
       
@@ -247,15 +258,6 @@ Deno.serve(async (req) => {
         // 시간 패턴 체크
         let timeMatch = null;
         let matchedPattern = null;
-        
-        const timePatterns = [
-          // "10:00~12:00", "14:00 - 16:00"
-          /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
-          // "오전 10시", "오후 3시"
-          /(오전|오후)\s*(\d{1,2})시(\s*\d{1,2}분)?/, // Add optional minutes
-          // "14:00"
-          /(\d{1,2}:\d{2})/
-        ];
         
         for (const pattern of timePatterns) {
           timeMatch = line.match(pattern);
@@ -438,6 +440,24 @@ ${context}
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
+        // ===== 재변환 모드: 기존 Festival 삭제 =====
+        if (retransform && rawData.festival_id) {
+          try {
+            console.log(`[Transform] 🗑️ Deleting existing Festival (ID: ${rawData.festival_id})...`);
+            await base44.asServiceRole.entities.Festival.delete(rawData.festival_id);
+            console.log(`[Transform] ✓ Existing Festival deleted`);
+            
+            // festival_id 초기화
+            await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
+              festival_id: null,
+              processing_status: 'pending' // pending으로 설정하여 새로 생성될 수 있도록 함
+            });
+          } catch (deleteError) {
+            console.error(`[Transform] Failed to delete existing Festival:`, deleteError.message);
+            // 삭제 실패해도 계속 진행 (Festival이 이미 삭제되었을 수도 있음)
+          }
+        }
+        
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
           processing_status: 'processing'
         });
@@ -446,7 +466,6 @@ ${context}
           await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // ===== 보조 함수들 =====
         const extractCity = (addr) => {
           if (!addr) return '서울';
           const match = addr.match(/(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/);
@@ -589,7 +608,7 @@ ${context}
             
             const infoUrl = `${baseUrl}/detailInfo2?${infoParams.toString()}`;
             const infoResponse = await fetch(infoUrl);
-            const infoText = await infoResponse.text();
+            const infoText = await introResponse.text();
             
             if (infoResponse.ok) {
               try {
@@ -870,7 +889,7 @@ ${context}
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           video_url: '',
-          media_urls: mediaUrls, // 여러 이미지
+          media_urls: mediaUrls,
           website: websiteUrl,
           price: 0,
           opening_hours: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
@@ -902,7 +921,7 @@ ${context}
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name}`);
+        console.log(`[Transform] ✓ SUCCESS: ${festival.name} ${retransform ? '(재변환 완료)' : ''}`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
@@ -921,6 +940,7 @@ ${context}
     }
     
     console.log(`[Transform] ========== SUMMARY ==========`);
+    console.log(`[Transform] Mode: ${retransform ? 'RETRANSFORM' : 'NEW'}`);
     console.log(`[Transform] Processed: ${rawDataIds.length}`);
     console.log(`[Transform] Success: ${festivals.length}`);
     console.log(`[Transform] Failed: ${errors.length}`);
@@ -929,7 +949,7 @@ ${context}
       success: true,
       festivals_created: festivals.length,
       festivals: festivals,
-      message: `${festivals.length}개의 축제가 생성되었습니다.`,
+      message: `${festivals.length}개의 축제가 ${retransform ? '재' : ''}생성되었습니다.`,
       errors: errors.length > 0 ? errors : undefined
     });
     

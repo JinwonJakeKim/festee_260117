@@ -93,7 +93,7 @@ export default function AdminTourAPI() {
     }
   };
 
-  const handleTransform = async (rawDataIds) => {
+  const handleTransform = async (rawDataIds, isRetransform = false) => {
     if (rawDataIds.length === 0) {
       alert('변환할 데이터를 선택해주세요');
       return;
@@ -105,7 +105,12 @@ export default function AdminTourAPI() {
       return;
     }
 
-    const confirmMessage = `${rawDataIds.length}개의 데이터를 Festival로 변환하시겠습니까?\n\n⏱️ 예상 소요 시간: 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분`;
+    const actionText = isRetransform ? '재변환' : '변환';
+    const warningText = isRetransform 
+      ? '\n\n⚠️ 기존 Festival 데이터가 삭제되고 새로 생성됩니다!'
+      : '';
+    
+    const confirmMessage = `${rawDataIds.length}개의 데이터를 Festival로 ${actionText}하시겠습니까?\n\n⏱️ 예상 소요 시간: 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분${warningText}`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -114,24 +119,28 @@ export default function AdminTourAPI() {
     setIsTransforming(true);
     
     try {
-      console.log('[AdminTourAPI] Calling transformTourApiData...');
+      console.log(`[AdminTourAPI] Calling transformTourApiData (retransform: ${isRetransform})...`);
       const response = await base44.functions.invoke('transformTourApiData', {
-        rawDataIds: rawDataIds
+        rawDataIds: rawDataIds,
+        retransform: isRetransform
       });
 
       console.log('[AdminTourAPI] Transform response:', response.data);
 
       if (response.data.success) {
-        alert(`✅ ${response.data.festivals_created}개의 축제가 생성되었습니다!`);
+        const message = isRetransform 
+          ? `✅ ${response.data.festivals_created}개의 축제가 재변환되었습니다!`
+          : `✅ ${response.data.festivals_created}개의 축제가 생성되었습니다!`;
+        alert(message);
         refetchRawData();
         queryClient.invalidateQueries({ queryKey: ['festivals'] });
         setSelectedRawData([]);
       } else {
-        alert(`변환 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error}`);
+        alert(`${actionText} 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error}`);
       }
     } catch (error) {
       console.error('[AdminTourAPI] Transform error:', error);
-      alert(`변환 중 오류가 발생했습니다:\n\n${error.message}`);
+      alert(`${actionText} 중 오류가 발생했습니다:\n\n${error.message}`);
     } finally {
       setIsTransforming(false);
     }
@@ -365,6 +374,7 @@ export default function AdminTourAPI() {
               </h3>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ 저장된 원본 데이터를 Festival 엔티티로 변환</li>
+                <li>✓ 이미 변환된 데이터도 재변환 가능 (기존 데이터 삭제 후 재생성)</li>
                 <li>✓ 실패한 데이터는 언제든지 재처리 가능</li>
                 <li>✓ 원본 데이터는 보관되므로 안전</li>
                 <li className="text-yellow-400 font-medium">⚠️ 한 번에 최대 {MAX_TRANSFORM_COUNT}개까지만 변환 가능</li>
@@ -393,41 +403,79 @@ export default function AdminTourAPI() {
               </Card>
             </div>
 
-            {/* 액션 버튼 */}
-            {pendingData.length > 0 && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    const allPendingIds = pendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
-                    setSelectedRawData(allPendingIds);
-                    if (pendingData.length > MAX_TRANSFORM_COUNT) {
-                      alert(`⚠️ 대기 중인 데이터가 ${pendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
-                    }
-                  }}
-                  variant="outline"
-                  className="flex-1 border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
-                >
-                  대기 중 {Math.min(pendingData.length, MAX_TRANSFORM_COUNT)}개 선택
-                </Button>
-                <Button
-                  onClick={() => handleTransform(selectedRawData)}
-                  disabled={selectedRawData.length === 0 || isTransforming}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                >
-                  {isTransforming ? (
-                    <>
-                      <Loader className="w-4 h-4 mr-2 animate-spin" />
-                      변환 중...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      {selectedRawData.length}개 변환하기
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+            {/* 액션 버튼 - 개선된 버전 */}
+            <div className="space-y-2">
+              {pendingData.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      const allPendingIds = pendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                      setSelectedRawData(allPendingIds);
+                      if (pendingData.length > MAX_TRANSFORM_COUNT) {
+                        alert(`⚠️ 대기 중인 데이터가 ${pendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1 border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
+                  >
+                    대기 중 {Math.min(pendingData.length, MAX_TRANSFORM_COUNT)}개 선택
+                  </Button>
+                  <Button
+                    onClick={() => handleTransform(selectedRawData, false)}
+                    disabled={selectedRawData.length === 0 || isTransforming}
+                    className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                  >
+                    {isTransforming ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        변환 중...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        {selectedRawData.length}개 변환하기
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* 재변환 버튼 - 새로 추가 */}
+              {([...processedData, ...failedData].length > 0) && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      const reprocessableData = [...processedData, ...failedData].slice(0, MAX_TRANSFORM_COUNT);
+                      setSelectedRawData(reprocessableData.map(r => r.id));
+                      if (processedData.length + failedData.length > MAX_TRANSFORM_COUNT) {
+                        alert(`⚠️ 재처리 가능한 데이터가 ${processedData.length + failedData.length}개 있지만, 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
+                  >
+                    완료/실패 {Math.min(processedData.length + failedData.length, MAX_TRANSFORM_COUNT)}개 선택
+                  </Button>
+                  <Button
+                    onClick={() => handleTransform(selectedRawData, true)}
+                    disabled={selectedRawData.length === 0 || isTransforming}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  >
+                    {isTransforming ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        재변환 중...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        {selectedRawData.length}개 재변환하기
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* 선택 개수 경고 */}
             {selectedRawData.length > 0 && (
@@ -452,10 +500,10 @@ export default function AdminTourAPI() {
               {rawDataList.map((raw) => {
                 const isSelected = selectedRawData.includes(raw.id);
                 const statusColors = {
-                  pending: 'bg-yellow-500/20 border-yellow-500/50',
-                  processing: 'bg-blue-500/20 border-blue-500/50',
-                  processed: 'bg-green-500/20 border-green-500/50',
-                  failed: 'bg-red-500/20 border-red-500/50',
+                  pending: 'bg-yellow-900/20 border-yellow-500/50',
+                  processing: 'bg-blue-900/20 border-blue-500/50',
+                  processed: 'bg-green-900/20 border-green-500/50',
+                  failed: 'bg-red-900/20 border-red-500/50',
                 };
                 const statusLabels = {
                   pending: '대기 중',
@@ -468,26 +516,24 @@ export default function AdminTourAPI() {
                   <Card
                     key={raw.id}
                     className={`border-2 transition-all ${
-                      isSelected && raw.processing_status === 'pending'
+                      isSelected
                         ? 'bg-purple-900/30 border-purple-400'
                         : statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'
                     }`}
                   >
                     <div className="p-4">
                       <div className="flex items-start gap-3">
-                        {/* 체크박스 (대기 중인 것만) */}
-                        {raw.processing_status === 'pending' && (
-                          <div className="flex-shrink-0 mt-1">
-                            <div 
-                              onClick={() => toggleRawData(raw.id)}
-                              className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
-                                isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600'
-                              }`}
-                            >
-                              {isSelected && <Check className="w-4 h-4 text-black" />}
-                            </div>
+                        {/* 체크박스 - 모든 상태에서 표시 */}
+                        <div className="flex-shrink-0 mt-1">
+                          <div 
+                            onClick={() => toggleRawData(raw.id)}
+                            className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
+                              isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600 hover:border-gray-500'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-4 h-4 text-black" />}
                           </div>
-                        )}
+                        </div>
 
                         {/* 이미지 */}
                         {raw.firstimage && (
@@ -556,16 +602,20 @@ export default function AdminTourAPI() {
 
                         {/* 액션 버튼 */}
                         <div className="flex flex-col gap-2">
-                          {raw.processing_status === 'failed' && (
+                          {/* 개별 재변환 버튼 (processed나 failed인 경우) */}
+                          {(raw.processing_status === 'processed' || raw.processing_status === 'failed') && (
                             <Button
-                              onClick={() => handleTransform([raw.id])}
+                              onClick={() => handleTransform([raw.id], true)}
                               disabled={isTransforming}
                               size="sm"
-                              className="bg-orange-500 hover:bg-orange-600"
+                              className="bg-orange-500 hover:bg-orange-600 text-white"
+                              title="이 항목만 재변환"
                             >
                               <RefreshCw className="w-4 h-4" />
                             </Button>
                           )}
+                          
+                          {/* 삭제 버튼 */}
                           <Button
                             onClick={() => {
                               if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
@@ -574,7 +624,7 @@ export default function AdminTourAPI() {
                             }}
                             size="sm"
                             variant="outline"
-                            className="border-gray-700 text-red-400"
+                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
