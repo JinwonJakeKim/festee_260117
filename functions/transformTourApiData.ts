@@ -180,147 +180,169 @@ Deno.serve(async (req) => {
     };
     
     // ========== 개선된 일정 추출 함수 ==========
-    const extractSchedule = (text, programText) => {
-      if (!text && !programText) return [];
+    const extractSchedule = (programText, festivalStartDate, festivalEndDate) => {
+      if (!programText) {
+        console.log(`[Schedule] No program text provided`);
+        return [];
+      }
       
-      console.log(`[ExtractSchedule] 🎯 Starting enhanced schedule extraction...`);
-      
-      const fullText = (text || '') + '\n' + (programText || '');
-      const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      console.log(`[Schedule] ========== 일정 추출 시작 ==========`);
+      console.log(`[Schedule] 입력 텍스트 길이: ${programText.length} chars`);
+      console.log(`[Schedule] 축제 기간: ${festivalStartDate} ~ ${festivalEndDate}`);
       
       const schedule = [];
-      const operatingHoursKeywords = ['평일', '주말', '매일', '운영시간', '관람시간', '이용시간', '오픈', '개장'];
+      const lines = programText.split('\n');
       
-      // 날짜 패턴 (예: "10월 31일", "10/31", "첫째 날", "Day 1")
-      const datePatterns = [
-        /(\d{1,2}월\s*\d{1,2}일)/,
-        /(\d{1,2}\/\d{1,2})/,
-        /(첫째\s*날|둘째\s*날|셋째\s*날|넷째\s*날)/,
-        /(Day\s*\d+)/i,
-        /(\d+일차)/
+      // 제외할 키워드 (운영시간, 관람시간 등)
+      const excludeKeywords = [
+        '운영시간', '관람시간', '개장시간', '이용시간', '영업시간',
+        '입장시간', '오픈시간', '개관시간', '개방시간',
+        '평일', '주말', '공휴일', '매일'
       ];
       
-      // 시간 패턴 (예: "14:00", "오후 2시", "14시")
+      // 날짜 패턴 매칭
+      const datePatterns = [
+        // "10월 31일", "10/31", "10.31"
+        /(\d{1,2})[월\/\.](\d{1,2})일?/,
+        // "첫째날", "둘째날", "마지막날"
+        /(첫째|둘째|셋째|넷째|다섯째|여섯째|마지막)날/,
+        // "Day 1", "DAY1"
+        /Day\s*(\d+)/i,
+        // "1일차", "2일차"
+        /(\d+)일차/
+      ];
+      
+      // 시간 패턴 매칭
       const timePatterns = [
-        /(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/,  // 14:00~16:00
-        /(\d{1,2}:\d{2})/,                            // 14:00
-        /(오전|오후)\s*(\d{1,2})\s*시/,               // 오후 2시
-        /(\d{1,2})\s*시/                              // 14시
+        // "10:00~12:00", "14:00 - 16:00"
+        /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
+        // "오전 10시", "오후 3시"
+        /(오전|오후)\s*(\d{1,2})시/,
+        // "14:00"
+        /(\d{1,2}:\d{2})/
       ];
       
       let currentDate = null;
+      let dateIndex = 1;
       
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        const line = lines[i].trim();
+        if (!line || line.length < 3) continue;
         
-        // 운영시간 패턴 감지 - 스킵
-        const isOperatingHours = operatingHoursKeywords.some(keyword => 
-          line.includes(keyword) && (line.includes('~') || line.includes('-'))
-        );
-        
-        if (isOperatingHours) {
-          console.log(`[ExtractSchedule] ⏭️ Skipping operating hours: ${line.substring(0, 50)}...`);
+        // 제외 키워드가 포함된 라인은 스킵
+        if (excludeKeywords.some(keyword => line.includes(keyword))) {
+          console.log(`[Schedule] ⏭️ 제외: "${line.substring(0, 50)}..." (운영시간 관련)`);
           continue;
         }
         
-        // 날짜 감지
-        let dateMatch = null;
+        // 날짜 패턴 체크
+        let foundDate = false;
         for (const pattern of datePatterns) {
-          const match = line.match(pattern);
-          if (match) {
-            dateMatch = match[1];
-            currentDate = dateMatch;
-            console.log(`[ExtractSchedule] 📅 Date detected: ${currentDate}`);
+          const dateMatch = line.match(pattern);
+          if (dateMatch) {
+            if (dateMatch[1] && dateMatch[2]) {
+              // "10월 31일" 형식
+              currentDate = `${dateMatch[1]}월 ${dateMatch[2]}일`;
+            } else if (dateMatch[1]) {
+              // "첫째날", "Day 1" 형식
+              currentDate = `${dateIndex}일차`;
+              dateIndex++;
+            }
+            foundDate = true;
+            console.log(`[Schedule] 📅 날짜 발견: ${currentDate}`);
             break;
           }
         }
         
-        // 시간 패턴 감지
+        if (foundDate) continue;
+        
+        // 시간 패턴 체크
+        let timeMatch = null;
+        let matchedPattern = null;
+        
         for (const pattern of timePatterns) {
-          const match = line.match(pattern);
-          if (match) {
-            let time = '';
-            let activity = '';
-            let location = '';
-            
-            // 시간 추출
-            if (pattern.source.includes('오전|오후')) {
-              const period = match[1]; // 오전/오후
-              const hour = match[2];   // 시
-              time = `${period} ${hour}시`;
-            } else if (pattern.source.includes('~')) {
-              time = `${match[1]}~${match[2]}`;
-            } else {
-              time = match[1];
-            }
-            
-            // 활동 추출 (시간 이후 텍스트)
-            const timeIndex = line.indexOf(match[0]);
-            const afterTime = line.substring(timeIndex + match[0].length).trim();
-            
-            // 구분자로 활동과 장소 분리 (-, :, @, (장소명) 등)
-            const locationMatch = afterTime.match(/[-@:]\s*(.+?)$/);
-            if (locationMatch) {
-              activity = afterTime.substring(0, afterTime.indexOf(locationMatch[0])).trim();
-              location = locationMatch[1].trim();
-            } else {
-              // 괄호 안 장소 추출
-              const bracketMatch = afterTime.match(/(.+?)\s*[\(（](.+?)[\)）]/);
-              if (bracketMatch) {
-                activity = bracketMatch[1].trim();
-                location = bracketMatch[2].trim();
-              } else {
-                activity = afterTime;
-              }
-            }
-            
-            // 활동이 명확한 경우만 추가
-            if (activity.length > 3 && activity.length < 150) {
-              const scheduleItem = {
-                time: time,
-                activity: activity,
-                location: location || undefined
-              };
-              
-              // 날짜가 있으면 추가
-              if (currentDate) {
-                scheduleItem.date = currentDate;
-              }
-              
-              schedule.push(scheduleItem);
-              console.log(`[ExtractSchedule] ✅ Added: ${currentDate || 'No Date'} | ${time} | ${activity.substring(0, 30)}...`);
-            }
-            
-            break; // 한 줄에서 첫 번째 시간만 처리
+          timeMatch = line.match(pattern);
+          if (timeMatch) {
+            matchedPattern = pattern;
+            break;
           }
+        }
+        
+        if (timeMatch) {
+          let time = '';
+          let activity = '';
+          let location = '';
+          
+          // 시간 추출
+          if (matchedPattern === timePatterns[0]) {
+            // "10:00~12:00"
+            time = `${timeMatch[1]}~${timeMatch[2]}`;
+          } else if (matchedPattern === timePatterns[1]) {
+            // "오전 10시"
+            time = `${timeMatch[1]} ${timeMatch[2]}시`;
+          } else {
+            // "14:00"
+            time = timeMatch[1];
+          }
+          
+          // 활동 내용 추출 (시간 이후 텍스트)
+          activity = line.replace(timeMatch[0], '').trim();
+          
+          // 콜론(:), 하이픈(-) 등으로 시작하면 제거
+          activity = activity.replace(/^[\s::\-\—]+/, '').trim();
+          
+          // 위치 정보 추출 시도 (괄호 안이나 @ 기호 뒤)
+          const locationMatch = activity.match(/[\(@]([^)\n]+)[)\n]?/);
+          if (locationMatch) {
+            location = locationMatch[1].trim();
+            activity = activity.replace(locationMatch[0], '').trim();
+          }
+          
+          // 활동이 너무 짧으면 스킵
+          if (activity.length < 3) {
+            console.log(`[Schedule] ⏭️ 제외: 활동 내용이 너무 짧음`);
+            continue;
+          }
+          
+          // 활동 내용이 100자를 넘으면 자르기
+          if (activity.length > 100) {
+            activity = activity.substring(0, 97) + '...';
+          }
+          
+          const scheduleItem = {
+            time,
+            activity,
+            ...(location && { location }),
+            ...(currentDate && { date: currentDate })
+          };
+          
+          schedule.push(scheduleItem);
+          console.log(`[Schedule] ✓ 추가: ${currentDate ? `[${currentDate}] ` : ''}${time} - ${activity}${location ? ` (${location})` : ''}`);
         }
       }
       
-      // 중복 제거 (같은 시간 + 활동)
-      const uniqueSchedule = [];
-      const seen = new Set();
+      console.log(`[Schedule] ========== 일정 추출 완료 ==========`);
+      console.log(`[Schedule] 총 ${schedule.length}개의 일정 항목 추출됨`);
       
-      schedule.forEach(item => {
-        const key = `${item.date || ''}-${item.time}-${item.activity}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniqueSchedule.push(item);
-        }
-      });
+      // 날짜별로 그룹화하여 정렬
+      if (schedule.length > 0) {
+        const grouped = {};
+        
+        schedule.forEach(item => {
+          const dateKey = item.date || '날짜 미정';
+          if (!grouped[dateKey]) {
+            grouped[dateKey] = [];
+          }
+          grouped[dateKey].push(item);
+        });
+        
+        console.log(`[Schedule] 📊 날짜별 그룹: ${Object.keys(grouped).length}개`);
+        Object.keys(grouped).forEach(date => {
+          console.log(`[Schedule]   - ${date}: ${grouped[date].length}개 일정`);
+        });
+      }
       
-      console.log(`[ExtractSchedule] 🎉 Extracted ${uniqueSchedule.length} unique schedule items`);
-      
-      // 날짜별로 정렬 (날짜가 있는 것 먼저, 그 다음 시간순)
-      uniqueSchedule.sort((a, b) => {
-        if (a.date && !b.date) return -1;
-        if (!a.date && b.date) return 1;
-        if (a.date && b.date && a.date !== b.date) {
-          return a.date.localeCompare(b.date);
-        }
-        return a.time.localeCompare(b.time);
-      });
-      
-      return uniqueSchedule;
+      return schedule;
     };
     
     // AI 기반 요약, 하이라이트, 태그 생성
@@ -795,8 +817,12 @@ ${context}
         console.log(`[Transform] ✅ FINAL Description:`);
         console.log(`[Transform]   - Total length: ${fullDescription.length} chars`);
         
-        // ===== 일정 추출 (개선된 버전 사용) =====
-        const scheduleItems = extractSchedule(fullDescription, introData.program);
+        // ===== 일정 추출 (개선된 버전) =====
+        const scheduleItems = extractSchedule(
+          introData.program || '', 
+          formattedStartDate, 
+          formattedEndDate
+        );
         
         console.log(`[Transform] ✓ Summary: ${summary.length} chars`);
         console.log(`[Transform] ✓ Highlights: ${highlights.length} items`);
