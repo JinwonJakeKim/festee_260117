@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Search, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -180,7 +179,7 @@ export default function AdminDashboard() {
       
       const finalResult = {
         total: count,
-        success: count - (deletionProgress?.errors?.length || 0), // Use the final count of errors, assuming deletionProgress is updated correctly
+        success: count - (deletionProgress?.errors?.length || 0),
         failed: (deletionProgress?.errors?.length || 0)
       };
       
@@ -204,7 +203,7 @@ export default function AdminDashboard() {
         alert('축제 삭제 중 오류가 발생했습니다.\n\n' + error.message);
       }
       
-      setDeletionProgress(null); // Close the progress modal if an unexpected error occurs or it's cancelled
+      setDeletionProgress(null);
     },
   });
 
@@ -455,14 +454,6 @@ export default function AdminDashboard() {
               >
                 <Plus className="w-5 h-5 mr-2" />
                 새 축제 추가
-              </Button>
-              
-              <Button
-                onClick={() => navigate(createPageUrl("AdminFestivalResearch"))}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                AI로 축제 자동 조사
               </Button>
 
               <Button
