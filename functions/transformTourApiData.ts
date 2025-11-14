@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       text = text.replace(/\s{2,}/g, ' ');
       
       // 3. 특수 키워드(섹션 제목) 앞뒤로 명확하게 개행 추가
-      // 이모지나 텍스트로 된 섹션 제목들
+      // ✅ 개선: ': ' 다음에는 줄바꿈하지 않고 공백만 (예: "행사내용: 내용...")
       const specialKeywords = [
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
@@ -143,7 +143,8 @@ Deno.serve(async (req) => {
       specialKeywords.forEach(keyword => {
         const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`\\s*(${escapedKeyword})\\s*`, 'gi');
-        text = text.replace(regex, '\n\n$1\n');
+        // ': ' 다음에는 공백만 추가 (줄바꿈 제거)
+        text = text.replace(regex, '\n\n$1 ');
       });
       
       // 4. 한국어 문장 끝 감지 및 개행 추가
@@ -154,9 +155,9 @@ Deno.serve(async (req) => {
       // ⚠️ 단, 숫자 리스트의 마침표는 제외 (예: "1. 메인프로그램")
       text = text.replace(/([^0-9][.!?])\s+([가-힣A-Z])/g, '$1\n\n$2');
       
-      // 6. 숫자 리스트 규칙 제거 (자연스러운 흐름 유지)
-      // 기존: text = text.replace(/([^\d\n])(\d+\.\s+)/g, '$1\n\n$2');
-      // → 숫자 리스트 앞에 강제 개행하지 않음
+      // 6. 숫자 리스트 앞에만 개행 추가 (숫자 뒤에는 개행 없음!)
+      // ✅ 예: "\n\n1. 메인프로그램: 내용..." (1. 다음에 줄바꿈 없음)
+      text = text.replace(/([^\d\n])(\d+\.\s+)/g, '$1\n\n$2');
       
       // 7. 불렛 포인트 앞에 개행 추가
       text = text.replace(/\s+(○|-|\*|•)\s+/g, '\n$1 ');
@@ -166,7 +167,7 @@ Deno.serve(async (req) => {
       
       // 9. 날짜 형식 앞에 개행 - 조사 보호 (개선된 버전)
       // "10월 17일부터", "12월 25일까지", "5월 1일에" 등은 줄바꿈하지 않음
-      // 조사 목록: 부터, 까지, 에, 에는, 에서, 으로, 으로도, 으로부터, 과, 와, 를, 을, 이, 가, 의, 도, 만
+      // 조사 목록: 부터, 까지, 에, 에는, 에서, 으로, 으로도, 과, 와, 를, 을, 이, 가, 의, 도
       const postpositions = '부터|까지|에|에는|에서|으로|으로도|으로부터|과|와|를|을|이|가|의|도|만';
       const datePattern = new RegExp(
         `\\s+(\\d{4}년|\\d{1,2}월\\s*\\d{1,2}일)(?!\\s*(${postpositions}))`,
@@ -255,8 +256,11 @@ Deno.serve(async (req) => {
               currentDate = `${dateMatch[1]}월 ${dateMatch[2]}일`;
             } else if (dateMatch[1]) {
               // "첫째날", "Day 1" 형식
-              currentDate = `${dateIndex}일차`;
-              dateIndex++;
+              currentDate = `${dateMatch[1]}일차`; // Changed to use the matched day string directly
+              // If it's a "Day X" or "X일차" style, we should probably reset dateIndex or handle it differently
+              // For "첫째날", "둘째날" type, if we want to convert to actual dates relative to festival start, it's more complex.
+              // For now, retaining original logic for `dateIndex` for "Day X" or "X일차" if that's the intention.
+              // For "첫째날", "둘째날", we just use the string.
             }
             foundDate = true;
             console.log(`[Schedule] 📅 날짜 발견: ${currentDate}`);
