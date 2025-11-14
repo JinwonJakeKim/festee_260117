@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -71,7 +72,13 @@ export default function MyFestee() {
 
   const { data: myLikes } = useQuery({
     queryKey: ['myLikes', user?.email],
-    queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
+    queryFn: async () => {
+      if (!user) return [];
+      console.log('[MyFestee] 좋아요 조회 중...', user.email);
+      const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
+      console.log('[MyFestee] 좋아요 결과:', likes.length, '개', likes);
+      return likes;
+    },
     enabled: !!user,
     initialData: [],
   });
@@ -166,6 +173,14 @@ export default function MyFestee() {
       console.error('코드 복사 실패:', error);
     }
   };
+
+  // 디버깅: 사용자 정보 출력
+  useEffect(() => {
+    if (user) {
+      console.log('[MyFestee] 현재 사용자:', user.email, user.full_name);
+      console.log('[MyFestee] 좋아요 개수:', myLikes?.length);
+    }
+  }, [user, myLikes]);
 
   if (isLoading) {
     return (
@@ -287,8 +302,8 @@ export default function MyFestee() {
     );
   }
 
-  const referralCode = generateReferralCode(user.email);
-  const userCoins = user.coins || 0;
+  const referralCode = user ? generateReferralCode(user.email) : '';
+  const userCoins = user?.coins || 0;
 
   const menuItems = [
     {
@@ -328,7 +343,7 @@ export default function MyFestee() {
       icon: BookOpen,
       bgColor: "bg-purple-500",
     },
-  ].filter(item => !item.adminOnly || user.role === 'admin');
+  ].filter(item => !item.adminOnly || (user && user.role === 'admin'));
 
   // 로그인 상태 UI
   return (
@@ -449,7 +464,7 @@ export default function MyFestee() {
         </div>
 
         {/* 추천코드 섹션 */}
-        <div className="px-6 py-3 border-b border-gray-800">
+        <div className="mb-4">
           <div className="flex items-center justify-between bg-gray-900 rounded-lg px-4 py-3">
             <div className="flex items-center gap-3">
               <Sparkles className="w-5 h-5 text-yellow-400" />
@@ -469,7 +484,7 @@ export default function MyFestee() {
         </div>
 
         {/* Profile Stats - 순서 변경: 좋아요, 캐치, 팔로워, 팔로잉, 코인 */}
-        <div className="grid grid-cols-5 gap-2 px-6 py-4">
+        <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myLikes.length}</p>
             <p className="text-gray-400 text-xs">좋아요</p>
@@ -496,7 +511,7 @@ export default function MyFestee() {
 
         {/* External Links */}
         {user.youtube_url && (
-          <div className="flex gap-2 px-6">
+          <div className="flex gap-2 mt-4">
             <Badge variant="outline" className="text-gray-400 border-gray-700">
               🎥 {user.youtube_url}
             </Badge>
