@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -74,10 +73,23 @@ export default function MyFestee() {
     queryKey: ['myLikes', user?.email],
     queryFn: async () => {
       if (!user) return [];
-      console.log('[MyFestee] 좋아요 조회 중...', user.email);
       const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
-      console.log('[MyFestee] 좋아요 결과:', likes.length, '개', likes);
-      return likes;
+      
+      // 🔥 중복 제거: 같은 축제를 여러 번 좋아요한 경우 하나만 카운트
+      const uniqueFestivalIds = new Set();
+      const uniqueLikes = [];
+      
+      for (const like of likes) {
+        if (!uniqueFestivalIds.has(like.festival_id)) {
+          uniqueFestivalIds.add(like.festival_id);
+          uniqueLikes.push(like);
+        }
+      }
+      
+      console.log('[MyFestee] 전체 좋아요:', likes.length, '개');
+      console.log('[MyFestee] 중복 제거 후:', uniqueLikes.length, '개');
+      
+      return uniqueLikes;
     },
     enabled: !!user,
     initialData: [],
@@ -173,14 +185,6 @@ export default function MyFestee() {
       console.error('코드 복사 실패:', error);
     }
   };
-
-  // 디버깅: 사용자 정보 출력
-  useEffect(() => {
-    if (user) {
-      console.log('[MyFestee] 현재 사용자:', user.email, user.full_name);
-      console.log('[MyFestee] 좋아요 개수:', myLikes?.length);
-    }
-  }, [user, myLikes]);
 
   if (isLoading) {
     return (
@@ -302,8 +306,8 @@ export default function MyFestee() {
     );
   }
 
-  const referralCode = user ? generateReferralCode(user.email) : '';
-  const userCoins = user?.coins || 0;
+  const referralCode = generateReferralCode(user.email);
+  const userCoins = user.coins || 0;
 
   const menuItems = [
     {
@@ -343,7 +347,7 @@ export default function MyFestee() {
       icon: BookOpen,
       bgColor: "bg-purple-500",
     },
-  ].filter(item => !item.adminOnly || (user && user.role === 'admin'));
+  ].filter(item => !item.adminOnly || user.role === 'admin');
 
   // 로그인 상태 UI
   return (
