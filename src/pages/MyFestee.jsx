@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Heart, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Target } from "lucide-react";
+import { User, Camera, Heart, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Target, Copy, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +23,33 @@ const safeFormatDate = (dateString, formatString) => {
   }
 };
 
+// 추천코드 생성 함수
+const generateReferralCode = (userEmail) => {
+  // 이메일 기반 시드로 일관된 코드 생성
+  let hash = 0;
+  for (let i = 0; i < userEmail.length; i++) {
+    hash = userEmail.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // 6자리 알파벳+숫자 코드 생성
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 혼동 가능한 문자 제외 (I, O, 0, 1)
+  let code = '';
+  let tempHash = Math.abs(hash);
+  
+  for (let i = 0; i < 6; i++) {
+    code += chars[tempHash % chars.length];
+    tempHash = Math.floor(tempHash / chars.length);
+  }
+  
+  return code;
+};
+
 export default function MyFestee() {
   const navigate = useNavigate();
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
+  const [showCodeCopied, setShowCodeCopied] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -129,6 +151,20 @@ export default function MyFestee() {
 
   const handleLogout = () => {
     base44.auth.logout();
+  };
+
+  // 추천코드 복사 핸들러
+  const handleCopyReferralCode = async () => {
+    const referralCode = generateReferralCode(user.email);
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setShowCodeCopied(true);
+      setTimeout(() => {
+        setShowCodeCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error('코드 복사 실패:', error);
+    }
   };
 
   if (isLoading) {
@@ -251,6 +287,9 @@ export default function MyFestee() {
     );
   }
 
+  const referralCode = generateReferralCode(user.email);
+  const userCoins = user.coins || 0;
+
   const menuItems = [
     {
       label: "관리자 대시보드",
@@ -294,6 +333,14 @@ export default function MyFestee() {
   // 로그인 상태 UI
   return (
     <div className="min-h-screen bg-black pb-20">
+      {/* 코드 복사 알림 */}
+      {showCodeCopied && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 border border-cyan-400 rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+          <Check className="w-4 h-4 text-cyan-400" />
+          <span className="text-white text-sm font-medium">추천코드가 복사되었습니다</span>
+        </div>
+      )}
+
       {/* Profile Header */}
       <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
         <div className="flex items-center justify-between mb-4">
@@ -305,7 +352,7 @@ export default function MyFestee() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-4">
           <label className="relative cursor-pointer group">
             <input
               type="file"
@@ -401,8 +448,32 @@ export default function MyFestee() {
           </div>
         </div>
 
-        {/* Profile Stats - 실제 데이터 반영 + 클릭 가능 */}
-        <div className="grid grid-cols-4 gap-4 mb-4">
+        {/* 추천코드 섹션 */}
+        <div className="px-6 py-3 border-b border-gray-800">
+          <div className="flex items-center justify-between bg-gray-900 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-yellow-400" />
+              <div>
+                <p className="text-gray-400 text-xs">내 추천코드</p>
+                <p className="text-white font-bold text-lg tracking-wider">{referralCode}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleCopyReferralCode}
+              className="w-9 h-9 rounded-lg bg-cyan-500 hover:bg-cyan-600 flex items-center justify-center transition-colors"
+              aria-label="추천코드 복사"
+            >
+              <Copy className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Profile Stats - 순서 변경: 좋아요, 캐치, 팔로워, 팔로잉, 코인 */}
+        <div className="grid grid-cols-5 gap-2 px-6 py-4">
+          <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
+            <p className="text-white text-2xl font-bold">{myLikes.length}</p>
+            <p className="text-gray-400 text-xs">좋아요</p>
+          </Link>
           <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">{myCatches.length}</p>
             <p className="text-gray-400 text-xs">캐치</p>
@@ -415,15 +486,17 @@ export default function MyFestee() {
             <p className="text-white text-2xl font-bold">{myFollowing.length}</p>
             <p className="text-gray-400 text-xs">팔로잉</p>
           </Link>
-          <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myLikes.length}</p>
-            <p className="text-gray-400 text-xs">좋아요</p>
-          </Link>
+          <div className="text-center">
+            <p className="text-white text-2xl font-bold flex items-center justify-center gap-1">
+              {userCoins}
+            </p>
+            <p className="text-gray-400 text-xs">코인</p>
+          </div>
         </div>
 
         {/* External Links */}
         {user.youtube_url && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 px-6">
             <Badge variant="outline" className="text-gray-400 border-gray-700">
               🎥 {user.youtube_url}
             </Badge>
