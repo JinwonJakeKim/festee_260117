@@ -25,7 +25,6 @@ import FeedbackDetail from './pages/FeedbackDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFestivalForm from './pages/AdminFestivalForm';
 import AdminAdForm from './pages/AdminAdForm';
-import AdminFestivalResearch from './pages/AdminFestivalResearch';
 import AdminFestivalExtract from './pages/AdminFestivalExtract';
 import Home from './pages/Home';
 import AdminTourAPI from './pages/AdminTourAPI';
@@ -64,7 +63,6 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminFestivalForm": AdminFestivalForm,
     "AdminAdForm": AdminAdForm,
-    "AdminFestivalResearch": AdminFestivalResearch,
     "AdminFestivalExtract": AdminFestivalExtract,
     "Home": Home,
     "AdminTourAPI": AdminTourAPI,
