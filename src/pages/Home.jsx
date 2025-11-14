@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -321,9 +322,9 @@ export default function Home() {
     
     // 지난 축제 필터링
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isPastFestival = festival.end_date && new Date(festival.end_date) < today;
-    const pastFestivalMatch = !hidePastFestivals || !isPastFestival;
+    today.setHours(0, 0, 0, 0); // Normalize today to start of day for comparison
+    const pastFestivalMatch = !hidePastFestivals || 
+      (festival.end_date && new Date(festival.end_date) >= today);
     
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   });
@@ -677,7 +678,7 @@ export default function Home() {
 
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
             <Select value={countryFilter} onValueChange={setCountryFilter}>
-              <SelectTrigger className="w-auto min-w-[100px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
                 <div className="flex items-center gap-1.5">
                   <Globe className="w-4 h-4 text-cyan-400" />
                   <SelectValue>
@@ -696,7 +697,7 @@ export default function Home() {
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-auto min-w-[90px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
                 <div className="flex items-center gap-1.5">
                   <Tag className="w-4 h-4 text-purple-400" />
                   <SelectValue>
@@ -737,8 +738,8 @@ export default function Home() {
               </PopoverContent>
             </Popover>
 
-            <div className="flex items-center gap-2 px-3 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap">
-              <span className="text-sm text-gray-400">지난 축제 숨기기</span>
+            <div className="flex items-center gap-2 px-3 h-9 bg-gray-900 rounded-full border border-gray-800">
+              <span className="text-white text-sm whitespace-nowrap">지난 축제 숨김</span>
               <Switch
                 checked={hidePastFestivals}
                 onCheckedChange={setHidePastFestivals}
@@ -972,7 +973,6 @@ export default function Home() {
           </Card>
         )}
 
-        {/* Festival Ranker - 실제 유저 기반으로 변경 */}
         {topUsers.length > 0 && (
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4">Festival Ranker</h2>
