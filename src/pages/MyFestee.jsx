@@ -73,9 +73,12 @@ export default function MyFestee() {
     queryKey: ['myLikes', user?.email],
     queryFn: async () => {
       if (!user) return [];
-      const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
       
-      // 🔥 중복 제거: 같은 축제를 여러 번 좋아요한 경우 하나만 카운트
+      console.log('[MyFestee] 좋아요 데이터 가져오기 시작...');
+      const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
+      console.log('[MyFestee] 전체 좋아요 레코드:', likes.length, '개');
+      
+      // 1단계: festival_id 기준 중복 제거
       const uniqueFestivalIds = new Set();
       const uniqueLikes = [];
       
@@ -86,10 +89,28 @@ export default function MyFestee() {
         }
       }
       
-      console.log('[MyFestee] 전체 좋아요:', likes.length, '개');
       console.log('[MyFestee] 중복 제거 후:', uniqueLikes.length, '개');
       
-      return uniqueLikes;
+      // 2단계: 실제로 존재하는 축제만 필터링
+      const validLikes = [];
+      
+      for (const like of uniqueLikes) {
+        try {
+          const festival = await base44.entities.Festival.filter({ id: like.festival_id });
+          if (festival && festival.length > 0) {
+            validLikes.push(like);
+            console.log('[MyFestee] ✅ 유효한 축제:', festival[0].name);
+          } else {
+            console.log('[MyFestee] ⚠️ 축제를 찾을 수 없음:', like.festival_id);
+          }
+        } catch (error) {
+          console.log('[MyFestee] ❌ 삭제된 축제:', like.festival_id);
+        }
+      }
+      
+      console.log('[MyFestee] 최종 유효한 좋아요:', validLikes.length, '개');
+      
+      return validLikes;
     },
     enabled: !!user,
     initialData: [],
