@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -32,7 +31,28 @@ export default function MyLikes() {
 
   const { data: myLikes } = useQuery({
     queryKey: ['myLikes', user?.email],
-    queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      console.log('[MyLikes] 좋아요 데이터 가져오기 시작...');
+      const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
+      console.log('[MyLikes] 전체 좋아요 레코드:', likes.length, '개');
+      
+      // 1단계: festival_id 기준 중복 제거
+      const uniqueFestivalIds = new Set();
+      const uniqueLikes = [];
+      
+      for (const like of likes) {
+        if (!uniqueFestivalIds.has(like.festival_id)) {
+          uniqueFestivalIds.add(like.festival_id);
+          uniqueLikes.push(like);
+        }
+      }
+      
+      console.log('[MyLikes] 중복 제거 후:', uniqueLikes.length, '개');
+      
+      return uniqueLikes;
+    },
     enabled: !!user,
     initialData: [],
   });
@@ -43,9 +63,12 @@ export default function MyLikes() {
     initialData: [],
   });
 
+  // 🔥 실제로 존재하는 축제만 필터링 (중복 제거 + 삭제된 축제 제외)
   const likedFestivals = festivals.filter(f =>
     myLikes.some(like => like.festival_id === f.id)
   );
+
+  console.log('[MyLikes] 최종 표시할 축제:', likedFestivals.length, '개');
 
   // 페이지 진입 시 스크롤 초기화
   useEffect(() => {
