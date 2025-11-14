@@ -1,4 +1,3 @@
-
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
@@ -118,19 +117,20 @@ Deno.serve(async (req) => {
       return result.join(' ');
     };
     
-    // 텍스트 포맷팅 - 이모티콘 줄바꿈 제거
+    // 텍스트 포맷팅 - 개선된 버전 (조사 보호 + 의미 단위 강조)
     const formatText = (text) => {
       if (!text) return '';
       
       console.log(`[FormatText] 📝 Input length: ${text.length} chars`);
       
-      // 1. 모든 개행을 공백으로 변환
+      // 1. 모든 개행을 공백으로 변환 (초기화)
       text = text.replace(/\n+/g, ' ');
       
       // 2. 연속 공백 제거
       text = text.replace(/\s{2,}/g, ' ');
       
-      // 3. 특수 키워드(텍스트) 앞뒤로 개행 추가 - 이모지 제외
+      // 3. 특수 키워드(섹션 제목) 앞뒤로 명확하게 개행 추가
+      // 이모지나 텍스트로 된 섹션 제목들
       const specialKeywords = [
         '행사내용:', '행사 내용:', '부대행사:', '부대 행사:',
         '프로그램:', '주요 프로그램:', '주요프로그램:',
@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
       });
       
       // 4. 한국어 문장 끝 감지 및 개행 추가
+      // "습니다.", "요.", "다." 등으로 끝나는 문장 뒤에 개행
       text = text.replace(/(다\.|요\.|니다\.|습니다\.|요!\s|다!\s|까\?)\s+([가-힣A-Z0-9])/g, '$1\n\n$2');
       
       // 5. 마침표, 느낌표, 물음표 뒤에 대문자나 한글이 오면 개행
@@ -161,19 +162,27 @@ Deno.serve(async (req) => {
       // 8. 섹션 제목 (대괄호 등) 앞뒤 개행
       text = text.replace(/\s*(\[.+?\]|【.+?】)\s*/g, '\n\n$1\n\n');
       
-      // 9. 날짜 형식 앞에 개행
-      text = text.replace(/\s+(\d{4}년|\d{1,2}월\s*\d{1,2}일)/g, '\n\n$1');
+      // 9. 날짜 형식 앞에 개행 - 조사 보호 (개선된 버전)
+      // "10월 17일부터", "12월 25일까지", "5월 1일에" 등은 줄바꿈하지 않음
+      // 조사 목록: 부터, 까지, 에, 에는, 에서, 으로, 으로도, 과, 와, 를, 을, 이, 가, 의, 도
+      const postpositions = '부터|까지|에|에는|에서|으로|으로도|으로부터|과|와|를|을|이|가|의|도|만';
+      const datePattern = new RegExp(
+        `\\s+(\\d{4}년|\\d{1,2}월\\s*\\d{1,2}일)(?!\\s*(${postpositions}))`,
+        'g'
+      );
+      text = text.replace(datePattern, '\n\n$1');
       
-      // 10. 과도한 개행 정리
+      // 10. 과도한 개행 정리 (3개 이상 → 2개로)
       text = text.replace(/\n{3,}/g, '\n\n');
       
-      // 11. 각 줄 trim
+      // 11. 각 줄 trim 및 빈 줄 제거
       const lines = text.split('\n');
       const trimmedLines = lines.map(line => line.trim()).filter(line => line.length > 0);
       text = trimmedLines.join('\n');
       
       const outputText = text.trim();
       console.log(`[FormatText] ✓ Output length: ${outputText.length} chars`);
+      console.log(`[FormatText] ✓ Line breaks count: ${(outputText.match(/\n/g) || []).length}`);
       
       return outputText;
     };
@@ -216,7 +225,7 @@ Deno.serve(async (req) => {
         // "10:00~12:00", "14:00 - 16:00"
         /(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/,
         // "오전 10시", "오후 3시"
-        /(오전|오후)\s*(\d{1,2})시(\s*\d{1,2}분)?/, // Add optional minutes
+        /(오전|오후)\s*(\d{1,2})시/,
         // "14:00"
         /(\d{1,2}:\d{2})/
       ];
@@ -278,7 +287,7 @@ Deno.serve(async (req) => {
             time = `${timeMatch[1]}~${timeMatch[2]}`;
           } else if (matchedPattern === timePatterns[1]) {
             // "오전 10시"
-            time = `${timeMatch[1]} ${timeMatch[2]}시${timeMatch[3] || ''}`;
+            time = `${timeMatch[1]} ${timeMatch[2]}시`;
           } else {
             // "14:00"
             time = timeMatch[1];
@@ -450,7 +459,7 @@ ${context}
             // festival_id 초기화
             await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
               festival_id: null,
-              processing_status: 'pending' // pending으로 설정하여 새로 생성될 수 있도록 함
+              processing_status: 'pending'
             });
           } catch (deleteError) {
             console.error(`[Transform] Failed to delete existing Festival:`, deleteError.message);
@@ -608,7 +617,7 @@ ${context}
             
             const infoUrl = `${baseUrl}/detailInfo2?${infoParams.toString()}`;
             const infoResponse = await fetch(infoUrl);
-            const infoText = await introResponse.text();
+            const infoText = await infoResponse.text();
             
             if (infoResponse.ok) {
               try {
