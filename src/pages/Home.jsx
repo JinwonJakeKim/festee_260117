@@ -737,15 +737,6 @@ export default function Home() {
                 />
               </PopoverContent>
             </Popover>
-
-            <div className="flex items-center gap-2 px-3 h-9 bg-gray-900 rounded-full border border-gray-800">
-              <span className="text-white text-sm whitespace-nowrap">지난 축제 숨김</span>
-              <Switch
-                checked={hidePastFestivals}
-                onCheckedChange={setHidePastFestivals}
-                className="data-[state=checked]:bg-cyan-500"
-              />
-            </div>
           </div>
 
           <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -764,6 +755,16 @@ export default function Home() {
                 {filter}
               </Button>
             ))}
+          </div>
+
+          {/* 지난 축제 숨김 토글 */}
+          <div className="flex items-center justify-between mb-3 px-4 py-3 bg-gray-900/50 rounded-xl border border-gray-800">
+            <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
+            <Switch
+              checked={hidePastFestivals}
+              onCheckedChange={setHidePastFestivals}
+              className="data-[state=checked]:bg-cyan-500"
+            />
           </div>
 
           {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || hidePastFestivals) && (
