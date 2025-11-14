@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
@@ -98,6 +98,7 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showBetaBanner, setShowBetaBanner] = useState(true);
+  const [hidePastFestivals, setHidePastFestivals] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { getLocalizedContent } = useFestivalLocalizedContent();
@@ -318,7 +319,13 @@ export default function Home() {
     const tagsMatch = selectedTags.length === 0 || 
       (festival.tags && selectedTags.every(tag => festival.tags.includes(tag)));
     
-    return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch;
+    // 지난 축제 필터링
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPastFestival = festival.end_date && new Date(festival.end_date) < today;
+    const pastFestivalMatch = !hidePastFestivals || !isPastFestival;
+    
+    return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   });
 
   const banners = useMemo(() => {
@@ -657,7 +664,7 @@ export default function Home() {
       )}
 
       <div className="px-4 pt-4">
-        {/* Top Festival Section - FesteeStar 제거 */}
+        {/* Top Festival Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white text-2xl font-bold">Top Festival</h2>
@@ -689,16 +696,16 @@ export default function Home() {
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-auto min-w-[120px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <SelectTrigger className="w-auto min-w-[90px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
                 <div className="flex items-center gap-1.5">
                   <Tag className="w-4 h-4 text-purple-400" />
                   <SelectValue>
-                    {categoryFilter === "all" ? "카테고리" : categoryFilter}
+                    {categoryFilter === "all" ? "분류" : categoryFilter}
                   </SelectValue>
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 분류</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
                     {category}
@@ -729,6 +736,15 @@ export default function Home() {
                 />
               </PopoverContent>
             </Popover>
+
+            <div className="flex items-center gap-2 px-3 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap">
+              <span className="text-sm text-gray-400">지난 축제 숨기기</span>
+              <Switch
+                checked={hidePastFestivals}
+                onCheckedChange={setHidePastFestivals}
+                className="data-[state=checked]:bg-cyan-500"
+              />
+            </div>
           </div>
 
           <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -749,7 +765,7 @@ export default function Home() {
             ))}
           </div>
 
-          {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from) && (
+          {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || hidePastFestivals) && (
             <div className="mb-4 flex items-center gap-2 flex-wrap">
               <span className="text-gray-400 text-xs">활성 필터:</span>
               {categoryFilter !== "all" && (
@@ -779,6 +795,15 @@ export default function Home() {
                   {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')} ✕
                 </Badge>
               )}
+              {hidePastFestivals && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
+                  onClick={() => setHidePastFestivals(false)}
+                >
+                  지난 축제 숨김 ✕
+                </Badge>
+              )}
               {selectedTags.map(tag => (
                 <Badge 
                   key={tag}
@@ -796,6 +821,7 @@ export default function Home() {
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
                   setSelectedTags([]);
+                  setHidePastFestivals(false);
                 }}
                 variant="ghost"
                 size="sm"
@@ -806,7 +832,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Festival List - FesteeStar 제거됨 */}
+          {/* Festival List */}
           <div className="space-y-3">
             {filteredFestivals.slice(0, 5).map((festival, index) => {
               const isLiked = myLikes.some(like => like.festival_id === festival.id);
@@ -883,6 +909,7 @@ export default function Home() {
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
                   setSelectedTags([]);
+                  setHidePastFestivals(false);
                 }}
                 variant="outline"
                 className="bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
