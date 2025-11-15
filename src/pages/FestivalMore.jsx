@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
@@ -55,6 +57,7 @@ export default function FestivalMore() {
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [hidePastFestivals, setHidePastFestivals] = useState(false);
   const queryClient = useQueryClient();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { getLocalizedContent } = useFestivalLocalizedContent();
@@ -159,7 +162,12 @@ export default function FestivalMore() {
     const tagsMatch = selectedTags.length === 0 ||
       (festival.tags && selectedTags.every(tag => festival.tags.includes(tag)));
 
-    return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const pastFestivalMatch = !hidePastFestivals ||
+      (festival.end_date && new Date(festival.end_date) >= today);
+
+    return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   });
 
   const countries = [...new Set(festivals.map(f => f.country))];
@@ -283,13 +291,23 @@ export default function FestivalMore() {
           ))}
         </div>
 
+        {/* 지난 축제 숨김 토글 - 오른쪽 정렬, 배경/테두리 제거 */}
+        <div className="flex items-center justify-end gap-3 mb-4 py-2">
+          <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
+          <Switch
+            checked={hidePastFestivals}
+            onCheckedChange={setHidePastFestivals}
+            className="data-[state=checked]:bg-cyan-500"
+          />
+        </div>
+
         {/* Active Filters */}
-        {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to)) && (
+        {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to) || hidePastFestivals) && (
           <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-gray-400 text-xs">활성 필터:</span>
             {categoryFilter !== "all" && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
                 onClick={() => setCategoryFilter("all")}
               >
@@ -297,8 +315,8 @@ export default function FestivalMore() {
               </Badge>
             )}
             {countryFilter !== "all" && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
                 onClick={() => setCountryFilter("all")}
               >
@@ -306,18 +324,27 @@ export default function FestivalMore() {
               </Badge>
             )}
             {dateRange.from && dateRange.to && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
                 onClick={() => setDateRange({ from: null, to: null })}
               >
                 {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')} ✕
               </Badge>
             )}
+            {hidePastFestivals && (
+              <Badge
+                variant="outline"
+                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
+                onClick={() => setHidePastFestivals(false)}
+              >
+                지난 축제 숨김 ✕
+              </Badge>
+            )}
             {selectedTags.map(tag => (
-              <Badge 
+              <Badge
                 key={tag}
-                variant="outline" 
+                variant="outline"
                 className="bg-pink-900/30 text-pink-400 border-pink-400/50 cursor-pointer"
                 onClick={() => toggleTag(tag)}
               >
@@ -331,6 +358,7 @@ export default function FestivalMore() {
                 setDateRange({ from: null, to: null });
                 setSearchQuery("");
                 setSelectedTags([]);
+                setHidePastFestivals(false);
               }}
               variant="ghost"
               size="sm"
@@ -425,6 +453,7 @@ export default function FestivalMore() {
                 setDateRange({ from: null, to: null });
                 setSearchQuery("");
                 setSelectedTags([]);
+                setHidePastFestivals(false);
               }}
               variant="outline"
               className="mt-4 bg-gray-900 text-white border-gray-800 hover:bg-gray-800"

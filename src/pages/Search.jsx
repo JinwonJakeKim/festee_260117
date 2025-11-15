@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DateRangePicker } from "@/components/ui/date-range-picker"; // New import
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -125,6 +126,7 @@ export default function Search() {
   const [likesRange, setLikesRange] = useState([0, 1000000]);
   const [starRange, setStarRange] = useState([1, 5]);
   const [priceRange, setPriceRange] = useState([0, 500000]);
+  const [hidePastFestivals, setHidePastFestivals] = useState(false);
 
   // 페이지 진입 시 스크롤 초기화 제거 - 검색 결과 위치 유지
 
@@ -280,13 +282,20 @@ export default function Search() {
         const matchesStarRating = festivalStarRating >= starRange[0] && festivalStarRating <= starRange[1];
         if (!matchesStarRating) return false;
 
+        // 지난 축제 숨기기 필터
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const pastFestivalMatch = !hidePastFestivals ||
+          (festival.end_date && new Date(festival.end_date) >= today);
+        if (!pastFestivalMatch) return false;
+
         return true;
       } catch (e) {
         console.error('Error during festival filtering:', e, festival);
         return false;
       }
     });
-  }, [festivals, searchQuery, selectedCountry, selectedCity, selectedCategories, likesRange, dateRange, selectedTags, priceRange, starRange]);
+  }, [festivals, searchQuery, selectedCountry, selectedCity, selectedCategories, likesRange, dateRange, selectedTags, priceRange, starRange, hidePastFestivals]);
 
   // 국가별, 도시별 축제 수 계산 - 검색 결과를 기반으로 계산
   const locationStats = useMemo(() => {
@@ -454,7 +463,7 @@ export default function Search() {
   };
 
   const isFilterActive = () => {
-    return selectedCountry || selectedCity || (dateRange.from && dateRange.to) || selectedCategories.length > 0 || selectedTags.length > 0 || likesRange[0] !== 0 || likesRange[1] !== 1000000 || starRange[0] !== 1 || starRange[1] !== 5 || priceRange[0] !== 0 || priceRange[1] !== 500000;
+    return selectedCountry || selectedCity || (dateRange.from && dateRange.to) || selectedCategories.length > 0 || selectedTags.length > 0 || likesRange[0] !== 0 || likesRange[1] !== 1000000 || starRange[0] !== 1 || starRange[1] !== 5 || priceRange[0] !== 0 || priceRange[1] !== 500000 || hidePastFestivals;
   };
 
   const handleDateFilterApply = () => {
@@ -658,6 +667,18 @@ export default function Search() {
             </div>
           </div>
 
+          {/* 지난 축제 숨김 토글 추가 */}
+          <div>
+            <div className="flex items-center justify-between py-2">
+              <h3 className="text-white font-bold">지난 축제 숨기기</h3>
+              <Switch
+                checked={hidePastFestivals}
+                onCheckedChange={setHidePastFestivals}
+                className="data-[state=checked]:bg-cyan-500"
+              />
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <Button
               onClick={() => {
@@ -667,6 +688,7 @@ export default function Search() {
                 setPriceRange([0, 500000]);
                 setDateRange({ from: null, to: null });
                 setTempDateRange({ from: null, to: null }); // Also reset temp date range
+                setHidePastFestivals(false);
                 // URL 파라미터 초기화
                 updateUrlParams({ q: '', country: '', city: '', categories: [], tags: [] });
               }}
