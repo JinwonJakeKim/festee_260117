@@ -757,7 +757,7 @@ export default function Home() {
           </div>
 
           {/* 지난 축제 숨김 토글 */}
-          <div className="flex items-center justify-between mb-4 px-4 py-3 bg-gray-900/50 rounded-xl border border-gray-800">
+          <div className="flex items-center justify-end gap-3 mb-4 py-2">
             <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
             <Switch
               checked={hidePastFestivals}
