@@ -826,6 +826,8 @@ export default function Search() {
               <div className="space-y-3">
                 {filteredFestivals.map((festival) => {
                   const starRating = getStarRating(festival);
+                  const dateStatus = festival.date_status || 'confirmed';
+                  
                   return (
                     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-900 hover:bg-gray-800 transition-colors">
@@ -844,9 +846,16 @@ export default function Search() {
                           <p className="text-gray-400 text-xs">
                             {festival.city}, {festival.country}
                           </p>
-                          <p className="text-gray-500 text-xs">
-                            {festival.category} / {safeFormatDate(festival.start_date, 'yyyy.MM.dd')}
-                          </p>
+                          <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
+                            <span>
+                              {safeFormatDate(festival.start_date, 'yyyy.MM.dd')} - {safeFormatDate(festival.end_date, 'MM.dd')}
+                            </span>
+                            {dateStatus === 'tentative' && (
+                              <Badge variant="outline" className="text-[10px] h-4 px-1 border-yellow-500 text-yellow-500">
+                                미확정
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-col items-center gap-1">
                           <Heart className="w-5 h-5 text-pink-500" />
