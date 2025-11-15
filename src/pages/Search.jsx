@@ -463,7 +463,7 @@ export default function Search() {
   };
 
   const isFilterActive = () => {
-    return selectedCountry || selectedCity || (dateRange.from && dateRange.to) || selectedCategories.length > 0 || selectedTags.length > 0 || likesRange[0] !== 0 || likesRange[1] !== 1000000 || starRange[0] !== 1 || starRange[1] !== 5 || priceRange[0] !== 0 || priceRange[1] !== 500000 || hidePastFestivals;
+    return selectedCountry || selectedCity || (dateRange.from && dateRange.to) || selectedCategories.length > 0 || selectedTags.length > 0 || likesRange[0] !== 0 || likesRange[1] !== 1000000 || starRange[0] !== 1 || starRange[1] !== 5 || priceRange[0] !== 0 || priceRange[1] !== 500000;
   };
 
   const handleDateFilterApply = () => {
@@ -667,18 +667,6 @@ export default function Search() {
             </div>
           </div>
 
-          {/* 지난 축제 숨김 토글 추가 */}
-          <div>
-            <div className="flex items-center justify-between py-2">
-              <h3 className="text-white font-bold">지난 축제 숨기기</h3>
-              <Switch
-                checked={hidePastFestivals}
-                onCheckedChange={setHidePastFestivals}
-                className="data-[state=checked]:bg-cyan-500"
-              />
-            </div>
-          </div>
-
           <div className="flex gap-2">
             <Button
               onClick={() => {
@@ -820,6 +808,18 @@ export default function Search() {
                 아티스트
               </Button>
             </div>
+
+            {/* 지난 축제 숨김 토글 - 축제 탭에서만 표시, 리스트뷰 바로 위 */}
+            {activeTab === "축제" && (
+              <div className="flex items-center justify-end gap-3 mb-4 py-2">
+                <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
+                <Switch
+                  checked={hidePastFestivals}
+                  onCheckedChange={setHidePastFestivals}
+                  className="data-[state=checked]:bg-cyan-500"
+                />
+              </div>
+            )}
 
             {/* Results */}
             {activeTab === "축제" && (
