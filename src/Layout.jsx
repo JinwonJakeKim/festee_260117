@@ -1,18 +1,25 @@
-
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Home, Map, Camera, Users, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showSplash, setShowSplash] = React.useState(true);
+  const [slogonIndex, setSlogonIndex] = React.useState(0);
 
-  // 앱 초기 로드 시 루트 경로에서만 홈으로 리다이렉트
+  const slogans = [
+    "세상의 모든 축제를 한 곳에서",
+    "당신의 특별한 순간을 찾아보세요",
+    "축제로 연결되는 세계",
+    "Festee와 함께 떠나는 축제 여행",
+  ];
+
   React.useEffect(() => {
     const homeUrl = createPageUrl("Home");
     
-    // 정확한 루트 경로만 체크 (프리뷰 초기 로드 시)
     const isRootPath = 
       location.pathname === '/' || 
       location.pathname === '' ||
@@ -23,6 +30,26 @@ export default function Layout({ children, currentPageName }) {
       navigate(homeUrl, { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  // 스플래시 화면 타이머
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 슬로건 순환
+  React.useEffect(() => {
+    if (!showSplash) return;
+    
+    const interval = setInterval(() => {
+      setSlogonIndex((prev) => (prev + 1) % slogans.length);
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [showSplash]);
 
   const isMessageDetail = currentPageName === "MessageDetail";
 
@@ -90,6 +117,115 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Splash Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          >
+            {/* 파티클 효과 배경 */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    background: i % 3 === 0 ? '#00d4ff' : i % 3 === 1 ? '#ff006e' : '#8b5cf6',
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    y: [0, -30, 0],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.5, 0],
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* 로고 및 텍스트 */}
+            <div className="relative z-10 text-center px-8">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <motion.h1
+                  className="text-7xl font-black mb-4"
+                  style={{
+                    background: 'linear-gradient(135deg, #00d4ff 0%, #ff006e 50%, #8b5cf6 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                  animate={{
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                >
+                  FESTEE
+                </motion.h1>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="h-8"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={slogonIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-gray-400 text-sm font-medium"
+                  >
+                    {slogans[slogonIndex]}
+                  </motion.p>
+                </AnimatePresence>
+              </motion.div>
+
+              {/* 로딩 점 애니메이션 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex justify-center gap-2 mt-8"
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-3 h-3 rounded-full bg-cyan-400"
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <style>{`
         /* Festee 테마 색상 */
