@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -71,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
 
   const catchRelatedPages = [
     createPageUrl("Catch"),
+    createPageUrl("NearbyCatch"), // Added "NearbyCatch"
   ];
 
   const myRelatedPages = [
