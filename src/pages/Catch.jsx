@@ -132,21 +132,35 @@ export default function Catch() {
     getUserLocation();
   }, []);
 
-  // 근처 축제 계산 (100km 이내만)
+  // 근처 축제 계산 - 중복 제거 로직 추가
   useEffect(() => {
     if (userLocation && festivals.length > 0) {
-      const nearby = festivals
-        .filter(f => f.latitude && f.longitude)
-        .map(festival => {
+      // 축제 이름을 key로 하는 Map을 사용하여 중복 제거
+      const festivalMap = new Map();
+      
+      festivals
+        .filter(f => f.latitude && f.longitude && f.name) // 위치와 이름이 있는 축제만
+        .forEach(festival => {
           const distance = calculateDistance(
             userLocation.latitude,
             userLocation.longitude,
             festival.latitude,
             festival.longitude
           );
-          return { ...festival, distance };
-        })
-        .filter(festival => festival.distance <= 100000) // 100km = 100,000m 이내만
+          
+          // 100km 이내만
+          if (distance <= 100000) {
+            const existingFestival = festivalMap.get(festival.name);
+            
+            // 같은 이름의 축제가 없거나, 기존 축제보다 더 가까우면 업데이트
+            if (!existingFestival || distance < existingFestival.distance) {
+              festivalMap.set(festival.name, { ...festival, distance });
+            }
+          }
+        });
+      
+      // Map을 배열로 변환하고 거리순으로 정렬
+      const nearby = Array.from(festivalMap.values())
         .sort((a, b) => a.distance - b.distance);
       
       setNearbyFestivals(nearby);
