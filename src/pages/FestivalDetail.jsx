@@ -216,12 +216,11 @@ export default function FestivalDetail() {
     
     console.log('Processing YouTube URL:', url);
     
-    // YouTube URL 패턴들
     const patterns = [
-      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,           // youtube.com/watch?v=VIDEO_ID
-      /(?:youtube\.com\/embed\/)([^?\s]+)/,              // youtube.com/embed/VIDEO_ID
-      /(?:youtu\.be\/)([^?\s]+)/,                        // youtu.be/VIDEO_ID
-      /(?:youtube\.com\/v\/)([^?\s]+)/,                  // youtube.com/v/VIDEO_ID
+      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
+      /(?:youtube\.com\/embed\/)([^?\s]+)/,
+      /(?:youtu\.be\/)([^?\s]+)/,
+      /(?:youtube\.com\/v\/)([^?\s]+)/,
     ];
     
     let videoId = null;
@@ -240,7 +239,6 @@ export default function FestivalDetail() {
     
     console.log('Extracted video ID:', videoId);
     
-    // 깨끗한 embed URL 생성
     return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1`;
   };
 
@@ -258,21 +256,17 @@ export default function FestivalDetail() {
   };
 
   const handleShare = async () => {
-    // 1. 축약된 URL 생성 - 현재 도메인 + 짧은 ID
     const shortId = generateShortId(festivalId);
     const shareUrl = `${window.location.origin}${createPageUrl(`FestivalDetail?id=${festivalId}`)}`;
     
-    // 2. 날짜 정보 포맷팅
     const dateInfo = festival.start_date && festival.end_date
       ? `📅 ${safeFormatDate(festival.start_date, 'yyyy년 M월 d일')} - ${safeFormatDate(festival.end_date, 'M월 d일')}`
       : '📅 날짜 추후 공지';
     
-    // 3. 가격 정보
     const priceInfo = festival.price 
       ? `💰 ₩${festival.price.toLocaleString()}`
       : '💰 무료 입장';
     
-    // 4. 풍부한 공유 텍스트 구성
     const shareTitle = `🎪 ${localizedName}`;
     const shareText = `${localizedName}
 
@@ -285,28 +279,23 @@ ${localizedSummary ? localizedSummary.substring(0, 100) + (localizedSummary.leng
 
 FESTEE에서 더 자세히 확인하세요 👉`;
 
-    // 5. Share Data 구성 - 이미지 URL 포함 (일부 플랫폼 지원)
     const shareData = {
       title: shareTitle,
       text: shareText,
       url: shareUrl,
     };
 
-    // 6. 이미지 파일이 있는 경우 files 배열에 추가 시도 (일부 플랫폼만 지원)
     if (festival.thumbnail_url && navigator.canShare) {
       try {
-        // 썸네일 이미지를 Blob으로 가져오기
         const imageResponse = await fetch(festival.thumbnail_url);
         const imageBlob = await imageResponse.blob();
         const imageFile = new File([imageBlob], `${localizedName}.jpg`, { type: imageBlob.type });
         
-        // files 포함한 shareData
         const shareDataWithImage = {
           ...shareData,
           files: [imageFile],
         };
         
-        // canShare로 이미지 포함 공유 가능 여부 확인
         if (navigator.canShare(shareDataWithImage)) {
           console.log('✅ 이미지 포함 공유 가능');
           await navigator.share(shareDataWithImage);
@@ -317,11 +306,9 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         }
       } catch (error) {
         console.log('이미지 fetch 실패:', error.message);
-        // 이미지 실패해도 텍스트는 공유
       }
     }
 
-    // 7. Web Share API (텍스트만)
     if (navigator.share) {
       try {
         if (navigator.canShare && !navigator.canShare(shareData)) {
@@ -345,7 +332,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       console.log('Web Share API가 지원되지 않는 환경입니다. 클립보드 복사를 시도합니다.');
     }
     
-    // 8. 클립보드에 풍부한 텍스트 복사
     const clipboardText = `${shareText}\n\n${shareUrl}`;
     
     try {
@@ -357,7 +343,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       console.log('클립보드 복사 성공');
     } catch (error) {
       console.error('클립보드 복사 실패:', error);
-      // 클립보드 API도 실패한 경우 대체 방법
       try {
         const textArea = document.createElement('textarea');
         textArea.value = clipboardText;
@@ -387,10 +372,16 @@ FESTEE에서 더 자세히 확인하세요 👉`;
     }
   };
 
-  // 미디어 배열 생성 (기존 video_url/thumbnail_url + media_urls)
+  // 수정된 미디어 배열 생성 로직
   const mediaItems = React.useMemo(() => {
     const items = [];
-    const addedUrls = new Set(); // 중복 URL 방지를 위한 Set
+    const addedUrls = new Set();
+
+    console.log('🎬 Building mediaItems for festival:', festival?.name);
+    console.log('📹 video_url:', festival?.video_url);
+    console.log('🖼️ thumbnail_url:', festival?.thumbnail_url);
+    console.log('🎞️ media_urls:', festival?.media_urls);
+    console.log('🖼️ image_gallery_urls length:', festival?.image_gallery_urls?.length);
 
     // 1. 기존 video_url이 있으면 첫 번째로 추가
     if (festival?.video_url && !addedUrls.has(festival.video_url)) {
@@ -401,11 +392,23 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         caption: `${festival.name} - 공식 영상`
       });
       addedUrls.add(festival.video_url);
+      console.log('✅ Added video_url:', festival.video_url);
     }
     
-    // 2. media_urls 배열 추가
+    // 2. thumbnail_url을 항상 추가 (중복만 체크)
+    if (festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
+      items.push({
+        type: 'image',
+        url: festival.thumbnail_url,
+        caption: festival.name
+      });
+      addedUrls.add(festival.thumbnail_url);
+      console.log('✅ Added thumbnail_url:', festival.thumbnail_url);
+    }
+    
+    // 3. media_urls 배열 추가
     if (festival?.media_urls && festival.media_urls.length > 0) {
-      festival.media_urls.forEach(media => {
+      festival.media_urls.forEach((media, index) => {
         let currentUrl = null;
         let currentType = null;
         let currentCaption = festival.name;
@@ -435,50 +438,14 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             caption: currentCaption
           });
           addedUrls.add(currentUrl);
+          console.log(`✅ Added media_urls[${index}]:`, currentUrl);
         }
       });
     }
 
-    // 3. 기존 thumbnail_url을 이미지로 추가 (아직 추가되지 않았고 video_url이 없는 경우)
-    if (items.length === 0 && festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
-      items.push({
-        type: 'image',
-        url: festival.thumbnail_url,
-        caption: festival.name
-      });
-      addedUrls.add(festival.thumbnail_url);
-    } 
-    
-    // Final fallback if absolutely no media is found
-    if (items.length === 0 && festival?.thumbnail_url) {
-      items.push({
-        type: 'image',
-        url: festival.thumbnail_url,
-        caption: festival.name
-      });
-    }
-    
-    console.log('Media items prepared:', items);
-    
-    return items;
-  }, [festival]);
-
-  // 갤러리 팝업용 미디어 아이템 (모든 미디어 + 갤러리 이미지)
-  const allGalleryItems = React.useMemo(() => {
-    const items = [];
-    const addedUrls = new Set();
-
-    // Add all items from mediaItems first
-    mediaItems.forEach(item => {
-      if (item.url && !addedUrls.has(item.url)) {
-        items.push(item);
-        addedUrls.add(item.url);
-      }
-    });
-
-    // Add image_gallery_urls, avoiding duplicates
+    // 4. image_gallery_urls의 모든 이미지 추가
     if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
-      festival.image_gallery_urls.forEach(image => {
+      festival.image_gallery_urls.forEach((image, index) => {
         const imageUrl = image.originimgurl || image.smallimageurl;
         if (imageUrl && !addedUrls.has(imageUrl)) {
           items.push({
@@ -487,18 +454,21 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             caption: image.imgname || festival.name
           });
           addedUrls.add(imageUrl);
+          console.log(`✅ Added image_gallery_urls[${index}]:`, imageUrl);
         }
       });
     }
     
-    // Fallback if no media at all (unlikely given mediaItems logic, but good for safety)
-    if (items.length === 0 && festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
-        items.push({ type: 'image', url: festival.thumbnail_url, caption: festival.name });
-        addedUrls.add(festival.thumbnail_url);
-    }
-
+    console.log('📊 Total mediaItems:', items.length);
+    
     return items;
-  }, [mediaItems, festival]);
+  }, [festival]);
+
+  // 갤러리 팝업용 미디어 아이템 (mediaItems를 그대로 사용)
+  const allGalleryItems = React.useMemo(() => {
+    console.log('🖼️ Building allGalleryItems, using mediaItems:', mediaItems.length);
+    return mediaItems;
+  }, [mediaItems]);
 
   // 갤러리 버튼 클릭 핸들러
   const handleGalleryClick = () => {
@@ -1261,10 +1231,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                           <span className="text-cyan-400 font-bold text-base">
                             ₩{platform.price.toLocaleString()}
                           </span>
-                          {/* <Badge variant="outline" className="text-xs border-gray-700 text-gray-400 px-1.5 py-0 h-4">
-                            <Eye className="w-3 h-3 mr-1 inline" />
-                            {platform.views.toLocaleString()}
-                          </Badge> */}
                         </div>
                         <p className="text-gray-400 text-xs">✓ {platform.benefit}</p>
                       </div>
