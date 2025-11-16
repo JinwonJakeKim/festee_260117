@@ -862,7 +862,7 @@ export default function Home() {
                         {localizedName}
                       </h3>
                       <div className="text-gray-400 text-xs">
-                        {festival.country} {festival.city}
+                        {festival.city}, {festival.country}{festival.category ? ` / ${festival.category}` : ''}
                       </div>
                       <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
                         <span>
