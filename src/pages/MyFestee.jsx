@@ -4,11 +4,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -51,6 +52,10 @@ export default function MyFestee() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [showCodeCopied, setShowCodeCopied] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [referralError, setReferralError] = useState("");
+  const [referralSuccess, setReferralSuccess] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -139,6 +144,22 @@ export default function MyFestee() {
     initialData: [],
   });
 
+  // 내가 추천한 친구 수 조회
+  const { data: myReferrals = [] } = useQuery({
+    queryKey: ['myReferrals', user?.email],
+    queryFn: () => user ? base44.entities.ReferralLog.filter({ referrer_email: user.email }) : [],
+    enabled: !!user,
+    initialData: [],
+  });
+
+  // 내가 추천 코드를 사용했는지 확인
+  const { data: myReferralUsage = [] } = useQuery({
+    queryKey: ['myReferralUsage', user?.email],
+    queryFn: () => user ? base44.entities.ReferralLog.filter({ referred_email: user.email }) : [],
+    enabled: !!user,
+    initialData: [],
+  });
+
   const uploadProfileImageMutation = useMutation({
     mutationFn: async (file) => {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -157,6 +178,28 @@ export default function MyFestee() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
+    },
+  });
+
+  const redeemReferralMutation = useMutation({
+    mutationFn: async (referralCode) => {
+      const response = await base44.functions.invoke('redeemReferralCode', { referralCode });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setReferralSuccess(data.message);
+      setReferralError("");
+      setReferralCodeInput("");
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.invalidateQueries({ queryKey: ['myReferralUsage'] });
+      setTimeout(() => {
+        setShowReferralModal(false);
+        setReferralSuccess("");
+      }, 3000);
+    },
+    onError: (error) => {
+      setReferralError(error.response?.data?.error || '추천 코드 처리 중 오류가 발생했습니다');
+      setReferralSuccess("");
     },
   });
 
@@ -206,6 +249,55 @@ export default function MyFestee() {
     } catch (error) {
       console.error('코드 복사 실패:', error);
     }
+  };
+
+  const handleShareReferralCode = async () => {
+    const referralCode = generateReferralCode(user.email);
+    const shareText = `🎉 Festee에서 전 세계 축제를 만나고, 친구와 함께 500 코인도 받으세요!\n\n내 추천 코드: ${referralCode}\n\n앱 다운로드: ${window.location.origin}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Festee 친구 초대',
+          text: shareText,
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.log('공유 실패, 클립보드로 복사합니다.');
+          await navigator.clipboard.writeText(shareText);
+          setShowCodeCopied(true);
+          setTimeout(() => {
+            setShowCodeCopied(false);
+          }, 2000);
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      setShowCodeCopied(true);
+      setTimeout(() => {
+        setShowCodeCopied(false);
+      }, 2000);
+    }
+  };
+
+  const handleOpenReferralModal = () => {
+    setShowReferralModal(true);
+    setReferralError("");
+    setReferralSuccess("");
+    setReferralCodeInput("");
+  };
+
+  const handleSubmitReferralCode = () => {
+    if (!referralCodeInput.trim()) {
+      setReferralError("추천 코드를 입력해주세요");
+      return;
+    }
+    // Prevent user from referring themselves
+    if (user && generateReferralCode(user.email).toUpperCase() === referralCodeInput.trim().toUpperCase()) {
+      setReferralError("자신의 추천 코드를 사용할 수 없습니다.");
+      return;
+    }
+    redeemReferralMutation.mutate(referralCodeInput);
   };
 
   if (isLoading) {
@@ -322,6 +414,7 @@ export default function MyFestee() {
 
   const referralCode = generateReferralCode(user.email);
   const userCoins = user.coins || 0;
+  const hasUsedReferralCode = myReferralUsage.length > 0;
 
   // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
@@ -371,9 +464,113 @@ export default function MyFestee() {
       {showCodeCopied && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 border border-cyan-400 rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
           <Check className="w-4 h-4 text-cyan-400" />
-          <span className="text-white text-sm font-medium">추천코드가 복사되었습니다</span>
+          <span className="text-white text-sm font-medium">복사되었습니다</span>
         </div>
       )}
+
+      {/* 추천인 코드 입력 모달 */}
+      <AnimatePresence>
+        {showReferralModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReferralModal(false)}
+              className="fixed inset-0 bg-black/80 z-[60]"
+            />
+
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 bg-gray-950 rounded-t-3xl z-[70] max-h-[80vh] overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-white text-xl font-bold">추천인 코드 입력</h2>
+                <button
+                  onClick={() => setShowReferralModal(false)}
+                  className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {hasUsedReferralCode ? (
+                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
+                    <p className="text-green-400 text-center">
+                      ✅ 이미 추천 코드를 사용하여 500 코인을 받으셨습니다!
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3 mb-3">
+                        <Gift className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h3 className="text-white font-bold mb-2">친구 추천 혜택</h3>
+                          <ul className="space-y-1 text-gray-300 text-sm">
+                            <li>• 친구의 추천 코드 입력 시 <span className="text-yellow-400 font-bold">500 코인</span> 획득</li>
+                            <li>• 추천한 친구도 <span className="text-yellow-400 font-bold">500 코인</span> 획득</li>
+                            <li>• 추천 혜택은 1회만 사용 가능합니다</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-white text-sm font-medium mb-2 block">
+                          추천인 코드 (6자리)
+                        </label>
+                        <Input
+                          value={referralCodeInput}
+                          onChange={(e) => {
+                            setReferralCodeInput(e.target.value.toUpperCase());
+                            setReferralError("");
+                          }}
+                          placeholder="예: ABC123"
+                          className="bg-gray-900 border-gray-700 text-white text-lg tracking-wider text-center"
+                          maxLength={6}
+                        />
+                      </div>
+
+                      {referralError && (
+                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                          <p className="text-red-400 text-sm">{referralError}</p>
+                        </div>
+                      )}
+
+                      {referralSuccess && (
+                        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3">
+                          <p className="text-green-400 text-sm">{referralSuccess}</p>
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={handleSubmitReferralCode}
+                        disabled={redeemReferralMutation.isPending || !referralCodeInput.trim()}
+                        className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 h-12 text-base font-bold"
+                      >
+                        {redeemReferralMutation.isPending ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
+                            <span>처리 중...</span>
+                          </div>
+                        ) : (
+                          '코드 입력하고 500 코인 받기'
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Profile Header - 톱니바퀴 제거 */}
       <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
@@ -479,21 +676,47 @@ export default function MyFestee() {
 
         {/* 추천코드 섹션 */}
         <div className="mb-4">
-          <div className="flex items-center justify-between bg-gray-900 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-yellow-400" />
-              <div>
-                <p className="text-gray-400 text-xs">내 추천코드</p>
-                <p className="text-white font-bold text-lg tracking-wider">{referralCode}</p>
+          <div className="bg-gray-900 rounded-lg px-4 py-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-yellow-400" />
+                <div>
+                  <p className="text-gray-400 text-xs">내 추천코드</p>
+                  <p className="text-white font-bold text-lg tracking-wider">{referralCode}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyReferralCode}
+                  className="w-9 h-9 rounded-lg bg-cyan-500 hover:bg-cyan-600 flex items-center justify-center transition-colors"
+                  aria-label="추천코드 복사"
+                >
+                  <Copy className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={handleShareReferralCode}
+                  className="w-9 h-9 rounded-lg bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors"
+                  aria-label="친구에게 공유"
+                >
+                  <Share2 className="w-4 h-4 text-white" />
+                </button>
+                {!hasUsedReferralCode && (
+                  <button
+                    onClick={handleOpenReferralModal}
+                    className="w-9 h-9 rounded-lg bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center transition-colors"
+                    aria-label="추천인 코드 입력"
+                  >
+                    <Gift className="w-4 h-4 text-white" />
+                  </button>
+                )}
               </div>
             </div>
-            <button
-              onClick={handleCopyReferralCode}
-              className="w-9 h-9 rounded-lg bg-cyan-500 hover:bg-cyan-600 flex items-center justify-center transition-colors"
-              aria-label="추천코드 복사"
-            >
-              <Copy className="w-4 h-4 text-white" />
-            </button>
+            
+            {/* 추천 현황 표시 */}
+            <div className="flex items-center justify-between pt-3 border-t border-gray-800">
+              <p className="text-gray-400 text-xs">내가 추천한 친구</p>
+              <p className="text-cyan-400 font-bold text-sm">{myReferrals.length}명</p>
+            </div>
           </div>
         </div>
 
