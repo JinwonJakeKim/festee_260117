@@ -844,7 +844,7 @@ export default function Search() {
                           </div>
                           <h3 className="text-white font-bold text-sm mb-1">{festival.name}</h3>
                           <p className="text-gray-400 text-xs">
-                            {festival.city}, {festival.country}
+                            {festival.city}, {festival.country}{festival.category ? ` / ${festival.category}` : ''}
                           </p>
                           <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
                             <span>
