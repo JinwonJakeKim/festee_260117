@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Map, Camera, Users, User } from "lucide-react";
+import { Home, Map, Target, Users, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Layout({ children, currentPageName }) {
@@ -72,7 +72,7 @@ export default function Layout({ children, currentPageName }) {
 
   const catchRelatedPages = [
     createPageUrl("Catch"),
-    createPageUrl("NearbyCatch"), // Added "NearbyCatch"
+    createPageUrl("NearbyCatch"),
   ];
 
   const myRelatedPages = [
@@ -99,7 +99,7 @@ export default function Layout({ children, currentPageName }) {
     },
     { 
       name: "캐치", 
-      icon: Camera, 
+      icon: Target, 
       url: createPageUrl("Catch"),
       relatedPages: catchRelatedPages
     },
