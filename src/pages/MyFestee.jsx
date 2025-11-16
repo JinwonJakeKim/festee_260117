@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Heart, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Target, Copy, Coins } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -259,17 +260,9 @@ export default function MyFestee() {
           <Card className="bg-gray-900 border-gray-800">
             <div className="p-4 flex items-center justify-between opacity-50">
               <div className="flex items-center gap-3">
-                <Heart className="w-5 h-5 text-pink-500" />
-                <span className="text-white">좋아요</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </div>
-          </Card>
-
-          <Card className="bg-gray-900 border-gray-800">
-            <div className="p-4 flex items-center justify-between opacity-50">
-              <div className="flex items-center gap-3">
-                <MessageCircle className="w-5 h-5 text-cyan-400" />
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
                 <span className="text-white">댓글</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-500" />
@@ -330,6 +323,7 @@ export default function MyFestee() {
   const referralCode = generateReferralCode(user.email);
   const userCoins = user.coins || 0;
 
+  // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
     {
       label: "관리자 대시보드",
@@ -339,34 +333,34 @@ export default function MyFestee() {
       adminOnly: true,
     },
     {
-      label: "메시지",
-      link: createPageUrl("Messages"),
-      icon: MessageCircle,
-      bgColor: "bg-cyan-500",
-    },
-    {
-      label: "좋아요",
-      link: createPageUrl("MyLikes"),
-      icon: Heart,
-      bgColor: "bg-pink-500",
-    },
-    {
-      label: "댓글",
-      link: createPageUrl("MyComments"),
-      icon: MessageCircle,
-      bgColor: "bg-cyan-500",
-    },
-    {
       label: "내가 추천하는 축제",
       link: createPageUrl("MyRecommendations"),
       icon: Star,
       bgColor: "bg-yellow-500",
     },
     {
+      label: "메시지",
+      link: createPageUrl("Messages"),
+      icon: MessageCircle,
+      bgColor: "bg-cyan-500",
+    },
+    {
+      label: "댓글",
+      link: createPageUrl("MyComments"),
+      icon: MessageCircle,
+      bgColor: "bg-green-500",
+    },
+    {
       label: "FESTEE Magazine",
       link: createPageUrl("FesteeMagazine"),
       icon: BookOpen,
       bgColor: "bg-purple-500",
+    },
+    {
+      label: "설정",
+      link: createPageUrl("Settings"),
+      icon: Settings,
+      bgColor: "bg-gray-600",
     },
   ].filter(item => !item.adminOnly || user.role === 'admin');
 
@@ -381,15 +375,10 @@ export default function MyFestee() {
         </div>
       )}
 
-      {/* Profile Header */}
+      {/* Profile Header - 톱니바퀴 제거 */}
       <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-white text-2xl font-bold">My Festee</h1>
-          <Link to={createPageUrl("Settings")}>
-            <button className="text-gray-400 hover:text-white">
-              <Settings className="w-6 h-6" />
-            </button>
-          </Link>
         </div>
 
         <div className="flex items-center gap-4 mb-4">
