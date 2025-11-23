@@ -32,7 +32,7 @@ import MyCatches from './pages/MyCatches';
 import FesteeMagazine from './pages/FesteeMagazine';
 import MyFollowers from './pages/MyFollowers';
 import MyFollowing from './pages/MyFollowing';
-import Layout from './Layout.jsx';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -75,5 +75,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Home",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };

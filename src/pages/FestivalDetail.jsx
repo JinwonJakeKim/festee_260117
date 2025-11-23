@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -511,13 +510,19 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
   useEffect(() => {
     if (mediaItems.length <= 1) return;
-    
+
+    // 현재 미디어가 동영상이면 자동 전환하지 않음
+    const currentMediaType = mediaItems[mediaIndex]?.type;
+    if (currentMediaType === 'video' || currentMediaType === 'youtube') {
+      return;
+    }
+
     const timer = setInterval(() => {
       setMediaIndex((prev) => (prev + 1) % mediaItems.length);
     }, 5000);
-    
+
     return () => clearInterval(timer);
-  }, [mediaItems.length]);
+  }, [mediaItems.length, mediaIndex, mediaItems]);
 
   if (isLoading || !festival) {
     return (
