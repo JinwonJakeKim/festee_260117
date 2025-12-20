@@ -37,6 +37,8 @@ Deno.serve(async (req) => {
         
         url.searchParams.append("expand", "venue,category,format");
 
+        console.log("Calling Eventbrite API URL:", url.toString());
+
         const response = await fetch(url.toString(), {
             headers: {
                 "Authorization": `Bearer ${eventbriteApiKey}`,
@@ -44,15 +46,20 @@ Deno.serve(async (req) => {
             }
         });
 
+        console.log("Eventbrite API response status:", response.status);
+
         if (!response.ok) {
             const errorText = await response.text();
+            console.error("Eventbrite API error:", errorText);
             return Response.json({ 
                 error: `Eventbrite API error: ${response.statusText}`,
-                details: errorText 
+                details: errorText,
+                url: url.toString()
             }, { status: response.status });
         }
 
         const data = await response.json();
+        console.log("Eventbrite API returned", data.events?.length || 0, "events");
         return Response.json(data);
 
     } catch (error) {
