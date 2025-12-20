@@ -16,8 +16,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Eventbrite API key is not set.' }, { status: 500 });
         }
 
-        const url = new URL("https://www.eventbriteapi.com/v3/events/search");
-        url.searchParams.append("token", eventbriteApiKey);
+        const url = new URL("https://www.eventbriteapi.com/v3/events/search/");
         url.searchParams.append("sort_by", "date");
 
         if (location) {
@@ -40,6 +39,7 @@ Deno.serve(async (req) => {
 
         const response = await fetch(url.toString(), {
             headers: {
+                "Authorization": `Bearer ${eventbriteApiKey}`,
                 "Accept": "application/json"
             }
         });
