@@ -1,75 +1,75 @@
-import FestivalMap from './pages/FestivalMap';
-import Community from './pages/Community';
-import FestivalMore from './pages/FestivalMore';
-import FestivalDetail from './pages/FestivalDetail';
-import Catch from './pages/Catch';
-import MyFestee from './pages/MyFestee';
-import Search from './pages/Search';
-import RankerDetail from './pages/RankerDetail';
-import FestivalVenueMap from './pages/FestivalVenueMap';
-import PostDetail from './pages/PostDetail';
-import GoTogetherDetail from './pages/GoTogetherDetail';
-import CreatePost from './pages/CreatePost';
-import Settings from './pages/Settings';
-import MyLikes from './pages/MyLikes';
-import MyComments from './pages/MyComments';
-import MyRecommendations from './pages/MyRecommendations';
-import SelectCity from './pages/SelectCity';
-import Messages from './pages/Messages';
-import MessageDetail from './pages/MessageDetail';
-import Notifications from './pages/Notifications';
-import FeedbackForm from './pages/FeedbackForm';
-import UserProfile from './pages/UserProfile';
-import NearbyCatch from './pages/NearbyCatch';
-import FeedbackDetail from './pages/FeedbackDetail';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminFestivalForm from './pages/AdminFestivalForm';
 import AdminAdForm from './pages/AdminAdForm';
+import AdminDashboard from './pages/AdminDashboard';
 import AdminFestivalExtract from './pages/AdminFestivalExtract';
-import Home from './pages/Home';
+import AdminFestivalForm from './pages/AdminFestivalForm';
 import AdminTourAPI from './pages/AdminTourAPI';
-import MyCatches from './pages/MyCatches';
+import Catch from './pages/Catch';
+import Community from './pages/Community';
+import CreatePost from './pages/CreatePost';
+import FeedbackDetail from './pages/FeedbackDetail';
+import FeedbackForm from './pages/FeedbackForm';
 import FesteeMagazine from './pages/FesteeMagazine';
+import FestivalDetail from './pages/FestivalDetail';
+import FestivalMap from './pages/FestivalMap';
+import FestivalMore from './pages/FestivalMore';
+import FestivalVenueMap from './pages/FestivalVenueMap';
+import GoTogetherDetail from './pages/GoTogetherDetail';
+import Home from './pages/Home';
+import MessageDetail from './pages/MessageDetail';
+import Messages from './pages/Messages';
+import MyCatches from './pages/MyCatches';
+import MyComments from './pages/MyComments';
+import MyFestee from './pages/MyFestee';
 import MyFollowers from './pages/MyFollowers';
 import MyFollowing from './pages/MyFollowing';
+import MyLikes from './pages/MyLikes';
+import MyRecommendations from './pages/MyRecommendations';
+import NearbyCatch from './pages/NearbyCatch';
+import Notifications from './pages/Notifications';
+import PostDetail from './pages/PostDetail';
+import RankerDetail from './pages/RankerDetail';
+import Search from './pages/Search';
+import SelectCity from './pages/SelectCity';
+import Settings from './pages/Settings';
+import UserProfile from './pages/UserProfile';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "FestivalMap": FestivalMap,
-    "Community": Community,
-    "FestivalMore": FestivalMore,
-    "FestivalDetail": FestivalDetail,
-    "Catch": Catch,
-    "MyFestee": MyFestee,
-    "Search": Search,
-    "RankerDetail": RankerDetail,
-    "FestivalVenueMap": FestivalVenueMap,
-    "PostDetail": PostDetail,
-    "GoTogetherDetail": GoTogetherDetail,
-    "CreatePost": CreatePost,
-    "Settings": Settings,
-    "MyLikes": MyLikes,
-    "MyComments": MyComments,
-    "MyRecommendations": MyRecommendations,
-    "SelectCity": SelectCity,
-    "Messages": Messages,
-    "MessageDetail": MessageDetail,
-    "Notifications": Notifications,
-    "FeedbackForm": FeedbackForm,
-    "UserProfile": UserProfile,
-    "NearbyCatch": NearbyCatch,
-    "FeedbackDetail": FeedbackDetail,
-    "AdminDashboard": AdminDashboard,
-    "AdminFestivalForm": AdminFestivalForm,
     "AdminAdForm": AdminAdForm,
+    "AdminDashboard": AdminDashboard,
     "AdminFestivalExtract": AdminFestivalExtract,
-    "Home": Home,
+    "AdminFestivalForm": AdminFestivalForm,
     "AdminTourAPI": AdminTourAPI,
-    "MyCatches": MyCatches,
+    "Catch": Catch,
+    "Community": Community,
+    "CreatePost": CreatePost,
+    "FeedbackDetail": FeedbackDetail,
+    "FeedbackForm": FeedbackForm,
     "FesteeMagazine": FesteeMagazine,
+    "FestivalDetail": FestivalDetail,
+    "FestivalMap": FestivalMap,
+    "FestivalMore": FestivalMore,
+    "FestivalVenueMap": FestivalVenueMap,
+    "GoTogetherDetail": GoTogetherDetail,
+    "Home": Home,
+    "MessageDetail": MessageDetail,
+    "Messages": Messages,
+    "MyCatches": MyCatches,
+    "MyComments": MyComments,
+    "MyFestee": MyFestee,
     "MyFollowers": MyFollowers,
     "MyFollowing": MyFollowing,
+    "MyLikes": MyLikes,
+    "MyRecommendations": MyRecommendations,
+    "NearbyCatch": NearbyCatch,
+    "Notifications": Notifications,
+    "PostDetail": PostDetail,
+    "RankerDetail": RankerDetail,
+    "Search": Search,
+    "SelectCity": SelectCity,
+    "Settings": Settings,
+    "UserProfile": UserProfile,
 }
 
 export const pagesConfig = {
