@@ -16,32 +16,34 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Eventbrite API key is not set.' }, { status: 500 });
         }
 
-        const url = new URL("https://www.eventbriteapi.com/v3/events/search");
-        url.searchParams.append("sort_by", "date");
+        // Build query parameters
+        const params = new URLSearchParams();
 
         if (location) {
-            url.searchParams.append("location.address", location);
+            params.append("location.address", location);
         }
         if (category) {
-            url.searchParams.append("categories", category);
+            params.append("categories", category);
         }
         if (keyword) {
-            url.searchParams.append("q", keyword);
+            params.append("q", keyword);
         }
         if (start_date) {
-            url.searchParams.append("start_date.range_start", `${start_date}T00:00:00Z`);
+            params.append("start_date.range_start", `${start_date}T00:00:00Z`);
         }
         if (end_date) {
-            url.searchParams.append("start_date.range_end", `${end_date}T23:59:59Z`);
+            params.append("start_date.range_end", `${end_date}T23:59:59Z`);
         }
-        
-        url.searchParams.append("expand", "venue,category,format");
 
-        console.log("Calling Eventbrite API URL:", url.toString());
+        params.append("expand", "venue,category,format");
+        params.append("token", eventbriteApiKey);
 
-        const response = await fetch(url.toString(), {
+        const url = `https://www.eventbriteapi.com/v3/events/search/?${params.toString()}`;
+
+        console.log("Calling Eventbrite API URL:", url);
+
+        const response = await fetch(url, {
             headers: {
-                "Authorization": `Bearer ${eventbriteApiKey}`,
                 "Accept": "application/json"
             }
         });
@@ -54,7 +56,7 @@ Deno.serve(async (req) => {
             return Response.json({ 
                 error: `Eventbrite API error: ${response.statusText}`,
                 details: errorText,
-                url: url.toString()
+                url: url
             }, { status: response.status });
         }
 
