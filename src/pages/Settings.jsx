@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,10 +44,32 @@ export default function Settings() {
     },
   });
 
+  const updateLanguageMutation = useMutation({
+    mutationFn: async (language) => {
+      await base44.auth.updateMe({ 
+        preferred_language: language
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    },
+  });
+
   const handleToggle = (key, value) => {
     console.log(`알림 설정 변경: ${key} = ${value}`);
     updateNotificationSettingMutation.mutate({ [key]: value });
   };
+
+  const handleLanguageChange = (language) => {
+    updateLanguageMutation.mutate(language);
+  };
+
+  const languageOptions = [
+    { code: 'ko', label: '한국어' },
+    { code: 'en', label: 'English' },
+    { code: 'ja', label: '日本語' },
+    { code: 'zh', label: '中文' },
+  ];
 
   if (isLoading) {
     return (
@@ -268,16 +289,27 @@ export default function Settings() {
           <h2 className="text-white font-bold mb-3">앱 설정</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
-              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
-                <div className="flex items-center gap-3">
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-3">
                   <Globe className="w-5 h-5 text-gray-400" />
                   <span className="text-white">언어</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-sm">한국어</span>
-                  <ChevronRight className="w-5 h-5 text-gray-500" />
+                <div className="grid grid-cols-2 gap-2">
+                  {languageOptions.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`p-3 rounded-lg border transition-all ${
+                        (user?.preferred_language || 'ko') === lang.code
+                          ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
+                          : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
                 </div>
-              </button>
+              </div>
 
               <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
                 <div className="flex items-center gap-3">

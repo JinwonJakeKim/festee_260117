@@ -1,5 +1,6 @@
 import AdminAdForm from './pages/AdminAdForm';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminEventbrite from './pages/AdminEventbrite';
 import AdminFestivalExtract from './pages/AdminFestivalExtract';
 import AdminFestivalForm from './pages/AdminFestivalForm';
 import AdminTourAPI from './pages/AdminTourAPI';
@@ -32,13 +33,13 @@ import Search from './pages/Search';
 import SelectCity from './pages/SelectCity';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
-import AdminEventbrite from './pages/AdminEventbrite';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdminAdForm": AdminAdForm,
     "AdminDashboard": AdminDashboard,
+    "AdminEventbrite": AdminEventbrite,
     "AdminFestivalExtract": AdminFestivalExtract,
     "AdminFestivalForm": AdminFestivalForm,
     "AdminTourAPI": AdminTourAPI,
@@ -71,7 +72,6 @@ export const PAGES = {
     "SelectCity": SelectCity,
     "Settings": Settings,
     "UserProfile": UserProfile,
-    "AdminEventbrite": AdminEventbrite,
 }
 
 export const pagesConfig = {
