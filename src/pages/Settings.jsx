@@ -6,10 +6,14 @@ import { ArrowLeft, User, Mail, Globe, MapPin, Bell, Lock, HelpCircle, Info, Che
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useTranslation } from "@/components/useTranslation";
 
 export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, language } = useTranslation();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,16 +64,19 @@ export default function Settings() {
     updateNotificationSettingMutation.mutate({ [key]: value });
   };
 
-  const handleLanguageChange = (language) => {
-    updateLanguageMutation.mutate(language);
+  const handleLanguageChange = (lang) => {
+    updateLanguageMutation.mutate(lang);
   };
 
-  const languageOptions = [
-    { code: 'ko', label: '한국어' },
-    { code: 'en', label: 'English' },
-    { code: 'ja', label: '日本語' },
-    { code: 'zh', label: '中文' },
-  ];
+  const getLanguageLabel = (code) => {
+    const labels = {
+      ko: '한국어',
+      en: 'English',
+      ja: '日本語',
+      zh: '中文',
+    };
+    return labels[code] || '한국어';
+  };
 
   if (isLoading) {
     return (
@@ -83,6 +90,13 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      <LanguageSelector
+        isOpen={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
+        currentLanguage={language}
+        onSelect={handleLanguageChange}
+      />
+
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -92,23 +106,23 @@ export default function Settings() {
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <h1 className="text-xl font-bold text-white">설정</h1>
+          <h1 className="text-xl font-bold text-white">{t('settings')}</h1>
         </div>
       </div>
 
       <div className="px-4 py-6 space-y-6">
         {/* 계정 설정 */}
         <div>
-          <h2 className="text-white font-bold mb-3">계정</h2>
+          <h2 className="text-white font-bold mb-3">{t('account')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
               <div className="p-4">
-                <p className="text-gray-400 text-sm mb-1">이메일</p>
-                <p className="text-white">{user?.email || '로그인 필요'}</p>
+                <p className="text-gray-400 text-sm mb-1">{t('email')}</p>
+                <p className="text-white">{user?.email || t('loginRequired')}</p>
               </div>
               <div className="p-4">
-                <p className="text-gray-400 text-sm mb-1">이름</p>
-                <p className="text-white">{user?.full_name || '로그인 필요'}</p>
+                <p className="text-gray-400 text-sm mb-1">{t('name')}</p>
+                <p className="text-white">{user?.full_name || t('loginRequired')}</p>
               </div>
             </div>
           </Card>
@@ -116,15 +130,15 @@ export default function Settings() {
 
         {/* 알림 설정 - 전체 */}
         <div>
-          <h2 className="text-white font-bold mb-3">알림 설정</h2>
+          <h2 className="text-white font-bold mb-3">{t('notificationSettings')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
                   <Bell className="w-5 h-5 text-cyan-400" />
                   <div>
-                    <p className="text-white font-medium">푸시 알림</p>
-                    <p className="text-gray-500 text-xs">앱 푸시 알림 받기</p>
+                    <p className="text-white font-medium">{t('pushNotification')}</p>
+                    <p className="text-gray-500 text-xs">{t('pushNotificationDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -137,8 +151,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Mail className="w-5 h-5 text-purple-400" />
                   <div>
-                    <p className="text-white font-medium">이메일 알림</p>
-                    <p className="text-gray-500 text-xs">이메일로 알림 받기</p>
+                    <p className="text-white font-medium">{t('emailNotification')}</p>
+                    <p className="text-gray-500 text-xs">{t('emailNotificationDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -152,15 +166,15 @@ export default function Settings() {
 
         {/* 알림 세부 설정 */}
         <div>
-          <h2 className="text-white font-bold mb-3">알림 세부 설정</h2>
+          <h2 className="text-white font-bold mb-3">{t('detailedNotificationSettings')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
                   <MessageCircle className="w-5 h-5 text-cyan-400" />
                   <div>
-                    <p className="text-white">새 메시지</p>
-                    <p className="text-gray-500 text-xs">새로운 메시지를 받았을 때</p>
+                    <p className="text-white">{t('newMessage')}</p>
+                    <p className="text-gray-500 text-xs">{t('newMessageDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -173,8 +187,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <MessageCircle className="w-5 h-5 text-green-400" />
                   <div>
-                    <p className="text-white">댓글</p>
-                    <p className="text-gray-500 text-xs">내 게시글에 댓글이 달렸을 때</p>
+                    <p className="text-white">{t('comment')}</p>
+                    <p className="text-gray-500 text-xs">{t('commentDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -187,8 +201,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <UserPlus className="w-5 h-5 text-purple-400" />
                   <div>
-                    <p className="text-white">새 팔로워</p>
-                    <p className="text-gray-500 text-xs">누군가 나를 팔로우했을 때</p>
+                    <p className="text-white">{t('newFollower')}</p>
+                    <p className="text-gray-500 text-xs">{t('newFollowerDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -201,8 +215,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Star className="w-5 h-5 text-yellow-400" />
                   <div>
-                    <p className="text-white">추천 축제 업데이트</p>
-                    <p className="text-gray-500 text-xs">팔로우한 유저가 추천 축제를 업데이트했을 때</p>
+                    <p className="text-white">{t('recommendedFestivalUpdate')}</p>
+                    <p className="text-gray-500 text-xs">{t('recommendedFestivalUpdateDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -215,8 +229,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Heart className="w-5 h-5 text-pink-500" />
                   <div>
-                    <p className="text-white">게시글 좋아요</p>
-                    <p className="text-gray-500 text-xs">내 게시글에 좋아요를 받았을 때</p>
+                    <p className="text-white">{t('postLike')}</p>
+                    <p className="text-gray-500 text-xs">{t('postLikeDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -229,8 +243,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Heart className="w-5 h-5 text-pink-500" />
                   <div>
-                    <p className="text-white">캐치 좋아요</p>
-                    <p className="text-gray-500 text-xs">내 캐치에 좋아요를 받았을 때</p>
+                    <p className="text-white">{t('catchLike')}</p>
+                    <p className="text-gray-500 text-xs">{t('catchLikeDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -243,8 +257,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Heart className="w-5 h-5 text-pink-500" />
                   <div>
-                    <p className="text-white">댓글 좋아요</p>
-                    <p className="text-gray-500 text-xs">내 댓글에 좋아요를 받았을 때</p>
+                    <p className="text-white">{t('commentLike')}</p>
+                    <p className="text-gray-500 text-xs">{t('commentLikeDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -257,8 +271,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Calendar className="w-5 h-5 text-orange-400" />
                   <div>
-                    <p className="text-white">축제 리마인더</p>
-                    <p className="text-gray-500 text-xs">좋아요한 축제 시작 3일 전 알림</p>
+                    <p className="text-white">{t('festivalReminder')}</p>
+                    <p className="text-gray-500 text-xs">{t('festivalReminderDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -271,8 +285,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3 flex-1">
                   <Users className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="text-white">같이가기 참여</p>
-                    <p className="text-gray-500 text-xs">내 같이가기 게시글에 참여 요청이 왔을 때</p>
+                    <p className="text-white">{t('goTogetherJoin')}</p>
+                    <p className="text-gray-500 text-xs">{t('goTogetherJoinDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -286,38 +300,19 @@ export default function Settings() {
 
         {/* 앱 설정 */}
         <div>
-          <h2 className="text-white font-bold mb-3">앱 설정</h2>
+          <h2 className="text-white font-bold mb-3">{t('appSettings')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Globe className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">언어</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {languageOptions.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => handleLanguageChange(lang.code)}
-                      className={`p-3 rounded-lg border transition-all ${
-                        (user?.preferred_language || 'ko') === lang.code
-                          ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
-                          : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
-                      }`}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
+              <button 
+                onClick={() => setShowLanguageModal(true)}
+                className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">지역</span>
+                  <span className="text-white">{t('language')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-sm">대한민국</span>
+                  <span className="text-gray-400 text-sm">{getLanguageLabel(language)}</span>
                   <ChevronRight className="w-5 h-5 text-gray-500" />
                 </div>
               </button>
@@ -325,10 +320,21 @@ export default function Settings() {
               <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">통화</span>
+                  <span className="text-white">{t('region')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-sm">₩ KRW</span>
+                  <span className="text-gray-400 text-sm">{t('korea')}</span>
+                  <ChevronRight className="w-5 h-5 text-gray-500" />
+                </div>
+              </button>
+
+              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-gray-400" />
+                  <span className="text-white">{t('currency')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-sm">{t('krw')}</span>
                   <ChevronRight className="w-5 h-5 text-gray-500" />
                 </div>
               </button>
@@ -338,7 +344,7 @@ export default function Settings() {
 
         {/* 지원 */}
         <div>
-          <h2 className="text-white font-bold mb-3">지원</h2>
+          <h2 className="text-white font-bold mb-3">{t('support')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
               <button 
@@ -347,7 +353,7 @@ export default function Settings() {
               >
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-cyan-400" />
-                  <span className="text-white">피드백 보내기</span>
+                  <span className="text-white">{t('sendFeedback')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-500" />
               </button>
@@ -355,7 +361,7 @@ export default function Settings() {
               <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">도움말</span>
+                  <span className="text-white">{t('help')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-500" />
               </button>
@@ -365,13 +371,13 @@ export default function Settings() {
 
         {/* 기타 */}
         <div>
-          <h2 className="text-white font-bold mb-3">기타</h2>
+          <h2 className="text-white font-bold mb-3">{t('other')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
               <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
                 <div className="flex items-center gap-3">
                   <Lock className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">개인정보 처리방침</span>
+                  <span className="text-white">{t('privacyPolicy')}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-500" />
               </button>
@@ -379,7 +385,7 @@ export default function Settings() {
               <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
                 <div className="flex items-center gap-3">
                   <Info className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">앱 정보</span>
+                  <span className="text-white">{t('appInfo')}</span>
                 </div>
                 <span className="text-gray-500 text-sm">v1.0.0</span>
               </button>
