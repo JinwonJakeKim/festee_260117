@@ -62,14 +62,22 @@ export default function AdminTourAPI() {
     initialData: [],
   });
 
-  const { data: scheduledTasks = [], refetch: refetchScheduledTasks } = useQuery({
-    queryKey: ['scheduledTasks'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('listScheduledTasks', {});
-      return response.data?.tasks || [];
-    },
-    initialData: [],
-  });
+  const [scheduledTasks, setScheduledTasks] = useState([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        // 스케줄 태스크는 현재 플랫폼 대시보드에서만 관리 가능
+        setScheduledTasks([]);
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+      } finally {
+        setIsLoadingTasks(false);
+      }
+    };
+    loadTasks();
+  }, []);
 
   const handleFetch = async () => {
     setIsFetching(true);
@@ -180,55 +188,7 @@ export default function AdminTourAPI() {
     },
   });
 
-  const createScheduleMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('createScheduledTask', {
-        name: 'TourAPI 자동 동기화',
-        function_name: 'syncTourApiData',
-        description: '매월 1일 00:00에 모든 지역의 TourAPI 데이터를 자동으로 수집하고 변환합니다.',
-        schedule_type: 'simple',
-        repeat_unit: 'months',
-        repeat_on_day_of_month: 1,
-        start_time: '00:00',
-        function_args: {}
-      });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchScheduledTasks();
-      alert('✅ 자동화 스케줄이 생성되었습니다!\n\n매월 1일 00:00에 모든 지역의 데이터를 자동 수집합니다.');
-    },
-    onError: (error) => {
-      alert(`스케줄 생성 실패:\n\n${error.message}`);
-    }
-  });
 
-  const toggleScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('toggleScheduledTask', { task_id: taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchScheduledTasks();
-    },
-    onError: (error) => {
-      alert(`상태 변경 실패:\n\n${error.message}`);
-    }
-  });
-
-  const deleteScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('deleteScheduledTask', { task_id: taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchScheduledTasks();
-      alert('스케줄이 삭제되었습니다');
-    },
-    onError: (error) => {
-      alert(`스케줄 삭제 실패:\n\n${error.message}`);
-    }
-  });
 
   const runSyncNowMutation = useMutation({
     mutationFn: async () => {
@@ -725,154 +685,63 @@ export default function AdminTourAPI() {
             <Card className="bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border-indigo-400/30 p-4">
               <h3 className="text-white font-bold mb-2 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-indigo-400" />
-                3단계: 자동화 스케줄 관리
+                3단계: 자동화 실행
               </h3>
               <ul className="text-gray-300 text-sm space-y-1">
-                <li>✓ 매월 1일 00:00에 모든 지역의 TourAPI 데이터를 자동 수집</li>
+                <li>✓ 모든 지역의 TourAPI 데이터를 자동 수집</li>
                 <li>✓ 각 지역별로 5분 간격으로 순차적 수집</li>
                 <li>✓ 수집 완료 후 대기 중인 데이터를 10개씩 자동 변환</li>
                 <li>✓ 현재 월과 다음 월 데이터를 모두 수집</li>
               </ul>
             </Card>
 
-            {/* 스케줄 생성 버튼 */}
-            {scheduledTasks.filter(t => t.function_name === 'syncTourApiData').length === 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <div className="text-center">
-                  <Clock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-4">아직 자동화 스케줄이 설정되지 않았습니다</p>
-                  <Button
-                    onClick={() => createScheduleMutation.mutate()}
-                    disabled={createScheduleMutation.isPending}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
-                  >
-                    {createScheduleMutation.isPending ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        생성 중...
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4 mr-2" />
-                        자동화 스케줄 생성
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </Card>
-            )}
+            {/* 전체 동기화 실행 */}
+            <Card className="bg-gray-900 border-gray-800 p-4">
+              <h4 className="text-white font-bold mb-2">전체 동기화 실행</h4>
+              <p className="text-gray-400 text-sm mb-4">
+                모든 지역의 TourAPI 데이터를 수집하고 Festival로 자동 변환합니다.<br />
+                <span className="text-yellow-400">⏱️ 예상 소요 시간: 약 2-3시간</span>
+              </p>
+              <Button
+                onClick={() => runSyncNowMutation.mutate()}
+                disabled={runSyncNowMutation.isPending}
+                className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 h-12"
+              >
+                {runSyncNowMutation.isPending ? (
+                  <>
+                    <Loader className="w-5 h-5 mr-2 animate-spin" />
+                    전체 동기화 실행 중... (백그라운드에서 실행됩니다)
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5 mr-2" />
+                    전체 동기화 지금 실행
+                  </>
+                )}
+              </Button>
+            </Card>
 
-            {/* 기존 스케줄 목록 */}
-            {scheduledTasks.filter(t => t.function_name === 'syncTourApiData').map((task) => (
-              <Card key={task.task_id} className="bg-gray-900 border-gray-800 p-4">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="text-white font-bold">{task.name}</h4>
-                      <Badge className={task.is_active ? 'bg-green-900/20 border-green-500/50' : 'bg-gray-700 border-gray-600'}>
-                        {task.is_active ? '활성' : '비활성'}
-                      </Badge>
-                    </div>
-                    <p className="text-gray-400 text-sm mb-3">{task.description}</p>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Calendar className="w-4 h-4 text-indigo-400" />
-                        <span>실행 주기: 매월 1일 00:00</span>
-                      </div>
-                      {task.last_run_at && (
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Clock className="w-4 h-4 text-cyan-400" />
-                          <span>마지막 실행: {safeFormatDate(task.last_run_at, 'yyyy-MM-dd HH:mm')}</span>
-                        </div>
-                      )}
-                      {task.next_run_at && (
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Clock className="w-4 h-4 text-yellow-400" />
-                          <span>다음 실행: {safeFormatDate(task.next_run_at, 'yyyy-MM-dd HH:mm')}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            {/* 스케줄링 안내 */}
+            <Card className="bg-blue-900/20 border-blue-400/30 p-4">
+              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-400" />
+                자동 스케줄링 설정 방법
+              </h4>
+              <div className="text-gray-300 text-sm space-y-2">
+                <p>매월 자동으로 데이터를 수집하려면 Base44 대시보드에서 스케줄 태스크를 생성하세요:</p>
+                <div className="bg-black/30 p-3 rounded-lg mt-2">
+                  <p className="text-cyan-400 font-mono text-xs mb-2">설정 정보:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <span className="text-gray-400">함수명:</span> <span className="text-white">syncTourApiData</span></li>
+                    <li>• <span className="text-gray-400">실행 주기:</span> <span className="text-white">매월 1일 00:00</span></li>
+                    <li>• <span className="text-gray-400">타입:</span> <span className="text-white">Simple (Monthly)</span></li>
+                  </ul>
                 </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => runSyncNowMutation.mutate()}
-                    disabled={runSyncNowMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
-                  >
-                    {runSyncNowMutation.isPending ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        실행 중...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        지금 실행
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => toggleScheduleMutation.mutate(task.task_id)}
-                    disabled={toggleScheduleMutation.isPending}
-                    variant="outline"
-                    className="border-gray-700 text-white hover:bg-gray-800"
-                  >
-                    {task.is_active ? (
-                      <>
-                        <Pause className="w-4 h-4 mr-2" />
-                        일시정지
-                      </>
-                    ) : (
-                      <>
-                        <Power className="w-4 h-4 mr-2" />
-                        활성화
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (confirm('이 스케줄을 삭제하시겠습니까?')) {
-                        deleteScheduleMutation.mutate(task.task_id);
-                      }
-                    }}
-                    disabled={deleteScheduleMutation.isPending}
-                    variant="outline"
-                    className="border-red-600 text-red-400 hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-
-            {/* 수동 실행 버튼 (스케줄이 없을 때도 표시) */}
-            {scheduledTasks.filter(t => t.function_name === 'syncTourApiData').length === 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <h4 className="text-white font-bold mb-2">수동 실행</h4>
-                <p className="text-gray-400 text-sm mb-4">
-                  자동화 스케줄을 생성하지 않고 지금 바로 전체 동기화를 실행할 수 있습니다.
+                <p className="text-yellow-400 mt-2">
+                  💡 Base44 대시보드 → Code → Scheduled Tasks에서 설정할 수 있습니다.
                 </p>
-                <Button
-                  onClick={() => runSyncNowMutation.mutate()}
-                  disabled={runSyncNowMutation.isPending}
-                  className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
-                >
-                  {runSyncNowMutation.isPending ? (
-                    <>
-                      <Loader className="w-4 h-4 mr-2 animate-spin" />
-                      전체 동기화 실행 중...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2" />
-                      전체 동기화 지금 실행
-                    </>
-                  )}
-                </Button>
-              </Card>
-            )}
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
