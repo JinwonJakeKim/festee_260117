@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -433,7 +432,7 @@ export default function AdminTourAPI() {
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        {selectedRawData.length}개 변환하기
+                        {selectedRawData.length}개 변환하기 (최초생성)
                       </>
                     )}
                   </Button>
@@ -469,7 +468,7 @@ export default function AdminTourAPI() {
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        {selectedRawData.length}개 재변환하기
+                        {selectedRawData.length}개 재변환하기 (Update)
                       </>
                     )}
                   </Button>
