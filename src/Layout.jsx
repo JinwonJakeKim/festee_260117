@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -82,6 +81,12 @@ export default function Layout({ children, currentPageName }) {
     createPageUrl("MyComments"),
     createPageUrl("MyRecommendations"),
     createPageUrl("SelectCity"),
+    createPageUrl("AdminDashboard"),
+    createPageUrl("AdminTourAPI"),
+    createPageUrl("AdminEventbrite"),
+    createPageUrl("AdminAdForm"),
+    createPageUrl("AdminFestivalExtract"),
+    createPageUrl("AdminFestivalForm"),
   ];
 
   const navItems = [
