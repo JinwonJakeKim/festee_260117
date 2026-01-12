@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const { taskId } = await req.json();
-    
+
     if (!taskId) {
       return Response.json({ success: false, error: 'taskId is required' }, { status: 400 });
     }
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error('Error toggling scheduled task:', error);
+    console.error('Toggle scheduled task error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });

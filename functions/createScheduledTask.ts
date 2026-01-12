@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, task });
   } catch (error) {
-    console.error('Error creating scheduled task:', error);
+    console.error('Create scheduled task error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });

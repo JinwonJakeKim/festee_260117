@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, tasks: syncTasks });
   } catch (error) {
-    console.error('Error listing scheduled tasks:', error);
+    console.error('List scheduled tasks error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });
