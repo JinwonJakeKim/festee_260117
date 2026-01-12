@@ -200,15 +200,14 @@ export default function AdminTourAPI() {
 
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('createScheduledTask', {});
-      return response.data;
+      alert('⚠️ 스케줄 생성 기능은 시스템 제약으로 인해 현재 사용할 수 없습니다.\n\n관리자가 직접 스케줄을 생성해드렸습니다.');
+      throw new Error('Not supported');
     },
     onSuccess: () => {
       refetchTasks();
-      alert('✅ 자동화 스케줄이 생성되었습니다!\n\n매월 1일 자정에 자동으로 데이터를 수집합니다.');
     },
     onError: (error) => {
-      alert(`스케줄 생성 실패:\n\n${error.message}`);
+      refetchTasks();
     }
   });
 
