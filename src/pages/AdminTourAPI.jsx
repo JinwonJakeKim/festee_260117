@@ -239,47 +239,6 @@ export default function AdminTourAPI() {
     }
   });
 
-  const createScheduleMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('createScheduledTask', {});
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchTasks();
-      alert('✅ 자동화 스케줄이 생성되었습니다!\n\n매월 1일 자정에 자동으로 데이터를 수집합니다.');
-    },
-    onError: (error) => {
-      alert(`스케줄 생성 실패:\n\n${error.message}`);
-    }
-  });
-
-  const toggleScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('toggleScheduledTask', { taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchTasks();
-    },
-    onError: (error) => {
-      alert(`상태 변경 실패:\n\n${error.message}`);
-    }
-  });
-
-  const deleteScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('deleteScheduledTask', { taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchTasks();
-      alert('스케줄이 삭제되었습니다');
-    },
-    onError: (error) => {
-      alert(`스케줄 삭제 실패:\n\n${error.message}`);
-    }
-  });
-
 
 
   const areaCodes = [
