@@ -962,6 +962,32 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 </a>
               </div>
             )}
+
+            {/* Shorts 섹션 */}
+            {festival.youtube_shorts_urls && festival.youtube_shorts_urls.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">Shorts</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {festival.youtube_shorts_urls.map((shortUrl, idx) => {
+                    const embedUrl = getYoutubeEmbedUrl(shortUrl);
+                    if (!embedUrl) return null;
+                    
+                    return (
+                      <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
+                        <iframe
+                          src={embedUrl}
+                          className="absolute top-0 left-0 w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={`Short ${idx + 1}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 

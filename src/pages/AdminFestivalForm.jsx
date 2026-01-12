@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,7 +20,7 @@ export default function AdminFestivalForm() {
 
   const [formData, setFormData] = useState({
     name: "",
-    summary: "", // Added summary field
+    summary: "",
     description: "",
     country: "",
     city: "",
@@ -32,6 +31,7 @@ export default function AdminFestivalForm() {
     longitude: 0,
     thumbnail_url: "",
     video_url: "",
+    youtube_shorts_urls: [],
     website: "",
     price: 0,
     highlights: [],
@@ -43,6 +43,7 @@ export default function AdminFestivalForm() {
   const [newTag, setNewTag] = useState("");
   const [newLineupDate, setNewLineupDate] = useState("");
   const [newLineupArtists, setNewLineupArtists] = useState("");
+  const [newShortUrl, setNewShortUrl] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function AdminFestivalForm() {
     if (festival && isEdit) {
       setFormData({
         name: festival.name || "",
-        summary: festival.summary || "", // Populating summary from festival data
+        summary: festival.summary || "",
         description: festival.description || "",
         country: festival.country || "",
         city: festival.city || "",
@@ -76,6 +77,7 @@ export default function AdminFestivalForm() {
         longitude: festival.longitude || 0,
         thumbnail_url: festival.thumbnail_url || "",
         video_url: festival.video_url || "",
+        youtube_shorts_urls: festival.youtube_shorts_urls || [],
         website: festival.website || "",
         price: festival.price || 0,
         highlights: festival.highlights || [],
@@ -171,6 +173,25 @@ export default function AdminFestivalForm() {
     setFormData({
       ...formData,
       lineup: formData.lineup.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleAddShortUrl = () => {
+    if (newShortUrl.trim() && formData.youtube_shorts_urls.length < 5) {
+      setFormData({
+        ...formData,
+        youtube_shorts_urls: [...formData.youtube_shorts_urls, newShortUrl.trim()]
+      });
+      setNewShortUrl("");
+    } else if (formData.youtube_shorts_urls.length >= 5) {
+      alert('최대 5개까지만 추가할 수 있습니다');
+    }
+  };
+
+  const handleRemoveShortUrl = (index) => {
+    setFormData({
+      ...formData,
+      youtube_shorts_urls: formData.youtube_shorts_urls.filter((_, i) => i !== index)
     });
   };
 
@@ -463,6 +484,54 @@ export default function AdminFestivalForm() {
                 placeholder="https://..."
               />
             </div>
+          </div>
+        </Card>
+
+        {/* 유튜브 Shorts */}
+        <Card className="bg-gray-900 border-gray-800 p-4">
+          <h2 className="text-white font-bold mb-4">유튜브 Shorts (최대 5개)</h2>
+          
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                value={newShortUrl}
+                onChange={(e) => setNewShortUrl(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddShortUrl())}
+                className="bg-gray-800 border-gray-700 text-white flex-1"
+                placeholder="유튜브 Shorts URL 입력"
+                disabled={formData.youtube_shorts_urls.length >= 5}
+              />
+              <Button
+                type="button"
+                onClick={handleAddShortUrl}
+                variant="outline"
+                className="border-gray-700"
+                disabled={formData.youtube_shorts_urls.length >= 5}
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {formData.youtube_shorts_urls.length > 0 && (
+              <div className="space-y-2">
+                {formData.youtube_shorts_urls.map((url, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
+                    <span className="text-white text-sm truncate flex-1">{url}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveShortUrl(index)}
+                      className="text-red-400 hover:text-red-300 ml-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-gray-500 text-xs">
+              💡 유튜브 Shorts URL을 입력하세요 (예: https://youtube.com/shorts/...)
+            </p>
           </div>
         </Card>
 
