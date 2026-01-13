@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("festivals");
   const [selectedFestivals, setSelectedFestivals] = useState(new Set());
   const [deletionProgress, setDeletionProgress] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -263,6 +264,18 @@ export default function AdminDashboard() {
   const isDeleting = deleteSelectedFestivalsMutation.isLoading;
   const isDeletionComplete = deletionProgress && deletionProgress.current === deletionProgress.total;
 
+  // 검색 필터링
+  const filteredFestivals = festivals.filter(festival => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      festival.name?.toLowerCase().includes(query) ||
+      festival.city?.toLowerCase().includes(query) ||
+      festival.country?.toLowerCase().includes(query) ||
+      festival.category?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* 삭제 진행 상황 모달 */}
@@ -448,6 +461,14 @@ export default function AdminDashboard() {
           {/* 축제 관리 탭 */}
           <TabsContent value="festivals" className="mt-4">
             <div className="mb-4 space-y-2">
+              {/* 검색 바 */}
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="축제 이름, 도시, 국가, 카테고리로 검색..."
+                className="bg-gray-900 border-gray-800 text-white"
+              />
+
               <Button
                 onClick={() => navigate(createPageUrl("AdminFestivalForm"))}
                 className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600"
@@ -484,7 +505,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* 선택 컨트롤 */}
-            {festivals.length > 0 && (
+            {filteredFestivals.length > 0 && (
               <div className="mb-4 space-y-2">
                 <Card className="bg-gray-900 border-gray-800 p-4">
                   <div className="flex items-center justify-between">
@@ -501,7 +522,7 @@ export default function AdminDashboard() {
                         {allSelected ? '전체 해제' : '전체 선택'}
                       </span>
                     </button>
-                    
+
                     {selectedFestivals.size > 0 && (
                       <div className="flex items-center gap-3">
                         <span className="text-cyan-400 text-sm">
@@ -522,8 +543,15 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* 검색 결과 표시 */}
+            {searchQuery && (
+              <div className="mb-3 text-gray-400 text-sm">
+                검색 결과: {filteredFestivals.length}개
+              </div>
+            )}
+
             <div className="space-y-3">
-              {festivals.map((festival) => {
+              {filteredFestivals.map((festival) => {
                 const isSelected = selectedFestivals.has(festival.id);
                 
                 return (
@@ -591,9 +619,15 @@ export default function AdminDashboard() {
                     </div>
                   </Card>
                 );
-              })}
-            </div>
-          </TabsContent>
+                })}
+
+                {filteredFestivals.length === 0 && searchQuery && (
+                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                  <p className="text-gray-500">"{searchQuery}"에 대한 검색 결과가 없습니다</p>
+                </Card>
+                )}
+                </div>
+                </TabsContent>
 
           {/* FesteeStar 관리 탭 */}
           <TabsContent value="stars" className="mt-4">
