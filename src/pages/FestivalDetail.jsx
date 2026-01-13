@@ -72,11 +72,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   return (
     <div>
       <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
-        <img 
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e839a7fae23682478cedbe/e4b549691_image.png" 
-          alt="YouTube Shorts" 
-          className="w-6 h-6"
-        />
+        <Youtube className="w-6 h-6 text-red-600" />
         <span className="text-white">Shorts</span>
       </h3>
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -107,7 +103,15 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                     src={thumbnailUrl}
                     alt={`Short ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                    }}
                   />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <Play className="w-5 h-5 text-white fill-white" />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -290,25 +294,17 @@ export default function FestivalDetail() {
 
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
+    const cleanUrl = url.trim();
     
-    const patterns = [
-      /(?:youtube\.com\/shorts\/)([^?\s]+)/,
-      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
-      /(?:youtube\.com\/embed\/)([^?\s]+)/,
-      /(?:youtu\.be\/)([^?\s]+)/,
-      /(?:youtube\.com\/v\/)([^?\s]+)/,
-    ];
+    // Handle Shorts specifically (most common for this section)
+    const shortsMatch = cleanUrl.match(/shorts\/([a-zA-Z0-9_-]+)/i);
+    if (shortsMatch && shortsMatch[1]) return shortsMatch[1];
+
+    // General YouTube regex
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = cleanUrl.match(regExp);
     
-    let videoId = null;
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match && match[1]) {
-        videoId = match[1];
-        break;
-      }
-    }
-    
-    return videoId;
+    return (match && match[2] && match[2].length >= 11) ? match[2] : null;
   };
 
   const getYoutubeEmbedUrl = (url) => {
