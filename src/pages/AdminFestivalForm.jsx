@@ -454,7 +454,7 @@ export default function AdminFestivalForm() {
                       {isUploadingImage ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-cyan-400" />
                       ) : (
-                        <Upload className="w-5 h-5" />
+                        <Upload className="w-5 h-5 text-gray-900" />
                       )}
                     </span>
                   </Button>
@@ -508,7 +508,7 @@ export default function AdminFestivalForm() {
                 className="border-gray-700"
                 disabled={formData.youtube_shorts_urls.length >= 5}
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5 text-gray-900" />
               </Button>
             </div>
 
@@ -554,7 +554,7 @@ export default function AdminFestivalForm() {
                 variant="outline"
                 className="border-gray-700"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5 text-gray-900" />
               </Button>
             </div>
 
@@ -596,7 +596,7 @@ export default function AdminFestivalForm() {
                 variant="outline"
                 className="border-gray-700"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5 text-gray-900" />
               </Button>
             </div>
 
