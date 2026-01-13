@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -50,21 +49,60 @@ const getRankColor = (index) => {
 
 export default function FestivalMore() {
   const navigate = useNavigate();
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [dateRange, setDateRange] = useState({ from: null, to: null });
-  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [hidePastFestivals, setHidePastFestivals] = useState(false);
   const queryClient = useQueryClient();
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const { getLocalizedContent } = useFestivalLocalizedContent();
+  
+  // URL 파라미터에서 필터 상태 초기화
+  const urlParams = new URLSearchParams(window.location.search);
+  const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
+  const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState(() => {
+    const from = urlParams.get('dateFrom');
+    const to = urlParams.get('dateTo');
+    return {
+      from: from ? new Date(from) : null,
+      to: to ? new Date(to) : null
+    };
+  });
+  const [tempDateRange, setTempDateRange] = useState(() => {
+    const from = urlParams.get('dateFrom');
+    const to = urlParams.get('dateTo');
+    return {
+      from: from ? new Date(from) : null,
+      to: to ? new Date(to) : null
+    };
+  });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState(() => {
+    const tags = urlParams.get('tags');
+    return tags ? tags.split(',') : [];
+  });
+  const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') === 'true');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // URL 파라미터 업데이트
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (categoryFilter !== "all") params.set('category', categoryFilter);
+    if (countryFilter !== "all") params.set('country', countryFilter);
+    if (dateRange.from) params.set('dateFrom', dateRange.from.toISOString().split('T')[0]);
+    if (dateRange.to) params.set('dateTo', dateRange.to.toISOString().split('T')[0]);
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
+    if (hidePastFestivals) params.set('hidePast', 'true');
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    const currentUrl = window.location.search;
+    
+    if (newUrl !== currentUrl) {
+      window.history.replaceState({}, '', `${window.location.pathname}${newUrl}`);
+    }
+  }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
