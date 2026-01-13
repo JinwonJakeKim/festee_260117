@@ -361,13 +361,14 @@ Deno.serve(async (req) => {
     // YouTube Shorts 검색 함수
     const searchYouTubeShorts = async (festivalName) => {
       try {
-        console.log(`[Transform] 🎬 Searching YouTube Shorts for: ${festivalName}`);
+        console.log(`[Transform] 🎬 Internal search function called for: ${festivalName}`);
         
         const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
         if (!youtubeApiKey) {
-          console.log(`[Transform] ⚠️ YOUTUBE_API_KEY not found, skipping shorts search`);
+          console.log(`[Transform] ⚠️ YOUTUBE_API_KEY is missing or empty`);
           return [];
         }
+        console.log(`[Transform] 🔑 API Key found (length: ${youtubeApiKey.length})`);
         
         // YouTube Data API v3 search endpoint
         const searchParams = new URLSearchParams({
