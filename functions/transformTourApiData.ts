@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
-    // YouTube 동영상 검색 함수 (조회수 높은 순, 동영상 URL 반환)
+    // YouTube 동영상 검색 함수 (조회수 높은 순 일반영상)
     const searchYouTubeVideos = async (festivalName) => {
       try {
         console.log(`[Transform] 🎬 YouTube video search for: ${festivalName}`);
@@ -375,62 +375,65 @@ Deno.serve(async (req) => {
           q: festivalName,
           type: 'video',
           order: 'viewCount', // 조회수 높은 순
-          maxResults: '10', // 10개 가져와서 5개 선별
+          maxResults: '10', // 10개 가져와서 선별
           key: youtubeApiKey
         });
         
         const searchUrl = `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`;
+        console.log(`[Transform] 📡 Calling YouTube API...`);
         const response = await fetch(searchUrl);
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`[Transform] YouTube API error:`, errorText);
+          console.error(`[Transform] ❌ YouTube API error (${response.status}):`, errorText);
           return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
         const data = await response.json();
         
         if (!data.items || data.items.length === 0) {
-          console.log(`[Transform] ℹ️ No videos found for: ${festivalName}`);
+          console.log(`[Transform] ⚠️ No videos found for: ${festivalName}`);
           return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
-        // Shorts와 일반 동영상 썸네일 분리
+        // 일반 영상과 Shorts 분리
         const shortsUrls = [];
         const thumbnailUrls = [];
         let topVideoUrl = '';
+        let videoCount = 0;
         
-        for (let idx = 0; idx < data.items.length; idx++) {
+        for (let idx = 0; idx < data.items.length && videoCount < 10; idx++) {
           const item = data.items[idx];
           const videoId = item.id.videoId;
+          const title = item.snippet.title || '';
           const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url;
           
-          // 첫 번째 동영상 (조회수 최다) URL 저장
-          if (idx === 0) {
+          // 첫 번째 동영상 (조회수 최다)을 topVideoUrl로 설정
+          if (!topVideoUrl) {
             topVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-            console.log(`[Transform] 🎬 Top video (most views): ${topVideoUrl}`);
+            console.log(`[Transform] ✅ Top video URL (조회수 최다): ${topVideoUrl}`);
+            console.log(`[Transform]    Title: ${title}`);
           }
           
-          // Shorts 여부 확인은 어렵지만, 일단 첫 5개를 Shorts로 가정
+          // Shorts URL (shorts 식별은 API로 정확히 할 수 없으므로, 일단 모든 영상을 shorts URL로 만들고 처음 5개 사용)
           if (shortsUrls.length < 5) {
             shortsUrls.push(`https://www.youtube.com/shorts/${videoId}`);
           }
           
-          // 썸네일은 5개만 수집
+          // 썸네일 수집
           if (thumbnailUrls.length < 5 && thumbnailUrl) {
             thumbnailUrls.push(thumbnailUrl);
-            console.log(`[Transform]   썸네일 ${thumbnailUrls.length}: ${thumbnailUrl}`);
           }
           
-          if (shortsUrls.length >= 5 && thumbnailUrls.length >= 5) break;
+          videoCount++;
         }
         
-        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts, ${thumbnailUrls.length} thumbnails, top video: ${topVideoUrl}`);
+        console.log(`[Transform] ✓ YouTube search result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${shortsUrls.length}, thumbnails=${thumbnailUrls.length}`);
         
         return { shortsUrls, thumbnailUrls, topVideoUrl };
         
       } catch (error) {
-        console.error(`[Transform] YouTube search error:`, error.message);
+        console.error(`[Transform] ❌ YouTube search exception:`, error.message);
         return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
       }
     };
@@ -993,27 +996,26 @@ ${context}
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
         
-        // ===== YouTube 동영상 및 썸네일 검색 =====
+        // ===== YouTube 동영상 검색 =====
         let youtubeShorts = [];
         let youtubeThumbnails = [];
         let topVideoUrl = '';
         
-        // 항상 YouTube 검색 실행 (topVideoUrl, shorts, thumbnails)
-        console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
+        console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
         const youtubeResult = await searchYouTubeVideos(rawData.title);
         topVideoUrl = youtubeResult.topVideoUrl;
+        youtubeThumbnails = youtubeResult.thumbnailUrls;
         
-        // Shorts는 기존값 재사용 여부 결정
+        // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
         if (preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
-          console.log(`[Transform] 🎬 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
+          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
+          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos`);
         }
         
-        // 썸네일도 항상 새로 수집
-        youtubeThumbnails = youtubeResult.thumbnailUrls;
-        console.log(`[Transform] 🎬 YouTube result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${youtubeShorts.length}, thumbnails=${youtubeThumbnails.length}`);
+        console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
@@ -1257,8 +1259,10 @@ ${context}
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           
-          // 영상 URL: 재변환 시 관리자 수동 입력값 유지, 새로 생성 시 YouTube 조회수 높은 영상
-          video_url: retransform && preservedAdminFields.video_url 
+          // 영상 URL: 
+          // - 재변환 모드에서 기존 video_url이 있고 비어있지 않으면 유지
+          // - 그 외에는 YouTube 검색 결과의 조회수 최다 영상 사용
+          video_url: (retransform && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '') 
             ? preservedAdminFields.video_url 
             : topVideoUrl,
           
