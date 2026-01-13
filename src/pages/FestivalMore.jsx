@@ -69,32 +69,32 @@ export default function FestivalMore() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { getLocalizedContent } = useFestivalLocalizedContent();
-  
-  // URL 파라미터에서 필터 상태 초기화
   const urlParams = new URLSearchParams(window.location.search);
+  
+  // URL에서 필터 초기값 읽기
   const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
   const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState(() => {
-    const from = urlParams.get('dateFrom');
-    const to = urlParams.get('dateTo');
+    const fromParam = urlParams.get('dateFrom');
+    const toParam = urlParams.get('dateTo');
     return {
-      from: from ? new Date(from) : null,
-      to: to ? new Date(to) : null
+      from: fromParam ? new Date(fromParam) : null,
+      to: toParam ? new Date(toParam) : null
     };
   });
   const [tempDateRange, setTempDateRange] = useState(() => {
-    const from = urlParams.get('dateFrom');
-    const to = urlParams.get('dateTo');
+    const fromParam = urlParams.get('dateFrom');
+    const toParam = urlParams.get('dateTo');
     return {
-      from: from ? new Date(from) : null,
-      to: to ? new Date(to) : null
+      from: fromParam ? new Date(fromParam) : null,
+      to: toParam ? new Date(toParam) : null
     };
   });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState(() => {
-    const tags = urlParams.get('tags');
-    return tags ? tags.split(',') : [];
+    const tagsParam = urlParams.get('tags');
+    return tagsParam ? tagsParam.split(',') : [];
   });
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') === 'true');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -103,7 +103,7 @@ export default function FestivalMore() {
     window.scrollTo(0, 0);
   }, []);
 
-  // URL 파라미터 업데이트
+  // 필터 변경 시 URL 업데이트
   useEffect(() => {
     const params = new URLSearchParams();
     
@@ -115,11 +115,7 @@ export default function FestivalMore() {
     if (hidePastFestivals) params.set('hidePast', 'true');
     
     const newUrl = params.toString() ? `?${params.toString()}` : '';
-    const currentUrl = window.location.search;
-    
-    if (newUrl !== currentUrl) {
-      window.history.replaceState({}, '', `${window.location.pathname}${newUrl}`);
-    }
+    window.history.replaceState({}, '', createPageUrl('FestivalMore') + newUrl);
   }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
 
   const { data: user } = useQuery({
