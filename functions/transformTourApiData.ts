@@ -784,8 +784,9 @@ ${context}
         const aiTags = aiResult.tags || [];
         
         // ===== YouTube Shorts 자동 검색 =====
+        console.log(`[Transform] 🎬 Starting YouTube Shorts search for: ${rawData.title}`);
         const youtubeShorts = await searchYouTubeShorts(rawData.title);
-        console.log(`[Transform] 🎬 YouTube Shorts: ${youtubeShorts.length} items`);
+        console.log(`[Transform] 🎬 YouTube Shorts result: ${youtubeShorts.length} items`);
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
