@@ -396,6 +396,12 @@ Deno.serve(async (req) => {
           return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
+        // API 응답 원본 확인
+        console.log(`[Transform] 📋 Raw API response - ${data.items.length} videos returned:`);
+        data.items.forEach((item, idx) => {
+          console.log(`[Transform]   API[${idx}] - VideoID: ${item.id.videoId} | Title: ${item.snippet.title?.substring(0, 50)}`);
+        });
+        
         // 4K 여부 판별 함수
         const is4KVideo = (item) => {
           const title = (item.snippet.title || '').toUpperCase();
@@ -403,7 +409,7 @@ Deno.serve(async (req) => {
           return /4K|UHD|2160|4096/.test(title + description);
         };
         
-        // 관련성 상위 5개 영상 정렬: 4K 우선
+        // 관련성 상위 5개 영상: 원본 순서 유지하면서 4K 우선순위로 정렬
         const videosWithQuality = data.items.map((item, idx) => ({
           item,
           videoId: item.id.videoId,
@@ -414,12 +420,21 @@ Deno.serve(async (req) => {
           thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url
         }));
         
-        // 4K 여부로 정렬 (4K 우선)
-        videosWithQuality.sort((a, b) => (b.is4K ? 1 : 0) - (a.is4K ? 1 : 0));
-        
-        console.log(`[Transform] 📊 Analyzed ${videosWithQuality.length} videos:`);
+        console.log(`[Transform] 📊 Before sorting (API relevance order):`);
         videosWithQuality.forEach((v, idx) => {
-          console.log(`[Transform]   ${idx + 1}. ${v.is4K ? '✅ 4K' : '  '} - ${v.title.substring(0, 60)}`);
+          console.log(`[Transform]   ${idx + 1}. ${v.is4K ? '✅ 4K' : '  '} - ${v.videoId} | ${v.title.substring(0, 60)}`);
+        });
+        
+        // 4K 여부로 정렬 (4K 우선, 동일하면 원래 순서 유지)
+        videosWithQuality.sort((a, b) => {
+          if (a.is4K && !b.is4K) return -1; // a가 4K면 앞으로
+          if (!a.is4K && b.is4K) return 1;  // b가 4K면 b가 앞으로
+          return a.relevanceIndex - b.relevanceIndex; // 동일하면 원래 순서
+        });
+        
+        console.log(`[Transform] 📊 After sorting (4K priority):`);
+        videosWithQuality.forEach((v, idx) => {
+          console.log(`[Transform]   ${idx + 1}. ${v.is4K ? '✅ 4K' : '  '} - ${v.videoId} | ${v.title.substring(0, 60)}`);
         });
         
         // 최상위 영상 (4K 있으면 4K, 없으면 관련성 최상)
