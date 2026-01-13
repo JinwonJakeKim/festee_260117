@@ -16,12 +16,15 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
 
 const removeDuplicateFestivals = (festivals) => {
-  const seen = new Map();
-  return festivals.filter(festival => {
+  const nameMap = new Map();
+  
+  festivals.forEach(festival => {
     const name = festival.name;
-    if (seen.has(name)) {
-      // 이미 있는 경우, 더 최근에 업데이트된 것 또는 더 많은 정보를 가진 것을 유지
-      const existing = seen.get(name);
+    if (!nameMap.has(name)) {
+      nameMap.set(name, festival);
+    } else {
+      // 같은 이름이면 더 많은 정보를 가진 것 또는 최근에 업데이트된 것을 유지
+      const existing = nameMap.get(name);
       const existingScore = (existing.youtube_shorts_urls?.length || 0) + 
                            (existing.image_gallery_urls?.length || 0) + 
                            (existing.description?.length || 0);
@@ -29,15 +32,14 @@ const removeDuplicateFestivals = (festivals) => {
                           (festival.image_gallery_urls?.length || 0) + 
                           (festival.description?.length || 0);
       
-      if (currentScore > existingScore || new Date(festival.updated_date) > new Date(existing.updated_date)) {
-        seen.set(name, festival);
-        return true;
+      if (currentScore > existingScore || 
+          (currentScore === existingScore && new Date(festival.updated_date) > new Date(existing.updated_date))) {
+        nameMap.set(name, festival);
       }
-      return false;
     }
-    seen.set(name, festival);
-    return true;
   });
+  
+  return Array.from(nameMap.values());
 };
 
 const safeFormatDate = (dateString, formatStr) => {
