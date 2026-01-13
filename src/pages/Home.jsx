@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -670,7 +669,7 @@ export default function Home() {
             <h2 className="text-white text-2xl font-bold">Top Festival</h2>
             <Link to={createPageUrl("FestivalMore")}>
               <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                More →
+                더보기 →
               </Button>
             </Link>
           </div>
