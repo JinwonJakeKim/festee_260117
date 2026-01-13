@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
-    // YouTube 동영상 검색 함수 (조회수 높은 순, 썸네일 포함)
+    // YouTube 동영상 검색 함수 (조회수 높은 순, 동영상 URL 반환)
     const searchYouTubeVideos = async (festivalName) => {
       try {
         console.log(`[Transform] 🎬 YouTube video search for: ${festivalName}`);
@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
         const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
         if (!youtubeApiKey) {
           console.log(`[Transform] ⚠️ YOUTUBE_API_KEY is missing or empty`);
-          return { shortsUrls: [], thumbnailUrls: [] };
+          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
         // YouTube Data API v3 search endpoint - 조회수 높은 동영상
@@ -385,23 +385,31 @@ Deno.serve(async (req) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`[Transform] YouTube API error:`, errorText);
-          return { shortsUrls: [], thumbnailUrls: [] };
+          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
         const data = await response.json();
         
         if (!data.items || data.items.length === 0) {
           console.log(`[Transform] ℹ️ No videos found for: ${festivalName}`);
-          return { shortsUrls: [], thumbnailUrls: [] };
+          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
         // Shorts와 일반 동영상 썸네일 분리
         const shortsUrls = [];
         const thumbnailUrls = [];
+        let topVideoUrl = '';
         
-        for (const item of data.items) {
+        for (let idx = 0; idx < data.items.length; idx++) {
+          const item = data.items[idx];
           const videoId = item.id.videoId;
           const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url;
+          
+          // 첫 번째 동영상 (조회수 최다) URL 저장
+          if (idx === 0) {
+            topVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            console.log(`[Transform] 🎬 Top video (most views): ${topVideoUrl}`);
+          }
           
           // Shorts 여부 확인은 어렵지만, 일단 첫 5개를 Shorts로 가정
           if (shortsUrls.length < 5) {
@@ -417,13 +425,150 @@ Deno.serve(async (req) => {
           if (shortsUrls.length >= 5 && thumbnailUrls.length >= 5) break;
         }
         
-        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts, ${thumbnailUrls.length} thumbnails`);
+        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts, ${thumbnailUrls.length} thumbnails, top video: ${topVideoUrl}`);
         
-        return { shortsUrls, thumbnailUrls };
+        return { shortsUrls, thumbnailUrls, topVideoUrl };
         
       } catch (error) {
         console.error(`[Transform] YouTube search error:`, error.message);
-        return { shortsUrls: [], thumbnailUrls: [] };
+        return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
+      }
+    };
+    
+    // 언어 감지 함수 (한글, 영문, 일본어 구분)
+    const detectLanguage = (text) => {
+      if (!text) return 'ko';
+      
+      // 한글 체크 (완성형 한글 범위: AC00-D7A3)
+      const koreanMatch = text.match(/[\uAC00-\uD7A3]/g);
+      // 영문 체크
+      const englishMatch = text.match(/[a-zA-Z]/g);
+      // 일본어 체크 (히라가나, 카타카나, 한자)
+      const japaneseMatch = text.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/g);
+      
+      const koreanCount = koreanMatch ? koreanMatch.length : 0;
+      const englishCount = englishMatch ? englishMatch.length : 0;
+      const japaneseCount = japaneseMatch ? japaneseMatch.length : 0;
+      
+      if (koreanCount > englishCount && koreanCount > japaneseCount) {
+        return 'ko';
+      } else if (englishCount > japaneseCount) {
+        return 'en';
+      } else if (japaneseCount > 0) {
+        return 'jp';
+      }
+      
+      return 'ko'; // 기본값
+    };
+    
+    // 다국어 번역 함수
+    const translateMultiLanguage = async (text, sourceLanguage, fieldName) => {
+      if (!text || text.length < 3) {
+        return {
+          ko: text || '',
+          en: text || '',
+          jp: text || '',
+          zh: text || ''
+        };
+      }
+      
+      try {
+        console.log(`[Transform] 🌐 Translating ${fieldName} from ${sourceLanguage} to multiple languages...`);
+        
+        const languageMap = { 'ko': '한국어', 'en': '영어', 'jp': '일본어', 'zh': '중국어' };
+        const prompt = `다음 텍스트를 한국어, 영어, 일본어, 중국어로 번역해주세요. 각 언어마다 자연스러운 표현으로 번역하세요.
+
+원본 텍스트 (${languageMap[sourceLanguage]}):
+${text}
+
+응답 형식은 반드시 JSON이어야 하며, 각 언어별 번역만 포함하세요.`;
+
+        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: prompt,
+          add_context_from_internet: false,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              ko: { type: "string", description: "한국어 번역" },
+              en: { type: "string", description: "영어 번역" },
+              jp: { type: "string", description: "일본어 번역" },
+              zh: { type: "string", description: "중국어 번역" }
+            },
+            required: ["ko", "en", "jp", "zh"]
+          }
+        });
+        
+        console.log(`[Transform] ✓ Translation completed for ${fieldName}`);
+        
+        return {
+          ko: result.ko || text,
+          en: result.en || text,
+          jp: result.jp || text,
+          zh: result.zh || text
+        };
+        
+      } catch (error) {
+        console.error(`[Transform] Translation error for ${fieldName}:`, error.message);
+        return {
+          ko: sourceLanguage === 'ko' ? text : '',
+          en: sourceLanguage === 'en' ? text : '',
+          jp: sourceLanguage === 'jp' ? text : '',
+          zh: sourceLanguage === 'zh' ? text : ''
+        };
+      }
+    };
+    
+    // 배열 다국어 번역 함수 (highlights, tags용)
+    const translateArrayMultiLanguage = async (items, sourceLanguage, fieldName) => {
+      if (!items || items.length === 0) {
+        return { ko: [], en: [], jp: [], zh: [] };
+      }
+      
+      try {
+        console.log(`[Transform] 🌐 Translating ${fieldName} array (${items.length} items) from ${sourceLanguage}...`);
+        
+        const languageMap = { 'ko': '한국어', 'en': '영어', 'jp': '일본어', 'zh': '중국어' };
+        const itemsText = items.join('\n- ');
+        
+        const prompt = `다음 항목들을 한국어, 영어, 일본어, 중국어로 번역해주세요. 각 항목마다 자연스러운 표현으로 번역하세요.
+
+원본 항목들 (${languageMap[sourceLanguage]}):
+- ${itemsText}
+
+응답 형식은 반드시 JSON이어야 하며, 각 언어별로 배열 형태로 번역을 제공하세요.`;
+
+        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: prompt,
+          add_context_from_internet: false,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              ko: { type: "array", items: { type: "string" }, description: "한국어 번역" },
+              en: { type: "array", items: { type: "string" }, description: "영어 번역" },
+              jp: { type: "array", items: { type: "string" }, description: "일본어 번역" },
+              zh: { type: "array", items: { type: "string" }, description: "중국어 번역" }
+            },
+            required: ["ko", "en", "jp", "zh"]
+          }
+        });
+        
+        console.log(`[Transform] ✓ Array translation completed for ${fieldName}`);
+        
+        return {
+          ko: result.ko || items,
+          en: result.en || items,
+          jp: result.jp || items,
+          zh: result.zh || items
+        };
+        
+      } catch (error) {
+        console.error(`[Transform] Array translation error for ${fieldName}:`, error.message);
+        return {
+          ko: sourceLanguage === 'ko' ? items : [],
+          en: sourceLanguage === 'en' ? items : [],
+          jp: sourceLanguage === 'jp' ? items : [],
+          zh: sourceLanguage === 'zh' ? items : []
+        };
       }
     };
     
@@ -523,13 +668,20 @@ ${context}
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
-        // ===== 재변환 모드: 사용자 행위 데이터 및 YouTube Shorts 보존 =====
+        // ===== 재변환 모드: 사용자 행위 데이터, YouTube Shorts, 관리자 필드 보존 =====
         let preservedUserData = {
           likes_count: 0,
           catches_count: 0,
           comments_count: 0
         };
         let preservedYoutubeShorts = [];
+        let preservedAdminFields = {
+          video_url: '',
+          website: '',
+          contact: {},
+          social_media: {},
+          star_rating: 0
+        };
         
         if (retransform && rawData.festival_id) {
           try {
@@ -549,6 +701,25 @@ ${context}
               if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
                 preservedYoutubeShorts = existing.youtube_shorts_urls;
                 console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
+              }
+              
+              // 관리자 수동 입력 필드 보존
+              preservedAdminFields = {
+                video_url: existing.video_url || '',
+                website: existing.website || '',
+                contact: existing.contact || {},
+                social_media: existing.social_media || {},
+                star_rating: existing.star_rating || 0
+              };
+              
+              if (preservedAdminFields.video_url) {
+                console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
+              }
+              if (preservedAdminFields.website) {
+                console.log(`[Transform] ✓ website preserved (admin manual input)`);
+              }
+              if (preservedAdminFields.star_rating > 0) {
+                console.log(`[Transform] ✓ star_rating preserved: ${preservedAdminFields.star_rating}`);
               }
               
               // 기존 Festival 삭제
@@ -825,6 +996,7 @@ ${context}
         // ===== YouTube 동영상 및 썸네일 검색 =====
         let youtubeShorts = [];
         let youtubeThumbnails = [];
+        let topVideoUrl = '';
         
         if (preservedYoutubeShorts.length >= 5) {
           // 재변환 시 기존 Shorts 재사용
@@ -836,6 +1008,7 @@ ${context}
           const youtubeResult = await searchYouTubeVideos(rawData.title);
           youtubeShorts = youtubeResult.shortsUrls;
           youtubeThumbnails = youtubeResult.thumbnailUrls;
+          topVideoUrl = youtubeResult.topVideoUrl;
           console.log(`[Transform] 🎬 YouTube result: ${youtubeShorts.length} shorts, ${youtubeThumbnails.length} thumbnails`);
         }
         
@@ -971,6 +1144,20 @@ ${context}
         console.log(`[Transform] ✓ AI Tags: ${aiTags.length} items - ${aiTags.join(', ')}`);
         console.log(`[Transform] ✓ Schedule: ${scheduleItems.length} items`);
         
+        // ===== 다국어 번역 =====
+        const sourceLanguage = detectLanguage(rawData.title);
+        console.log(`[Transform] 📝 Detected source language: ${sourceLanguage}`);
+        
+        // 다국어 필드 번역
+        const nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
+        const summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
+        const descriptionTranslations = await translateMultiLanguage(fullDescription, sourceLanguage, 'description');
+        const highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
+        const tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
+        const categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
+        
+        console.log(`[Transform] ✓ Multi-language translation completed`);
+        
         // ===== 기타 정보 =====
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
         const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
@@ -1017,34 +1204,91 @@ ${context}
         
         // ===== Festival 엔티티 생성 =====
         const festival = {
-          name: detailData.title || rawData.title,
-          description: fullDescription,
-          summary: summary,
+          // 기본 정보
+          name: nameTranslations.ko,
+          name_ko: nameTranslations.ko,
+          name_en: nameTranslations.en,
+          name_jp: nameTranslations.jp,
+          name_zh: nameTranslations.zh,
+          original_language: sourceLanguage,
+          
+          description: descriptionTranslations.ko,
+          description_ko: descriptionTranslations.ko,
+          description_en: descriptionTranslations.en,
+          description_jp: descriptionTranslations.jp,
+          description_zh: descriptionTranslations.zh,
+          
+          summary: summaryTranslations.ko,
+          summary_ko: summaryTranslations.ko,
+          summary_en: summaryTranslations.en,
+          summary_jp: summaryTranslations.jp,
+          summary_zh: summaryTranslations.zh,
+          
+          highlights: highlightsTranslations.ko,
+          highlights_ko: highlightsTranslations.ko,
+          highlights_en: highlightsTranslations.en,
+          highlights_jp: highlightsTranslations.jp,
+          highlights_zh: highlightsTranslations.zh,
+          
+          category: festivalCategory,
+          category_en: categoryTranslations.en,
+          category_jp: categoryTranslations.jp,
+          category_zh: categoryTranslations.zh,
+          
+          tags: finalTags,
+          tags_en: tagsTranslations.en,
+          tags_jp: tagsTranslations.jp,
+          tags_zh: tagsTranslations.zh,
+          
           country: '대한민국',
           city: extractCity(detailData.addr1 || rawData.addr1),
-          category: festivalCategory,
           start_date: formattedStartDate,
           end_date: formattedEndDate,
           latitude: latitude,
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-          video_url: '',
+          
+          // 영상 URL: 재변환 시 관리자 수동 입력값 유지, 새로 생성 시 YouTube 조회수 높은 영상
+          video_url: retransform && preservedAdminFields.video_url 
+            ? preservedAdminFields.video_url 
+            : topVideoUrl,
+          
           youtube_shorts_urls: youtubeShorts,
           media_urls: mediaUrls,
-          website: websiteUrl,
+          
+          // 웹사이트: 재변환 시 기존값 유지
+          website: retransform && preservedAdminFields.website 
+            ? preservedAdminFields.website 
+            : websiteUrl,
+          
           price: 0,
           opening_hours: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
+          opening_hours_ko: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
+          
           access_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
+          access_info_ko: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
+          
           parking_info: formatText(introData.parkingfee || introData.parkingfestival || ''),
+          parking_info_ko: formatText(introData.parkingfee || introData.parkingfestival || ''),
+          
           organizer: organizerInfo,
-          contact: {
-            phone: phoneNumber,
-            email: ''
-          },
-          highlights: highlights,
+          
+          // 연락처: 재변환 시 기존값 유지
+          contact: retransform && preservedAdminFields.contact && Object.keys(preservedAdminFields.contact).length > 0
+            ? preservedAdminFields.contact
+            : { phone: phoneNumber, email: '' },
+          
+          // SNS: 재변환 시 기존값 유지
+          social_media: retransform && preservedAdminFields.social_media && Object.keys(preservedAdminFields.social_media).length > 0
+            ? preservedAdminFields.social_media
+            : {},
+          
+          // 별점: 재변환 시 기존값 유지
+          star_rating: retransform && preservedAdminFields.star_rating > 0
+            ? preservedAdminFields.star_rating
+            : 0,
+          
           lineup: [],
-          tags: finalTags,
-          star_rating: 0,
           likes_count: preservedUserData.likes_count,
           catches_count: preservedUserData.catches_count,
           comments_count: preservedUserData.comments_count,
