@@ -523,12 +523,31 @@ ${context}
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
-        // ===== 재변환 모드: 기존 Festival 삭제 =====
+        // ===== 재변환 모드: 사용자 행위 데이터 보존 =====
+        let preservedUserData = {
+          likes_count: 0,
+          catches_count: 0,
+          comments_count: 0
+        };
+        
         if (retransform && rawData.festival_id) {
           try {
-            console.log(`[Transform] 🗑️ Deleting existing Festival (ID: ${rawData.festival_id})...`);
-            await base44.asServiceRole.entities.Festival.delete(rawData.festival_id);
-            console.log(`[Transform] ✓ Existing Festival deleted`);
+            console.log(`[Transform] 🔄 Retrieving existing Festival data (ID: ${rawData.festival_id})...`);
+            const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+            
+            if (existingFestivals && existingFestivals.length > 0) {
+              const existing = existingFestivals[0];
+              preservedUserData = {
+                likes_count: existing.likes_count || 0,
+                catches_count: existing.catches_count || 0,
+                comments_count: existing.comments_count || 0
+              };
+              console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
+              
+              // 기존 Festival 삭제
+              await base44.asServiceRole.entities.Festival.delete(rawData.festival_id);
+              console.log(`[Transform] 🗑️ Existing Festival deleted`);
+            }
             
             // festival_id 초기화
             await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
@@ -1009,8 +1028,9 @@ ${context}
           lineup: [],
           tags: finalTags,
           star_rating: 0,
-          likes_count: 0,
-          catches_count: 0,
+          likes_count: preservedUserData.likes_count,
+          catches_count: preservedUserData.catches_count,
+          comments_count: preservedUserData.comments_count,
           restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
           recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
           schedule: scheduleItems,
