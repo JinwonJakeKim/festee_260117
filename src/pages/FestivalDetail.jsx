@@ -50,19 +50,36 @@ const festivalIcon = new L.Icon({
 
 // Shorts Section Component
 function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, currentPlayingShortIndex, setCurrentPlayingShortIndex, playerRefs }) {
+  const [playersInitialized, setPlayersInitialized] = React.useState(false);
+
+  // Initialize all players once
   useEffect(() => {
-    if (!youtubeApiReady || !youtubeShortUrls || youtubeShortUrls.length === 0) {
+    if (!youtubeApiReady || !youtubeShortUrls || youtubeShortUrls.length === 0 || playersInitialized) {
       return;
     }
 
-    // Initialize players
-    youtubeShortUrls.forEach((shortUrl, idx) => {
-      const videoId = getYoutubeVideoId(shortUrl);
-      if (!videoId) return;
+    console.log('[Shorts] Initializing players...');
 
-      const containerId = `youtube-short-${idx}`;
-      
-      if (!playerRefs.current[idx]) {
+    const initPlayers = async () => {
+      youtubeShortUrls.forEach((shortUrl, idx) => {
+        const videoId = getYoutubeVideoId(shortUrl);
+        if (!videoId) return;
+
+        const containerId = `youtube-short-${idx}`;
+        const container = document.getElementById(containerId);
+        
+        if (!container) {
+          console.error(`[Shorts] Container not found: ${containerId}`);
+          return;
+        }
+
+        if (playerRefs.current[idx]) {
+          console.log(`[Shorts] Player ${idx} already exists`);
+          return;
+        }
+
+        console.log(`[Shorts] Creating player ${idx} with videoId: ${videoId}`);
+        
         playerRefs.current[idx] = new window.YT.Player(containerId, {
           videoId: videoId,
           playerVars: {
@@ -71,50 +88,68 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, c
             controls: 1,
             rel: 0,
             modestbranding: 1,
-            enablejsapi: 1,
+            playsinline: 1,
           },
           events: {
             onReady: (event) => {
-              if (idx === currentPlayingShortIndex) {
-                event.target.playVideo();
-              }
+              console.log(`[Shorts] Player ${idx} ready`);
+              // Pause all players initially
+              event.target.pauseVideo();
             },
             onStateChange: (event) => {
+              console.log(`[Shorts] Player ${idx} state changed:`, event.data);
               // When video ends, play next
               if (event.data === window.YT.PlayerState.ENDED) {
+                console.log(`[Shorts] Video ${idx} ended, moving to next`);
                 setCurrentPlayingShortIndex((prev) => (prev + 1) % youtubeShortUrls.length);
               }
             },
           },
         });
-      }
-    });
+      });
+      
+      setPlayersInitialized(true);
+    };
+
+    // Small delay to ensure DOM is ready
+    setTimeout(initPlayers, 100);
 
     return () => {
-      playerRefs.current.forEach(player => {
-        if (player && player.destroy) {
+      console.log('[Shorts] Cleaning up players');
+      playerRefs.current.forEach((player, idx) => {
+        if (player && typeof player.destroy === 'function') {
+          console.log(`[Shorts] Destroying player ${idx}`);
           player.destroy();
         }
       });
       playerRefs.current = [];
+      setPlayersInitialized(false);
     };
-  }, [youtubeApiReady, youtubeShortUrls, getYoutubeVideoId]);
+  }, [youtubeApiReady, youtubeShortUrls, getYoutubeVideoId, playersInitialized]);
 
   // Control playback based on currentPlayingShortIndex
   useEffect(() => {
-    if (!youtubeApiReady) return;
+    if (!playersInitialized || playerRefs.current.length === 0) return;
+
+    console.log(`[Shorts] Switching to video ${currentPlayingShortIndex}`);
 
     playerRefs.current.forEach((player, idx) => {
-      if (!player || !player.playVideo) return;
+      if (!player || typeof player.getPlayerState !== 'function') return;
 
-      if (idx === currentPlayingShortIndex) {
-        player.playVideo();
-      } else {
-        player.pauseVideo();
-        player.seekTo(0);
+      try {
+        if (idx === currentPlayingShortIndex) {
+          console.log(`[Shorts] Playing video ${idx}`);
+          player.playVideo();
+        } else {
+          console.log(`[Shorts] Pausing video ${idx}`);
+          player.pauseVideo();
+          player.seekTo(0, true);
+        }
+      } catch (error) {
+        console.error(`[Shorts] Error controlling player ${idx}:`, error);
       }
     });
-  }, [currentPlayingShortIndex, youtubeApiReady]);
+  }, [currentPlayingShortIndex, playersInitialized]);
 
   return (
     <div>
@@ -134,7 +169,10 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, c
               {idx !== currentPlayingShortIndex && (
                 <div 
                   className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer z-10"
-                  onClick={() => setCurrentPlayingShortIndex(idx)}
+                  onClick={() => {
+                    console.log(`[Shorts] User clicked video ${idx}`);
+                    setCurrentPlayingShortIndex(idx);
+                  }}
                 >
                   <Play className="w-12 h-12 text-white" />
                 </div>
