@@ -1151,7 +1151,13 @@ ${context}
         // 다국어 필드 번역
         const nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
         const summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
-        const descriptionTranslations = await translateMultiLanguage(fullDescription, sourceLanguage, 'description');
+        
+        // Description은 길이가 길어서 요약본만 번역 (처음 500자)
+        const descriptionForTranslation = fullDescription.length > 500 
+          ? fullDescription.substring(0, 500) + '...' 
+          : fullDescription;
+        const descriptionTranslations = await translateMultiLanguage(descriptionForTranslation, sourceLanguage, 'description');
+        
         const highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
         const tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
         const categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
