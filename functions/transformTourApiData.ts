@@ -998,19 +998,22 @@ ${context}
         let youtubeThumbnails = [];
         let topVideoUrl = '';
         
+        // 항상 YouTube 검색 실행 (topVideoUrl, shorts, thumbnails)
+        console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
+        const youtubeResult = await searchYouTubeVideos(rawData.title);
+        topVideoUrl = youtubeResult.topVideoUrl;
+        
+        // Shorts는 기존값 재사용 여부 결정
         if (preservedYoutubeShorts.length >= 5) {
-          // 재변환 시 기존 Shorts 재사용
           youtubeShorts = preservedYoutubeShorts;
-          console.log(`[Transform] 🎬 Using preserved YouTube Shorts: ${youtubeShorts.length} videos (API call skipped)`);
+          console.log(`[Transform] 🎬 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
         } else {
-          // 새로운 검색 또는 5개 미만인 경우
-          console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
-          const youtubeResult = await searchYouTubeVideos(rawData.title);
           youtubeShorts = youtubeResult.shortsUrls;
-          youtubeThumbnails = youtubeResult.thumbnailUrls;
-          topVideoUrl = youtubeResult.topVideoUrl;
-          console.log(`[Transform] 🎬 YouTube result: ${youtubeShorts.length} shorts, ${youtubeThumbnails.length} thumbnails`);
         }
+        
+        // 썸네일도 항상 새로 수집
+        youtubeThumbnails = youtubeResult.thumbnailUrls;
+        console.log(`[Transform] 🎬 YouTube result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${youtubeShorts.length}, thumbnails=${youtubeThumbnails.length}`);
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
