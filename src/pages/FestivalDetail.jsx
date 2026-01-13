@@ -87,9 +87,6 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
                     alt={`Short ${idx + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <Play className="w-16 h-16 text-white" />
-                  </div>
                 </div>
               )}
             </div>
