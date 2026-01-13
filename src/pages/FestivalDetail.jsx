@@ -50,10 +50,18 @@ const festivalIcon = new L.Icon({
 
 // Shorts Section Component
 function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
-  const [playingIndex, setPlayingIndex] = React.useState(null);
+  const [clickedIndices, setClickedIndices] = React.useState(new Set());
 
-  const handlePlay = (idx) => {
-    setPlayingIndex(idx);
+  const handleClick = (idx) => {
+    setClickedIndices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(idx)) {
+        newSet.delete(idx);
+      } else {
+        newSet.add(idx);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -65,12 +73,13 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
           if (!videoId) return null;
           
           const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+          const isClicked = clickedIndices.has(idx);
           
           return (
             <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
-              {playingIndex === idx ? (
+              {isClicked ? (
                 <iframe
-                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&rel=0&modestbranding=1&playsinline=1`}
+                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
                   className="absolute top-0 left-0 w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -80,7 +89,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
               ) : (
                 <div 
                   className="absolute inset-0 cursor-pointer"
-                  onClick={() => handlePlay(idx)}
+                  onClick={() => handleClick(idx)}
                 >
                   <img
                     src={thumbnailUrl}
