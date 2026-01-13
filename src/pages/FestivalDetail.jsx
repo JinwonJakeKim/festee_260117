@@ -607,6 +607,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
   // 디버깅: 축제 데이터 확인
   console.log('Festival Data:', festival);
   console.log('Image Gallery URLs:', festival.image_gallery_urls);
+  console.log('🎬 YouTube Shorts URLs:', festival.youtube_shorts_urls);
+  console.log('🎬 Shorts length:', festival.youtube_shorts_urls?.length);
 
   const starRating = getStarRating(festival);
   const currentMedia = mediaItems[mediaIndex];
