@@ -3,12 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Globe, CheckCircle, CheckCircle2, Loader, MapPin, Calendar, Check, AlertCircle, Database, RefreshCw, Eye, Trash2, Clock, Play, Pause, Power } from "lucide-react";
+import { ArrowLeft, Globe, CheckCircle, CheckCircle2, Loader, MapPin, Calendar, Check, AlertCircle, Database, RefreshCw, Eye, Trash2, Clock, Play, Pause, Power, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -35,6 +36,7 @@ export default function AdminTourAPI() {
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
   const [isTransforming, setIsTransforming] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 최대 변환 개수 제한
   const MAX_TRANSFORM_COUNT = 10;
@@ -274,9 +276,21 @@ export default function AdminTourAPI() {
     { value: 100, label: "100개 (최대)" },
   ];
 
-  const pendingData = rawDataList.filter(r => r.processing_status === 'pending');
-  const processedData = rawDataList.filter(r => r.processing_status === 'processed');
-  const failedData = rawDataList.filter(r => r.processing_status === 'failed');
+  // 검색 필터링 추가
+  const filteredRawDataList = rawDataList.filter(raw => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      raw.title?.toLowerCase().includes(query) ||
+      raw.addr1?.toLowerCase().includes(query) ||
+      raw.contentid?.toLowerCase().includes(query)
+    );
+  });
+
+  const pendingData = filteredRawDataList.filter(r => r.processing_status === 'pending');
+  const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
+  const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
   if (isLoading) {
     return (
@@ -566,9 +580,28 @@ export default function AdminTourAPI() {
               </Card>
             )}
 
+            {/* 검색 바 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="축제명, 주소, ContentID로 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* 검색 결과 표시 */}
+            {searchQuery && (
+              <p className="text-gray-400 text-sm">
+                검색 결과: {filteredRawDataList.length}개
+              </p>
+            )}
+
             {/* 원본 데이터 목록 */}
             <div className="space-y-3">
-              {rawDataList.map((raw) => {
+              {filteredRawDataList.map((raw) => {
                 const isSelected = selectedRawData.includes(raw.id);
                 const statusColors = {
                   pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -705,6 +738,14 @@ export default function AdminTourAPI() {
                   </Card>
                 );
               })}
+
+              {filteredRawDataList.length === 0 && rawDataList.length > 0 && (
+                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                  <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
+                  <p className="text-gray-600 text-sm">다른 검색어를 시도해보세요</p>
+                </Card>
+              )}
 
               {rawDataList.length === 0 && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
