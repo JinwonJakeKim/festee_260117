@@ -49,7 +49,7 @@ const festivalIcon = new L.Icon({
 });
 
 // Shorts Section Component
-function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
+function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   const [clickedIndices, setClickedIndices] = React.useState(new Set());
 
   const handleClick = (idx) => {
@@ -64,10 +64,15 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
     });
   };
 
+  const handleMoreClick = () => {
+    const searchQuery = encodeURIComponent(festivalName);
+    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+  };
+
   return (
     <div>
       <h3 className="text-xl font-bold mb-3 text-cyan-400">Shorts</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {youtubeShortUrls.map((shortUrl, idx) => {
           const videoId = getYoutubeVideoId(shortUrl);
           if (!videoId) return null;
@@ -102,6 +107,14 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
           );
         })}
       </div>
+      
+      <button
+        onClick={handleMoreClick}
+        className="w-full py-3 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex items-center justify-center gap-2 text-cyan-400 font-medium"
+      >
+        <span>YouTube에서 더보기</span>
+        <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
   );
 }
@@ -1019,6 +1032,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               <ShortsSection
                 youtubeShortUrls={festival.youtube_shorts_urls}
                 getYoutubeVideoId={getYoutubeVideoId}
+                festivalName={localizedName}
               />
             )}
           </div>
