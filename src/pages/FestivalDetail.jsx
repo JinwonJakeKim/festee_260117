@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
@@ -48,6 +48,105 @@ const festivalIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Shorts Section Component
+function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, currentPlayingShortIndex, setCurrentPlayingShortIndex, playerRefs }) {
+  useEffect(() => {
+    if (!youtubeApiReady || !youtubeShortUrls || youtubeShortUrls.length === 0) {
+      return;
+    }
+
+    // Initialize players
+    youtubeShortUrls.forEach((shortUrl, idx) => {
+      const videoId = getYoutubeVideoId(shortUrl);
+      if (!videoId) return;
+
+      const containerId = `youtube-short-${idx}`;
+      
+      if (!playerRefs.current[idx]) {
+        playerRefs.current[idx] = new window.YT.Player(containerId, {
+          videoId: videoId,
+          playerVars: {
+            autoplay: 0,
+            mute: 1,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+          },
+          events: {
+            onReady: (event) => {
+              if (idx === currentPlayingShortIndex) {
+                event.target.playVideo();
+              }
+            },
+            onStateChange: (event) => {
+              // When video ends, play next
+              if (event.data === window.YT.PlayerState.ENDED) {
+                setCurrentPlayingShortIndex((prev) => (prev + 1) % youtubeShortUrls.length);
+              }
+            },
+          },
+        });
+      }
+    });
+
+    return () => {
+      playerRefs.current.forEach(player => {
+        if (player && player.destroy) {
+          player.destroy();
+        }
+      });
+      playerRefs.current = [];
+    };
+  }, [youtubeApiReady, youtubeShortUrls, getYoutubeVideoId]);
+
+  // Control playback based on currentPlayingShortIndex
+  useEffect(() => {
+    if (!youtubeApiReady) return;
+
+    playerRefs.current.forEach((player, idx) => {
+      if (!player || !player.playVideo) return;
+
+      if (idx === currentPlayingShortIndex) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+        player.seekTo(0);
+      }
+    });
+  }, [currentPlayingShortIndex, youtubeApiReady]);
+
+  return (
+    <div>
+      <h3 className="text-xl font-bold mb-3 text-cyan-400">Shorts</h3>
+      <div className="grid grid-cols-2 gap-3">
+        {youtubeShortUrls.map((shortUrl, idx) => {
+          const videoId = getYoutubeVideoId(shortUrl);
+          if (!videoId) return null;
+          
+          return (
+            <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
+              <div 
+                id={`youtube-short-${idx}`}
+                className="absolute top-0 left-0 w-full h-full"
+              />
+              {/* Overlay when not playing */}
+              {idx !== currentPlayingShortIndex && (
+                <div 
+                  className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer z-10"
+                  onClick={() => setCurrentPlayingShortIndex(idx)}
+                >
+                  <Play className="w-12 h-12 text-white" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function FestivalDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -69,9 +168,31 @@ export default function FestivalDetail() {
   const [showGalleryPopup, setShowGalleryPopup] = useState(false);
   const [galleryPopupIndex, setGalleryPopupIndex] = useState(0);
 
+  // Shorts playback state
+  const [currentPlayingShortIndex, setCurrentPlayingShortIndex] = useState(0);
+  const [youtubeApiReady, setYoutubeApiReady] = useState(false);
+  const playerRefs = useRef([]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [festivalId]);
+
+  // Load YouTube Iframe API
+  useEffect(() => {
+    if (window.YT) {
+      setYoutubeApiReady(true);
+      return;
+    }
+
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      setYoutubeApiReady(true);
+    };
+  }, []);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -210,10 +331,8 @@ export default function FestivalDetail() {
     { name: "NOL티켓", price: (festival?.price || 187000) + 4000, views: 1384, benefit: "무료 굿즈 증정", url: "https://nolticket.co.kr" },
   ];
 
-  const getYoutubeEmbedUrl = (url) => {
+  const getYoutubeVideoId = (url) => {
     if (!url) return null;
-    
-    console.log('Processing YouTube URL:', url);
     
     const patterns = [
       /(?:youtube\.com\/shorts\/)([^?\s]+)/,
@@ -232,13 +351,12 @@ export default function FestivalDetail() {
       }
     }
     
-    if (!videoId) {
-      console.error('Could not extract YouTube video ID from:', url);
-      return null;
-    }
-    
-    console.log('Extracted video ID:', videoId);
-    
+    return videoId;
+  };
+
+  const getYoutubeEmbedUrl = (url) => {
+    const videoId = getYoutubeVideoId(url);
+    if (!videoId) return null;
     return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1`;
   };
 
@@ -961,28 +1079,14 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
             {/* Shorts 섹션 */}
             {festival.youtube_shorts_urls && festival.youtube_shorts_urls.length > 0 && (
-              <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">Shorts</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {festival.youtube_shorts_urls.map((shortUrl, idx) => {
-                    const embedUrl = getYoutubeEmbedUrl(shortUrl);
-                    if (!embedUrl) return null;
-                    
-                    return (
-                      <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
-                        <iframe
-                          src={embedUrl}
-                          className="absolute top-0 left-0 w-full h-full"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={`Short ${idx + 1}`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <ShortsSection
+                youtubeShortUrls={festival.youtube_shorts_urls}
+                getYoutubeVideoId={getYoutubeVideoId}
+                youtubeApiReady={youtubeApiReady}
+                currentPlayingShortIndex={currentPlayingShortIndex}
+                setCurrentPlayingShortIndex={setCurrentPlayingShortIndex}
+                playerRefs={playerRefs}
+              />
             )}
           </div>
         </TabsContent>
