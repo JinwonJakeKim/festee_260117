@@ -833,11 +833,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               <Target className="w-6 h-6 text-gray-400 hover:text-pink-500 transition-colors" />
             </button>
           </Link>
-          
-          <div className="flex items-center gap-1 ml-auto">
-            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-            <span className="text-yellow-400 font-bold">{starRating}</span>
-          </div>
         </div>
       </div>
 
