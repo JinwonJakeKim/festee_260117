@@ -185,9 +185,6 @@ export default function FestivalChatbot({ festival }) {
                   <Send className="w-5 h-5" />
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Shift + Enter로 줄바꿈
-              </p>
             </div>
           </motion.div>
         )}
