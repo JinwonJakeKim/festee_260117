@@ -82,14 +82,29 @@ const getRankColor = (index) => {
 };
 
 export default function Home() {
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("all");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // URL에서 필터 초기값 읽기
+  const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
+  const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [dateRange, setDateRange] = useState(() => {
+    const fromParam = urlParams.get('dateFrom');
+    const toParam = urlParams.get('dateTo');
+    return {
+      from: fromParam ? new Date(fromParam) : null,
+      to: toParam ? new Date(toParam) : null
+    };
+  });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState(() => {
+    const tagsParam = urlParams.get('tags');
+    return tagsParam ? tagsParam.split(',') : [];
+  });
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [showFeedbackCard, setShowFeedbackCard] = useState(true);
@@ -98,10 +113,35 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showBetaBanner, setShowBetaBanner] = useState(true);
-  const [hidePastFestivals, setHidePastFestivals] = useState(false);
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') === 'true');
   const { getLocalizedContent } = useFestivalLocalizedContent();
+
+  // URL 업데이트 함수
+  const updateUrl = (filters) => {
+    const params = new URLSearchParams();
+    
+    if (filters.category && filters.category !== 'all') params.set('category', filters.category);
+    if (filters.country && filters.country !== 'all') params.set('country', filters.country);
+    if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.set('dateTo', filters.dateTo);
+    if (filters.tags && filters.tags.length > 0) params.set('tags', filters.tags.join(','));
+    if (filters.hidePast) params.set('hidePast', 'true');
+    
+    const newUrl = params.toString() ? `${createPageUrl('Home')}?${params.toString()}` : createPageUrl('Home');
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // 필터 변경 시 URL 업데이트
+  useEffect(() => {
+    updateUrl({
+      category: categoryFilter,
+      country: countryFilter,
+      dateFrom: dateRange.from?.toISOString(),
+      dateTo: dateRange.to?.toISOString(),
+      tags: selectedTags,
+      hidePast: hidePastFestivals
+    });
+  }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
