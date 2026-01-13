@@ -239,10 +239,13 @@ export default function Home() {
       }
       
       const existing = myLikes.find(like => like.festival_id === festivalId);
+      const festival = rawFestivals?.find(f => f.id === festivalId);
+      const currentCount = festival?.likes_count || 0;
+      
       if (existing) {
         await base44.entities.FestivalLike.delete(existing.id);
         await base44.entities.Festival.update(festivalId, {
-          likes_count: Math.max(0, (festivals.find(f => f.id === festivalId)?.likes_count || 0) - 1)
+          likes_count: Math.max(0, currentCount - 1)
         });
       } else {
         await base44.entities.FestivalLike.create({
@@ -250,13 +253,14 @@ export default function Home() {
           user_email: user.email
         });
         await base44.entities.Festival.update(festivalId, {
-          likes_count: (festivals.find(f => f.id === festivalId)?.likes_count || 0) + 1
+          likes_count: currentCount + 1
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rawFestivals'] }); 
       queryClient.invalidateQueries({ queryKey: ['myLikes'] });
+      queryClient.invalidateQueries({ queryKey: ['festival'] });
     },
   });
 
