@@ -468,8 +468,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       addedUrls.add(festival.video_url);
       console.log('✅ Added video_url:', festival.video_url);
     }
-    
-    // 2. thumbnail_url을 항상 추가 (중복만 체크)
+
+    // 2. thumbnail_url을 항상 추가 (대표 이미지 - TourAPI)
     if (festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
       items.push({
         type: 'image',
@@ -477,10 +477,10 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         caption: festival.name
       });
       addedUrls.add(festival.thumbnail_url);
-      console.log('✅ Added thumbnail_url:', festival.thumbnail_url);
+      console.log('✅ Added thumbnail_url (TourAPI):', festival.thumbnail_url);
     }
-    
-    // 3. media_urls 배열 추가
+
+    // 3. media_urls 배열 추가 (YouTube 썸네일이 여기에 포함됨)
     if (festival?.media_urls && festival.media_urls.length > 0) {
       festival.media_urls.forEach((media, index) => {
         let currentUrl = null;
@@ -489,8 +489,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
         if (typeof media === 'string') {
           currentUrl = media;
-          if (media.includes('youtube.com') || media.includes('youtu.be')) {
-            currentType = 'youtube';
+          if (media.includes('youtube.com') || media.includes('youtu.be') || media.includes('ytimg.com')) {
+            currentType = 'image'; // YouTube 썸네일도 이미지로 처리
           } else if (media.match(/\.(mp4|webm|ogg)$/i)) {
             currentType = 'video';
           } else {
@@ -498,8 +498,13 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           }
         } else if (typeof media === 'object' && media !== null && media.url) {
           currentUrl = media.url;
-          const isYoutube = media.url.includes('youtube.com') || media.url.includes('youtu.be');
-          currentType = isYoutube ? 'youtube' : (media.type || 'image');
+          const isYoutubeThumbnail = media.url.includes('ytimg.com') || media.caption?.includes('YouTube');
+          if (isYoutubeThumbnail) {
+            currentType = 'image';
+          } else {
+            const isYoutube = media.url.includes('youtube.com') || media.url.includes('youtu.be');
+            currentType = isYoutube ? 'youtube' : (media.type || 'image');
+          }
           if (media.caption) {
             currentCaption = media.caption;
           }
@@ -517,24 +522,11 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       });
     }
 
-    // 4. image_gallery_urls의 모든 이미지 추가
-    if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
-      festival.image_gallery_urls.forEach((image, index) => {
-        const imageUrl = image.originimgurl || image.smallimageurl;
-        if (imageUrl && !addedUrls.has(imageUrl)) {
-          items.push({
-            type: 'image',
-            url: imageUrl,
-            caption: image.imgname || festival.name
-          });
-          addedUrls.add(imageUrl);
-          console.log(`✅ Added image_gallery_urls[${index}]:`, imageUrl);
-        }
-      });
-    }
-    
+    // 4. image_gallery_urls는 제외 (이미 media_urls에 포함되어 있음)
+    // TourAPI 이미지는 이미 media_urls에 추가되었으므로 중복 방지
+
     console.log('📊 Total mediaItems:', items.length);
-    
+
     return items;
   }, [festival]);
 

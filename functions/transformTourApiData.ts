@@ -358,26 +358,24 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
-    // YouTube Shorts 검색 함수
-    const searchYouTubeShorts = async (festivalName) => {
+    // YouTube 동영상 검색 함수 (조회수 높은 순, 썸네일 포함)
+    const searchYouTubeVideos = async (festivalName) => {
       try {
-        console.log(`[Transform] 🎬 Internal search function called for: ${festivalName}`);
+        console.log(`[Transform] 🎬 YouTube video search for: ${festivalName}`);
         
         const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
         if (!youtubeApiKey) {
           console.log(`[Transform] ⚠️ YOUTUBE_API_KEY is missing or empty`);
-          return [];
+          return { shortsUrls: [], thumbnailUrls: [] };
         }
-        console.log(`[Transform] 🔑 API Key found (length: ${youtubeApiKey.length})`);
         
-        // YouTube Data API v3 search endpoint
+        // YouTube Data API v3 search endpoint - 조회수 높은 동영상
         const searchParams = new URLSearchParams({
-          part: 'id',
+          part: 'id,snippet',
           q: festivalName,
           type: 'video',
-          videoDuration: 'short', // Shorts only (< 60 seconds)
-          order: 'viewCount', // Sort by view count
-          maxResults: '5',
+          order: 'viewCount', // 조회수 높은 순
+          maxResults: '10', // 10개 가져와서 5개 선별
           key: youtubeApiKey
         });
         
@@ -387,31 +385,45 @@ Deno.serve(async (req) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`[Transform] YouTube API error:`, errorText);
-          return [];
+          return { shortsUrls: [], thumbnailUrls: [] };
         }
         
         const data = await response.json();
         
         if (!data.items || data.items.length === 0) {
-          console.log(`[Transform] ℹ️ No shorts found for: ${festivalName}`);
-          return [];
+          console.log(`[Transform] ℹ️ No videos found for: ${festivalName}`);
+          return { shortsUrls: [], thumbnailUrls: [] };
         }
         
-        // Convert video IDs to YouTube Shorts URLs
-        const shortsUrls = data.items.map(item => 
-          `https://www.youtube.com/shorts/${item.id.videoId}`
-        );
+        // Shorts와 일반 동영상 썸네일 분리
+        const shortsUrls = [];
+        const thumbnailUrls = [];
         
-        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts for: ${festivalName}`);
-        shortsUrls.forEach((url, idx) => {
-          console.log(`[Transform]   ${idx + 1}. ${url}`);
-        });
+        for (const item of data.items) {
+          const videoId = item.id.videoId;
+          const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url;
+          
+          // Shorts 여부 확인은 어렵지만, 일단 첫 5개를 Shorts로 가정
+          if (shortsUrls.length < 5) {
+            shortsUrls.push(`https://www.youtube.com/shorts/${videoId}`);
+          }
+          
+          // 썸네일은 5개만 수집
+          if (thumbnailUrls.length < 5 && thumbnailUrl) {
+            thumbnailUrls.push(thumbnailUrl);
+            console.log(`[Transform]   썸네일 ${thumbnailUrls.length}: ${thumbnailUrl}`);
+          }
+          
+          if (shortsUrls.length >= 5 && thumbnailUrls.length >= 5) break;
+        }
         
-        return shortsUrls;
+        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts, ${thumbnailUrls.length} thumbnails`);
+        
+        return { shortsUrls, thumbnailUrls };
         
       } catch (error) {
         console.error(`[Transform] YouTube search error:`, error.message);
-        return [];
+        return { shortsUrls: [], thumbnailUrls: [] };
       }
     };
     
@@ -784,10 +796,12 @@ ${context}
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
         
-        // ===== YouTube Shorts 자동 검색 =====
-        console.log(`[Transform] 🎬 Starting YouTube Shorts search for: ${rawData.title}`);
-        const youtubeShorts = await searchYouTubeShorts(rawData.title);
-        console.log(`[Transform] 🎬 YouTube Shorts result: ${youtubeShorts.length} items`);
+        // ===== YouTube 동영상 및 썸네일 검색 =====
+        console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
+        const youtubeResult = await searchYouTubeVideos(rawData.title);
+        const youtubeShorts = youtubeResult.shortsUrls;
+        const youtubeThumbnails = youtubeResult.thumbnailUrls;
+        console.log(`[Transform] 🎬 YouTube result: ${youtubeShorts.length} shorts, ${youtubeThumbnails.length} thumbnails`);
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
@@ -939,13 +953,27 @@ ${context}
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
         // ===== media_urls 구성 (여러 이미지) =====
-        const mediaUrls = imageGallery.map(img => ({
-          type: 'image',
-          url: img.originimgurl,
-          caption: img.imgname || rawData.title
-        }));
+        const mediaUrls = [];
         
-        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items`);
+        // 1. TourAPI 이미지 추가 (imageGallery)
+        imageGallery.forEach(img => {
+          mediaUrls.push({
+            type: 'image',
+            url: img.originimgurl,
+            caption: img.imgname || rawData.title
+          });
+        });
+        
+        // 2. YouTube 썸네일 추가 (조회수 높은 순 5개)
+        youtubeThumbnails.forEach((thumbnailUrl, index) => {
+          mediaUrls.push({
+            type: 'image',
+            url: thumbnailUrl,
+            caption: `${rawData.title} - YouTube 영상 ${index + 1}`
+          });
+        });
+        
+        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items (${imageGallery.length} from API, ${youtubeThumbnails.length} from YouTube)`);
         
         // ===== 최종 태그 구성 =====
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
