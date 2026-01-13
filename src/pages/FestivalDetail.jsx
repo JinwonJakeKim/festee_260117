@@ -72,7 +72,11 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   return (
     <div>
       <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
-        <Youtube className="w-6 h-6 text-red-500" />
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#FF0000"/>
+          <path d="M10 8.5v7l6-3.5-6-3.5z" fill="#FF0000"/>
+          <path d="M17 10.5v3l-5 3v-6l5 3z" fill="#FF0000" fillOpacity="0.7"/>
+        </svg>
         <span className="text-white">Shorts</span>
       </h3>
       <div className="grid grid-cols-2 gap-3 mb-4">
