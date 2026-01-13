@@ -16,11 +16,27 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
 
 const removeDuplicateFestivals = (festivals) => {
-  const seen = new Set();
+  const seen = new Map();
   return festivals.filter(festival => {
-    const duplicate = seen.has(festival.id);
-    seen.add(festival.id);
-    return !duplicate;
+    const name = festival.name;
+    if (seen.has(name)) {
+      // 이미 있는 경우, 더 최근에 업데이트된 것 또는 더 많은 정보를 가진 것을 유지
+      const existing = seen.get(name);
+      const existingScore = (existing.youtube_shorts_urls?.length || 0) + 
+                           (existing.image_gallery_urls?.length || 0) + 
+                           (existing.description?.length || 0);
+      const currentScore = (festival.youtube_shorts_urls?.length || 0) + 
+                          (festival.image_gallery_urls?.length || 0) + 
+                          (festival.description?.length || 0);
+      
+      if (currentScore > existingScore || new Date(festival.updated_date) > new Date(existing.updated_date)) {
+        seen.set(name, festival);
+        return true;
+      }
+      return false;
+    }
+    seen.set(name, festival);
+    return true;
   });
 };
 
