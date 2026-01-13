@@ -523,12 +523,13 @@ ${context}
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
-        // ===== 재변환 모드: 사용자 행위 데이터 보존 =====
+        // ===== 재변환 모드: 사용자 행위 데이터 및 YouTube Shorts 보존 =====
         let preservedUserData = {
           likes_count: 0,
           catches_count: 0,
           comments_count: 0
         };
+        let preservedYoutubeShorts = [];
         
         if (retransform && rawData.festival_id) {
           try {
@@ -543,6 +544,12 @@ ${context}
                 comments_count: existing.comments_count || 0
               };
               console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
+              
+              // YouTube Shorts 보존 (5개 이상이면)
+              if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
+                preservedYoutubeShorts = existing.youtube_shorts_urls;
+                console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
+              }
               
               // 기존 Festival 삭제
               await base44.asServiceRole.entities.Festival.delete(rawData.festival_id);
@@ -816,11 +823,21 @@ ${context}
         const aiTags = aiResult.tags || [];
         
         // ===== YouTube 동영상 및 썸네일 검색 =====
-        console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
-        const youtubeResult = await searchYouTubeVideos(rawData.title);
-        const youtubeShorts = youtubeResult.shortsUrls;
-        const youtubeThumbnails = youtubeResult.thumbnailUrls;
-        console.log(`[Transform] 🎬 YouTube result: ${youtubeShorts.length} shorts, ${youtubeThumbnails.length} thumbnails`);
+        let youtubeShorts = [];
+        let youtubeThumbnails = [];
+        
+        if (preservedYoutubeShorts.length >= 5) {
+          // 재변환 시 기존 Shorts 재사용
+          youtubeShorts = preservedYoutubeShorts;
+          console.log(`[Transform] 🎬 Using preserved YouTube Shorts: ${youtubeShorts.length} videos (API call skipped)`);
+        } else {
+          // 새로운 검색 또는 5개 미만인 경우
+          console.log(`[Transform] 🎬 Starting YouTube search for: ${rawData.title}`);
+          const youtubeResult = await searchYouTubeVideos(rawData.title);
+          youtubeShorts = youtubeResult.shortsUrls;
+          youtubeThumbnails = youtubeResult.thumbnailUrls;
+          console.log(`[Transform] 🎬 YouTube result: ${youtubeShorts.length} shorts, ${youtubeThumbnails.length} thumbnails`);
+        }
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
