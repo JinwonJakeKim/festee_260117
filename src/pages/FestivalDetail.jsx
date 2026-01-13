@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -71,7 +71,10 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
 
   return (
     <div>
-      <h3 className="text-xl font-bold mb-3 text-cyan-400">Shorts</h3>
+      <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+        <Youtube className="w-6 h-6 text-red-500" />
+        <span className="text-white">Shorts</span>
+      </h3>
       <div className="grid grid-cols-2 gap-3 mb-4">
         {youtubeShortUrls.map((shortUrl, idx) => {
           const videoId = getYoutubeVideoId(shortUrl);
