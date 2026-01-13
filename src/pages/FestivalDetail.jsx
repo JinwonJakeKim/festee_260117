@@ -49,120 +49,12 @@ const festivalIcon = new L.Icon({
 });
 
 // Shorts Section Component
-function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, currentPlayingShortIndex, setCurrentPlayingShortIndex, playerRefs }) {
-  const [playersReady, setPlayersReady] = React.useState({});
+function ShortsSection({ youtubeShortUrls, getYoutubeVideoId }) {
+  const [playingIndex, setPlayingIndex] = React.useState(null);
 
-  // Initialize all players once
-  React.useEffect(() => {
-    if (!youtubeApiReady || !youtubeShortUrls || youtubeShortUrls.length === 0) {
-      return;
-    }
-
-    console.log('[Shorts] Initializing players...');
-
-    const initPlayers = () => {
-      youtubeShortUrls.forEach((shortUrl, idx) => {
-        const videoId = getYoutubeVideoId(shortUrl);
-        if (!videoId) {
-          console.warn(`[Shorts] No videoId for index ${idx}`);
-          return;
-        }
-
-        const containerId = `youtube-short-${idx}`;
-        
-        if (playerRefs.current[idx]) {
-          console.log(`[Shorts] Player ${idx} already exists, skipping`);
-          return;
-        }
-
-        console.log(`[Shorts] Creating player ${idx} with videoId: ${videoId}`);
-        
-        try {
-          playerRefs.current[idx] = new window.YT.Player(containerId, {
-            videoId: videoId,
-            playerVars: {
-              autoplay: 0,
-              mute: 1,
-              controls: 1,
-              rel: 0,
-              modestbranding: 1,
-              playsinline: 1,
-            },
-            events: {
-              onReady: (event) => {
-                console.log(`[Shorts] Player ${idx} ready`);
-                setPlayersReady(prev => ({ ...prev, [idx]: true }));
-                
-                // Start playing the first video
-                if (idx === 0) {
-                  console.log('[Shorts] Auto-playing first video');
-                  event.target.playVideo();
-                } else {
-                  event.target.pauseVideo();
-                }
-              },
-              onStateChange: (event) => {
-                console.log(`[Shorts] Player ${idx} state: ${event.data}`);
-                if (event.data === window.YT.PlayerState.ENDED) {
-                  console.log(`[Shorts] Video ${idx} ended, playing next`);
-                  const nextIndex = (idx + 1) % youtubeShortUrls.length;
-                  setCurrentPlayingShortIndex(nextIndex);
-                }
-              },
-            },
-          });
-        } catch (error) {
-          console.error(`[Shorts] Error creating player ${idx}:`, error);
-        }
-      });
-    };
-
-    const timer = setTimeout(initPlayers, 300);
-
-    return () => {
-      clearTimeout(timer);
-      console.log('[Shorts] Cleanup: destroying players');
-      playerRefs.current.forEach((player, idx) => {
-        if (player && typeof player.destroy === 'function') {
-          try {
-            player.destroy();
-          } catch (e) {
-            console.error(`[Shorts] Error destroying player ${idx}:`, e);
-          }
-        }
-      });
-      playerRefs.current = [];
-      setPlayersReady({});
-    };
-  }, [youtubeApiReady, youtubeShortUrls, getYoutubeVideoId]);
-
-  // Control playback
-  React.useEffect(() => {
-    const allReady = Object.keys(playersReady).length === youtubeShortUrls?.length;
-    if (!allReady) {
-      console.log('[Shorts] Not all players ready yet');
-      return;
-    }
-
-    console.log(`[Shorts] Switching to video ${currentPlayingShortIndex}`);
-
-    playerRefs.current.forEach((player, idx) => {
-      if (!player) return;
-
-      try {
-        if (idx === currentPlayingShortIndex) {
-          console.log(`[Shorts] ▶ Playing ${idx}`);
-          player.playVideo();
-        } else {
-          console.log(`[Shorts] ⏸ Pausing ${idx}`);
-          player.pauseVideo();
-          player.seekTo(0, true);
-        }
-      } catch (error) {
-        console.error(`[Shorts] Error controlling player ${idx}:`, error);
-      }
-    });
-  }, [currentPlayingShortIndex, playersReady, youtubeShortUrls]);
+  const handlePlay = (idx) => {
+    setPlayingIndex(idx);
+  };
 
   return (
     <div>
@@ -172,21 +64,32 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, youtubeApiReady, c
           const videoId = getYoutubeVideoId(shortUrl);
           if (!videoId) return null;
           
+          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+          
           return (
             <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
-              <div 
-                id={`youtube-short-${idx}`}
-                className="absolute top-0 left-0 w-full h-full"
-              />
-              {idx !== currentPlayingShortIndex && (
+              {playingIndex === idx ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&rel=0&modestbranding=1&playsinline=1`}
+                  className="absolute top-0 left-0 w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={`Short ${idx + 1}`}
+                />
+              ) : (
                 <div 
-                  className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer z-10"
-                  onClick={() => {
-                    console.log(`[Shorts] User clicked ${idx}`);
-                    setCurrentPlayingShortIndex(idx);
-                  }}
+                  className="absolute inset-0 cursor-pointer"
+                  onClick={() => handlePlay(idx)}
                 >
-                  <Play className="w-12 h-12 text-white" />
+                  <img
+                    src={thumbnailUrl}
+                    alt={`Short ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Play className="w-16 h-16 text-white" />
+                  </div>
                 </div>
               )}
             </div>
@@ -218,31 +121,9 @@ export default function FestivalDetail() {
   const [showGalleryPopup, setShowGalleryPopup] = useState(false);
   const [galleryPopupIndex, setGalleryPopupIndex] = useState(0);
 
-  // Shorts playback state
-  const [currentPlayingShortIndex, setCurrentPlayingShortIndex] = useState(0);
-  const [youtubeApiReady, setYoutubeApiReady] = useState(false);
-  const playerRefs = useRef([]);
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [festivalId]);
-
-  // Load YouTube Iframe API
-  useEffect(() => {
-    if (window.YT) {
-      setYoutubeApiReady(true);
-      return;
-    }
-
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = () => {
-      setYoutubeApiReady(true);
-    };
-  }, []);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -1132,10 +1013,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               <ShortsSection
                 youtubeShortUrls={festival.youtube_shorts_urls}
                 getYoutubeVideoId={getYoutubeVideoId}
-                youtubeApiReady={youtubeApiReady}
-                currentPlayingShortIndex={currentPlayingShortIndex}
-                setCurrentPlayingShortIndex={setCurrentPlayingShortIndex}
-                playerRefs={playerRefs}
               />
             )}
           </div>
