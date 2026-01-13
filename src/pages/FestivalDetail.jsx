@@ -216,6 +216,7 @@ export default function FestivalDetail() {
     console.log('Processing YouTube URL:', url);
     
     const patterns = [
+      /(?:youtube\.com\/shorts\/)([^?\s]+)/,
       /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
       /(?:youtube\.com\/embed\/)([^?\s]+)/,
       /(?:youtu\.be\/)([^?\s]+)/,
