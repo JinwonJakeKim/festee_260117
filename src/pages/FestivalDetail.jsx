@@ -17,6 +17,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
+import FestivalChatbot from "../components/FestivalChatbot";
 
 // 안전한 날짜 포맷팅 함수 추가
 const safeFormatDate = (dateString, formatString) => {
@@ -1446,6 +1447,9 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           </>
         )}
       </AnimatePresence>
+
+      {/* Chatbot */}
+      <FestivalChatbot festival={festival} />
 
       {/* 갤러리 팝업 모달 - 새로운 버전 */}
       <AnimatePresence>
