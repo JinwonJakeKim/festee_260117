@@ -963,6 +963,7 @@ ${context}
           longitude: longitude,
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           video_url: '',
+          youtube_shorts_urls: youtubeShorts,
           media_urls: mediaUrls,
           website: websiteUrl,
           price: 0,
