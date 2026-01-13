@@ -783,6 +783,10 @@ ${context}
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
         
+        // ===== YouTube Shorts 자동 검색 =====
+        const youtubeShorts = await searchYouTubeShorts(rawData.title);
+        console.log(`[Transform] 🎬 YouTube Shorts: ${youtubeShorts.length} items`);
+        
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
         const usedContent = new Set();
