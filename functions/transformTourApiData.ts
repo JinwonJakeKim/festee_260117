@@ -1,4 +1,3 @@
-
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
@@ -357,6 +356,62 @@ Deno.serve(async (req) => {
       }
       
       return schedule;
+    };
+    
+    // YouTube Shorts 검색 함수
+    const searchYouTubeShorts = async (festivalName) => {
+      try {
+        console.log(`[Transform] 🎬 Searching YouTube Shorts for: ${festivalName}`);
+        
+        const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
+        if (!youtubeApiKey) {
+          console.log(`[Transform] ⚠️ YOUTUBE_API_KEY not found, skipping shorts search`);
+          return [];
+        }
+        
+        // YouTube Data API v3 search endpoint
+        const searchParams = new URLSearchParams({
+          part: 'id',
+          q: festivalName,
+          type: 'video',
+          videoDuration: 'short', // Shorts only (< 60 seconds)
+          order: 'viewCount', // Sort by view count
+          maxResults: '5',
+          key: youtubeApiKey
+        });
+        
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`;
+        const response = await fetch(searchUrl);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[Transform] YouTube API error:`, errorText);
+          return [];
+        }
+        
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          console.log(`[Transform] ℹ️ No shorts found for: ${festivalName}`);
+          return [];
+        }
+        
+        // Convert video IDs to YouTube Shorts URLs
+        const shortsUrls = data.items.map(item => 
+          `https://www.youtube.com/shorts/${item.id.videoId}`
+        );
+        
+        console.log(`[Transform] ✓ Found ${shortsUrls.length} shorts for: ${festivalName}`);
+        shortsUrls.forEach((url, idx) => {
+          console.log(`[Transform]   ${idx + 1}. ${url}`);
+        });
+        
+        return shortsUrls;
+        
+      } catch (error) {
+        console.error(`[Transform] YouTube search error:`, error.message);
+        return [];
+      }
     };
     
     // AI 기반 요약, 하이라이트, 태그 생성
