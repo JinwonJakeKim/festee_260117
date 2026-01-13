@@ -358,10 +358,10 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
-    // YouTube 동영상 검색 함수 (조회수 높은 순 일반영상)
+    // YouTube 동영상 검색 함수 (관련성 기준, 4K 우선순위)
     const searchYouTubeVideos = async (festivalName) => {
       try {
-        console.log(`[Transform] 🎬 YouTube video search for: ${festivalName}`);
+        console.log(`[Transform] 🎬 YouTube video search for: "${festivalName}" (관련성 기준, 4K 우선)`);
         
         const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
         if (!youtubeApiKey) {
@@ -369,18 +369,18 @@ Deno.serve(async (req) => {
           return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
-        // YouTube Data API v3 search endpoint - 조회수 높은 동영상
+        // YouTube Data API v3 search endpoint - 관련성 기준 검색
         const searchParams = new URLSearchParams({
           part: 'id,snippet',
           q: festivalName,
           type: 'video',
-          order: 'viewCount', // 조회수 높은 순
-          maxResults: '10', // 10개 가져와서 선별
+          order: 'relevance', // 관련성 높은 순
+          maxResults: '5', // 상위 5개만 가져오기
           key: youtubeApiKey
         });
         
         const searchUrl = `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`;
-        console.log(`[Transform] 📡 Calling YouTube API...`);
+        console.log(`[Transform] 📡 Calling YouTube API (relevance order)...`);
         const response = await fetch(searchUrl);
         
         if (!response.ok) {
@@ -396,37 +396,43 @@ Deno.serve(async (req) => {
           return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
         }
         
-        // 일반 영상과 Shorts 분리
-        const shortsUrls = [];
-        const thumbnailUrls = [];
-        let topVideoUrl = '';
-        let videoCount = 0;
+        // 4K 여부 판별 함수
+        const is4KVideo = (item) => {
+          const title = (item.snippet.title || '').toUpperCase();
+          const description = (item.snippet.description || '').toUpperCase();
+          return /4K|UHD|2160|4096/.test(title + description);
+        };
         
-        for (let idx = 0; idx < data.items.length && videoCount < 10; idx++) {
-          const item = data.items[idx];
-          const videoId = item.id.videoId;
-          const title = item.snippet.title || '';
-          const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url;
-          
-          // 첫 번째 동영상 (조회수 최다)을 topVideoUrl로 설정
-          if (!topVideoUrl) {
-            topVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-            console.log(`[Transform] ✅ Top video URL (조회수 최다): ${topVideoUrl}`);
-            console.log(`[Transform]    Title: ${title}`);
-          }
-          
-          // Shorts URL (shorts 식별은 API로 정확히 할 수 없으므로, 일단 모든 영상을 shorts URL로 만들고 처음 5개 사용)
-          if (shortsUrls.length < 5) {
-            shortsUrls.push(`https://www.youtube.com/shorts/${videoId}`);
-          }
-          
-          // 썸네일 수집
-          if (thumbnailUrls.length < 5 && thumbnailUrl) {
-            thumbnailUrls.push(thumbnailUrl);
-          }
-          
-          videoCount++;
-        }
+        // 관련성 상위 5개 영상 정렬: 4K 우선
+        const videosWithQuality = data.items.map((item, idx) => ({
+          item,
+          videoId: item.id.videoId,
+          title: item.snippet.title || '',
+          description: item.snippet.description || '',
+          is4K: is4KVideo(item),
+          relevanceIndex: idx,
+          thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url
+        }));
+        
+        // 4K 여부로 정렬 (4K 우선)
+        videosWithQuality.sort((a, b) => (b.is4K ? 1 : 0) - (a.is4K ? 1 : 0));
+        
+        console.log(`[Transform] 📊 Analyzed ${videosWithQuality.length} videos:`);
+        videosWithQuality.forEach((v, idx) => {
+          console.log(`[Transform]   ${idx + 1}. ${v.is4K ? '✅ 4K' : '  '} - ${v.title.substring(0, 60)}`);
+        });
+        
+        // 최상위 영상 (4K 있으면 4K, 없으면 관련성 최상)
+        const topVideo = videosWithQuality[0];
+        const topVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
+        console.log(`[Transform] ✅ Top video selected (${topVideo.is4K ? '4K' : '일반'}): ${topVideoUrl}`);
+        console.log(`[Transform]    Title: ${topVideo.title}`);
+        
+        // Shorts URL과 썸네일 (모든 5개 항목)
+        const shortsUrls = videosWithQuality.map(v => `https://www.youtube.com/shorts/${v.videoId}`);
+        const thumbnailUrls = videosWithQuality
+          .filter(v => v.thumbnailUrl)
+          .map(v => v.thumbnailUrl);
         
         console.log(`[Transform] ✓ YouTube search result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${shortsUrls.length}, thumbnails=${thumbnailUrls.length}`);
         
