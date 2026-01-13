@@ -75,7 +75,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
         <Youtube className="w-6 h-6 text-red-600" />
         <span className="text-white">Shorts</span>
       </h3>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
         {youtubeShortUrls.map((shortUrl, idx) => {
           const videoId = getYoutubeVideoId(shortUrl);
           if (!videoId) return null;
@@ -84,11 +84,11 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           const isClicked = clickedIndices.has(idx);
           
           return (
-            <div key={idx} className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingTop: '177.78%' }}>
+            <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden" style={{ width: '140px', height: '249px' }}>
               {isClicked ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
-                  className="absolute top-0 left-0 w-full h-full"
+                  className="w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -96,7 +96,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                 />
               ) : (
                 <div 
-                  className="absolute inset-0 cursor-pointer"
+                  className="w-full h-full cursor-pointer"
                   onClick={() => handleClick(idx)}
                 >
                   <img
@@ -117,15 +117,17 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
             </div>
           );
         })}
+        
+        <button
+          onClick={handleMoreClick}
+          className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6"
+          style={{ width: '140px', height: '249px' }}
+        >
+          <Youtube className="w-8 h-8" />
+          <span className="text-sm text-center">YouTube에서<br/>더보기</span>
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
-      
-      <button
-        onClick={handleMoreClick}
-        className="w-full py-3 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex items-center justify-center gap-2 text-cyan-400 font-medium"
-      >
-        <span>YouTube에서 더보기</span>
-        <ChevronRight className="w-4 h-4" />
-      </button>
     </div>
   );
 }
