@@ -71,6 +71,15 @@ export default function AdminDashboard() {
     initialData: [],
   });
 
+  const { data: apiUsageLogs } = useQuery({
+    queryKey: ['apiUsageLogs'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      return base44.entities.ApiUsageLog.filter({ date: today });
+    },
+    initialData: [],
+  });
+
   const updateFestivalStarMutation = useMutation({
     mutationFn: async ({ festivalId, starRating }) => {
       await base44.entities.Festival.update(festivalId, { star_rating: starRating });
@@ -443,18 +452,21 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="px-4 py-4">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-4">
-            <TabsTrigger value="festivals" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-5">
+            <TabsTrigger value="festivals" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               축제 관리
             </TabsTrigger>
-            <TabsTrigger value="stars" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+            <TabsTrigger value="stars" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               FesteeStar
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+            <TabsTrigger value="feedback" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               피드백
             </TabsTrigger>
-            <TabsTrigger value="ads" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+            <TabsTrigger value="ads" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               광고
+            </TabsTrigger>
+            <TabsTrigger value="api" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
+              API
             </TabsTrigger>
           </TabsList>
 
@@ -792,6 +804,199 @@ export default function AdminDashboard() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* API 관리 탭 */}
+          <TabsContent value="api" className="mt-4">
+            <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-400/30 p-4 mb-4">
+              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-blue-400" />
+                연동된 API
+              </h3>
+              <p className="text-gray-300 text-sm">
+                외부 API 연동 현황과 일일 사용량을 확인할 수 있습니다.
+              </p>
+            </Card>
+
+            <div className="space-y-3">
+              {/* Google Custom Search API */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">G</span>
+                      </div>
+                      Google Custom Search API
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      축제 이미지 검색에 사용
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">오늘 사용량</span>
+                        <span className="text-white font-bold">
+                          {apiUsageLogs.find(log => log.api_name === 'google_custom_search')?.count || 0} / 100 쿼리
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-500 to-green-500"
+                          style={{ 
+                            width: `${((apiUsageLogs.find(log => log.api_name === 'google_custom_search')?.count || 0) / 100) * 100}%` 
+                          }}
+                        />
+                      </div>
+                      <p className="text-gray-500 text-xs">
+                        일일 무료 한도: 100 쿼리
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                  ✓ 연동됨
+                </Badge>
+              </Card>
+
+              {/* YouTube Data API */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">▶</span>
+                      </div>
+                      YouTube Data API
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      축제 영상 및 Shorts 검색에 사용
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">오늘 사용량</span>
+                        <span className="text-white font-bold">
+                          {apiUsageLogs.find(log => log.api_name === 'youtube_data_api')?.count || 0} / 100 쿼리
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-red-600"
+                          style={{ 
+                            width: `${((apiUsageLogs.find(log => log.api_name === 'youtube_data_api')?.count || 0) / 100) * 100}%` 
+                          }}
+                        />
+                      </div>
+                      <p className="text-gray-500 text-xs">
+                        일일 무료 한도: 100 쿼리
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                  ✓ 연동됨
+                </Badge>
+              </Card>
+
+              {/* TourAPI */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">🇰🇷</span>
+                      </div>
+                      한국관광공사 TourAPI
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      국내 축제 데이터 수집
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">일일 한도</span>
+                        <span className="text-white font-bold">무제한</span>
+                      </div>
+                      <p className="text-gray-500 text-xs">
+                        무료 사용 가능 (일일 호출 제한 없음)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                  ✓ 연동됨
+                </Badge>
+              </Card>
+
+              {/* Eventbrite API */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">E</span>
+                      </div>
+                      Eventbrite API
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      해외 이벤트 및 축제 데이터
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">일일 한도</span>
+                        <span className="text-white font-bold">1,000 호출</span>
+                      </div>
+                      <p className="text-gray-500 text-xs">
+                        무료 플랜 (월 50,000 호출 제한)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                  ✓ 연동됨
+                </Badge>
+              </Card>
+
+              {/* Base44 InvokeLLM (참고) */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">AI</span>
+                      </div>
+                      Base44 InvokeLLM
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      축제 정보 번역 및 요약 생성
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">오늘 사용량</span>
+                        <span className="text-white font-bold">
+                          {apiUsageLogs.find(log => log.api_name === 'invoke_llm')?.count || 0} 호출
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-xs">
+                        Base44 플랫폼 내장 기능 (별도 비용 없음)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                  ✓ 사용 중
+                </Badge>
+              </Card>
+            </div>
+
+            {/* 안내 카드 */}
+            <Card className="bg-blue-900/20 border-blue-400/30 p-4 mt-4">
+              <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 API 사용량 안내</h4>
+              <ul className="text-gray-300 text-xs space-y-1">
+                <li>• Google Custom Search와 YouTube Data API는 하루 100회 무료 제한이 있습니다</li>
+                <li>• 제한을 초과하면 다음날 00:00(UTC)에 자동 리셋됩니다</li>
+                <li>• 변환/재변환 작업 시 자동으로 API 사용량이 추적됩니다</li>
+                <li>• TourAPI와 Eventbrite는 충분한 무료 한도를 제공합니다</li>
+              </ul>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
