@@ -679,13 +679,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
       {/* Hero Media Carousel - 수정된 버전 */}
       <div className="relative w-full bg-black" style={{ paddingTop: '56.25%' }}>
-        <div 
-          className="absolute top-0 left-0 w-full h-full overflow-hidden cursor-pointer bg-black" 
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onClick={handleGalleryClick}
-        >
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden bg-black">
           {currentMedia?.type === 'youtube' ? (
             (() => {
               const embedUrl = getYoutubeEmbedUrl(currentMedia.url);
@@ -739,11 +733,21 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+
+          {/* 스와이프 및 클릭 감지용 투명 레이어 */}
+          <div 
+            className="absolute inset-0 z-10 cursor-pointer"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onClick={handleGalleryClick}
+          />
+
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none z-20" />
           
           {/* 컨텐츠 번호 표시 - 왼쪽 아래 */}
           {mediaItems.length > 0 && (
-            <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
+            <div className="absolute bottom-4 left-4 z-30 pointer-events-none">
               <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5">
                 <span className="text-white font-bold text-sm">
                   {mediaIndex + 1}/{mediaItems.length}
@@ -759,7 +763,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 e.stopPropagation();
                 handleGalleryClick();
               }}
-              className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors pointer-events-auto"
+              className="absolute bottom-4 right-4 z-30 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors pointer-events-auto"
             >
               <Images className="w-4 h-4 text-white" />
               <span className="text-white font-medium text-sm">갤러리</span>
@@ -769,7 +773,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         
         {/* Indicators */}
         {mediaItems.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
             {mediaItems.map((_, idx) => (
               <button
                 key={idx}
@@ -793,7 +797,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 e.stopPropagation();
                 setMediaIndex(prev => (prev - 1 + mediaItems.length) % mediaItems.length);
               }}
-              className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-10"
+              className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-30"
             >
               <ChevronRight className="w-6 h-6 text-white rotate-180" />
             </button>
@@ -802,7 +806,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 e.stopPropagation();
                 setMediaIndex(prev => (prev + 1) % mediaItems.length);
               }}
-              className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-10"
+              className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full items-center justify-center hover:bg-black/70 transition-colors z-30"
             >
               <ChevronRight className="w-6 h-6 text-white" />
             </button>
