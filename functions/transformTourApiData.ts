@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
         const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
         if (!youtubeApiKey) {
           console.log(`[Transform] ⚠️ YOUTUBE_API_KEY is missing or empty`);
-          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
+          return { shortsUrls: [], topVideoUrl: '' };
         }
         
         // YouTube Data API v3 search endpoint - 관련성 기준 검색
@@ -386,14 +386,14 @@ Deno.serve(async (req) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`[Transform] ❌ YouTube API error (${response.status}):`, errorText);
-          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
+          return { shortsUrls: [], topVideoUrl: '' };
         }
         
         const data = await response.json();
         
         if (!data.items || data.items.length === 0) {
           console.log(`[Transform] ⚠️ No videos found for: ${festivalName}`);
-          return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
+          return { shortsUrls: [], topVideoUrl: '' };
         }
         
         // API 응답 원본 확인
@@ -416,8 +416,7 @@ Deno.serve(async (req) => {
           title: item.snippet.title || '',
           description: item.snippet.description || '',
           is4K: is4KVideo(item),
-          relevanceIndex: idx,
-          thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url
+          relevanceIndex: idx
         }));
         
         console.log(`[Transform] 📊 Before sorting (API relevance order):`);
@@ -443,19 +442,68 @@ Deno.serve(async (req) => {
         console.log(`[Transform] ✅ Top video selected (${topVideo.is4K ? '4K' : '일반'}): ${topVideoUrl}`);
         console.log(`[Transform]    Title: ${topVideo.title}`);
         
-        // Shorts URL과 썸네일 (모든 5개 항목)
+        // Shorts URL (모든 5개 항목)
         const shortsUrls = videosWithQuality.map(v => `https://www.youtube.com/shorts/${v.videoId}`);
-        const thumbnailUrls = videosWithQuality
-          .filter(v => v.thumbnailUrl)
-          .map(v => v.thumbnailUrl);
         
-        console.log(`[Transform] ✓ YouTube search result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${shortsUrls.length}, thumbnails=${thumbnailUrls.length}`);
+        console.log(`[Transform] ✓ YouTube search result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${shortsUrls.length}`);
         
-        return { shortsUrls, thumbnailUrls, topVideoUrl };
+        return { shortsUrls, topVideoUrl };
         
       } catch (error) {
         console.error(`[Transform] ❌ YouTube search exception:`, error.message);
-        return { shortsUrls: [], thumbnailUrls: [], topVideoUrl: '' };
+        return { shortsUrls: [], topVideoUrl: '' };
+      }
+    };
+    
+    // Google 이미지 검색 함수
+    const searchGoogleImages = async (festivalName) => {
+      try {
+        console.log(`[Transform] 🖼️ Google Image search for: "${festivalName}"`);
+        
+        const googleApiKey = Deno.env.get("GOOGLE_CUSTOM_SEARCH_API_KEY");
+        const searchEngineId = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
+        
+        if (!googleApiKey || !searchEngineId) {
+          console.log(`[Transform] ⚠️ Google API credentials missing`);
+          return [];
+        }
+        
+        // Google Custom Search API - 이미지 검색
+        const searchParams = new URLSearchParams({
+          key: googleApiKey,
+          cx: searchEngineId,
+          q: festivalName,
+          searchType: 'image',
+          num: '10',
+          imgSize: 'large',
+          safe: 'active'
+        });
+        
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
+        console.log(`[Transform] 📡 Calling Google Custom Search API...`);
+        const response = await fetch(searchUrl);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[Transform] ❌ Google API error (${response.status}):`, errorText);
+          return [];
+        }
+        
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          console.log(`[Transform] ⚠️ No images found for: ${festivalName}`);
+          return [];
+        }
+        
+        const imageUrls = data.items.map(item => item.link).filter(url => url);
+        console.log(`[Transform] ✅ Found ${imageUrls.length} images from Google`);
+        
+        return imageUrls;
+        
+      } catch (error) {
+        console.error(`[Transform] ❌ Google Image search exception:`, error.message);
+        return [];
       }
     };
     
