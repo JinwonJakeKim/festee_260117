@@ -1271,16 +1271,16 @@ ${context}
           });
         });
         
-        // 2. YouTube 썸네일 추가 (조회수 높은 순 5개)
-        youtubeThumbnails.forEach((thumbnailUrl, index) => {
+        // 2. Google 이미지 추가 (최대 10개)
+        googleImages.forEach((imageUrl, index) => {
           mediaUrls.push({
             type: 'image',
-            url: thumbnailUrl,
-            caption: `${rawData.title} - YouTube 영상 ${index + 1}`
+            url: imageUrl,
+            caption: `${rawData.title} - 이미지 ${index + 1}`
           });
         });
         
-        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items (${imageGallery.length} from API, ${youtubeThumbnails.length} from YouTube)`);
+        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items (${imageGallery.length} from TourAPI, ${googleImages.length} from Google Images)`);
         
         // ===== 최종 태그 구성 =====
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
