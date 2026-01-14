@@ -1291,9 +1291,9 @@ ${context}
         const nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
         const summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
         
-        // Description은 길이가 길어서 요약본만 번역 (처음 500자)
-        const descriptionForTranslation = fullDescription.length > 500 
-          ? fullDescription.substring(0, 500) + '...' 
+        // Description은 길이가 길어서 요약본만 번역 (처음 1000자)
+        const descriptionForTranslation = fullDescription.length > 1000 
+          ? fullDescription.substring(0, 1000) + '...' 
           : fullDescription;
         const descriptionTranslations = await translateMultiLanguage(descriptionForTranslation, sourceLanguage, 'description');
         
