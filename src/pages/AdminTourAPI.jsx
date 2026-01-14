@@ -152,6 +152,20 @@ export default function AdminTourAPI() {
       }
     } catch (error) {
       console.error('[AdminTourAPI] Transform error:', error);
+      
+      // API 제한 에러 체크
+      if (error.response?.status === 429) {
+        const errorData = error.response?.data;
+        if (errorData?.error_type === 'google_search') {
+          alert('🚫 Google Custom Search API 하루 100회 무료 쿼리를 소진하였습니다.\n\n내일 다시 시도해주세요.');
+          return;
+        }
+        if (errorData?.error_type === 'youtube') {
+          alert('🚫 YouTube Data API 하루 100회 무료 쿼리를 소진하였습니다.\n\n내일 다시 시도해주세요.');
+          return;
+        }
+      }
+      
       alert(`${actionText} 중 오류가 발생했습니다:\n\n${error.message}`);
     } finally {
       setIsTransforming(false);
