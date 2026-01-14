@@ -1067,13 +1067,11 @@ ${context}
         
         // ===== YouTube 동영상 검색 =====
         let youtubeShorts = [];
-        let youtubeThumbnails = [];
         let topVideoUrl = '';
         
         console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
         const youtubeResult = await searchYouTubeVideos(rawData.title);
         topVideoUrl = youtubeResult.topVideoUrl;
-        youtubeThumbnails = youtubeResult.thumbnailUrls;
         
         // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
         if (preservedYoutubeShorts.length >= 5) {
@@ -1085,6 +1083,12 @@ ${context}
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
+        
+        // ===== Google 이미지 검색 =====
+        let googleImages = [];
+        console.log(`[Transform] 🖼️ Searching Google Images for: "${rawData.title}"`);
+        googleImages = await searchGoogleImages(rawData.title);
+        console.log(`[Transform] 📸 Google Images: ${googleImages.length} images found`);
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
