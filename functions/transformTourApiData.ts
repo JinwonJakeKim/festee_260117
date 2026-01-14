@@ -369,6 +369,12 @@ Deno.serve(async (req) => {
           return { shortsUrls: [], topVideoUrl: '' };
         }
         
+        // API 사용량 체크
+        const usage = await checkAndIncrementApiUsage('youtube_data_api', 100);
+        if (!usage.allowed) {
+          throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
+        }
+        
         // YouTube Data API v3 search endpoint - 관련성 기준 검색
         const searchParams = new URLSearchParams({
           part: 'id,snippet',
@@ -451,7 +457,53 @@ Deno.serve(async (req) => {
         
       } catch (error) {
         console.error(`[Transform] ❌ YouTube search exception:`, error.message);
+        if (error.message.includes('YOUTUBE_API_LIMIT_REACHED')) {
+          throw error; // 제한 에러는 상위로 전달
+        }
         return { shortsUrls: [], topVideoUrl: '' };
+      }
+    };
+    
+    // API 사용량 체크 및 증가 함수
+    const checkAndIncrementApiUsage = async (apiName, limit) => {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      try {
+        // 오늘 날짜의 사용 로그 조회
+        const logs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+          api_name: apiName,
+          date: today
+        });
+        
+        if (logs.length === 0) {
+          // 첫 사용 - 새로 생성
+          await base44.asServiceRole.entities.ApiUsageLog.create({
+            api_name: apiName,
+            date: today,
+            count: 1,
+            limit: limit
+          });
+          console.log(`[Transform] ✓ ${apiName} usage: 1/${limit}`);
+          return { allowed: true, count: 1, limit };
+        } else {
+          // 기존 로그 있음
+          const log = logs[0];
+          if (log.count >= limit) {
+            console.log(`[Transform] ❌ ${apiName} daily limit reached: ${log.count}/${limit}`);
+            return { allowed: false, count: log.count, limit };
+          }
+          
+          // 카운트 증가
+          await base44.asServiceRole.entities.ApiUsageLog.update(log.id, {
+            count: log.count + 1
+          });
+          console.log(`[Transform] ✓ ${apiName} usage: ${log.count + 1}/${limit}`);
+          return { allowed: true, count: log.count + 1, limit };
+        }
+      } catch (error) {
+        console.error(`[Transform] ❌ Failed to check API usage:`, error.message);
+        // 에러 시에는 허용 (로깅 실패로 API 호출 막지 않음)
+        return { allowed: true, count: 0, limit };
       }
     };
     
@@ -466,6 +518,12 @@ Deno.serve(async (req) => {
         if (!googleApiKey || !searchEngineId) {
           console.log(`[Transform] ⚠️ Google API credentials missing`);
           return [];
+        }
+        
+        // API 사용량 체크
+        const usage = await checkAndIncrementApiUsage('google_custom_search', 100);
+        if (!usage.allowed) {
+          throw new Error(`GOOGLE_SEARCH_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
         // Google Custom Search API - 이미지 검색
@@ -503,6 +561,9 @@ Deno.serve(async (req) => {
         
       } catch (error) {
         console.error(`[Transform] ❌ Google Image search exception:`, error.message);
+        if (error.message.includes('GOOGLE_SEARCH_LIMIT_REACHED')) {
+          throw error; // 제한 에러는 상위로 전달
+        }
         return [];
       }
     };
@@ -1427,6 +1488,26 @@ ${context}
     
   } catch (error) {
     console.error('[Transform] Function error:', error);
+    
+    // API 제한 에러 체크
+    if (error.message && error.message.includes('GOOGLE_SEARCH_LIMIT_REACHED')) {
+      return Response.json({ 
+        success: false,
+        error: 'API_LIMIT_REACHED',
+        error_type: 'google_search',
+        message: 'Google Custom Search API 하루 100회 무료 쿼리를 소진하였습니다.'
+      }, { status: 429 });
+    }
+    
+    if (error.message && error.message.includes('YOUTUBE_API_LIMIT_REACHED')) {
+      return Response.json({ 
+        success: false,
+        error: 'API_LIMIT_REACHED',
+        error_type: 'youtube',
+        message: 'YouTube Data API 하루 100회 무료 쿼리를 소진하였습니다.'
+      }, { status: 429 });
+    }
+    
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류',
