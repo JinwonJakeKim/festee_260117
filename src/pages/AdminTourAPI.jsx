@@ -590,48 +590,7 @@ export default function AdminTourAPI() {
               {pendingNewData.length > 0 ? (
                 <div className="space-y-3 mt-4">
                   {pendingNewData.map((raw) => {
-              <div className="space-y-3">
-                <div className="flex items-center justify-between bg-purple-900/20 border border-purple-400/30 rounded-lg p-3">
-                  <div>
-                    <h3 className="text-purple-400 font-bold flex items-center gap-2">
-                      <Database className="w-5 h-5" />
-                      신규 데이터 ({newPendingData.length}개)
-                    </h3>
-                    <p className="text-gray-400 text-xs mt-1">Festival ID가 없는 새로운 데이터</p>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      const newFestivalIds = selectedRawData.filter(id => {
-                        const item = rawDataList.find(r => r.id === id);
-                        return !item?.festival_id;
-                      });
-                      if (newFestivalIds.length === 0) {
-                        alert('⚠️ 선택된 항목 중 신규 생성할 데이터가 없습니다.');
-                        return;
-                      }
-                      handleTransform(newFestivalIds, false);
-                    }}
-                    disabled={selectedRawData.filter(id => {
-                      const item = rawDataList.find(r => r.id === id);
-                      return !item?.festival_id;
-                    }).length === 0 || isTransforming}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                  >
-                    {isTransforming ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        변환 중...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        변환하기
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {newPendingData.map((raw) => {
-                  const isSelected = selectedRawData.includes(raw.id);
+                    const isSelected = selectedRawData.includes(raw.id);
                   return (
                     <Card
                       key={raw.id}
