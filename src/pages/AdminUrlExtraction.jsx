@@ -18,6 +18,13 @@ export default function AdminUrlExtraction() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAddUrlForm, setShowAddUrlForm] = useState(false);
   const [newSourceUrl, setNewSourceUrl] = useState({ name: "", url: "", country: "", description: "" });
+  const [showBatchExtract, setShowBatchExtract] = useState(false);
+  const [batchConfig, setBatchConfig] = useState({
+    list_page_url: "",
+    container_selector: "div.row.small-event-gutter",
+    link_selector: "a"
+  });
+  const [isBatchExtracting, setIsBatchExtracting] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -61,6 +68,26 @@ export default function AdminUrlExtraction() {
     },
     onError: (error) => {
       alert('추출 중 오류가 발생했습니다: ' + error.message);
+    }
+  });
+
+  const batchExtractMutation = useMutation({
+    mutationFn: async (config) => {
+      const { data } = await base44.functions.invoke('extractFestivalsFromListPage', config);
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        alert(data.message + `\n\n상세 결과:\n총 링크: ${data.links_found}개\n성공: ${data.extraction_results.success}개\n실패: ${data.extraction_results.failed}개`);
+        setShowBatchExtract(false);
+        setActiveTab("data");
+        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+      } else {
+        alert(`일괄 추출 실패: ${data.error}\n${data.message || ''}`);
+      }
+    },
+    onError: (error) => {
+      alert('일괄 추출 중 오류가 발생했습니다: ' + error.message);
     }
   });
 
@@ -165,6 +192,19 @@ export default function AdminUrlExtraction() {
   const handleDeleteSourceUrl = (id) => {
     if (confirm('이 소스 URL을 삭제하시겠습니까?')) {
       deleteSourceUrlMutation.mutate(id);
+    }
+  };
+
+  const handleBatchExtract = async () => {
+    if (!batchConfig.list_page_url.trim()) {
+      alert('목록 페이지 URL을 입력해주세요');
+      return;
+    }
+    setIsBatchExtracting(true);
+    try {
+      await batchExtractMutation.mutateAsync(batchConfig);
+    } finally {
+      setIsBatchExtracting(false);
     }
   };
 
@@ -308,7 +348,84 @@ export default function AdminUrlExtraction() {
                   <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
                   <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
                   <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
+                  <li>• 여러 축제가 나열된 목록 페이지는 "일괄 추출" 기능을 사용하세요</li>
                 </ul>
+              </div>
+
+              {/* 일괄 추출 기능 */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-bold">일괄 추출 (Batch)</h4>
+                  <Button
+                    onClick={() => setShowBatchExtract(!showBatchExtract)}
+                    size="sm"
+                    className="bg-purple-500 hover:bg-purple-600"
+                  >
+                    {showBatchExtract ? '닫기' : '열기'}
+                  </Button>
+                </div>
+
+                {showBatchExtract && (
+                  <Card className="bg-gray-800 border-gray-700 p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-gray-300 text-xs mb-1 block">목록 페이지 URL *</label>
+                        <input
+                          type="url"
+                          placeholder="https://en.japantravel.com/events"
+                          value={batchConfig.list_page_url}
+                          onChange={(e) => setBatchConfig({ ...batchConfig, list_page_url: e.target.value })}
+                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                          disabled={isBatchExtracting}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-300 text-xs mb-1 block">컨테이너 CSS 선택자</label>
+                        <input
+                          type="text"
+                          placeholder="div.row.small-event-gutter"
+                          value={batchConfig.container_selector}
+                          onChange={(e) => setBatchConfig({ ...batchConfig, container_selector: e.target.value })}
+                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                          disabled={isBatchExtracting}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-300 text-xs mb-1 block">링크 선택자</label>
+                        <input
+                          type="text"
+                          placeholder="a"
+                          value={batchConfig.link_selector}
+                          onChange={(e) => setBatchConfig({ ...batchConfig, link_selector: e.target.value })}
+                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                          disabled={isBatchExtracting}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleBatchExtract}
+                        disabled={isBatchExtracting || !batchConfig.list_page_url.trim()}
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      >
+                        {isBatchExtracting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            일괄 추출 중... (시간이 걸릴 수 있습니다)
+                          </>
+                        ) : (
+                          '일괄 추출 시작'
+                        )}
+                      </Button>
+                      <div className="p-3 bg-yellow-900/20 border border-yellow-400/30 rounded-lg">
+                        <p className="text-yellow-400 text-xs font-bold mb-1">⚠️ 주의사항</p>
+                        <ul className="text-gray-300 text-xs space-y-1">
+                          <li>• 여러 축제 링크가 있는 목록 페이지의 URL을 입력하세요</li>
+                          <li>• CSS 선택자는 브라우저 개발자 도구로 확인할 수 있습니다</li>
+                          <li>• 추출 시간은 링크 개수에 따라 수 분이 소요될 수 있습니다</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </Card>
+                )}
               </div>
 
               {/* 저장된 소스 URL 관리 */}

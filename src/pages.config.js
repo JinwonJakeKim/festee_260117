@@ -4,6 +4,7 @@ import AdminEventbrite from './pages/AdminEventbrite';
 import AdminFestivalExtract from './pages/AdminFestivalExtract';
 import AdminFestivalForm from './pages/AdminFestivalForm';
 import AdminTourAPI from './pages/AdminTourAPI';
+import AdminUrlExtraction from './pages/AdminUrlExtraction';
 import Catch from './pages/Catch';
 import Community from './pages/Community';
 import CreatePost from './pages/CreatePost';
@@ -33,7 +34,6 @@ import Search from './pages/Search';
 import SelectCity from './pages/SelectCity';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
-import AdminUrlExtraction from './pages/AdminUrlExtraction';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +44,7 @@ export const PAGES = {
     "AdminFestivalExtract": AdminFestivalExtract,
     "AdminFestivalForm": AdminFestivalForm,
     "AdminTourAPI": AdminTourAPI,
+    "AdminUrlExtraction": AdminUrlExtraction,
     "Catch": Catch,
     "Community": Community,
     "CreatePost": CreatePost,
@@ -73,7 +74,6 @@ export const PAGES = {
     "SelectCity": SelectCity,
     "Settings": Settings,
     "UserProfile": UserProfile,
-    "AdminUrlExtraction": AdminUrlExtraction,
 }
 
 export const pagesConfig = {
