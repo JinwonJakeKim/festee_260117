@@ -17,6 +17,8 @@ export default function AdminUrlExtraction() {
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAddUrlForm, setShowAddUrlForm] = useState(false);
+  const [editingSourceId, setEditingSourceId] = useState(null);
+  const [editingSourceData, setEditingSourceData] = useState(null);
   const [newSourceUrl, setNewSourceUrl] = useState({ 
     name: "", 
     url: "", 
@@ -160,6 +162,18 @@ export default function AdminUrlExtraction() {
     }
   });
 
+  const updateSourceMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      await base44.entities.FestivalSourceUrl.update(id, data);
+    },
+    onSuccess: () => {
+      setEditingSourceId(null);
+      setEditingSourceData(null);
+      queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
+      alert('소스 URL이 수정되었습니다');
+    }
+  });
+
   const updateSourceUrlMutation = useMutation({
     mutationFn: async ({ id, url }) => {
       await base44.entities.FestivalSourceUrl.update(id, { 
@@ -219,6 +233,31 @@ export default function AdminUrlExtraction() {
     if (confirm('이 소스 URL을 삭제하시겠습니까?')) {
       deleteSourceUrlMutation.mutate(id);
     }
+  };
+
+  const handleEditSourceUrl = (source) => {
+    setEditingSourceId(source.id);
+    setEditingSourceData({
+      name: source.name,
+      url: source.url,
+      country: source.country,
+      description: source.description || "",
+      container_selector: source.container_selector || "div.row.small-event-gutter",
+      link_selector: source.link_selector || "a"
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingSourceData.name || !editingSourceData.url || !editingSourceData.country) {
+      alert('이름, URL, 국가는 필수 입력 항목입니다');
+      return;
+    }
+    updateSourceMutation.mutate({ id: editingSourceId, data: editingSourceData });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSourceId(null);
+    setEditingSourceData(null);
   };
 
   const handleBatchExtract = async () => {
@@ -533,71 +572,136 @@ export default function AdminUrlExtraction() {
                         key={source.id}
                         className="bg-gray-800 border-gray-700 p-3 hover:bg-gray-750 transition-colors"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h5 className="text-white font-medium text-sm truncate">{source.name}</h5>
-                              <Badge className="bg-pink-500/20 text-pink-400 border-pink-400/50 text-xs">
-                                {source.country}
-                              </Badge>
-                            </div>
-                            <p className="text-gray-400 text-xs truncate mb-1">{source.url}</p>
-                            {source.description && (
-                              <p className="text-gray-500 text-xs">{source.description}</p>
-                            )}
-                            {source.last_used_date && (
-                              <p className="text-gray-600 text-xs mt-1">
-                                마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(source.url, '_blank');
-                                }}
-                                className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
-                                title="링크 열기"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteSourceUrl(source.id);
-                                }}
-                                className="flex-shrink-0 text-red-400 hover:text-red-300"
-                                title="삭제"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                        {editingSourceId === source.id ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              placeholder="이름"
+                              value={editingSourceData.name}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, name: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                            />
+                            <input
+                              type="url"
+                              placeholder="URL"
+                              value={editingSourceData.url}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, url: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                            />
+                            <input
+                              type="text"
+                              placeholder="국가"
+                              value={editingSourceData.country}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, country: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                            />
+                            <textarea
+                              placeholder="설명"
+                              value={editingSourceData.description}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, description: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              rows={2}
+                            />
+                            <input
+                              type="text"
+                              placeholder="컨테이너 CSS 선택자"
+                              value={editingSourceData.container_selector}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, container_selector: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                            />
+                            <input
+                              type="text"
+                              placeholder="링크 CSS 선택자"
+                              value={editingSourceData.link_selector}
+                              onChange={(e) => setEditingSourceData({ ...editingSourceData, link_selector: e.target.value })}
+                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                            />
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectSourceUrl(source);
-                                }}
-                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-auto"
-                              >
-                                단일
+                              <Button size="sm" onClick={handleSaveEdit} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-xs">
+                                저장
                               </Button>
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleUseBatchSourceUrl(source);
-                                }}
-                                className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
-                              >
-                                일괄
+                              <Button size="sm" onClick={handleCancelEdit} className="flex-1 bg-gray-600 hover:bg-gray-700 text-xs">
+                                취소
                               </Button>
                             </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h5 className="text-white font-medium text-sm truncate">{source.name}</h5>
+                                <Badge className="bg-pink-500/20 text-pink-400 border-pink-400/50 text-xs">
+                                  {source.country}
+                                </Badge>
+                              </div>
+                              <p className="text-gray-400 text-xs truncate mb-1">{source.url}</p>
+                              {source.description && (
+                                <p className="text-gray-500 text-xs">{source.description}</p>
+                              )}
+                              {source.last_used_date && (
+                                <p className="text-gray-600 text-xs mt-1">
+                                  마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(source.url, '_blank');
+                                  }}
+                                  className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
+                                  title="링크 열기"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditSourceUrl(source);
+                                  }}
+                                  className="flex-shrink-0 text-yellow-400 hover:text-yellow-300"
+                                  title="수정"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSourceUrl(source.id);
+                                  }}
+                                  className="flex-shrink-0 text-red-400 hover:text-red-300"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectSourceUrl(source);
+                                  }}
+                                  className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-auto"
+                                >
+                                  단일
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUseBatchSourceUrl(source);
+                                  }}
+                                  className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
+                                >
+                                  일괄
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </Card>
                     ))
                   )}
