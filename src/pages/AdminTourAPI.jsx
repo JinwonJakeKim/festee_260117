@@ -306,9 +306,9 @@ export default function AdminTourAPI() {
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
-  // 신규/기존 데이터 구분
-  const newPendingData = filteredRawDataList.filter(r => r.processing_status === 'pending' && !r.festival_id);
-  const existingData = filteredRawDataList.filter(r => r.festival_id);
+  // 대기 중인 데이터를 신규/기존으로 구분
+  const pendingNewData = filteredRawDataList.filter(r => r.processing_status === 'pending' && !r.festival_id);
+  const pendingExistingData = filteredRawDataList.filter(r => r.processing_status === 'pending' && r.festival_id);
 
   if (isLoading) {
     return (
@@ -506,125 +506,6 @@ export default function AdminTourAPI() {
               </Card>
             </div>
 
-            {/* 액션 버튼 - festival_id 기준으로 명확히 분리 */}
-            <div className="space-y-2">
-              {/* 신규 변환 (festival_id 없는 pending만) */}
-              {newPendingData.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-purple-400 text-sm font-medium">📝 신규 변환 (Festival ID 없음)</p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => {
-                        const allNewIds = newPendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
-                        setSelectedRawData(allNewIds);
-                        if (newPendingData.length > MAX_TRANSFORM_COUNT) {
-                          alert(`⚠️ 신규 데이터가 ${newPendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
-                        }
-                      }}
-                      variant="outline"
-                      className="flex-1 border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
-                    >
-                      신규 {Math.min(newPendingData.length, MAX_TRANSFORM_COUNT)}개 선택
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        const newFestivalIds = selectedRawData.filter(id => {
-                          const item = rawDataList.find(r => r.id === id);
-                          return !item?.festival_id;
-                        });
-                        if (newFestivalIds.length === 0) {
-                          alert('⚠️ 선택된 항목 중 신규 생성할 데이터가 없습니다.\n\n"신규 N개 선택" 버튼을 눌러주거나, "신규 축제" 뱃지가 있는 항목을 선택해주세요.');
-                          return;
-                        }
-                        handleTransform(newFestivalIds, false);
-                      }}
-                      disabled={selectedRawData.length === 0 || isTransforming}
-                      className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                    >
-                      {isTransforming ? (
-                        <>
-                          <Loader className="w-4 h-4 mr-2 animate-spin" />
-                          변환 중...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          변환하기 (신규 생성)
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* 재변환 (festival_id 있는 모든 데이터) */}
-              {existingData.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-orange-400 text-sm font-medium">🔄 재변환 (Festival ID 있음)</p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => {
-                        const allExistingIds = existingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
-                        setSelectedRawData(allExistingIds);
-                        if (existingData.length > MAX_TRANSFORM_COUNT) {
-                          alert(`⚠️ 기존 데이터가 ${existingData.length}개 있지만, 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
-                        }
-                      }}
-                      variant="outline"
-                      className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
-                    >
-                      기존 {Math.min(existingData.length, MAX_TRANSFORM_COUNT)}개 선택
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        const updateFestivalIds = selectedRawData.filter(id => {
-                          const item = rawDataList.find(r => r.id === id);
-                          return item?.festival_id;
-                        });
-                        if (updateFestivalIds.length === 0) {
-                          alert('⚠️ 선택된 항목 중 업데이트할 기존 데이터가 없습니다.\n\n"기존 N개 선택" 버튼을 누르거나, "기존 축제" 뱃지가 있는 항목을 선택해주세요.');
-                          return;
-                        }
-                        handleTransform(updateFestivalIds, true);
-                      }}
-                      disabled={selectedRawData.length === 0 || isTransforming}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                    >
-                      {isTransforming ? (
-                        <>
-                          <Loader className="w-4 h-4 mr-2 animate-spin" />
-                          재변환 중...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          재변환하기 (업데이트)
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 선택 개수 경고 */}
-            {selectedRawData.length > 0 && (
-              <Card className={`p-3 ${
-                selectedRawData.length > MAX_TRANSFORM_COUNT 
-                  ? 'bg-red-900/20 border-red-400/30' 
-                  : 'bg-blue-900/20 border-blue-400/30'
-              }`}>
-                <p className={`text-sm text-center ${
-                  selectedRawData.length > MAX_TRANSFORM_COUNT ? 'text-red-400' : 'text-blue-400'
-                }`}>
-                  {selectedRawData.length > MAX_TRANSFORM_COUNT 
-                    ? `⚠️ ${selectedRawData.length}개 선택됨 - 최대 ${MAX_TRANSFORM_COUNT}개까지만 가능합니다.`
-                    : `✓ ${selectedRawData.length}개 선택됨 (예상 소요시간: 약 ${Math.ceil(selectedRawData.length * 30 / 60)}초)`
-                  }
-                </p>
-              </Card>
-            )}
-
             {/* 검색 바 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -644,8 +525,71 @@ export default function AdminTourAPI() {
               </p>
             )}
 
-            {/* 신규 데이터 섹션 */}
-            {newPendingData.length > 0 && (
+            {/* 신규 변환 섹션 - 항상 표시 */}
+            <div className="space-y-3 border border-purple-800/50 rounded-lg p-4 bg-purple-900/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-purple-400 font-bold flex items-center gap-2">
+                    <Database className="w-5 h-5" />
+                    신규 축제 변환 ({pendingNewData.length}개)
+                  </h3>
+                  <p className="text-gray-400 text-xs mt-1">대기 중이며 Festival ID가 없는 새로운 데이터</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (pendingNewData.length === 0) {
+                      alert('새롭게 변환할 수 있는 대기 중인 데이터가 없습니다.');
+                      return;
+                    }
+                    const allNewIds = pendingNewData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                    setSelectedRawData(allNewIds);
+                    if (pendingNewData.length > MAX_TRANSFORM_COUNT) {
+                      alert(`⚠️ 신규 데이터가 ${pendingNewData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                    }
+                  }}
+                  variant="outline"
+                  className="flex-1 border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
+                >
+                  대기중 축제 {Math.min(pendingNewData.length, MAX_TRANSFORM_COUNT)}개 선택
+                </Button>
+                <Button
+                  onClick={() => {
+                    const newFestivalIds = selectedRawData.filter(id => {
+                      const item = rawDataList.find(r => r.id === id);
+                      return item?.processing_status === 'pending' && !item?.festival_id;
+                    });
+                    if (newFestivalIds.length === 0) {
+                      alert('⚠️ 선택된 항목 중 신규 생성할 대기 중 데이터가 없습니다.\n\n"대기중 축제 N개 선택" 버튼을 눌러주세요.');
+                      return;
+                    }
+                    handleTransform(newFestivalIds, false);
+                  }}
+                  disabled={selectedRawData.filter(id => {
+                    const item = rawDataList.find(r => r.id === id);
+                    return item?.processing_status === 'pending' && !item?.festival_id;
+                  }).length === 0 || isTransforming}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                >
+                  {isTransforming ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      변환 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      변환하기
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {pendingNewData.length > 0 ? (
+                <div className="space-y-3 mt-4">
+                  {pendingNewData.map((raw) => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between bg-purple-900/20 border border-purple-400/30 rounded-lg p-3">
                   <div>
@@ -778,37 +722,56 @@ export default function AdminTourAPI() {
                     </Card>
                   );
                 })}
-              </div>
-            )}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-4">신규 축제 변환 대상 데이터가 없습니다.</p>
+              )}
+            </div>
 
-            {/* 기존 데이터 섹션 */}
-            {existingData.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between bg-orange-900/20 border border-orange-400/30 rounded-lg p-3">
+            {/* 재변환 섹션 - 데이터가 있을 때만 표시 */}
+            {pendingExistingData.length > 0 && (
+              <div className="space-y-3 border border-orange-800/50 rounded-lg p-4 bg-orange-900/10">
+                <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-orange-400 font-bold flex items-center gap-2">
                       <Database className="w-5 h-5" />
-                      기존 데이터 ({existingData.length}개)
+                      기존 축제 재변환 ({pendingExistingData.length}개)
                     </h3>
-                    <p className="text-gray-400 text-xs mt-1">Festival ID가 있는 데이터 (재변환 가능)</p>
+                    <p className="text-gray-400 text-xs mt-1">대기 중이며 Festival ID가 있는 데이터</p>
                   </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      const allExistingPendingIds = pendingExistingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                      setSelectedRawData(allExistingPendingIds);
+                      if (pendingExistingData.length > MAX_TRANSFORM_COUNT) {
+                        alert(`⚠️ 기존 데이터가 ${pendingExistingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
+                  >
+                    대기중 축제 {Math.min(pendingExistingData.length, MAX_TRANSFORM_COUNT)}개 선택
+                  </Button>
                   <Button
                     onClick={() => {
                       const updateFestivalIds = selectedRawData.filter(id => {
                         const item = rawDataList.find(r => r.id === id);
-                        return item?.festival_id;
+                        return item?.festival_id && item?.processing_status === 'pending';
                       });
                       if (updateFestivalIds.length === 0) {
-                        alert('⚠️ 선택된 항목 중 업데이트할 기존 데이터가 없습니다.');
+                        alert('⚠️ 선택된 항목 중 업데이트할 대기 중인 기존 데이터가 없습니다.\n\n"대기중 축제 N개 선택" 버튼을 눌러주세요.');
                         return;
                       }
                       handleTransform(updateFestivalIds, true);
                     }}
                     disabled={selectedRawData.filter(id => {
                       const item = rawDataList.find(r => r.id === id);
-                      return item?.festival_id;
+                      return item?.festival_id && item?.processing_status === 'pending';
                     }).length === 0 || isTransforming}
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                   >
                     {isTransforming ? (
                       <>
@@ -823,7 +786,9 @@ export default function AdminTourAPI() {
                     )}
                   </Button>
                 </div>
-                {existingData.map((raw) => {
+
+                <div className="space-y-3 mt-4">
+                  {pendingExistingData.map((raw) => {
                   const isSelected = selectedRawData.includes(raw.id);
                   const statusColors = {
                     pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -961,11 +926,30 @@ export default function AdminTourAPI() {
                   </Card>
                 );
               })}
+                </div>
               </div>
             )}
 
+            {/* 선택 개수 안내 */}
+            {selectedRawData.length > 0 && (
+              <Card className={`p-3 ${
+                selectedRawData.length > MAX_TRANSFORM_COUNT 
+                  ? 'bg-red-900/20 border-red-400/30' 
+                  : 'bg-blue-900/20 border-blue-400/30'
+              }`}>
+                <p className={`text-sm text-center ${
+                  selectedRawData.length > MAX_TRANSFORM_COUNT ? 'text-red-400' : 'text-blue-400'
+                }`}>
+                  {selectedRawData.length > MAX_TRANSFORM_COUNT 
+                    ? `⚠️ ${selectedRawData.length}개 선택됨 - 최대 ${MAX_TRANSFORM_COUNT}개까지만 가능합니다.`
+                    : `✓ ${selectedRawData.length}개 선택됨 (예상 소요시간: 약 ${Math.ceil(selectedRawData.length * 30 / 60)}초)`
+                  }
+                </p>
+              </Card>
+            )}
+
             {/* 데이터가 없을 때 표시 */}
-            {newPendingData.length === 0 && existingData.length === 0 && rawDataList.length > 0 && (
+            {pendingNewData.length === 0 && pendingExistingData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
                   <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
