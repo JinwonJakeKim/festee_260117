@@ -10,7 +10,6 @@ import CreatePost from './pages/CreatePost';
 import FeedbackDetail from './pages/FeedbackDetail';
 import FeedbackForm from './pages/FeedbackForm';
 import FesteeMagazine from './pages/FesteeMagazine';
-import FestivalDetail from './pages/FestivalDetail';
 import FestivalMap from './pages/FestivalMap';
 import FestivalMore from './pages/FestivalMore';
 import FestivalVenueMap from './pages/FestivalVenueMap';
@@ -33,6 +32,7 @@ import Search from './pages/Search';
 import SelectCity from './pages/SelectCity';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
+import FestivalDetail from './pages/FestivalDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -49,7 +49,6 @@ export const PAGES = {
     "FeedbackDetail": FeedbackDetail,
     "FeedbackForm": FeedbackForm,
     "FesteeMagazine": FesteeMagazine,
-    "FestivalDetail": FestivalDetail,
     "FestivalMap": FestivalMap,
     "FestivalMore": FestivalMore,
     "FestivalVenueMap": FestivalVenueMap,
@@ -72,6 +71,7 @@ export const PAGES = {
     "SelectCity": SelectCity,
     "Settings": Settings,
     "UserProfile": UserProfile,
+    "FestivalDetail": FestivalDetail,
 }
 
 export const pagesConfig = {

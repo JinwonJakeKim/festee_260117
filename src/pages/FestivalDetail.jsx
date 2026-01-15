@@ -85,7 +85,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           const isClicked = clickedIndices.has(idx);
 
           return (
-            <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden snap-start" style={{ width: '60vw', height: 'calc(60vw * 16 / 9)' }}>
+            <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden snap-start" style={{ width: '70vw', height: 'calc(70vw * 16 / 9)' }}>
               {isClicked ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
@@ -122,7 +122,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
         <button
           onClick={handleMoreClick}
           className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6 snap-start"
-          style={{ width: '60vw', height: 'calc(60vw * 16 / 9)' }}
+          style={{ width: '70vw', height: 'calc(70vw * 16 / 9)' }}
           >
           <Youtube className="w-8 h-8" />
           <span className="text-sm text-center">YouTube에서<br/>더보기</span>
