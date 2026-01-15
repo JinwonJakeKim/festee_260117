@@ -37,15 +37,15 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        console.log(`[Transform] Processing: ${rawData.extracted_data?.name_ko || rawData.extracted_data?.name_original}`);
+        console.log(`[Transform] Processing: ${rawData.name_original}`);
 
         // 상태 업데이트 - processing
         await base44.asServiceRole.entities.UrlExtractionRawData.update(rawDataId, {
           processing_status: 'processing'
         });
 
-        const festivalData = rawData.extracted_data;
-        const festivalNameForSearch = festivalData.name_en || festivalData.name_ko || festivalData.name_original;
+        const festivalData = rawData;
+        const festivalNameForSearch = festivalData.name_original;
 
         // Google 이미지 검색
         let thumbnailUrl = festivalData.thumbnail_url;
@@ -110,14 +110,103 @@ Deno.serve(async (req) => {
           console.error('[Transform] YouTube Shorts search failed:', shortsError.message);
         }
 
-        // Festival 엔티티 생성 또는 업데이트
-        let festivalId = rawData.festival_id;
+        // LLM으로 번역 수행
+        console.log(`[Transform] Performing LLM translation for: ${festivalData.name_original}`);
+
+        let translatedData;
+        try {
+          translatedData = await base44.integrations.Core.InvokeLLM({
+            prompt: `
+다음은 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 한국어와 영어로 번역해주세요.
+
+**원본 데이터:**
+${JSON.stringify(festivalData, null, 2)}
+
+**번역 규칙:**
+1. 원본 필드(_original)는 그대로 유지하고, _ko, _en 필드를 생성해주세요.
+2. 모든 번역은 정확하고 자연스럽게 해주세요.
+3. 고유명사는 번역하지 말고 원문을 유지해주세요.
+4. 한국어: 존댓말 사용, "~입니다" 체
+5. 영어: 명확하고 간결하게
+6. 원본과 번역본의 문장 수, 문단 수가 동일해야 합니다.
+            `,
+            response_json_schema: {
+              type: "object",
+              properties: {
+                name_ko: { type: "string" },
+                name_en: { type: "string" },
+                summary_ko: { type: "string" },
+                summary_en: { type: "string" },
+                description_ko: { type: "string" },
+                description_en: { type: "string" },
+                highlights_ko: { type: "array", items: { type: "string" } },
+                highlights_en: { type: "array", items: { type: "string" } },
+                opening_hours_ko: { type: "string" },
+                opening_hours_en: { type: "string" },
+                access_info_ko: { type: "string" },
+                access_info_en: { type: "string" },
+                parking_info_ko: { type: "string" },
+                parking_info_en: { type: "string" },
+                restrictions_ko: { type: "array", items: { type: "string" } },
+                restrictions_en: { type: "array", items: { type: "string" } },
+                recommendations_ko: { type: "array", items: { type: "string" } },
+                recommendations_en: { type: "array", items: { type: "string" } },
+                category_en: { type: "string" },
+                tags_en: { type: "array", items: { type: "string" } }
+              },
+              required: ["name_ko", "name_en", "description_ko", "description_en"]
+            }
+          });
+          console.log(`[Transform] LLM Translation successful.`);
+        } catch (llmError) {
+          console.error('[Transform] LLM Translation failed:', llmError);
+          translatedData = { 
+            name_ko: festivalData.name_original,
+            name_en: festivalData.name_original,
+            summary_ko: festivalData.summary_original,
+            summary_en: festivalData.summary_original,
+            description_ko: festivalData.description_original,
+            description_en: festivalData.description_original,
+            highlights_ko: festivalData.highlights_original,
+            highlights_en: festivalData.highlights_original,
+            opening_hours_ko: festivalData.opening_hours_original,
+            opening_hours_en: festivalData.opening_hours_original,
+            access_info_ko: festivalData.access_info_original,
+            access_info_en: festivalData.access_info_original,
+            parking_info_ko: festivalData.parking_info_original,
+            parking_info_en: festivalData.parking_info_original,
+            restrictions_ko: festivalData.restrictions_original,
+            restrictions_en: festivalData.restrictions_original,
+            recommendations_ko: festivalData.recommendations_original,
+            recommendations_en: festivalData.recommendations_original,
+            category_en: festivalData.category,
+            tags_en: festivalData.tags,
+          };
+        }
+
         const festivalPayload = {
           ...festivalData,
+          ...translatedData,
           thumbnail_url: thumbnailUrl,
           media_urls: mediaUrls,
-          youtube_shorts_urls: youtubeShortUrls.length > 0 ? youtubeShortUrls : (festivalData.youtube_shorts_urls || [])
+          youtube_shorts_urls: youtubeShortUrls,
+          name: translatedData.name_ko || festivalData.name_original,
+          summary: translatedData.summary_ko || festivalData.summary_original,
+          description: translatedData.description_ko || festivalData.description_original,
+          opening_hours: translatedData.opening_hours_ko || festivalData.opening_hours_original,
+          access_info: translatedData.access_info_ko || festivalData.access_info_original,
+          parking_info: translatedData.parking_info_ko || festivalData.parking_info_original,
+          restrictions: translatedData.restrictions_ko || festivalData.restrictions_original || [],
+          recommendations: translatedData.recommendations_ko || festivalData.recommendations_original || [],
+          highlights: translatedData.highlights_ko || festivalData.highlights_original || [],
+          tags: translatedData.tags_ko || festivalData.tags || [],
+          category: translatedData.category_ko || festivalData.category,
+          star_rating: 0,
+          likes_count: 0,
+          catches_count: 0,
         };
+
+        let festivalId = rawData.festival_id;
 
         if (retransform && festivalId) {
           // 재변환 - 기존 Festival 업데이트
@@ -151,7 +240,7 @@ Deno.serve(async (req) => {
           rawDataId,
           festivalId,
           success: true,
-          festivalName: festivalPayload.name
+          festivalName: festivalPayload.name_original
         });
 
       } catch (itemError) {

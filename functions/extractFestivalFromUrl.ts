@@ -293,84 +293,30 @@ Deno.serve(async (req) => {
         prompt: `
           다음 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
           
-          **🌏 다국어 처리 (매우 중요!):**
+          **🎯 추출 규칙 (매우 중요!):**
           
           1. **원본 언어 감지:**
-             - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요
-             - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등)
+             - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
+             - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등).
           
-          2. **⭐ 3가지 버전 모두 필수 작성 (절대 빠뜨리지 마세요!):**
-             
-             a) **축제 이름:**
-                - name_original: 웹페이지 원본 언어 그대로
-                - name_ko: 한국어 번역 (원본이 한국어면 그대로 복사)
-                - name_en: 영어 번역 (원본이 영어면 그대로 복사)
-             
-             b) **축제 요약:**
-                - summary_original: 웹페이지 원본 언어 그대로 (1-2줄)
-                - summary_ko: 한국어 번역 (1-2줄)
-                - summary_en: 영어 번역 (1-2줄)
-             
-             c) **축제 설명 (가장 중요!):**
-                - description_original: 웹페이지 원본 언어의 모든 설명 텍스트 (절대 요약 금지!)
-                - description_ko: 위 원본을 한국어로 완전히 번역 (모든 문장 포함, 절대 요약 금지!)
-                - description_en: 위 원본을 영어로 완전히 번역 (모든 문장 포함, 절대 요약 금지!)
-                
-                ⚠️⚠️⚠️ 매우 중요:
-                - 원본이 영어면: description_original과 description_en은 동일, description_ko는 한국어 번역
-                - 원본이 일본어면: description_original과 description_ja는 동일, description_ko는 한국어 번역, description_en은 영어 번역
-                - 원본이 한국어면: description_original과 description_ko는 동일, description_en은 영어 번역
-                - 3가지 버전 모두 동일한 길이와 양의 텍스트를 포함해야 합니다!
-             
-             d) **하이라이트:**
-                - highlights_original: 원본 언어로 7-10개
-                - highlights_ko: 한국어 번역으로 7-10개 (원본과 동일한 개수)
-                - highlights_en: 영어 번역으로 7-10개 (원본과 동일한 개수)
-             
-             e) **운영 정보:**
-                - opening_hours_ko: 한국어
-                - opening_hours_en: 영어
-             
-             f) **교통 정보:**
-                - access_info_ko: 한국어로 상세히
-                - access_info_en: 영어로 상세히
-             
-             g) **주차 정보:**
-                - parking_info_ko: 한국어
-                - parking_info_en: 영어
-             
-             h) **금지사항:**
-                - restrictions_original: 원본 언어로 5-7개
-                - restrictions_ko: 한국어 번역으로 5-7개
-                - restrictions_en: 영어 번역으로 5-7개
-             
-             i) **추천사항:**
-                - recommendations_original: 원본 언어로 5-7개
-                - recommendations_ko: 한국어 번역으로 5-7개
-                - recommendations_en: 영어 번역으로 5-7개
+          2. **텍스트 필드 (_original 접미사):**
+             - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original, opening_hours_original, access_info_original, parking_info_original
+             - **웹페이지의 원본 언어 텍스트를 그대로** 추출해야 합니다.
+             - **절대 번역하거나 요약하지 마세요!**
+             - description_original은 웹페이지의 축제 소개 전체 내용을 100% 원문 그대로 복사 (최소 10문장 이상, 문단 구분은 \\n\\n 사용).
           
-          3. **번역 품질 규칙:**
-             - 모든 번역은 정확하고 자연스럽게
-             - 고유명사(축제명, 장소명)는 번역하지 말고 원문 유지
-             - 한국어 번역: 존댓말 사용, "~입니다" 체
-             - 영어 번역: 명확하고 간결하게
-             - 원본과 번역본의 문장 수, 문단 수가 동일해야 합니다
+          3. **URL 필드:**
+             - thumbnail_url, video_url, website, social_media
+             - 유효한 URL만 추출하고, 필요한 경우 절대 경로로 정규화하세요.
+             - video_url은 재생 가능한 YouTube URL만 추출합니다.
           
-          4. **번역 예시:**
+          4. **날짜:**
+             - 아래에 제시된 **HTML에서 추출한 날짜 정보를 최우선으로 사용**하여 정확한 YYYY-MM-DD 형식으로 추출합니다.
+             - 날짜 정보가 명확하지 않으면 date_status를 "tentative" 또는 "estimated"로 설정합니다.
              
-             원본(영어):
-             "The Nagoya Women's Marathon is one of Japan's premier running events, attracting thousands of participants from around the world. The race takes place through the historic streets of Nagoya, offering runners a unique opportunity to experience the city's culture while competing.
-             
-             Established in 1980, this marathon has grown to become a significant event in the international running calendar. The course showcases Nagoya's beautiful landmarks and provides excellent support from local volunteers."
-             
-             description_original (영어): [위와 동일]
-             
-             description_ko (한국어):
-             "나고야 여자 마라톤은 일본 최고의 러닝 이벤트 중 하나로, 전 세계에서 수천 명의 참가자들이 모입니다. 이 경주는 나고야의 역사적인 거리를 통과하며, 러너들에게 경쟁하는 동안 도시의 문화를 경험할 수 있는 독특한 기회를 제공합니다.
-             
-             1980년에 설립된 이 마라톤은 국제 러닝 일정에서 중요한 행사로 성장했습니다. 코스는 나고야의 아름다운 랜드마크를 보여주며 현지 자원봉사자들로부터 훌륭한 지원을 제공합니다."
-             
-             description_en (영어): [원본과 동일]
+          5. **기타 필드:**
+             - country, city, category, price, organizer, contact, schedule, lineup, nearby_attractions, tags, expected_visitors
+             - 웹페이지에서 해당 정보를 정확히 찾아 추출합니다.
           
           ${extractedDateInfo.length > 0 ? `
           **🎯 HTML에서 추출한 날짜 정보:**
@@ -511,36 +457,10 @@ Deno.serve(async (req) => {
               items: {
                 type: "object",
                 properties: {
-                  // 원본 언어 정보
-                  original_language: { 
-                    type: "string", 
-                    description: "원본 언어 코드 (ja, ko, en, zh, th 등)" 
-                  },
-                  
-                  // 축제 이름 (3가지 버전)
+                  original_language: { type: "string", description: "원본 언어 코드 (ja, ko, en, zh, th 등)" },
                   name_original: { type: "string", description: "축제 이름 (원본 언어)" },
-                  name_ko: { type: "string", description: "축제 이름 (한국어 번역)" },
-                  name_en: { type: "string", description: "축제 이름 (영어 번역)" },
-                  name_local: { type: "string", description: "현지 언어 이름" }, 
-                  
-                  // 축제 요약 (3가지 버전)
                   summary_original: { type: "string", description: "축제 요약 (원본 언어, 1-2줄)" },
-                  summary_ko: { type: "string", description: "축제 요약 (한국어 번역, 1-2줄)" },
-                  summary_en: { type: "string", description: "축제 요약 (영어 번역, 1-2줄)" },
-                  
-                  // 축제 설명 (3가지 버전)
-                  description_original: { 
-                    type: "string", 
-                    description: "축제 설명 (원본 언어, 모든 텍스트 포함, 절대 요약 금지, 최소 10문장)" 
-                  },
-                  description_ko: { 
-                    type: "string", 
-                    description: "축제 설명 (한국어 완전 번역, 원본의 모든 문장 포함, 절대 요약 금지, 최소 10문장)" 
-                  },
-                  description_en: { 
-                    type: "string", 
-                    description: "축제 설명 (영어 완전 번역, 원본의 모든 문장 포함, 절대 요약 금지, 최소 10문장)" 
-                  },
+                  description_original: { type: "string", description: "축제 설명 (원본 언어, 웹페이지의 모든 설명 텍스트, 절대 요약 금지, 최소 10문장)" },
                   
                   // 날짜 및 기본 정보
                   start_date: { type: "string", description: "YYYY-MM-DD 형식" },
@@ -558,11 +478,9 @@ Deno.serve(async (req) => {
                   longitude: { type: "number" },
                   category: { type: "string" },
                   
-                  // 가격 및 운영 정보
                   price: { type: "number" },
-                  price_details: { type: "string", description: "모든 티켓 종류의 가격 상세 (일반, VIP, 할인 등)" },
-                  opening_hours_ko: { type: "string", description: "운영 시간 (한국어)" },
-                  opening_hours_en: { type: "string", description: "운영 시간 (영어)" },
+                  price_details: { type: "string", description: "모든 티켓 종류의 가격 상세 정보" },
+                  opening_hours_original: { type: "string", description: "운영 시간 (원본 언어)" },
                   organizer: { type: "string", description: "주최/주관 기관" },
                   contact: {
                     type: "object",
@@ -573,45 +491,11 @@ Deno.serve(async (req) => {
                     description: "연락처 정보"
                   },
                   
-                  // 교통 및 주차 정보 (다국어)
-                  access_info_ko: { type: "string", description: "교통 정보 (한국어, \\n으로 구분)" },
-                  access_info_en: { type: "string", description: "교통 정보 (영어, \\n으로 구분)" },
-                  parking_info_ko: { type: "string", description: "주차 정보 (한국어)" },
-                  parking_info_en: { type: "string", description: "주차 정보 (영어)" },
+                  access_info_original: { type: "string", description: "교통 정보 (원본 언어)" },
+                  parking_info_original: { type: "string", description: "주차 정보 (원본 언어)" },
                   
-                  // 제한사항 (다국어)
-                  restrictions_original: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "금지사항 (원본 언어) 5-7개"
-                  },
-                  restrictions_ko: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "금지사항 (한국어) 5-7개"
-                  },
-                  restrictions_en: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "금지사항 (영어) 5-7개"
-                  },
-                  
-                  // 추천사항 (다국어)
-                  recommendations_original: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "추천 준비물 (원본 언어) 5-7개"
-                  },
-                  recommendations_ko: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "추천 준비물 (한국어) 5-7개"
-                  },
-                  recommendations_en: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "추천 준비물 (영어) 5-7개"
-                  },
+                  restrictions_original: { type: "array", items: { type: "string" }, description: "금지사항/주의사항 (원본 언어)" },
+                  recommendations_original: { type: "array", items: { type: "string" }, description: "추천 복장/준비물 (원본 언어)" },
                   
                   // 웹사이트 및 SNS
                   website: { type: "string" },
@@ -626,37 +510,21 @@ Deno.serve(async (req) => {
                     description: "SNS 링크"
                   },
                   
-                  // 미디어
-                  image_url: { type: "string" },
+                  thumbnail_url: { type: "string", description: "썸네일 이미지 URL" },
                   video_url: { type: "string", description: "유효한 YouTube URL만, 없으면 빈 문자열" },
-                  media_urls: {
+                  image_gallery_urls: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["image", "video", "youtube"] },
-                        url: { type: "string" },
-                        caption: { type: "string" }
+                        originimgurl: { type: "string" },
+                        smallimageurl: { type: "string" },
+                        imgname: { type: "string" }
                       }
-                    }
+                    },
+                    description: "이미지 갤러리 URL 목록"
                   },
-                  
-                  // 하이라이트 (다국어)
-                  highlights_original: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "하이라이트 (원본 언어) 7-10개, 각 항목은 2-3문장으로 상세하게"
-                  },
-                  highlights_ko: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "하이라이트 (한국어) 7-10개, 각 항목은 2-3문장으로 상세하게"
-                  },
-                  highlights_en: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "하이라이트 (영어) 7-10개, 각 항목은 2-3문장으로 상세하게"
-                  },
+                  highlights_original: { type: "array", items: { type: "string" }, description: "하이라이트 포인트 (원본 언어)" },
                   
                   // 일정 및 라인업
                   schedule: {
@@ -868,98 +736,54 @@ Deno.serve(async (req) => {
       });
 
       // 디버깅: 다국어 필드 확인
-      console.log(`Festival "${festival.name_original}" multilingual fields:`, {
+      console.log(`Festival "${festival.name_original}" extracted fields:`, {
         original_language: festival.original_language,
         description_original_length: festival.description_original?.length || 0,
-        description_ko_length: festival.description_ko?.length || 0,
-        description_en_length: festival.description_en?.length || 0,
         summary_original: festival.summary_original?.substring(0, 50),
-        summary_ko: festival.summary_ko?.substring(0, 50),
-        summary_en: festival.summary_en?.substring(0, 50),
       });
 
       return {
-        // 기본 필드 (한국어 우선 - 한국 서비스이므로)
-        name: festival.name_ko || festival.name_original || festival.name_en,
-        summary: festival.summary_ko || festival.summary_original || festival.summary_en || null,
-        description: festival.description_ko || festival.description_original || festival.description_en,
-        opening_hours: festival.opening_hours_ko || festival.opening_hours_en || null,
-        access_info: festival.access_info_ko || festival.access_info_en || null,
-        parking_info: festival.parking_info_ko || festival.parking_info_en || null,
-        restrictions: festival.restrictions_ko || festival.restrictions_original || festival.restrictions_en || [],
-        recommendations: festival.recommendations_ko || festival.recommendations_original || festival.recommendations_en || [],
-        highlights: festival.highlights_ko || festival.highlights_original || festival.highlights_en || [],
-
-        // 모든 다국어 버전 명시적으로 저장
-        name_original: festival.name_original || null,
-        name_ko: festival.name_ko || null,
-        name_en: festival.name_en || null,
-        name_local: festival.name_local || festival.name_original || null, 
-        
-        summary_original: festival.summary_original || null,
-        summary_ko: festival.summary_ko || null,
-        summary_en: festival.summary_en || null,
-        
-        description_original: festival.description_original || null,
-        description_ko: festival.description_ko || null,
-        description_en: festival.description_en || null,
-        
-        highlights_original: festival.highlights_original || [],
-        highlights_ko: festival.highlights_ko || [],
-        highlights_en: festival.highlights_en || [],
-        
-        opening_hours_ko: festival.opening_hours_ko || null,
-        opening_hours_en: festival.opening_hours_en || null,
-        
-        access_info_ko: festival.access_info_ko || null,
-        access_info_en: festival.access_info_en || null,
-        
-        parking_info_ko: festival.parking_info_ko || null,
-        parking_info_en: festival.parking_info_en || null,
-        
-        restrictions_original: festival.restrictions_original || [],
-        restrictions_ko: festival.restrictions_ko || [],
-        restrictions_en: festival.restrictions_en || [],
-        
-        recommendations_original: festival.recommendations_original || [],
-        recommendations_ko: festival.recommendations_ko || [],
-        recommendations_en: festival.recommendations_en || [],
-        
+        source_url: url,
         original_language: festival.original_language,
-
-        // 나머지 필드들
-        country: festival.city?.includes('나고야') || festival.city?.includes('오사카') || festival.city?.includes('도쿄') ? '일본' : '일본',
-        city: festival.city,
-        location: festival.location,
-        category: festival.category,
+        name_original: festival.name_original || null,
+        summary_original: festival.summary_original || null,
+        description_original: festival.description_original || null,
+        country: festival.country || 'Unknown',
+        city: festival.city || null,
+        category: festival.category || null,
         start_date: festival.start_date,
         end_date: festival.end_date,
         date_status: festival.date_status || 'confirmed',
-        latitude: festival.latitude,
-        longitude: festival.longitude,
+        latitude: festival.latitude || null,
+        longitude: festival.longitude || null,
         thumbnail_url: thumbnailUrl,
         video_url: videoUrl,
-        media_urls: processedMediaUrls,
+        image_gallery_urls: processedMediaUrls,
         website: websiteUrl,
         price: festival.price || 0,
         price_details: festival.price_details || null,
+        opening_hours_original: festival.opening_hours_original || null,
+        access_info_original: festival.access_info_original || null,
+        parking_info_original: festival.parking_info_original || null,
         organizer: festival.organizer || null,
         contact: festival.contact || null,
         social_media: socialMedia,
+        highlights_original: festival.highlights_original || [],
+        restrictions_original: festival.restrictions_original || [],
+        recommendations_original: festival.recommendations_original || [],
         schedule: festival.schedule || [],
         lineup: festival.lineup || [],
         nearby_attractions: festival.nearby_attractions || [],
         tags: festival.tags || [],
         expected_visitors: festival.expected_visitors || null,
-        star_rating: 0,
-        likes_count: 0,
-        catches_count: 0,
-        _metadata: {
+        processing_status: 'pending',
+        festival_id: null,
+        error_message: null,
+        extraction_metadata: {
           date_status: festival.date_status || 'confirmed',
           date_confidence: festival.date_confidence || 0,
           date_source: festival.date_source || 'unknown',
           video_validation: videoValidationResult,
-          source_url: url,
           extracted_at: new Date().toISOString(),
           extracted_date_info: extractedDateInfo,
         }
@@ -970,18 +794,7 @@ Deno.serve(async (req) => {
     const savedRecords = [];
     for (const festival of festivals) {
       try {
-        const rawRecord = await base44.asServiceRole.entities.UrlExtractionRawData.create({
-          source_url: url,
-          raw_extraction_json: JSON.stringify(extraction),
-          extracted_data: festival,
-          processing_status: 'pending',
-          extraction_metadata: {
-            date_info_found: extractedDateInfo.length,
-            date_info: extractedDateInfo,
-            html_youtube_urls_found: extractedYoutubeUrls.length,
-            extracted_at: new Date().toISOString()
-          }
-        });
+        const rawRecord = await base44.asServiceRole.entities.UrlExtractionRawData.create(festival);
         savedRecords.push(rawRecord);
         console.log(`Saved UrlExtractionRawData record: ${rawRecord.id}`);
       } catch (saveError) {
@@ -1004,10 +817,9 @@ Deno.serve(async (req) => {
         video_found: festivals[0]?.video_url ? true : false,
         video_validation: festivals[0]?._metadata?.video_validation,
         html_youtube_urls_found: extractedYoutubeUrls.length,
-        multilingual_check: {
-          description_ko_length: festivals[0]?.description_ko?.length || 0,
-          description_en_length: festivals[0]?.description_en?.length || 0,
+        original_data_check: {
           description_original_length: festivals[0]?.description_original?.length || 0,
+          summary_original_length: festivals[0]?.summary_original?.length || 0,
         }
       }
     });
