@@ -153,6 +153,13 @@ export default function AdminTourAPI() {
     } catch (error) {
       console.error('[AdminTourAPI] Transform error:', error);
       
+      // 504 Gateway Timeout 에러 체크
+      if (error.response?.status === 504 || error.message?.includes('504')) {
+        alert(`⏱️ 504 Gateway Timeout\n\n데이터 처리 시간이 너무 오래 걸려 타임아웃이 발생했습니다.\n\n💡 해결 방법:\n• 한 번에 처리하는 개수를 5개 이하로 줄여주세요\n• 일부 데이터는 처리되었을 수 있으니 페이지를 새로고침하여 확인해주세요\n• 남은 데이터는 다시 선택하여 변환해주세요\n\n원문 에러: ${error.message}`);
+        refetchRawData();
+        return;
+      }
+      
       // API 제한 에러 체크
       if (error.response?.status === 429) {
         const errorData = error.response?.data;
