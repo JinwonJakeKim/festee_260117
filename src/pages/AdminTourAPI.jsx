@@ -824,7 +824,6 @@ export default function AdminTourAPI() {
                   </Button>
                 </div>
                 {existingData.map((raw) => {
-                const isSelected = selectedRawData.includes(raw.id);
                   const isSelected = selectedRawData.includes(raw.id);
                   const statusColors = {
                     pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -962,8 +961,11 @@ export default function AdminTourAPI() {
                   </Card>
                 );
               })}
+              </div>
+            )}
 
-              {newPendingData.length === 0 && existingData.length === 0 && rawDataList.length > 0 && (
+            {/* 데이터가 없을 때 표시 */}
+            {newPendingData.length === 0 && existingData.length === 0 && rawDataList.length > 0 && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
                   <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
@@ -978,7 +980,6 @@ export default function AdminTourAPI() {
                   <p className="text-gray-600 text-sm">먼저 "데이터 가져오기" 탭에서 데이터를 가져오세요</p>
                 </Card>
               )}
-            </div>
           </TabsContent>
 
           {/* 자동화 스케줄 탭 */}
