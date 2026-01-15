@@ -17,19 +17,19 @@ export default function Layout({ children, currentPageName }) {
     "Festee와 함께 떠나는 축제 여행",
   ];
 
-  React.useEffect(() => {
-    const homeUrl = createPageUrl("Home");
-    
-    const isRootPath = 
-      location.pathname === '/' || 
-      location.pathname === '' ||
-      location.pathname === '/index.html';
-    
-    if (isRootPath && location.pathname !== homeUrl) {
-      console.log('🏠 Redirecting to Home from:', location.pathname);
-      navigate(homeUrl, { replace: true });
-    }
-  }, [location.pathname, navigate]);
+  // React.useEffect(() => {
+  //   const homeUrl = createPageUrl("Home");
+  //   
+  //   const isRootPath = 
+  //     location.pathname === '/' || 
+  //     location.pathname === '' ||
+  //     location.pathname === '/index.html';
+  //   
+  //   if (isRootPath && location.pathname !== homeUrl) {
+  //     console.log('🏠 Redirecting to Home from:', location.pathname);
+  //     navigate(homeUrl, { replace: true });
+  //   }
+  // }, [location.pathname, navigate]);
 
   // 스플래시 화면 타이머
   React.useEffect(() => {
