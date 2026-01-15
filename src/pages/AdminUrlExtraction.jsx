@@ -16,6 +16,8 @@ export default function AdminUrlExtraction() {
   const [urlInput, setUrlInput] = useState("");
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
   const [isExtracting, setIsExtracting] = useState(false);
+  const [showAddUrlForm, setShowAddUrlForm] = useState(false);
+  const [newSourceUrl, setNewSourceUrl] = useState({ name: "", url: "", country: "", description: "" });
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -26,6 +28,12 @@ export default function AdminUrlExtraction() {
   const { data: rawDataList } = useQuery({
     queryKey: ['urlExtractionRawData'],
     queryFn: () => base44.entities.UrlExtractionRawData.list('-created_date'),
+    initialData: [],
+  });
+
+  const { data: sourceUrls } = useQuery({
+    queryKey: ['festivalSourceUrls'],
+    queryFn: () => base44.entities.FestivalSourceUrl.list('-created_date'),
     initialData: [],
   });
 
@@ -90,6 +98,39 @@ export default function AdminUrlExtraction() {
     }
   });
 
+  const addSourceUrlMutation = useMutation({
+    mutationFn: async (data) => {
+      await base44.entities.FestivalSourceUrl.create(data);
+    },
+    onSuccess: () => {
+      setShowAddUrlForm(false);
+      setNewSourceUrl({ name: "", url: "", country: "", description: "" });
+      queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
+      alert('소스 URL이 추가되었습니다');
+    }
+  });
+
+  const deleteSourceUrlMutation = useMutation({
+    mutationFn: async (id) => {
+      await base44.entities.FestivalSourceUrl.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
+    }
+  });
+
+  const updateSourceUrlMutation = useMutation({
+    mutationFn: async ({ id, url }) => {
+      await base44.entities.FestivalSourceUrl.update(id, { 
+        last_used_date: new Date().toISOString(),
+        url 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
+    }
+  });
+
   const handleExtract = async () => {
     if (!urlInput.trim()) {
       alert('URL을 입력해주세요');
@@ -98,8 +139,32 @@ export default function AdminUrlExtraction() {
     setIsExtracting(true);
     try {
       await extractMutation.mutateAsync(urlInput);
+      
+      // 저장된 URL이라면 last_used_date 업데이트
+      const matchingSource = sourceUrls.find(s => s.url === urlInput);
+      if (matchingSource) {
+        updateSourceUrlMutation.mutate({ id: matchingSource.id, url: urlInput });
+      }
     } finally {
       setIsExtracting(false);
+    }
+  };
+
+  const handleSelectSourceUrl = (sourceUrl) => {
+    setUrlInput(sourceUrl.url);
+  };
+
+  const handleAddSourceUrl = () => {
+    if (!newSourceUrl.name || !newSourceUrl.url || !newSourceUrl.country) {
+      alert('이름, URL, 국가를 모두 입력해주세요');
+      return;
+    }
+    addSourceUrlMutation.mutate(newSourceUrl);
+  };
+
+  const handleDeleteSourceUrl = (id) => {
+    if (confirm('이 소스 URL을 삭제하시겠습니까?')) {
+      deleteSourceUrlMutation.mutate(id);
     }
   };
 
@@ -244,6 +309,106 @@ export default function AdminUrlExtraction() {
                   <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
                   <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
                 </ul>
+              </div>
+
+              {/* 저장된 소스 URL 관리 */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-bold">저장된 소스 URL</h4>
+                  <Button
+                    onClick={() => setShowAddUrlForm(!showAddUrlForm)}
+                    size="sm"
+                    className="bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    {showAddUrlForm ? '취소' : '+ 추가'}
+                  </Button>
+                </div>
+
+                {showAddUrlForm && (
+                  <Card className="bg-gray-800 border-gray-700 p-4 mb-3">
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="이름 (예: Japan Travel Events)"
+                        value={newSourceUrl.name}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, name: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <input
+                        type="url"
+                        placeholder="URL"
+                        value={newSourceUrl.url}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, url: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="국가 (예: Japan)"
+                        value={newSourceUrl.country}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, country: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="설명 (선택)"
+                        value={newSourceUrl.description}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, description: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <Button
+                        onClick={handleAddSourceUrl}
+                        disabled={addSourceUrlMutation.isPending}
+                        className="w-full bg-green-500 hover:bg-green-600"
+                        size="sm"
+                      >
+                        저장
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {sourceUrls.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-4">저장된 URL이 없습니다</p>
+                  ) : (
+                    sourceUrls.map((source) => (
+                      <Card
+                        key={source.id}
+                        className="bg-gray-800 border-gray-700 p-3 hover:bg-gray-750 transition-colors cursor-pointer"
+                        onClick={() => handleSelectSourceUrl(source)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h5 className="text-white font-medium text-sm truncate">{source.name}</h5>
+                              <Badge className="bg-pink-500/20 text-pink-400 border-pink-400/50 text-xs">
+                                {source.country}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-400 text-xs truncate mb-1">{source.url}</p>
+                            {source.description && (
+                              <p className="text-gray-500 text-xs">{source.description}</p>
+                            )}
+                            {source.last_used_date && (
+                              <p className="text-gray-600 text-xs mt-1">
+                                마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSourceUrl(source.id);
+                            }}
+                            className="flex-shrink-0 text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
               </div>
             </Card>
           </TabsContent>
