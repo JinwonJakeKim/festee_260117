@@ -51,18 +51,10 @@ const festivalIcon = new L.Icon({
 
 // Shorts Section Component
 function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
-  const [clickedIndices, setClickedIndices] = React.useState(new Set());
+  const [playingIndex, setPlayingIndex] = React.useState(null);
 
   const handleClick = (idx) => {
-    setClickedIndices(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(idx)) {
-        newSet.delete(idx);
-      } else {
-        newSet.add(idx);
-      }
-      return newSet;
-    });
+    setPlayingIndex(prev => prev === idx ? null : idx);
   };
 
   const handleMoreClick = () => {
@@ -82,11 +74,11 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           if (!videoId) return null;
 
           const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-          const isClicked = clickedIndices.has(idx);
+          const isPlaying = playingIndex === idx;
 
           return (
             <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden snap-start" style={{ width: '70vw', height: 'calc(70vw * 16 / 9)' }}>
-              {isClicked ? (
+              {isPlaying ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
                   className="w-full h-full"
