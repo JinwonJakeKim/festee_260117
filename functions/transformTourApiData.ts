@@ -815,6 +815,9 @@ ${context}
           social_media: {},
           star_rating: 0
         };
+        let preservedLikes = [];
+        let preservedCatches = [];
+        let preservedComments = [];
         
         if (retransform && rawData.festival_id) {
           try {
@@ -829,6 +832,37 @@ ${context}
                 comments_count: existing.comments_count || 0
               };
               console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
+              
+              // 좋아요 레코드 보존
+              const existingLikes = await base44.asServiceRole.entities.FestivalLike.filter({ festival_id: rawData.festival_id });
+              preservedLikes = existingLikes.map(like => ({
+                user_email: like.user_email
+              }));
+              console.log(`[Transform] ✓ FestivalLike records preserved: ${preservedLikes.length} likes`);
+              
+              // 캐치 레코드 보존
+              const existingCatches = await base44.asServiceRole.entities.Catch.filter({ festival_id: rawData.festival_id });
+              preservedCatches = existingCatches.map(c => ({
+                user_email: c.user_email,
+                user_name: c.user_name,
+                image_url: c.image_url,
+                location: c.location,
+                latitude: c.latitude,
+                longitude: c.longitude,
+                likes_count: c.likes_count || 0
+              }));
+              console.log(`[Transform] ✓ Catch records preserved: ${preservedCatches.length} catches`);
+              
+              // 댓글 레코드 보존
+              const existingComments = await base44.asServiceRole.entities.Comment.filter({ festival_id: rawData.festival_id });
+              preservedComments = existingComments.map(c => ({
+                user_email: c.user_email,
+                user_name: c.user_name,
+                content: c.content,
+                likes_count: c.likes_count || 0,
+                parent_id: c.parent_id
+              }));
+              console.log(`[Transform] ✓ Comment records preserved: ${preservedComments.length} comments`);
               
               // YouTube Shorts 보존 (5개 이상이면)
               if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
@@ -1447,6 +1481,61 @@ ${context}
         
         const createdFestival = await base44.asServiceRole.entities.Festival.create(festival);
         festivals.push(createdFestival);
+        
+        // 재변환 모드: 좋아요, 캐치, 댓글 레코드 복원
+        if (retransform && rawData.festival_id) {
+          console.log(`[Transform] 🔄 Restoring user interaction records...`);
+          
+          // 좋아요 복원
+          for (const like of preservedLikes) {
+            try {
+              await base44.asServiceRole.entities.FestivalLike.create({
+                festival_id: createdFestival.id,
+                user_email: like.user_email
+              });
+            } catch (e) {
+              console.error(`[Transform] Failed to restore like:`, e.message);
+            }
+          }
+          console.log(`[Transform] ✓ Restored ${preservedLikes.length} likes`);
+          
+          // 캐치 복원
+          for (const catchRecord of preservedCatches) {
+            try {
+              await base44.asServiceRole.entities.Catch.create({
+                festival_id: createdFestival.id,
+                festival_name: createdFestival.name,
+                user_email: catchRecord.user_email,
+                user_name: catchRecord.user_name,
+                image_url: catchRecord.image_url,
+                location: catchRecord.location,
+                latitude: catchRecord.latitude,
+                longitude: catchRecord.longitude,
+                likes_count: catchRecord.likes_count
+              });
+            } catch (e) {
+              console.error(`[Transform] Failed to restore catch:`, e.message);
+            }
+          }
+          console.log(`[Transform] ✓ Restored ${preservedCatches.length} catches`);
+          
+          // 댓글 복원
+          for (const comment of preservedComments) {
+            try {
+              await base44.asServiceRole.entities.Comment.create({
+                festival_id: createdFestival.id,
+                user_email: comment.user_email,
+                user_name: comment.user_name,
+                content: comment.content,
+                likes_count: comment.likes_count,
+                parent_id: comment.parent_id
+              });
+            } catch (e) {
+              console.error(`[Transform] Failed to restore comment:`, e.message);
+            }
+          }
+          console.log(`[Transform] ✓ Restored ${preservedComments.length} comments`);
+        }
         
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
           processing_status: 'processed',
