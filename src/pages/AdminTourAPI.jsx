@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -645,32 +644,210 @@ export default function AdminTourAPI() {
               </p>
             )}
 
-            {/* 원본 데이터 목록 */}
-            <div className="space-y-3">
-              {filteredRawDataList.map((raw) => {
-                const isSelected = selectedRawData.includes(raw.id);
-                const statusColors = {
-                  pending: 'bg-yellow-900/20 border-yellow-500/50',
-                  processing: 'bg-blue-900/20 border-blue-500/50',
-                  processed: 'bg-green-900/20 border-green-500/50',
-                  failed: 'bg-red-900/20 border-red-500/50',
-                };
-                const statusLabels = {
-                  pending: '대기 중',
-                  processing: '처리 중',
-                  processed: '완료',
-                  failed: '실패',
-                };
-                
-                return (
-                  <Card
-                    key={raw.id}
-                    className={`border-2 transition-all ${
-                      isSelected
-                        ? 'bg-purple-900/30 border-purple-400'
-                        : statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'
-                    }`}
+            {/* 신규 데이터 섹션 */}
+            {newPendingData.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-purple-900/20 border border-purple-400/30 rounded-lg p-3">
+                  <div>
+                    <h3 className="text-purple-400 font-bold flex items-center gap-2">
+                      <Database className="w-5 h-5" />
+                      신규 데이터 ({newPendingData.length}개)
+                    </h3>
+                    <p className="text-gray-400 text-xs mt-1">Festival ID가 없는 새로운 데이터</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const newFestivalIds = selectedRawData.filter(id => {
+                        const item = rawDataList.find(r => r.id === id);
+                        return !item?.festival_id;
+                      });
+                      if (newFestivalIds.length === 0) {
+                        alert('⚠️ 선택된 항목 중 신규 생성할 데이터가 없습니다.');
+                        return;
+                      }
+                      handleTransform(newFestivalIds, false);
+                    }}
+                    disabled={selectedRawData.filter(id => {
+                      const item = rawDataList.find(r => r.id === id);
+                      return !item?.festival_id;
+                    }).length === 0 || isTransforming}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                   >
+                    {isTransforming ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        변환 중...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        변환하기
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {newPendingData.map((raw) => {
+                  const isSelected = selectedRawData.includes(raw.id);
+                  return (
+                    <Card
+                      key={raw.id}
+                      className={`border-2 transition-all ${
+                        isSelected
+                          ? 'bg-purple-900/30 border-purple-400'
+                          : 'bg-yellow-900/20 border-yellow-500/50'
+                      }`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          {/* 체크박스 */}
+                          <div className="flex-shrink-0 mt-1">
+                            <div 
+                              onClick={() => toggleRawData(raw.id)}
+                              className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
+                                isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600 hover:border-gray-500'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-4 h-4 text-black" />}
+                            </div>
+                          </div>
+
+                          {/* 이미지 */}
+                          {raw.firstimage && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={raw.firstimage}
+                                alt={raw.title}
+                                className="w-20 h-20 rounded-lg object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {/* 정보 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-bold text-base">{raw.title}</h3>
+                              <Badge className="bg-yellow-900/20 border-yellow-500/50">대기 중</Badge>
+                              <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
+                                신규 축제
+                              </Badge>
+                            </div>
+
+                            <div className="text-gray-400 text-sm space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-green-400" />
+                                <span>
+                                  {raw.eventstartdate ? 
+                                    `${raw.eventstartdate.substring(0,4)}-${raw.eventstartdate.substring(4,6)}-${raw.eventstartdate.substring(6,8)}` : 
+                                    '시작일 없음'
+                                  } ~ {raw.eventenddate ? 
+                                    `${raw.eventenddate.substring(0,4)}-${raw.eventenddate.substring(4,6)}-${raw.eventenddate.substring(6,8)}` : 
+                                    '종료일 없음'
+                                  }
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-teal-400" />
+                                <span>{raw.addr1 || '주소 없음'}</span>
+                              </div>
+
+                              <p className="text-xs text-gray-500">
+                                ContentID: {raw.contentid} · 수집: {safeFormatDate(raw.fetch_date || raw.created_date, 'yy-MM-dd HH:mm')}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* 삭제 버튼 */}
+                          <Button
+                            onClick={() => {
+                              if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
+                                deleteRawDataMutation.mutate(raw.id);
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 기존 데이터 섹션 */}
+            {existingData.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-orange-900/20 border border-orange-400/30 rounded-lg p-3">
+                  <div>
+                    <h3 className="text-orange-400 font-bold flex items-center gap-2">
+                      <Database className="w-5 h-5" />
+                      기존 데이터 ({existingData.length}개)
+                    </h3>
+                    <p className="text-gray-400 text-xs mt-1">Festival ID가 있는 데이터 (재변환 가능)</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const updateFestivalIds = selectedRawData.filter(id => {
+                        const item = rawDataList.find(r => r.id === id);
+                        return item?.festival_id;
+                      });
+                      if (updateFestivalIds.length === 0) {
+                        alert('⚠️ 선택된 항목 중 업데이트할 기존 데이터가 없습니다.');
+                        return;
+                      }
+                      handleTransform(updateFestivalIds, true);
+                    }}
+                    disabled={selectedRawData.filter(id => {
+                      const item = rawDataList.find(r => r.id === id);
+                      return item?.festival_id;
+                    }).length === 0 || isTransforming}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  >
+                    {isTransforming ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        재변환 중...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        재변환하기
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {existingData.map((raw) => {
+                const isSelected = selectedRawData.includes(raw.id);
+                  const isSelected = selectedRawData.includes(raw.id);
+                  const statusColors = {
+                    pending: 'bg-yellow-900/20 border-yellow-500/50',
+                    processing: 'bg-blue-900/20 border-blue-500/50',
+                    processed: 'bg-green-900/20 border-green-500/50',
+                    failed: 'bg-red-900/20 border-red-500/50',
+                  };
+                  const statusLabels = {
+                    pending: '대기 중',
+                    processing: '처리 중',
+                    processed: '완료',
+                    failed: '실패',
+                  };
+                  
+                  return (
+                    <Card
+                      key={raw.id}
+                      className={`border-2 transition-all ${
+                        isSelected
+                          ? 'bg-purple-900/30 border-purple-400'
+                          : statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'
+                      }`}
+                    >
                     <div className="p-4">
                       <div className="flex items-start gap-3">
                         {/* 체크박스 - 모든 상태에서 표시 */}
@@ -706,15 +883,9 @@ export default function AdminTourAPI() {
                             <Badge className={statusColors[raw.processing_status]}>
                               {statusLabels[raw.processing_status]}
                             </Badge>
-                            {raw.festival_id ? (
-                              <Badge className="bg-blue-900/50 text-blue-400 border border-blue-400/50">
-                                기존 축제
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
-                                신규 축제
-                              </Badge>
-                            )}
+                            <Badge className="bg-blue-900/50 text-blue-400 border border-blue-400/50">
+                              기존 축제
+                            </Badge>
                           </div>
 
                           <div className="text-gray-400 text-sm space-y-1">
@@ -761,18 +932,16 @@ export default function AdminTourAPI() {
 
                         {/* 액션 버튼 */}
                         <div className="flex flex-col gap-2">
-                          {/* 개별 재변환 버튼 (festival_id가 있는 경우) */}
-                          {raw.festival_id && (
-                            <Button
-                              onClick={() => handleTransform([raw.id], true)}
-                              disabled={isTransforming}
-                              size="sm"
-                              className="bg-orange-500 hover:bg-orange-600 text-white"
-                              title="이 항목만 재변환"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </Button>
-                          )}
+                          {/* 개별 재변환 버튼 */}
+                          <Button
+                            onClick={() => handleTransform([raw.id], true)}
+                            disabled={isTransforming}
+                            size="sm"
+                            className="bg-orange-500 hover:bg-orange-600 text-white"
+                            title="이 항목만 재변환"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </Button>
                           
                           {/* 삭제 버튼 */}
                           <Button
@@ -794,7 +963,7 @@ export default function AdminTourAPI() {
                 );
               })}
 
-              {filteredRawDataList.length === 0 && rawDataList.length > 0 && (
+              {newPendingData.length === 0 && existingData.length === 0 && rawDataList.length > 0 && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
                   <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
