@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
         // Google 이미지 검색
         let thumbnailUrl = festivalData.thumbnail_url;
-        let mediaUrls = festivalData.media_urls || [];
+        let mediaUrls = festivalData.image_gallery_urls || [];
         
         try {
           console.log(`[Transform] Searching Google Images for: ${festivalNameForSearch}`);
@@ -185,11 +185,35 @@ ${JSON.stringify(festivalData, null, 2)}
         }
 
         const festivalPayload = {
-          ...festivalData,
-          ...translatedData,
-          thumbnail_url: thumbnailUrl,
-          media_urls: mediaUrls,
-          youtube_shorts_urls: youtubeShortUrls,
+          name_original: festivalData.name_original,
+          summary_original: festivalData.summary_original,
+          description_original: festivalData.description_original,
+          highlights_original: festivalData.highlights_original,
+          restrictions_original: festivalData.restrictions_original,
+          recommendations_original: festivalData.recommendations_original,
+          original_language: festivalData.original_language,
+          
+          name_ko: translatedData.name_ko,
+          name_en: translatedData.name_en,
+          summary_ko: translatedData.summary_ko,
+          summary_en: translatedData.summary_en,
+          description_ko: translatedData.description_ko,
+          description_en: translatedData.description_en,
+          highlights_ko: translatedData.highlights_ko || [],
+          highlights_en: translatedData.highlights_en || [],
+          opening_hours_ko: translatedData.opening_hours_ko,
+          opening_hours_en: translatedData.opening_hours_en,
+          access_info_ko: translatedData.access_info_ko,
+          access_info_en: translatedData.access_info_en,
+          parking_info_ko: translatedData.parking_info_ko,
+          parking_info_en: translatedData.parking_info_en,
+          restrictions_ko: translatedData.restrictions_ko || [],
+          restrictions_en: translatedData.restrictions_en || [],
+          recommendations_ko: translatedData.recommendations_ko || [],
+          recommendations_en: translatedData.recommendations_en || [],
+          category_en: translatedData.category_en,
+          tags_en: translatedData.tags_en || [],
+          
           name: translatedData.name_ko || festivalData.name_original,
           summary: translatedData.summary_ko || festivalData.summary_original,
           description: translatedData.description_ko || festivalData.description_original,
@@ -201,6 +225,29 @@ ${JSON.stringify(festivalData, null, 2)}
           highlights: translatedData.highlights_ko || festivalData.highlights_original || [],
           tags: translatedData.tags_ko || festivalData.tags || [],
           category: translatedData.category_ko || festivalData.category,
+          
+          country: festivalData.country,
+          city: festivalData.city,
+          start_date: festivalData.start_date,
+          end_date: festivalData.end_date,
+          date_status: festivalData.date_status,
+          latitude: festivalData.latitude,
+          longitude: festivalData.longitude,
+          thumbnail_url: thumbnailUrl,
+          video_url: festivalData.video_url,
+          image_gallery_urls: festivalData.image_gallery_urls,
+          media_urls: mediaUrls,
+          youtube_shorts_urls: youtubeShortUrls,
+          website: festivalData.website,
+          price: festivalData.price || 0,
+          price_details: festivalData.price_details,
+          organizer: festivalData.organizer,
+          contact: festivalData.contact,
+          social_media: festivalData.social_media,
+          schedule: festivalData.schedule || [],
+          lineup: festivalData.lineup || [],
+          nearby_attractions: festivalData.nearby_attractions || [],
+          expected_visitors: festivalData.expected_visitors,
           star_rating: 0,
           likes_count: 0,
           catches_count: 0,
@@ -241,6 +288,12 @@ ${JSON.stringify(festivalData, null, 2)}
           festivalId,
           success: true,
           festivalName: festivalPayload.name_original
+        });
+
+        console.log(`[Transform] Festival translation completed:`, {
+          original_language: festivalData.original_language,
+          description_ko_length: translatedData.description_ko?.length || 0,
+          description_en_length: translatedData.description_en?.length || 0,
         });
 
       } catch (itemError) {
