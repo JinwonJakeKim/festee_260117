@@ -97,7 +97,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                 />
               ) : (
                 <div 
-                  className="w-full h-full cursor-pointer"
+                  className="w-full h-full cursor-pointer relative"
                   onClick={() => handleClick(idx)}
                 >
                   <img
@@ -113,6 +113,17 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                       <Play className="w-5 h-5 text-white fill-white" />
                     </div>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+                    }}
+                    className="absolute bottom-2 right-2 w-8 h-8 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/90 transition-colors pointer-events-auto"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
