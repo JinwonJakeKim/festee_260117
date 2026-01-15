@@ -138,7 +138,14 @@ export default function AdminUrlExtraction() {
     },
     onSuccess: () => {
       setShowAddUrlForm(false);
-      setNewSourceUrl({ name: "", url: "", country: "", description: "" });
+      setNewSourceUrl({ 
+        name: "", 
+        url: "", 
+        country: "", 
+        description: "",
+        container_selector: "div.row.small-event-gutter",
+        link_selector: "a"
+      });
       queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
       alert('소스 URL이 추가되었습니다');
     }
@@ -186,6 +193,18 @@ export default function AdminUrlExtraction() {
 
   const handleSelectSourceUrl = (sourceUrl) => {
     setUrlInput(sourceUrl.url);
+  };
+
+  const handleUseBatchSourceUrl = (sourceUrl) => {
+    setBatchConfig({
+      list_page_url: sourceUrl.url,
+      container_selector: sourceUrl.container_selector || "div.row.small-event-gutter",
+      link_selector: sourceUrl.link_selector || "a"
+    });
+    setShowBatchExtract(true);
+    if (sourceUrl.id) {
+      updateSourceUrlMutation.mutate({ id: sourceUrl.id, url: sourceUrl.url });
+    }
   };
 
   const handleAddSourceUrl = () => {
@@ -472,11 +491,25 @@ export default function AdminUrlExtraction() {
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, country: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                       />
-                      <input
-                        type="text"
+                      <textarea
                         placeholder="설명 (선택)"
                         value={newSourceUrl.description}
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, description: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        rows={2}
+                      />
+                      <input
+                        type="text"
+                        placeholder="컨테이너 CSS 선택자 (예: div.row.small-event-gutter)"
+                        value={newSourceUrl.container_selector}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, container_selector: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="링크 CSS 선택자 (예: a 또는 a.article-item-link)"
+                        value={newSourceUrl.link_selector}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                       />
                       <Button
@@ -498,8 +531,7 @@ export default function AdminUrlExtraction() {
                     sourceUrls.map((source) => (
                       <Card
                         key={source.id}
-                        className="bg-gray-800 border-gray-700 p-3 hover:bg-gray-750 transition-colors cursor-pointer"
-                        onClick={() => handleSelectSourceUrl(source)}
+                        className="bg-gray-800 border-gray-700 p-3 hover:bg-gray-750 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -519,27 +551,51 @@ export default function AdminUrlExtraction() {
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(source.url, '_blank');
-                              }}
-                              className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
-                              title="링크 열기"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteSourceUrl(source.id);
-                              }}
-                              className="flex-shrink-0 text-red-400 hover:text-red-300"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(source.url, '_blank');
+                                }}
+                                className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
+                                title="링크 열기"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSourceUrl(source.id);
+                                }}
+                                className="flex-shrink-0 text-red-400 hover:text-red-300"
+                                title="삭제"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectSourceUrl(source);
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-auto"
+                              >
+                                단일
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUseBatchSourceUrl(source);
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
+                              >
+                                일괄
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </Card>
