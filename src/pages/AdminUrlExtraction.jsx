@@ -17,7 +17,14 @@ export default function AdminUrlExtraction() {
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAddUrlForm, setShowAddUrlForm] = useState(false);
-  const [newSourceUrl, setNewSourceUrl] = useState({ name: "", url: "", country: "", description: "" });
+  const [newSourceUrl, setNewSourceUrl] = useState({ 
+    name: "", 
+    url: "", 
+    country: "", 
+    description: "",
+    container_selector: "div.row.small-event-gutter",
+    link_selector: "a"
+  });
   const [showBatchExtract, setShowBatchExtract] = useState(false);
   const [batchConfig, setBatchConfig] = useState({
     list_page_url: "",
