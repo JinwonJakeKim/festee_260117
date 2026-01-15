@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Trash2, CheckSquare, Square, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, CheckSquare, Square, ExternalLink, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -664,7 +664,7 @@ export default function AdminUrlExtraction() {
                                   className="flex-shrink-0 text-yellow-400 hover:text-yellow-300"
                                   title="수정"
                                 >
-                                  <RefreshCw className="w-4 h-4" />
+                                  <Pencil className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={(e) => {
