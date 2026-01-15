@@ -395,15 +395,28 @@ export default function AdminUrlExtraction() {
                               </p>
                             )}
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteSourceUrl(source.id);
-                            }}
-                            className="flex-shrink-0 text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(source.url, '_blank');
+                              }}
+                              className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
+                              title="링크 열기"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSourceUrl(source.id);
+                              }}
+                              className="flex-shrink-0 text-red-400 hover:text-red-300"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </Card>
                     ))
