@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -306,6 +307,10 @@ export default function AdminTourAPI() {
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
+  // 신규/기존 데이터 구분
+  const newPendingData = filteredRawDataList.filter(r => r.processing_status === 'pending' && !r.festival_id);
+  const existingData = filteredRawDataList.filter(r => r.festival_id);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -502,37 +507,37 @@ export default function AdminTourAPI() {
               </Card>
             </div>
 
-            {/* 액션 버튼 - 명확히 분리된 버전 */}
+            {/* 액션 버튼 - festival_id 기준으로 명확히 분리 */}
             <div className="space-y-2">
-              {/* 신규 변환 (pending 데이터만) */}
-              {pendingData.length > 0 && (
+              {/* 신규 변환 (festival_id 없는 pending만) */}
+              {newPendingData.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-purple-400 text-sm font-medium">📝 신규 변환 (대기 중인 데이터)</p>
+                  <p className="text-purple-400 text-sm font-medium">📝 신규 변환 (Festival ID 없음)</p>
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        const allPendingIds = pendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
-                        setSelectedRawData(allPendingIds);
-                        if (pendingData.length > MAX_TRANSFORM_COUNT) {
-                          alert(`⚠️ 대기 중인 데이터가 ${pendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                        const allNewIds = newPendingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                        setSelectedRawData(allNewIds);
+                        if (newPendingData.length > MAX_TRANSFORM_COUNT) {
+                          alert(`⚠️ 신규 데이터가 ${newPendingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
                         }
                       }}
                       variant="outline"
                       className="flex-1 border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
                     >
-                      대기 중 {Math.min(pendingData.length, MAX_TRANSFORM_COUNT)}개 선택
+                      신규 {Math.min(newPendingData.length, MAX_TRANSFORM_COUNT)}개 선택
                     </Button>
                     <Button
                       onClick={() => {
-                        const pendingIds = selectedRawData.filter(id => {
+                        const newFestivalIds = selectedRawData.filter(id => {
                           const item = rawDataList.find(r => r.id === id);
-                          return item?.processing_status === 'pending';
+                          return !item?.festival_id;
                         });
-                        if (pendingIds.length === 0) {
-                          alert('⚠️ 선택된 항목 중 대기 중인 데이터가 없습니다.\n\n"대기 중 N개 선택" 버튼을 눌러주세요.');
+                        if (newFestivalIds.length === 0) {
+                          alert('⚠️ 선택된 항목 중 신규 생성할 데이터가 없습니다.\n\n"신규 N개 선택" 버튼을 눌러주거나, "신규 축제" 뱃지가 있는 항목을 선택해주세요.');
                           return;
                         }
-                        handleTransform(pendingIds, false);
+                        handleTransform(newFestivalIds, false);
                       }}
                       disabled={selectedRawData.length === 0 || isTransforming}
                       className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
@@ -553,35 +558,35 @@ export default function AdminTourAPI() {
                 </div>
               )}
 
-              {/* 재변환 (processed/failed 데이터만) */}
-              {([...processedData, ...failedData].length > 0) && (
+              {/* 재변환 (festival_id 있는 모든 데이터) */}
+              {existingData.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-orange-400 text-sm font-medium">🔄 재변환 (완료/실패 데이터)</p>
+                  <p className="text-orange-400 text-sm font-medium">🔄 재변환 (Festival ID 있음)</p>
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        const reprocessableData = [...processedData, ...failedData].slice(0, MAX_TRANSFORM_COUNT);
-                        setSelectedRawData(reprocessableData.map(r => r.id));
-                        if (processedData.length + failedData.length > MAX_TRANSFORM_COUNT) {
-                          alert(`⚠️ 재처리 가능한 데이터가 ${processedData.length + failedData.length}개 있지만, 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
+                        const allExistingIds = existingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                        setSelectedRawData(allExistingIds);
+                        if (existingData.length > MAX_TRANSFORM_COUNT) {
+                          alert(`⚠️ 기존 데이터가 ${existingData.length}개 있지만, 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
                         }
                       }}
                       variant="outline"
                       className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
                     >
-                      완료/실패 {Math.min(processedData.length + failedData.length, MAX_TRANSFORM_COUNT)}개 선택
+                      기존 {Math.min(existingData.length, MAX_TRANSFORM_COUNT)}개 선택
                     </Button>
                     <Button
                       onClick={() => {
-                        const reprocessIds = selectedRawData.filter(id => {
+                        const updateFestivalIds = selectedRawData.filter(id => {
                           const item = rawDataList.find(r => r.id === id);
-                          return item?.processing_status === 'processed' || item?.processing_status === 'failed';
+                          return item?.festival_id;
                         });
-                        if (reprocessIds.length === 0) {
-                          alert('⚠️ 선택된 항목 중 완료/실패 데이터가 없습니다.\n\n"완료/실패 N개 선택" 버튼을 눌러주세요.');
+                        if (updateFestivalIds.length === 0) {
+                          alert('⚠️ 선택된 항목 중 업데이트할 기존 데이터가 없습니다.\n\n"기존 N개 선택" 버튼을 누르거나, "기존 축제" 뱃지가 있는 항목을 선택해주세요.');
                           return;
                         }
-                        handleTransform(reprocessIds, true);
+                        handleTransform(updateFestivalIds, true);
                       }}
                       disabled={selectedRawData.length === 0 || isTransforming}
                       className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
@@ -756,8 +761,8 @@ export default function AdminTourAPI() {
 
                         {/* 액션 버튼 */}
                         <div className="flex flex-col gap-2">
-                          {/* 개별 재변환 버튼 (processed나 failed인 경우) */}
-                          {(raw.processing_status === 'processed' || raw.processing_status === 'failed') && (
+                          {/* 개별 재변환 버튼 (festival_id가 있는 경우) */}
+                          {raw.festival_id && (
                             <Button
                               onClick={() => handleTransform([raw.id], true)}
                               disabled={isTransforming}
