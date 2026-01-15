@@ -634,7 +634,15 @@ export default function AdminUrlExtraction() {
                                   {source.country}
                                 </Badge>
                               </div>
-                              <p className="text-gray-400 text-xs truncate mb-1">{source.url}</p>
+                              <a 
+                                href={source.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:text-cyan-300 text-xs truncate mb-1 block underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {source.url}
+                              </a>
                               {source.description && (
                                 <p className="text-gray-500 text-xs">{source.description}</p>
                               )}
@@ -646,16 +654,6 @@ export default function AdminUrlExtraction() {
                             </div>
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(source.url, '_blank');
-                                  }}
-                                  className="flex-shrink-0 text-cyan-400 hover:text-cyan-300"
-                                  title="링크 열기"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
