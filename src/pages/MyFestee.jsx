@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -175,8 +174,8 @@ export default function MyFestee() {
     mutationFn: async (newName) => {
       await base44.auth.updateMe({ full_name: newName });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
     },
   });
