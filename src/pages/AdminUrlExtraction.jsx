@@ -781,7 +781,7 @@ export default function AdminUrlExtraction() {
                       <div className="flex items-center gap-2 mb-2">
                         {getStatusBadge(item.processing_status)}
                         <h3 className="text-white font-bold">
-                          {item.extracted_data?.name_ko || item.extracted_data?.name_original || '이름 없음'}
+                          {item.name_original || '이름 없음'}
                         </h3>
                       </div>
                       <p className="text-gray-400 text-sm mb-2 truncate">
