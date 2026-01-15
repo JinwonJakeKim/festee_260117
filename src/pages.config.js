@@ -33,6 +33,7 @@ import Search from './pages/Search';
 import SelectCity from './pages/SelectCity';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
+import AdminUrlExtraction from './pages/AdminUrlExtraction';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +73,7 @@ export const PAGES = {
     "SelectCity": SelectCity,
     "Settings": Settings,
     "UserProfile": UserProfile,
+    "AdminUrlExtraction": AdminUrlExtraction,
 }
 
 export const pagesConfig = {
