@@ -888,9 +888,20 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
-                  ✓ 연동됨
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                    ✓ 연동됨
+                  </Badge>
+                  <a 
+                    href="https://console.cloud.google.com/apis/dashboard?project=festee-shorts"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    관리 콘솔
+                  </a>
+                </div>
               </Card>
 
               {/* YouTube Data API */}
@@ -927,9 +938,20 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
-                  ✓ 연동됨
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                    ✓ 연동됨
+                  </Badge>
+                  <a 
+                    href="https://console.cloud.google.com/apis/dashboard?project=festee-shorts"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    관리 콘솔
+                  </a>
+                </div>
               </Card>
 
               {/* TourAPI */}
