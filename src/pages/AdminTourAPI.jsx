@@ -36,6 +36,8 @@ export default function AdminTourAPI() {
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
   const [isTransforming, setIsTransforming] = useState(false);
+  const [isRetransforming, setIsRetransforming] = useState(false);
+  const [transformProgress, setTransformProgress] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // 최대 변환 개수 제한
@@ -128,7 +130,19 @@ export default function AdminTourAPI() {
       return;
     }
 
-    setIsTransforming(true);
+    // 각각 별도의 진행 상태로 관리
+    if (isRetransform) {
+      setIsRetransforming(true);
+    } else {
+      setIsTransforming(true);
+    }
+
+    // 진행률 초기화
+    setTransformProgress({
+      total: rawDataIds.length,
+      current: 0,
+      isRetransform: isRetransform
+    });
     
     try {
       console.log(`[AdminTourAPI] Calling transformTourApiData (retransform: ${isRetransform})...`);
@@ -143,15 +157,29 @@ export default function AdminTourAPI() {
         const message = isRetransform 
           ? `✅ ${response.data.festivals_created}개의 축제가 재변환되었습니다!`
           : `✅ ${response.data.festivals_created}개의 축제가 생성되었습니다!`;
-        alert(message);
-        refetchRawData();
-        queryClient.invalidateQueries({ queryKey: ['festivals'] });
-        setSelectedRawData([]);
+        
+        // 진행률 완료 처리
+        setTransformProgress({
+          total: rawDataIds.length,
+          current: rawDataIds.length,
+          isRetransform: isRetransform,
+          completed: true
+        });
+        
+        setTimeout(() => {
+          alert(message);
+          setTransformProgress(null);
+          refetchRawData();
+          queryClient.invalidateQueries({ queryKey: ['festivals'] });
+          setSelectedRawData([]);
+        }, 1000);
       } else {
+        setTransformProgress(null);
         alert(`${actionText} 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error}`);
       }
     } catch (error) {
       console.error('[AdminTourAPI] Transform error:', error);
+      setTransformProgress(null);
       
       // 504 Gateway Timeout 에러 체크
       if (error.response?.status === 504 || error.message?.includes('504')) {
@@ -175,7 +203,11 @@ export default function AdminTourAPI() {
       
       alert(`${actionText} 중 오류가 발생했습니다:\n\n${error.message}`);
     } finally {
-      setIsTransforming(false);
+      if (isRetransform) {
+        setIsRetransforming(false);
+      } else {
+        setIsTransforming(false);
+      }
     }
   };
 
@@ -313,9 +345,30 @@ export default function AdminTourAPI() {
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
-  // 대기 중인 데이터를 신규/기존으로 구분
-  const pendingNewData = filteredRawDataList.filter(r => r.processing_status === 'pending' && !r.festival_id);
-  const pendingExistingData = filteredRawDataList.filter(r => r.processing_status === 'pending' && r.festival_id);
+  // 대기 중인 데이터를 신규/기존으로 구분 - 필터링된 리스트 대신 전체 리스트에서 필터링
+  const pendingNewData = rawDataList
+    .filter(r => r.processing_status === 'pending' && !r.festival_id)
+    .filter(raw => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        raw.title?.toLowerCase().includes(query) ||
+        raw.addr1?.toLowerCase().includes(query) ||
+        raw.contentid?.toLowerCase().includes(query)
+      );
+    });
+  
+  const pendingExistingData = rawDataList
+    .filter(r => r.processing_status === 'pending' && r.festival_id)
+    .filter(raw => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        raw.title?.toLowerCase().includes(query) ||
+        raw.addr1?.toLowerCase().includes(query) ||
+        raw.contentid?.toLowerCase().includes(query)
+      );
+    });
 
   if (isLoading) {
     return (
@@ -331,6 +384,35 @@ export default function AdminTourAPI() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      {/* 진행률 팝업 */}
+      {transformProgress && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <Card className="bg-gray-900 border-gray-800 p-6 w-80">
+            <h3 className="text-white font-bold mb-4 text-center">
+              {transformProgress.isRetransform ? '재변환' : '변환'} 진행 중
+            </h3>
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-cyan-400 mb-1">
+                  {transformProgress.completed ? '100' : Math.round((transformProgress.current / transformProgress.total) * 100)}%
+                </div>
+                <div className="text-gray-400 text-sm">
+                  {transformProgress.current} / {transformProgress.total}
+                </div>
+              </div>
+              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-500"
+                  style={{ width: `${transformProgress.completed ? 100 : (transformProgress.current / transformProgress.total) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-center">
+                <Loader className="w-6 h-6 text-cyan-400 animate-spin" />
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -514,16 +596,13 @@ export default function AdminTourAPI() {
             </div>
 
             {/* 검색 바 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <Input
-                type="text"
-                placeholder="축제명, 주소, ContentID로 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="축제명, 주소, ContentID로 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            />
 
             {/* 검색 결과 표시 */}
             {searchQuery && (
@@ -577,10 +656,10 @@ export default function AdminTourAPI() {
                   disabled={selectedRawData.filter(id => {
                     const item = rawDataList.find(r => r.id === id);
                     return item?.processing_status === 'pending' && !item?.festival_id;
-                  }).length === 0 || isTransforming}
+                  }).length === 0 || isTransforming || isRetransforming}
                   className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                 >
-                  {isTransforming ? (
+                  {isTransforming && !isRetransforming ? (
                     <>
                       <Loader className="w-4 h-4 mr-2 animate-spin" />
                       변환 중...
@@ -736,10 +815,10 @@ export default function AdminTourAPI() {
                     disabled={selectedRawData.filter(id => {
                       const item = rawDataList.find(r => r.id === id);
                       return item?.festival_id && item?.processing_status === 'pending';
-                    }).length === 0 || isTransforming}
+                    }).length === 0 || isTransforming || isRetransforming}
                     className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                   >
-                    {isTransforming ? (
+                    {isRetransforming && !isTransforming ? (
                       <>
                         <Loader className="w-4 h-4 mr-2 animate-spin" />
                         재변환 중...
@@ -865,7 +944,7 @@ export default function AdminTourAPI() {
                           {/* 개별 재변환 버튼 */}
                           <Button
                             onClick={() => handleTransform([raw.id], true)}
-                            disabled={isTransforming}
+                            disabled={isTransforming || isRetransforming}
                             size="sm"
                             className="bg-orange-500 hover:bg-orange-600 text-white"
                             title="이 항목만 재변환"
