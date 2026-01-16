@@ -358,8 +358,9 @@ export default function AdminTourAPI() {
       );
     });
   
-  const pendingExistingData = rawDataList
-    .filter(r => r.processing_status === 'pending' && r.festival_id)
+  // 기존 축제 데이터 - festival_id가 있는 모든 데이터 (처리 상태 무관)
+  const existingFestivalData = rawDataList
+    .filter(r => r.festival_id) // processing_status 조건 제거
     .filter(raw => {
       if (!searchQuery.trim()) return true;
       const query = searchQuery.toLowerCase();
@@ -369,6 +370,9 @@ export default function AdminTourAPI() {
         raw.contentid?.toLowerCase().includes(query)
       );
     });
+  
+  // 대기중인 기존 축제만 필터링 (버튼 활성화 조건용)
+  const pendingExistingData = existingFestivalData.filter(r => r.processing_status === 'pending');
 
   if (isLoading) {
     return (
@@ -774,15 +778,15 @@ export default function AdminTourAPI() {
             </div>
 
             {/* 재변환 섹션 - 데이터가 있을 때만 표시 */}
-            {pendingExistingData.length > 0 && (
+            {existingFestivalData.length > 0 && (
               <div className="space-y-3 border border-orange-800/50 rounded-lg p-4 bg-orange-900/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-orange-400 font-bold flex items-center gap-2">
                       <Database className="w-5 h-5" />
-                      기존 축제 재변환 ({pendingExistingData.length}개)
+                      기존 축제 ({existingFestivalData.length}개)
                     </h3>
-                    <p className="text-gray-400 text-xs mt-1">축제명으로 검색 시 Festival 엔티티에 이미 존재하는 데이터</p>
+                    <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 이미 존재하는 축제 (재변환 가능)</p>
                   </div>
                 </div>
 
@@ -833,7 +837,7 @@ export default function AdminTourAPI() {
                 </div>
 
                 <div className="space-y-3 mt-4">
-                  {pendingExistingData.map((raw) => {
+                  {existingFestivalData.map((raw) => {
                   const isSelected = selectedRawData.includes(raw.id);
                   const statusColors = {
                     pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -994,7 +998,7 @@ export default function AdminTourAPI() {
             )}
 
             {/* 데이터가 없을 때 표시 */}
-            {pendingNewData.length === 0 && pendingExistingData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
+            {pendingNewData.length === 0 && existingFestivalData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
                   <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
