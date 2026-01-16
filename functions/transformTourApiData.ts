@@ -1481,8 +1481,8 @@ ${context}
         const createdFestival = await base44.asServiceRole.entities.Festival.create(festival);
         festivals.push(createdFestival);
         
-        // 재변환 모드: 좋아요, 캐치, 댓글 레코드 복원
-        if (retransform && rawData.festival_id) {
+        // 기존 데이터가 있었다면: 좋아요, 캐치, 댓글 레코드 복원
+        if (existingFestivalId) {
           console.log(`[Transform] 🔄 Restoring user interaction records...`);
           
           // 좋아요 복원
