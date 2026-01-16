@@ -540,7 +540,7 @@ export default function AdminTourAPI() {
                     <Database className="w-5 h-5" />
                     신규 축제 변환 ({pendingNewData.length}개)
                   </h3>
-                  <p className="text-gray-400 text-xs mt-1">대기 중이며 Festival ID가 없는 새로운 데이터</p>
+                  <p className="text-gray-400 text-xs mt-1">축제명으로 검색 시 Festival 엔티티에 없는 새로운 데이터</p>
                 </div>
               </div>
               
@@ -703,7 +703,7 @@ export default function AdminTourAPI() {
                       <Database className="w-5 h-5" />
                       기존 축제 재변환 ({pendingExistingData.length}개)
                     </h3>
-                    <p className="text-gray-400 text-xs mt-1">대기 중이며 Festival ID가 있는 데이터</p>
+                    <p className="text-gray-400 text-xs mt-1">축제명으로 검색 시 Festival 엔티티에 이미 존재하는 데이터</p>
                   </div>
                 </div>
 
