@@ -538,7 +538,7 @@ export default function AdminDashboard() {
             {filteredFestivals.length > 0 && (
               <div className="mb-4 space-y-2">
                 <Card className="bg-gray-900 border-gray-800 p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={handleSelectAll}
                       className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
@@ -569,6 +569,23 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
+
+                  {/* 검색 결과 선택 버튼 - 검색 중일 때만 표시 */}
+                  {searchQuery && (
+                    <button
+                      onClick={handleSelectSearchResults}
+                      className="flex items-center gap-2 text-white hover:text-purple-400 transition-colors w-full py-2 px-3 bg-gray-800 rounded-lg"
+                    >
+                      {allSearchResultsSelected ? (
+                        <CheckSquare className="w-5 h-5 text-purple-400" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                      <span className="font-medium text-sm">
+                        {allSearchResultsSelected ? '검색 결과 해제' : '검색 결과만 선택'} ({filteredFestivals.length}개)
+                      </span>
+                    </button>
+                  )}
                 </Card>
               </div>
             )}
