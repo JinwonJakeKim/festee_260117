@@ -595,7 +595,7 @@ Deno.serve(async (req) => {
           cx: searchEngineId,
           q: `${festivalName} -포스터 -poster -현수막 -banner -기간 -일시`,
           searchType: 'image',
-          num: '10',
+          num: '5',
           imgSize: 'large',
           safe: 'active'
         });
@@ -1175,6 +1175,9 @@ ${context}
                       .filter(img => img.originimgurl);
                     
                     console.log(`[Transform] ✓ detailImage1 success - ${imageGallery.length} images`);
+                    if (imageGallery.length > 0) {
+                      console.log(`[Transform] 📸 First gallery image: ${imageGallery[0].originimgurl}`);
+                    }
                   }
                 }
               } catch (e) {
@@ -1416,7 +1419,10 @@ ${context}
         
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
-        console.log(`[Transform] 📸 TourAPI gallery: ${imageGallery.length} images, Google Images: ${googleImages.length} images`);
+        console.log(`[Transform] 📸 Image summary:`);
+        console.log(`[Transform]   - TourAPI gallery (detailImage1): ${imageGallery.length} images`);
+        console.log(`[Transform]   - Google Images: ${googleImages.length} images`);
+        console.log(`[Transform]   - Total media_urls will include: thumbnail + ${imageGallery.length} + ${googleImages.length} images`);
         
         // ===== 최종 태그 구성 =====
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
