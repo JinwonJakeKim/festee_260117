@@ -1015,7 +1015,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               <div>
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">공식 웹사이트</h3>
                 <a 
-                  href={festival.website} 
+                  href={festival.website.startsWith('http') ? festival.website : `https://${festival.website}`}
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800"
