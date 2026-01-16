@@ -825,85 +825,83 @@ ${context}
           console.log(`[Transform] 🔍 Searching for existing Festival by name: "${rawData.title}"...`);
           const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ name: rawData.title });
             
-            if (existingFestivals && existingFestivals.length > 0) {
-              const existing = existingFestivals[0];
-              preservedUserData = {
-                likes_count: existing.likes_count || 0,
-                catches_count: existing.catches_count || 0,
-                comments_count: existing.comments_count || 0
-              };
-              console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
-              
-              // 좋아요 레코드 보존
-              const existingLikes = await base44.asServiceRole.entities.FestivalLike.filter({ festival_id: rawData.festival_id });
-              preservedLikes = existingLikes.map(like => ({
-                user_email: like.user_email
-              }));
-              console.log(`[Transform] ✓ FestivalLike records preserved: ${preservedLikes.length} likes`);
-              
-              // 캐치 레코드 보존
-              const existingCatches = await base44.asServiceRole.entities.Catch.filter({ festival_id: rawData.festival_id });
-              preservedCatches = existingCatches.map(c => ({
-                user_email: c.user_email,
-                user_name: c.user_name,
-                image_url: c.image_url,
-                location: c.location,
-                latitude: c.latitude,
-                longitude: c.longitude,
-                likes_count: c.likes_count || 0
-              }));
-              console.log(`[Transform] ✓ Catch records preserved: ${preservedCatches.length} catches`);
-              
-              // 댓글 레코드 보존
-              const existingComments = await base44.asServiceRole.entities.Comment.filter({ festival_id: rawData.festival_id });
-              preservedComments = existingComments.map(c => ({
-                user_email: c.user_email,
-                user_name: c.user_name,
-                content: c.content,
-                likes_count: c.likes_count || 0,
-                parent_id: c.parent_id
-              }));
-              console.log(`[Transform] ✓ Comment records preserved: ${preservedComments.length} comments`);
-              
-              // YouTube Shorts 보존 (5개 이상이면)
-              if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
-                preservedYoutubeShorts = existing.youtube_shorts_urls;
-                console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
-              }
-              
-              // 관리자 수동 입력 필드 보존
-              preservedAdminFields = {
-                video_url: existing.video_url || '',
-                website: existing.website || '',
-                contact: existing.contact || {},
-                social_media: existing.social_media || {},
-                star_rating: existing.star_rating || 0
-              };
-              
-              if (preservedAdminFields.video_url) {
-                console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
-              }
-              if (preservedAdminFields.website) {
-                console.log(`[Transform] ✓ website preserved (admin manual input)`);
-              }
-              if (preservedAdminFields.star_rating > 0) {
-                console.log(`[Transform] ✓ star_rating preserved: ${preservedAdminFields.star_rating}`);
-              }
-              
-              // 기존 Festival 삭제
-              await base44.asServiceRole.entities.Festival.delete(rawData.festival_id);
-              console.log(`[Transform] 🗑️ Existing Festival deleted`);
+          if (existingFestivals && existingFestivals.length > 0) {
+            const existing = existingFestivals[0];
+            existingFestivalId = existing.id;
+            console.log(`[Transform] ✓ Found existing Festival (ID: ${existingFestivalId})`);
+            
+            preservedUserData = {
+              likes_count: existing.likes_count || 0,
+              catches_count: existing.catches_count || 0,
+              comments_count: existing.comments_count || 0
+            };
+            console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
+            
+            // 좋아요 레코드 보존
+            const existingLikes = await base44.asServiceRole.entities.FestivalLike.filter({ festival_id: existingFestivalId });
+            preservedLikes = existingLikes.map(like => ({
+              user_email: like.user_email
+            }));
+            console.log(`[Transform] ✓ FestivalLike records preserved: ${preservedLikes.length} likes`);
+            
+            // 캐치 레코드 보존
+            const existingCatches = await base44.asServiceRole.entities.Catch.filter({ festival_id: existingFestivalId });
+            preservedCatches = existingCatches.map(c => ({
+              user_email: c.user_email,
+              user_name: c.user_name,
+              image_url: c.image_url,
+              location: c.location,
+              latitude: c.latitude,
+              longitude: c.longitude,
+              likes_count: c.likes_count || 0
+            }));
+            console.log(`[Transform] ✓ Catch records preserved: ${preservedCatches.length} catches`);
+            
+            // 댓글 레코드 보존
+            const existingComments = await base44.asServiceRole.entities.Comment.filter({ festival_id: existingFestivalId });
+            preservedComments = existingComments.map(c => ({
+              user_email: c.user_email,
+              user_name: c.user_name,
+              content: c.content,
+              likes_count: c.likes_count || 0,
+              parent_id: c.parent_id
+            }));
+            console.log(`[Transform] ✓ Comment records preserved: ${preservedComments.length} comments`);
+            
+            // YouTube Shorts 보존 (5개 이상이면)
+            if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
+              preservedYoutubeShorts = existing.youtube_shorts_urls;
+              console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
             }
             
-            // festival_id 초기화
-            await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
-              festival_id: null,
-              processing_status: 'pending'
-            });
-          } catch (deleteError) {
-            console.error(`[Transform] Failed to delete existing Festival:`, deleteError.message);
-            // 삭제 실패해도 계속 진행 (Festival이 이미 삭제되었을 수도 있음)
+            // 관리자 수동 입력 필드 보존
+            preservedAdminFields = {
+              video_url: existing.video_url || '',
+              website: existing.website || '',
+              contact: existing.contact || {},
+              social_media: existing.social_media || {},
+              star_rating: existing.star_rating || 0
+            };
+            
+            if (preservedAdminFields.video_url) {
+              console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
+            }
+            if (preservedAdminFields.website) {
+              console.log(`[Transform] ✓ website preserved (admin manual input)`);
+            }
+            if (preservedAdminFields.star_rating > 0) {
+              console.log(`[Transform] ✓ star_rating preserved: ${preservedAdminFields.star_rating}`);
+            }
+            
+            // 기존 Festival 삭제
+            await base44.asServiceRole.entities.Festival.delete(existingFestivalId);
+            console.log(`[Transform] 🗑️ Existing Festival deleted (ID: ${existingFestivalId})`);
+          } else {
+            console.log(`[Transform] ℹ️ No existing Festival found with name "${rawData.title}" - will create new`);
           }
+        } catch (searchError) {
+          console.error(`[Transform] Failed to search/delete existing Festival:`, searchError.message);
+          // 검색/삭제 실패해도 계속 진행
         }
         
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
