@@ -230,6 +230,20 @@ export default function AdminDashboard() {
     }
   };
 
+  // 검색 결과만 선택/해제
+  const handleSelectSearchResults = () => {
+    const searchResultIds = new Set(filteredFestivals.map(f => f.id));
+    const allSearchResultsSelected = filteredFestivals.every(f => selectedFestivals.has(f.id));
+    
+    if (allSearchResultsSelected) {
+      // 검색 결과만 해제
+      setSelectedFestivals(new Set(Array.from(selectedFestivals).filter(id => !searchResultIds.has(id))));
+    } else {
+      // 검색 결과만 선택
+      setSelectedFestivals(new Set([...selectedFestivals, ...searchResultIds]));
+    }
+  };
+
   // 개별 선택/해제
   const handleSelectFestival = (festivalId) => {
     const newSelected = new Set(selectedFestivals);
