@@ -299,6 +299,10 @@ export default function AdminDashboard() {
     );
   });
 
+  // 검색 결과 모두 선택 여부
+  const allSearchResultsSelected = filteredFestivals.length > 0 && 
+    filteredFestivals.every(f => selectedFestivals.has(f.id));
+
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* 삭제 진행 상황 모달 */}
