@@ -44,27 +44,35 @@ Deno.serve(async (req) => {
       return homepage.replace(/<[^>]*>/g, '').trim();
     };
     
-    // 웹사이트 URL 파싱 - 여러 개의 링크 분리
+    // 웹사이트 URL 파싱 및 검증
     const parseWebsiteUrls = (homepage) => {
       if (!homepage) return '';
       
       // HTML 태그 제거
       let cleaned = homepage.replace(/<[^>]*>/g, '').trim();
       
-      // 여러 URL 패턴 찾기
-      const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
-      const matches = cleaned.match(urlPattern);
-      
-      if (matches && matches.length > 1) {
-        // 여러 개의 URL이 있는 경우 첫 번째만 반환
-        console.log(`[Transform] 📎 Found ${matches.length} URLs, using first one: ${matches[0]}`);
-        return matches[0].trim();
-      } else if (matches && matches.length === 1) {
-        return matches[0].trim();
+      if (!cleaned) return '';
+
+      // 완전한 URL (http 또는 https로 시작) 패턴 찾기
+      const fullUrlPattern = /(https?:\/\/[^\s\)]+)/gi;
+      const fullUrlMatches = cleaned.match(fullUrlPattern);
+
+      if (fullUrlMatches && fullUrlMatches.length > 0) {
+        // 여러 개의 완전한 URL이 있는 경우 첫 번째만 반환
+        console.log(`[Transform] 📎 Found ${fullUrlMatches.length} full URLs, using first one: ${fullUrlMatches[0]}`);
+        return fullUrlMatches[0].trim();
       }
       
-      // URL 패턴이 없으면 원본 반환
-      return cleaned;
+      // http/https가 없지만 www. 또는 도메인 형식으로 시작하는 경우
+      const domainPattern = /^(www\.|[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?$/i;
+      if (domainPattern.test(cleaned)) {
+        console.log(`[Transform] 🌐 Appending https:// to: ${cleaned}`);
+        return `https://${cleaned}`;
+      }
+      
+      // 그 외의 경우 (유효한 URL이 아니라고 판단)
+      console.log(`[Transform] 🚫 Invalid URL format, returning empty: ${cleaned}`);
+      return '';
     };
     
     // 중복 문장 제거
