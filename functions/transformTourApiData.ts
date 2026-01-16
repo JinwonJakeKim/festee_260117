@@ -589,11 +589,11 @@ Deno.serve(async (req) => {
           throw new Error(`GOOGLE_SEARCH_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
-        // Google Custom Search API - 이미지 검색
+        // Google Custom Search API - 이미지 검색 (포스터 이미지 제외)
         const searchParams = new URLSearchParams({
           key: googleApiKey,
           cx: searchEngineId,
-          q: festivalName,
+          q: `${festivalName} -포스터 -poster -현수막 -banner -기간 -일시`,
           searchType: 'image',
           num: '10',
           imgSize: 'large',
@@ -1416,28 +1416,7 @@ ${context}
         
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
-        // ===== media_urls 구성 (여러 이미지) =====
-        const mediaUrls = [];
-        
-        // 1. TourAPI 이미지 추가 (imageGallery)
-        imageGallery.forEach(img => {
-          mediaUrls.push({
-            type: 'image',
-            url: img.originimgurl,
-            caption: img.imgname || rawData.title
-          });
-        });
-        
-        // 2. Google 이미지 추가 (최대 10개)
-        googleImages.forEach((imageUrl, index) => {
-          mediaUrls.push({
-            type: 'image',
-            url: imageUrl,
-            caption: `${rawData.title} - 이미지 ${index + 1}`
-          });
-        });
-        
-        console.log(`[Transform] 📸 Prepared ${mediaUrls.length} media items (${imageGallery.length} from TourAPI, ${googleImages.length} from Google Images)`);
+        console.log(`[Transform] 📸 TourAPI gallery: ${imageGallery.length} images, Google Images: ${googleImages.length} images`);
         
         // ===== 최종 태그 구성 =====
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
@@ -1497,7 +1476,26 @@ ${context}
             : topVideoUrl,
           
           youtube_shorts_urls: youtubeShorts,
-          media_urls: mediaUrls,
+          media_urls: [
+            // 1. 대표 이미지 (thumbnail)
+            {
+              type: 'image',
+              url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+              caption: rawData.title
+            },
+            // 2. TourAPI 갤러리 이미지
+            ...imageGallery.map(img => ({
+              type: 'image',
+              url: img.originimgurl,
+              caption: img.imgname || rawData.title
+            })),
+            // 3. Google 이미지 검색 결과
+            ...googleImages.map((imageUrl, index) => ({
+              type: 'image',
+              url: imageUrl,
+              caption: `${rawData.title} - 이미지 ${index + 1}`
+            }))
+          ],
           
           // 웹사이트: 재변환 시 기존값 유지
           website: retransform && preservedAdminFields.website 
@@ -1538,7 +1536,11 @@ ${context}
           restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
           recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
           schedule: scheduleItems,
-          image_gallery_urls: imageGallery
+          image_gallery_urls: imageGallery,
+          restrictions_ko: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
+          restrictions_en: [],
+          recommendations_ko: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
+          recommendations_en: []
         };
         
         const createdFestival = await base44.asServiceRole.entities.Festival.create(festival);
