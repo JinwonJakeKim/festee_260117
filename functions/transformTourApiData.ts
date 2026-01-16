@@ -818,11 +818,12 @@ ${context}
         let preservedLikes = [];
         let preservedCatches = [];
         let preservedComments = [];
+        let existingFestivalId = null;
         
-        if (retransform && rawData.festival_id) {
-          try {
-            console.log(`[Transform] 🔄 Retrieving existing Festival data (ID: ${rawData.festival_id})...`);
-            const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+        // 축제명으로 기존 Festival 검색
+        try {
+          console.log(`[Transform] 🔍 Searching for existing Festival by name: "${rawData.title}"...`);
+          const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ name: rawData.title });
             
             if (existingFestivals && existingFestivals.length > 0) {
               const existing = existingFestivals[0];
