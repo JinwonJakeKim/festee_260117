@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -215,11 +214,18 @@ export default function Search() {
 
     return festivals.filter(festival => {
       try {
-        // 검색어 매칭 - 안전한 문자열 비교
+        // 검색어 매칭 - 안전한 문자열 비교 (다국어 필드 포함)
         const matchesQuery =
           safeStringIncludes(festival.name, searchQuery) ||
+          safeStringIncludes(festival.name_ko, searchQuery) ||
+          safeStringIncludes(festival.name_en, searchQuery) ||
+          safeStringIncludes(festival.name_jp, searchQuery) ||
+          safeStringIncludes(festival.name_zh, searchQuery) ||
           safeStringIncludes(festival.city, searchQuery) ||
-          safeStringIncludes(festival.country, searchQuery);
+          safeStringIncludes(festival.country, searchQuery) ||
+          safeStringIncludes(festival.summary, searchQuery) ||
+          safeStringIncludes(festival.description, searchQuery) ||
+          (festival.tags && festival.tags.some(tag => safeStringIncludes(tag, searchQuery)));
 
         if (!matchesQuery) return false;
 
