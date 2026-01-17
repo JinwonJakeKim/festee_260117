@@ -1578,10 +1578,13 @@ ${context}
     console.log(`[Transform] Success: ${festivals.length}`);
     console.log(`[Transform] Failed: ${errors.length}`);
     
+    // JSON serialization safe response - 순환 참조 제거
+    const festivalIds = festivals.map(f => f.id);
+    
     return Response.json({
       success: true,
       festivals_created: festivals.length,
-      festivals: festivals,
+      festival_ids: festivalIds,
       message: `${festivals.length}개의 축제가 처리되었습니다.`,
       errors: errors.length > 0 ? errors : undefined
     });
