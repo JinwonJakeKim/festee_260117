@@ -39,13 +39,16 @@ Deno.serve(async (req) => {
     });
 
     console.log('[AutoTransform] ========== AUTO TRANSFORM COMPLETED ==========');
-    console.log(`[AutoTransform] Result:`, transformResult);
+    console.log(`[AutoTransform] Result:`, transformResult?.data);
 
+    // transformResult.data에서 필요한 정보만 추출
+    const resultData = transformResult?.data || {};
+    
     return Response.json({
       success: true,
-      message: `${transformResult.festivals_created || 0}개의 축제가 자동 변환되었습니다.`,
-      processed: transformResult.festivals_created || 0,
-      details: transformResult
+      message: `${resultData.festivals_created || 0}개의 축제가 자동 변환되었습니다.`,
+      processed: resultData.festivals_created || 0,
+      festivals_count: resultData.festivals_created || 0
     });
 
   } catch (error) {
