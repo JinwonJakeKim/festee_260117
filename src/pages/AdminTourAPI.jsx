@@ -191,18 +191,32 @@ export default function AdminTourAPI() {
 
 
   const runSyncNowMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('syncTourApiData', {});
-      return response.data;
-    },
-    onSuccess: (data) => {
-      refetchRawData();
-      alert(`✅ 동기화가 완료되었습니다!\n\n원본 데이터 수집: ${data.summary?.raw_data_fetched || 0}개\nFestival 생성: ${data.summary?.festivals_created || 0}개`);
-    },
-    onError: (error) => {
-      alert(`동기화 실패:\n\n${error.message}`);
-    }
-  });
+      mutationFn: async () => {
+        const response = await base44.functions.invoke('syncTourApiData', {});
+        return response.data;
+      },
+      onSuccess: (data) => {
+        refetchRawData();
+        alert(`✅ 동기화가 완료되었습니다!\n\n원본 데이터 수집: ${data.summary?.raw_data_fetched || 0}개\nFestival 생성: ${data.summary?.festivals_created || 0}개`);
+      },
+      onError: (error) => {
+        alert(`동기화 실패:\n\n${error.message}`);
+      }
+    });
+
+    const startTransformNowMutation = useMutation({
+      mutationFn: async () => {
+        const response = await base44.functions.invoke('autoTransformPendingData', {});
+        return response.data;
+      },
+      onSuccess: (data) => {
+        refetchRawData();
+        alert(`✅ 변환이 시작되었습니다!\n\n처리된 축제: ${data.processed || 0}개`);
+      },
+      onError: (error) => {
+        alert(`변환 실패:\n\n${error.message}`);
+      }
+    });
 
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -628,6 +642,29 @@ export default function AdminTourAPI() {
                 </p>
               )}
               <div className="flex gap-2 ml-auto">
+                {pendingData.length > 0 && (
+                  <Button
+                    onClick={() => {
+                      if (confirm(`대기 중인 ${pendingData.length}개의 축제를 지금 변환하시겠습니까?`)) {
+                        startTransformNowMutation.mutate();
+                      }
+                    }}
+                    disabled={startTransformNowMutation.isPending}
+                    className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                  >
+                    {startTransformNowMutation.isPending ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        변환 중...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        지금 변환 시작 ({pendingData.length})
+                      </>
+                    )}
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     const allFilteredIds = filteredRawDataList.map(r => r.id);
