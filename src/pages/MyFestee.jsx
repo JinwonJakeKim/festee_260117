@@ -173,9 +173,11 @@ export default function MyFestee() {
   const updateNameMutation = useMutation({
     mutationFn: async (newName) => {
       await base44.auth.updateMe({ full_name: newName });
+      return newName;
     },
-    onSuccess: async () => {
+    onSuccess: async (newName) => {
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      await queryClient.refetchQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
     },
   });
