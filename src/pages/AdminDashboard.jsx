@@ -851,7 +851,7 @@ export default function AdminDashboard() {
               <p className="text-gray-300 text-sm mb-3">
                 외부 API 연동 현황과 일일 사용량을 확인할 수 있습니다.
               </p>
-              <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-4 text-xs flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-400">🇰🇷 한국 시각:</span>
                   <span className="text-white font-mono font-bold">
@@ -859,12 +859,15 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">🇺🇸 SF 시각:</span>
+                  <span className="text-gray-400">🌐 UTC 시각:</span>
                   <span className="text-white font-mono font-bold">
-                    {new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                    {new Date().toLocaleString('en-US', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </span>
                 </div>
               </div>
+              <p className="text-gray-400 text-xs mt-2">
+                ※ Google, YouTube API 사용량은 UTC 자정 기준 리셋
+              </p>
             </Card>
 
             <div className="space-y-3">
