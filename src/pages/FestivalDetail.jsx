@@ -77,7 +77,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           const isPlaying = playingIndex === idx;
 
           return (
-            <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden snap-start" style={{ width: '70vw', height: 'calc(70vw * 16 / 9)' }}>
+            <div key={idx} className="flex-shrink-0 relative bg-gray-900 rounded-lg overflow-hidden snap-start w-[280px] h-[498px]">
               {isPlaying ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
@@ -113,8 +113,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
         
         <button
           onClick={handleMoreClick}
-          className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6 snap-start"
-          style={{ width: '70vw', height: 'calc(70vw * 16 / 9)' }}
+          className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6 snap-start w-[280px] h-[498px]"
           >
           <Youtube className="w-8 h-8" />
           <span className="text-sm text-center">YouTube에서<br/>더보기</span>
@@ -612,7 +611,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
   console.log('Has \\n:', localizedDescription.includes('\n'));
 
   return (
-    <div className="min-h-screen bg-black pb-20">
+    <div className="min-h-screen bg-black pb-20 overflow-x-hidden">
       {/* Login Prompt Modal */}
       <LoginPromptModal
         isOpen={showLoginModal}
@@ -834,7 +833,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         </div>
 
         {(festival.category || (festival.tags && festival.tags.length > 0)) && (
-          <div className="flex gap-2 mb-4 flex-wrap">
+          <div className="flex gap-2 mb-4 flex-wrap max-w-full">
             {/* 카테고리 - 아이콘 포함한 채워진 그라데이션 배지 (약간 둥근 사각형) */}
             {festival.category && (
               <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 font-bold rounded-lg px-4 py-1 flex items-center gap-1.5">
