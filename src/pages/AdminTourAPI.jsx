@@ -608,6 +608,13 @@ export default function AdminTourAPI() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                onClick={() => refetchRawData()}
+                variant="outline"
+                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-900/20"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* 필터 결과 표시 및 선택 버튼 */}
