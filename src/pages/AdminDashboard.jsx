@@ -848,9 +848,23 @@ export default function AdminDashboard() {
                 <Globe className="w-5 h-5 text-blue-400" />
                 연동된 API
               </h3>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-sm mb-3">
                 외부 API 연동 현황과 일일 사용량을 확인할 수 있습니다.
               </p>
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">🇰🇷 한국 시각:</span>
+                  <span className="text-white font-mono font-bold">
+                    {new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">🇺🇸 SF 시각:</span>
+                  <span className="text-white font-mono font-bold">
+                    {new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                  </span>
+                </div>
+              </div>
             </Card>
 
             <div className="space-y-3">
