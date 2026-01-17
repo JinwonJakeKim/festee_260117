@@ -617,8 +617,16 @@ Deno.serve(async (req) => {
           return [];
         }
         
-        const imageUrls = data.items.map(item => item.link).filter(url => url);
-        console.log(`[Transform] ✅ Found ${imageUrls.length} images from Google`);
+        // HTTPS 이미지만 필터링
+        const imageUrls = data.items
+          .map(item => item.link)
+          .filter(url => url && url.startsWith('https://'));
+        
+        const filteredCount = data.items.length - imageUrls.length;
+        if (filteredCount > 0) {
+          console.log(`[Transform] 🔒 Filtered out ${filteredCount} HTTP images (HTTPS only)`);
+        }
+        console.log(`[Transform] ✅ Found ${imageUrls.length} HTTPS images from Google`);
         
         return imageUrls;
         
