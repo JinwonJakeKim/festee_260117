@@ -35,13 +35,10 @@ export default function AdminTourAPI() {
   const [isFetching, setIsFetching] = useState(false);
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
-  const [isTransforming, setIsTransforming] = useState(false);
-  const [isRetransforming, setIsRetransforming] = useState(false);
-  const [transformProgress, setTransformProgress] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 최대 변환 개수 제한
-  const MAX_TRANSFORM_COUNT = 10;
+  // 최대 변환 개수 제한 제거 (자동화 모드)
+  const MAX_TRANSFORM_COUNT = 999;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -113,101 +110,34 @@ export default function AdminTourAPI() {
       return;
     }
 
-    // 최대 개수 체크
-    if (rawDataIds.length > MAX_TRANSFORM_COUNT) {
-      alert(`⚠️ 한 번에 최대 ${MAX_TRANSFORM_COUNT}개까지만 변환할 수 있습니다.\n\n현재 선택: ${rawDataIds.length}개\n\n서버 안정성을 위해 더 작은 단위로 나누어 변환해주세요.`);
-      return;
-    }
-
     const actionText = isRetransform ? '재변환' : '변환';
     const warningText = isRetransform 
       ? '\n\n⚠️ 기존 Festival 데이터가 삭제되고 새로 생성됩니다!'
       : '';
     
-    const confirmMessage = `${rawDataIds.length}개의 데이터를 Festival로 ${actionText}하시겠습니까?\n\n⏱️ 예상 소요 시간: 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분${warningText}`;
+    const confirmMessage = `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하시겠습니까?\n\n⏱️ 자동화가 5분 이내에 백그라운드에서 변환을 시작합니다.\n변환 완료까지 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분 소요됩니다.${warningText}`;
     
     if (!confirm(confirmMessage)) {
       return;
     }
-
-    // 각각 별도의 진행 상태로 관리
-    if (isRetransform) {
-      setIsRetransforming(true);
-    } else {
-      setIsTransforming(true);
-    }
-
-    // 진행률 초기화
-    setTransformProgress({
-      total: rawDataIds.length,
-      current: 0,
-      isRetransform: isRetransform
-    });
     
     try {
-      console.log(`[AdminTourAPI] Calling transformTourApiData (retransform: ${isRetransform})...`);
-      const response = await base44.functions.invoke('transformTourApiData', {
-        rawDataIds: rawDataIds,
-        retransform: isRetransform
-      });
-
-      console.log('[AdminTourAPI] Transform response:', response.data);
-
-      if (response.data.success) {
-        const message = isRetransform 
-          ? `✅ ${response.data.festivals_created}개의 축제가 재변환되었습니다!`
-          : `✅ ${response.data.festivals_created}개의 축제가 생성되었습니다!`;
-        
-        // 진행률 완료 처리
-        setTransformProgress({
-          total: rawDataIds.length,
-          current: rawDataIds.length,
-          isRetransform: isRetransform,
-          completed: true
+      // 선택된 레코드들의 processing_status를 pending으로 업데이트
+      for (const id of rawDataIds) {
+        await base44.entities.TourApiRawData.update(id, {
+          processing_status: 'pending',
+          error_message: ''
         });
-        
-        setTimeout(() => {
-          alert(message);
-          setTransformProgress(null);
-          refetchRawData();
-          queryClient.invalidateQueries({ queryKey: ['festivals'] });
-          setSelectedRawData([]);
-        }, 1000);
-      } else {
-        setTransformProgress(null);
-        alert(`${actionText} 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error}`);
       }
+      
+      alert(`✅ ${rawDataIds.length}개의 축제가 변환 대기열에 추가되었습니다.\n\n자동화가 곧 처리를 시작합니다. 이 페이지를 닫아도 괜찮습니다.`);
+      
+      setSelectedRawData([]);
+      refetchRawData();
+      
     } catch (error) {
-      console.error('[AdminTourAPI] Transform error:', error);
-      setTransformProgress(null);
-      
-      // 504 Gateway Timeout 에러 체크
-      if (error.response?.status === 504 || error.message?.includes('504')) {
-        alert(`⏱️ 504 Gateway Timeout\n\n데이터 처리 시간이 너무 오래 걸려 타임아웃이 발생했습니다.\n\n💡 해결 방법:\n• 한 번에 처리하는 개수를 5개 이하로 줄여주세요\n• 일부 데이터는 처리되었을 수 있으니 페이지를 새로고침하여 확인해주세요\n• 남은 데이터는 다시 선택하여 변환해주세요\n\n원문 에러: ${error.message}`);
-        refetchRawData();
-        return;
-      }
-      
-      // API 제한 에러 체크
-      if (error.response?.status === 429) {
-        const errorData = error.response?.data;
-        if (errorData?.error_type === 'google_search') {
-          alert('🚫 Google Custom Search API 하루 100회 무료 쿼리를 소진하였습니다.\n\n내일 다시 시도해주세요.');
-          return;
-        }
-        if (errorData?.error_type === 'youtube') {
-          alert('🚫 YouTube Data API 하루 100회 무료 쿼리를 소진하였습니다.\n\n내일 다시 시도해주세요.');
-          return;
-        }
-      }
-      
-      alert(`${actionText} 중 오류가 발생했습니다:\n\n${error.message}`);
-    } finally {
-      if (isRetransform) {
-        setIsRetransforming(false);
-      } else {
-        setIsTransforming(false);
-      }
+      console.error('[AdminTourAPI] Status update error:', error);
+      alert(`상태 업데이트 중 오류가 발생했습니다:\n\n${error.message}`);
     }
   };
 
@@ -216,12 +146,6 @@ export default function AdminTourAPI() {
       const newSelection = prev.includes(id)
         ? prev.filter(i => i !== id)
         : [...prev, id];
-      
-      // 최대 개수 초과 체크
-      if (newSelection.length > MAX_TRANSFORM_COUNT) {
-        alert(`⚠️ 최대 ${MAX_TRANSFORM_COUNT}개까지만 선택할 수 있습니다.`);
-        return prev;
-      }
       
       return newSelection;
     });
@@ -388,35 +312,6 @@ export default function AdminTourAPI() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
-      {/* 진행률 팝업 */}
-      {transformProgress && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <Card className="bg-gray-900 border-gray-800 p-6 w-80">
-            <h3 className="text-white font-bold mb-4 text-center">
-              {transformProgress.isRetransform ? '재변환' : '변환'} 진행 중
-            </h3>
-            <div className="space-y-3">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-cyan-400 mb-1">
-                  {transformProgress.completed ? '100' : Math.round((transformProgress.current / transformProgress.total) * 100)}%
-                </div>
-                <div className="text-gray-400 text-sm">
-                  {transformProgress.current} / {transformProgress.total}
-                </div>
-              </div>
-              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-500"
-                  style={{ width: `${transformProgress.completed ? 100 : (transformProgress.current / transformProgress.total) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-center">
-                <Loader className="w-6 h-6 text-cyan-400 animate-spin" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -566,14 +461,14 @@ export default function AdminTourAPI() {
             <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
               <h3 className="text-white font-bold mb-2 flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-purple-400" />
-                2단계: 원본 데이터를 Festival로 변환
+                2단계: 원본 데이터를 Festival로 변환 (자동화)
               </h3>
               <ul className="text-gray-300 text-sm space-y-1">
-                <li>✓ 저장된 원본 데이터를 Festival 엔티티로 변환</li>
-                <li>✓ 이미 변환된 데이터도 재변환 가능 (기존 데이터 삭제 후 재생성)</li>
-                <li>✓ 실패한 데이터는 언제든지 재처리 가능</li>
-                <li>✓ 원본 데이터는 보관되므로 안전</li>
-                <li className="text-yellow-400 font-medium">⚠️ 한 번에 최대 {MAX_TRANSFORM_COUNT}개까지만 변환 가능</li>
+                <li>✓ 변환 버튼 클릭 시 대기열에 추가되며, 자동화가 백그라운드에서 처리</li>
+                <li>✓ 5분마다 최대 10개씩 자동 변환 (타임아웃 없음)</li>
+                <li>✓ 변환 완료까지 페이지를 닫아도 됩니다</li>
+                <li>✓ 실패한 데이터는 자동으로 재시도 가능</li>
+                <li className="text-cyan-400 font-medium">💡 원하는 만큼 선택 가능 - 자동으로 순차 처리됩니다</li>
               </ul>
             </Card>
 
@@ -634,16 +529,13 @@ export default function AdminTourAPI() {
                       alert('새롭게 변환할 수 있는 대기 중인 데이터가 없습니다.');
                       return;
                     }
-                    const allNewIds = pendingNewData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                    const allNewIds = pendingNewData.map(r => r.id);
                     setSelectedRawData(allNewIds);
-                    if (pendingNewData.length > MAX_TRANSFORM_COUNT) {
-                      alert(`⚠️ 신규 데이터가 ${pendingNewData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
-                    }
                   }}
                   variant="outline"
                   className="flex-1 border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
                 >
-                  대기중 축제 {Math.min(pendingNewData.length, MAX_TRANSFORM_COUNT)}개 선택
+                  대기중 축제 전체 선택 ({pendingNewData.length}개)
                 </Button>
                 <Button
                   onClick={() => {
@@ -660,20 +552,11 @@ export default function AdminTourAPI() {
                   disabled={selectedRawData.filter(id => {
                     const item = rawDataList.find(r => r.id === id);
                     return item?.processing_status === 'pending' && !item?.festival_id;
-                  }).length === 0 || isTransforming || isRetransforming}
+                  }).length === 0}
                   className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                 >
-                  {isTransforming && !isRetransforming ? (
-                    <>
-                      <Loader className="w-4 h-4 mr-2 animate-spin" />
-                      변환 중...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      변환하기
-                    </>
-                  )}
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  대기열에 추가
                 </Button>
               </div>
 
@@ -793,16 +676,13 @@ export default function AdminTourAPI() {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => {
-                      const allExistingPendingIds = pendingExistingData.slice(0, MAX_TRANSFORM_COUNT).map(r => r.id);
+                      const allExistingPendingIds = pendingExistingData.map(r => r.id);
                       setSelectedRawData(allExistingPendingIds);
-                      if (pendingExistingData.length > MAX_TRANSFORM_COUNT) {
-                        alert(`⚠️ 기존 데이터가 ${pendingExistingData.length}개 있지만, 서버 안정성을 위해 최대 ${MAX_TRANSFORM_COUNT}개만 선택되었습니다.`);
-                      }
                     }}
                     variant="outline"
                     className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
                   >
-                    대기중 축제 {Math.min(pendingExistingData.length, MAX_TRANSFORM_COUNT)}개 선택
+                    대기중 축제 전체 선택 ({pendingExistingData.length}개)
                   </Button>
                   <Button
                     onClick={() => {
@@ -819,20 +699,11 @@ export default function AdminTourAPI() {
                     disabled={selectedRawData.filter(id => {
                       const item = rawDataList.find(r => r.id === id);
                       return item?.festival_id && item?.processing_status === 'pending';
-                    }).length === 0 || isTransforming || isRetransforming}
+                    }).length === 0}
                     className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  >
-                    {isRetransforming && !isTransforming ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        재변환 중...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        재변환하기
-                      </>
-                    )}
+                    >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    대기열에 추가
                   </Button>
                 </div>
 
@@ -948,10 +819,9 @@ export default function AdminTourAPI() {
                           {/* 개별 재변환 버튼 */}
                           <Button
                             onClick={() => handleTransform([raw.id], true)}
-                            disabled={isTransforming || isRetransforming}
                             size="sm"
                             className="bg-orange-500 hover:bg-orange-600 text-white"
-                            title="이 항목만 재변환"
+                            title="대기열에 추가"
                           >
                             <RefreshCw className="w-4 h-4" />
                           </Button>
@@ -981,18 +851,9 @@ export default function AdminTourAPI() {
 
             {/* 선택 개수 안내 */}
             {selectedRawData.length > 0 && (
-              <Card className={`p-3 ${
-                selectedRawData.length > MAX_TRANSFORM_COUNT 
-                  ? 'bg-red-900/20 border-red-400/30' 
-                  : 'bg-blue-900/20 border-blue-400/30'
-              }`}>
-                <p className={`text-sm text-center ${
-                  selectedRawData.length > MAX_TRANSFORM_COUNT ? 'text-red-400' : 'text-blue-400'
-                }`}>
-                  {selectedRawData.length > MAX_TRANSFORM_COUNT 
-                    ? `⚠️ ${selectedRawData.length}개 선택됨 - 최대 ${MAX_TRANSFORM_COUNT}개까지만 가능합니다.`
-                    : `✓ ${selectedRawData.length}개 선택됨 (예상 소요시간: 약 ${Math.ceil(selectedRawData.length * 30 / 60)}초)`
-                  }
+              <Card className="p-3 bg-blue-900/20 border-blue-400/30">
+                <p className="text-sm text-center text-blue-400">
+                  ✓ {selectedRawData.length}개 선택됨 (자동화가 백그라운드에서 처리합니다)
                 </p>
               </Card>
             )}
