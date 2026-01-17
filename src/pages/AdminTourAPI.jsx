@@ -161,6 +161,19 @@ export default function AdminTourAPI() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await base44.entities.TourApiRawData.delete(id);
+      }
+    },
+    onSuccess: (_, ids) => {
+      refetchRawData();
+      setSelectedRawData([]);
+      alert(`${ids.length}개의 원본 데이터가 삭제되었습니다`);
+    },
+  });
+
 
 
   const runSyncNowMutation = useMutation({
@@ -503,12 +516,63 @@ export default function AdminTourAPI() {
               className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
             />
 
-            {/* 검색 결과 표시 */}
-            {searchQuery && (
-              <p className="text-gray-400 text-sm">
-                검색 결과: {filteredRawDataList.length}개
-              </p>
-            )}
+            {/* 검색 결과 표시 및 선택 버튼 */}
+            <div className="flex items-center justify-between gap-3">
+              {searchQuery && (
+                <p className="text-gray-400 text-sm">
+                  검색 결과: {filteredRawDataList.length}개
+                </p>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  onClick={() => {
+                    const allFilteredIds = filteredRawDataList.map(r => r.id);
+                    setSelectedRawData(allFilteredIds);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                >
+                  {searchQuery ? '검색 결과 전체 선택' : '전체 선택'} ({filteredRawDataList.length}개)
+                </Button>
+                <Button
+                  onClick={() => setSelectedRawData([])}
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  disabled={selectedRawData.length === 0}
+                >
+                  선택 해제
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedRawData.length === 0) {
+                      alert('삭제할 데이터를 선택해주세요');
+                      return;
+                    }
+                    if (confirm(`선택한 ${selectedRawData.length}개의 원본 데이터를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
+                      bulkDeleteMutation.mutate(selectedRawData);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-red-600 text-red-400 hover:bg-red-900/20"
+                  disabled={selectedRawData.length === 0 || bulkDeleteMutation.isPending}
+                >
+                  {bulkDeleteMutation.isPending ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-1 animate-spin" />
+                      삭제 중...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      일괄 삭제 ({selectedRawData.length})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
             {/* 신규 변환 섹션 - 항상 표시 */}
             <div className="space-y-3 border border-purple-800/50 rounded-lg p-4 bg-purple-900/10">
