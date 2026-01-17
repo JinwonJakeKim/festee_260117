@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -441,18 +442,16 @@ FESTEE에서 더 자세히 확인하세요 👉`;
     }
   };
 
-  // 수정된 미디어 배열 생성 로직
+  // 수정된 미디어 배열 생성 로직 - media_urls 순서 정확히 반영
   const mediaItems = React.useMemo(() => {
     const items = [];
     const addedUrls = new Set();
 
-    console.log('🎬 Building mediaItems for festival:', festival?.name);
-    console.log('📹 video_url:', festival?.video_url);
-    console.log('🖼️ thumbnail_url:', festival?.thumbnail_url);
-    console.log('🎞️ media_urls:', festival?.media_urls);
-    console.log('🖼️ image_gallery_urls length:', festival?.image_gallery_urls?.length);
+    console.log('[FestivalDetail] 🎬 Building mediaItems for festival:', festival?.name);
+    console.log('[FestivalDetail] 📹 video_url:', festival?.video_url);
+    console.log('[FestivalDetail] 🎞️ media_urls:', festival?.media_urls);
 
-    // 1. 기존 video_url이 있으면 첫 번째로 추가
+    // 1. video_url이 있으면 가장 먼저 추가
     if (festival?.video_url && !addedUrls.has(festival.video_url)) {
       const isYoutube = festival.video_url.includes('youtube.com') || festival.video_url.includes('youtu.be');
       items.push({
@@ -461,21 +460,10 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         caption: `${festival.name} - 공식 영상`
       });
       addedUrls.add(festival.video_url);
-      console.log('✅ Added video_url:', festival.video_url);
+      console.log('[FestivalDetail] ✅ Added video_url:', festival.video_url);
     }
 
-    // 2. thumbnail_url을 항상 추가 (대표 이미지 - TourAPI)
-    if (festival?.thumbnail_url && !addedUrls.has(festival.thumbnail_url)) {
-      items.push({
-        type: 'image',
-        url: festival.thumbnail_url,
-        caption: festival.name
-      });
-      addedUrls.add(festival.thumbnail_url);
-      console.log('✅ Added thumbnail_url (TourAPI):', festival.thumbnail_url);
-    }
-
-    // 3. media_urls 배열 추가 (YouTube 썸네일이 여기에 포함됨)
+    // 2. media_urls 배열을 순서대로 추가 (thumbnail_url은 이미 media_urls[0]에 포함)
     if (festival?.media_urls && festival.media_urls.length > 0) {
       festival.media_urls.forEach((media, index) => {
         let currentUrl = null;
@@ -484,8 +472,11 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
         if (typeof media === 'string') {
           currentUrl = media;
-          if (media.includes('youtube.com') || media.includes('youtu.be') || media.includes('ytimg.com')) {
-            currentType = 'image'; // YouTube 썸네일도 이미지로 처리
+          if (media.includes('ytimg.com')) {
+            currentType = 'image';
+            currentCaption = `YouTube 썸네일`;
+          } else if (media.includes('youtube.com') || media.includes('youtu.be')) {
+            currentType = 'youtube';
           } else if (media.match(/\.(mp4|webm|ogg)$/i)) {
             currentType = 'video';
           } else {
@@ -493,7 +484,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           }
         } else if (typeof media === 'object' && media !== null && media.url) {
           currentUrl = media.url;
-          const isYoutubeThumbnail = media.url.includes('ytimg.com') || media.caption?.includes('YouTube');
+          const isYoutubeThumbnail = media.url.includes('ytimg.com');
           if (isYoutubeThumbnail) {
             currentType = 'image';
           } else {
@@ -512,22 +503,21 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             caption: currentCaption
           });
           addedUrls.add(currentUrl);
-          console.log(`✅ Added media_urls[${index}]:`, currentUrl);
+          console.log(`[FestivalDetail] ✅ media_urls[${index}] → mediaItems[${items.length - 1}]:`, currentUrl);
+        } else if (currentUrl) {
+          console.log(`[FestivalDetail] ⏭️ Skipped duplicate media_urls[${index}]:`, currentUrl);
         }
       });
     }
 
-    // 4. image_gallery_urls는 제외 (이미 media_urls에 포함되어 있음)
-    // TourAPI 이미지는 이미 media_urls에 추가되었으므로 중복 방지
-
-    console.log('📊 Total mediaItems:', items.length);
+    console.log('[FestivalDetail] 📊 Total mediaItems:', items.length);
 
     return items;
   }, [festival]);
 
   // 갤러리 팝업용 미디어 아이템 (mediaItems를 그대로 사용)
   const allGalleryItems = React.useMemo(() => {
-    console.log('🖼️ Building allGalleryItems, using mediaItems:', mediaItems.length);
+    console.log('[FestivalDetail] 🖼️ Building allGalleryItems, using mediaItems:', mediaItems.length);
     return mediaItems;
   }, [mediaItems]);
 
