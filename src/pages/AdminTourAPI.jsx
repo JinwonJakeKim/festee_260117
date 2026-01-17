@@ -116,7 +116,7 @@ export default function AdminTourAPI() {
       ? '\n\n⚠️ 기존 Festival 데이터가 삭제되고 새로 생성됩니다!'
       : '';
     
-    const confirmMessage = `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하시겠습니까?\n\n⏱️ 자동화가 5분 이내에 백그라운드에서 변환을 시작합니다.\n변환 완료까지 약 ${Math.ceil(rawDataIds.length * 30 / 60)}분 소요됩니다.${warningText}`;
+    const confirmMessage = `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하고 지금 바로 시작하시겠습니까?${warningText}`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -131,10 +131,13 @@ export default function AdminTourAPI() {
         });
       }
       
-      alert(`✅ ${rawDataIds.length}개의 축제가 변환 대기열에 추가되었습니다.\n\n자동화가 곧 처리를 시작합니다. 이 페이지를 닫아도 괜찮습니다.`);
-      
       setSelectedRawData([]);
       refetchRawData();
+      
+      // 대기열 추가 후 바로 변환 시작
+      setTimeout(() => {
+        startTransformNowMutation.mutate();
+      }, 500);
       
     } catch (error) {
       console.error('[AdminTourAPI] Status update error:', error);
@@ -642,30 +645,6 @@ export default function AdminTourAPI() {
                 </p>
               )}
               <div className="flex gap-2 ml-auto">
-                {pendingData.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      if (confirm(`대기 중인 ${pendingData.length}개의 축제를 지금 변환하시겠습니까?`)) {
-                        startTransformNowMutation.mutate();
-                      }
-                    }}
-                    disabled={startTransformNowMutation.isPending}
-                    size="sm"
-                    className="bg-gray-800 border border-cyan-500/50 text-cyan-400 hover:bg-gray-700 hover:border-cyan-400"
-                  >
-                    {startTransformNowMutation.isPending ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-1 animate-spin" />
-                        변환 중...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-1" />
-                        지금 변환 시작 ({pendingData.length})
-                      </>
-                    )}
-                  </Button>
-                )}
                 <Button
                    onClick={() => {
                      const allFilteredIds = filteredRawDataList.map(r => r.id);
