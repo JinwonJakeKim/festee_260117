@@ -1389,10 +1389,20 @@ ${context}
         
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
+        // ===== 썸네일 이미지 결정 =====
+        // 1. TourAPI 이미지가 있으면 우선 사용
+        // 2. 없으면 Google 검색 이미지 첫 번째 사용
+        // 3. 둘 다 없으면 null
+        const tourApiImage = detailData.firstimage || rawData.firstimage || '';
+        const thumbnailUrl = tourApiImage || (googleImages.length > 0 ? googleImages[0] : null);
+        const usedGoogleImageForThumbnail = !tourApiImage && googleImages.length > 0;
+        
         console.log(`[Transform] 📸 Image summary:`);
+        console.log(`[Transform]   - TourAPI thumbnail: ${tourApiImage ? '✓' : '✗'}`);
         console.log(`[Transform]   - TourAPI gallery (detailImage1): ${imageGallery.length} images`);
         console.log(`[Transform]   - Google Images: ${googleImages.length} images`);
-        console.log(`[Transform]   - Total media_urls will include: thumbnail + ${imageGallery.length} + ${googleImages.length} images`);
+        console.log(`[Transform]   - Using Google image as thumbnail: ${usedGoogleImageForThumbnail ? 'YES' : 'NO'}`);
+        console.log(`[Transform]   - Final thumbnail: ${thumbnailUrl || 'null'}`);
         
         // ===== 최종 태그 구성 =====
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
