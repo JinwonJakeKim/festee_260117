@@ -36,6 +36,7 @@ export default function AdminTourAPI() {
   const [fetchResults, setFetchResults] = useState(null);
   const [selectedRawData, setSelectedRawData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMonth, setFilterMonth] = useState("all");
 
   // 최대 변환 개수 제한 제거 (자동화 모드)
   const MAX_TRANSFORM_COUNT = 999;
@@ -266,47 +267,39 @@ export default function AdminTourAPI() {
     { value: 100, label: "100개 (최대)" },
   ];
 
-  // 검색 필터링 추가
+  // 검색 및 월 필터링
   const filteredRawDataList = rawDataList.filter(raw => {
-    if (!searchQuery.trim()) return true;
+    // 검색 필터
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = (
+        raw.title?.toLowerCase().includes(query) ||
+        raw.addr1?.toLowerCase().includes(query) ||
+        raw.contentid?.toLowerCase().includes(query)
+      );
+      if (!matchesSearch) return false;
+    }
     
-    const query = searchQuery.toLowerCase();
-    return (
-      raw.title?.toLowerCase().includes(query) ||
-      raw.addr1?.toLowerCase().includes(query) ||
-      raw.contentid?.toLowerCase().includes(query)
-    );
+    // 월 필터
+    if (filterMonth !== "all") {
+      const startDate = raw.eventstartdate;
+      if (!startDate || startDate.length < 6) return false;
+      const month = startDate.substring(4, 6);
+      if (month !== filterMonth.padStart(2, '0')) return false;
+    }
+    
+    return true;
   });
 
   const pendingData = filteredRawDataList.filter(r => r.processing_status === 'pending');
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
-  // 신규 축제 데이터 - festival_id가 없는 모든 데이터 (처리 상태 무관)
-  const newFestivalData = rawDataList
-    .filter(r => !r.festival_id)
-    .filter(raw => {
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        raw.title?.toLowerCase().includes(query) ||
-        raw.addr1?.toLowerCase().includes(query) ||
-        raw.contentid?.toLowerCase().includes(query)
-      );
-    });
+  // 신규 축제 데이터 - festival_id가 없는 모든 데이터 (필터 적용)
+  const newFestivalData = filteredRawDataList.filter(r => !r.festival_id);
   
-  // 기존 축제 데이터 - festival_id가 있는 모든 데이터 (처리 상태 무관)
-  const existingFestivalData = rawDataList
-    .filter(r => r.festival_id)
-    .filter(raw => {
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        raw.title?.toLowerCase().includes(query) ||
-        raw.addr1?.toLowerCase().includes(query) ||
-        raw.contentid?.toLowerCase().includes(query)
-      );
-    });
+  // 기존 축제 데이터 - festival_id가 있는 모든 데이터 (필터 적용)
+  const existingFestivalData = filteredRawDataList.filter(r => r.festival_id);
 
   if (isLoading) {
     return (
@@ -504,20 +497,44 @@ export default function AdminTourAPI() {
               </Card>
             </div>
 
-            {/* 검색 바 */}
-            <Input
-              type="text"
-              placeholder="축제명, 주소, ContentID로 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
-            />
+            {/* 검색 및 필터 */}
+            <div className="flex gap-3">
+              <Input
+                type="text"
+                placeholder="축제명, 주소, ContentID로 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+              />
+              <Select value={filterMonth} onValueChange={setFilterMonth}>
+                <SelectTrigger className="w-32 bg-gray-900 border-gray-800 text-white">
+                  <SelectValue placeholder="월 선택" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-800">
+                  <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                    전체 월
+                  </SelectItem>
+                  {months.map((month) => (
+                    <SelectItem 
+                      key={month.value} 
+                      value={month.value} 
+                      className="text-white hover:bg-gray-800 focus:bg-gray-800"
+                    >
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* 검색 결과 표시 및 선택 버튼 */}
+            {/* 필터 결과 표시 및 선택 버튼 */}
             <div className="flex items-center justify-between gap-3">
-              {searchQuery && (
+              {(searchQuery || filterMonth !== "all") && (
                 <p className="text-gray-400 text-sm">
-                  검색 결과: {filteredRawDataList.length}개
+                  {searchQuery && `"${searchQuery}" 검색 결과`}
+                  {searchQuery && filterMonth !== "all" && " · "}
+                  {filterMonth !== "all" && `${months.find(m => m.value === filterMonth)?.label}`}
+                  : {filteredRawDataList.length}개
                 </p>
               )}
               <div className="flex gap-2 ml-auto">
