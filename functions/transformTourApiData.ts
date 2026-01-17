@@ -1398,6 +1398,17 @@ ${context}
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
         const finalTags = [...new Set([...baseTagsArray, ...aiTags])]; // 중복 제거
         
+        // ===== 썸네일 결정 로직 =====
+        // TourAPI 이미지 우선, 없으면 Google 검색 첫 이미지 사용
+        const tourApiImage = detailData.firstimage || rawData.firstimage || '';
+        const thumbnailUrl = tourApiImage || (googleImages.length > 0 ? googleImages[0] : null);
+        const usedGoogleImageAsThumbnail = !tourApiImage && googleImages.length > 0;
+        
+        console.log(`[Transform] 📸 Thumbnail decision:`);
+        console.log(`[Transform]   - TourAPI image: ${tourApiImage ? '✓' : '✗'}`);
+        console.log(`[Transform]   - Google fallback: ${usedGoogleImageAsThumbnail ? '✓ (used)' : '✗'}`);
+        console.log(`[Transform]   - Final thumbnail: ${thumbnailUrl || 'null'}`);
+        
         // ===== Festival 엔티티 생성/업데이트 =====
         const festivalData = {
           // 원본 데이터 ID 저장 (중복 방지용)
@@ -1444,7 +1455,7 @@ ${context}
           end_date: formattedEndDate,
           latitude: latitude,
           longitude: longitude,
-          thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+          thumbnail_url: thumbnailUrl,
           
           // 영상 URL: 
           // - 업데이트 모드에서 기존 video_url이 있고 비어있지 않으면 유지
@@ -1455,20 +1466,20 @@ ${context}
           
           youtube_shorts_urls: youtubeShorts,
           media_urls: [
-            // 1. 대표 이미지 (thumbnail)
-            {
+            // 1. 대표 이미지 (thumbnail) - null이면 제외
+            ...(thumbnailUrl ? [{
               type: 'image',
-              url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+              url: thumbnailUrl,
               caption: rawData.title
-            },
+            }] : []),
             // 2. TourAPI 갤러리 이미지
             ...imageGallery.map(img => ({
               type: 'image',
               url: img.originimgurl,
               caption: img.imgname || rawData.title
             })),
-            // 3. Google 이미지 검색 결과
-            ...googleImages.map((imageUrl, index) => ({
+            // 3. Google 이미지 검색 결과 (썸네일로 사용된 첫 이미지는 제외)
+            ...(usedGoogleImageAsThumbnail ? googleImages.slice(1) : googleImages).map((imageUrl, index) => ({
               type: 'image',
               url: imageUrl,
               caption: `${rawData.title} - 이미지 ${index + 1}`
