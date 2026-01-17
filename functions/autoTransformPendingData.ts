@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
 
     console.log('[AutoTransform] ========== AUTO TRANSFORM STARTED ==========');
     
-    // pending 상태의 원본 데이터 조회 (최대 10개)
+    // pending 상태의 원본 데이터 조회 (최대 3개 - 타임아웃 방지)
     const pendingData = await base44.asServiceRole.entities.TourApiRawData.filter(
       { processing_status: 'pending' },
       '-created_date',
-      10
+      3
     );
 
     if (pendingData.length === 0) {
