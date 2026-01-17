@@ -292,6 +292,7 @@ export default function AdminTourAPI() {
   });
 
   const pendingData = filteredRawDataList.filter(r => r.processing_status === 'pending');
+  const processingData = filteredRawDataList.filter(r => r.processing_status === 'processing');
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
@@ -475,12 +476,48 @@ export default function AdminTourAPI() {
               </ul>
             </Card>
 
+            {/* 백그라운드 변환 진행 중 알림 배너 */}
+            {processingData.length > 0 && (
+              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <Loader className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-blue-400 font-bold mb-1">
+                      백그라운드 변환 진행 중
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      현재 {processingData.length}개의 축제가 자동으로 변환되고 있습니다. 
+                      이 페이지를 닫으셔도 작업은 계속되며, 잠시 후 새로고침하여 상태를 확인하세요.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => refetchRawData()}
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-400 text-blue-400 hover:bg-blue-900/20 flex-shrink-0"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    새로고침
+                  </Button>
+                </div>
+              </Card>
+            )}
+
             {/* 통계 카드 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-400">{pendingData.length}</div>
                   <div className="text-xs text-gray-400">대기 중</div>
+                </div>
+              </Card>
+              <Card className="bg-blue-900/20 border-blue-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
+                    {processingData.length}
+                    {processingData.length > 0 && <Loader className="w-4 h-4 animate-spin" />}
+                  </div>
+                  <div className="text-xs text-gray-400">처리 중</div>
                 </div>
               </Card>
               <Card className="bg-green-900/20 border-green-400/30 p-3">
@@ -680,7 +717,14 @@ export default function AdminTourAPI() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="text-white font-bold text-base">{raw.title}</h3>
-                              <Badge className="bg-yellow-900/20 border-yellow-500/50">대기 중</Badge>
+                              {raw.processing_status === 'processing' ? (
+                                <Badge className="bg-blue-900/20 border-blue-500/50 flex items-center gap-1">
+                                  <Loader className="w-3 h-3 animate-spin" />
+                                  처리 중
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-yellow-900/20 border-yellow-500/50">대기 중</Badge>
+                              )}
                               <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
                                 신규 축제
                               </Badge>
@@ -801,6 +845,9 @@ export default function AdminTourAPI() {
                     processed: '완료',
                     failed: '실패',
                   };
+                  const statusIcons = {
+                    processing: <Loader className="w-3 h-3 animate-spin" />,
+                  };
                   
                   return (
                     <Card
@@ -843,7 +890,8 @@ export default function AdminTourAPI() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <h3 className="text-white font-bold text-base">{raw.title}</h3>
-                            <Badge className={statusColors[raw.processing_status]}>
+                            <Badge className={statusColors[raw.processing_status] + " flex items-center gap-1"}>
+                              {statusIcons[raw.processing_status]}
                               {statusLabels[raw.processing_status]}
                             </Badge>
                             <Badge className="bg-blue-900/50 text-blue-400 border border-blue-400/50">
