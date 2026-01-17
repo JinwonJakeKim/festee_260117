@@ -872,107 +872,69 @@ ${context}
         const rawData = rawDataList[0];
         console.log(`[Transform] Processing: ${rawData.title} (contentid: ${rawData.contentid})`);
         
-        // ===== 재변환 모드: 사용자 행위 데이터, YouTube Shorts, 관리자 필드 보존 =====
-        let preservedUserData = {
-          likes_count: 0,
-          catches_count: 0,
-          comments_count: 0
-        };
-        let preservedYoutubeShorts = [];
-        let preservedAdminFields = {
-          video_url: '',
-          website: '',
-          contact: {},
-          social_media: {},
-          star_rating: 0
-        };
-        let preservedLikes = [];
-        let preservedCatches = [];
-        let preservedComments = [];
-        let existingFestivalId = null;
+        // ===== 기존 Festival 검색 (중복 방지) =====
+        let existingFestival = null;
+        let isUpdate = false;
         
-        // 축제명으로 기존 Festival 검색
         try {
-          console.log(`[Transform] 🔍 Searching for existing Festival by name: "${rawData.title}"...`);
-          const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ name: rawData.title });
-            
-          if (existingFestivals && existingFestivals.length > 0) {
-            const existing = existingFestivals[0];
-            existingFestivalId = existing.id;
-            console.log(`[Transform] ✓ Found existing Festival (ID: ${existingFestivalId})`);
-            
-            preservedUserData = {
-              likes_count: existing.likes_count || 0,
-              catches_count: existing.catches_count || 0,
-              comments_count: existing.comments_count || 0
-            };
-            console.log(`[Transform] ✓ User data preserved: likes=${preservedUserData.likes_count}, catches=${preservedUserData.catches_count}, comments=${preservedUserData.comments_count}`);
-            
-            // 좋아요 레코드 보존
-            const existingLikes = await base44.asServiceRole.entities.FestivalLike.filter({ festival_id: existingFestivalId });
-            preservedLikes = existingLikes.map(like => ({
-              user_email: like.user_email
-            }));
-            console.log(`[Transform] ✓ FestivalLike records preserved: ${preservedLikes.length} likes`);
-            
-            // 캐치 레코드 보존
-            const existingCatches = await base44.asServiceRole.entities.Catch.filter({ festival_id: existingFestivalId });
-            preservedCatches = existingCatches.map(c => ({
-              user_email: c.user_email,
-              user_name: c.user_name,
-              image_url: c.image_url,
-              location: c.location,
-              latitude: c.latitude,
-              longitude: c.longitude,
-              likes_count: c.likes_count || 0
-            }));
-            console.log(`[Transform] ✓ Catch records preserved: ${preservedCatches.length} catches`);
-            
-            // 댓글 레코드 보존
-            const existingComments = await base44.asServiceRole.entities.Comment.filter({ festival_id: existingFestivalId });
-            preservedComments = existingComments.map(c => ({
-              user_email: c.user_email,
-              user_name: c.user_name,
-              content: c.content,
-              likes_count: c.likes_count || 0,
-              parent_id: c.parent_id
-            }));
-            console.log(`[Transform] ✓ Comment records preserved: ${preservedComments.length} comments`);
-            
-            // YouTube Shorts 보존 (5개 이상이면)
-            if (existing.youtube_shorts_urls && existing.youtube_shorts_urls.length >= 5) {
-              preservedYoutubeShorts = existing.youtube_shorts_urls;
-              console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
+          // 1. TourApiRawData에 festival_id가 있으면 우선적으로 그 ID로 검색
+          if (rawData.festival_id) {
+            console.log(`[Transform] 🔍 Searching by stored festival_id: ${rawData.festival_id}...`);
+            const festivalById = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+            if (festivalById && festivalById.length > 0) {
+              existingFestival = festivalById[0];
+              isUpdate = true;
+              console.log(`[Transform] ✓ Found existing Festival by ID: ${existingFestival.id}`);
             }
-            
-            // 관리자 수동 입력 필드 보존
-            preservedAdminFields = {
-              video_url: existing.video_url || '',
-              website: existing.website || '',
-              contact: existing.contact || {},
-              social_media: existing.social_media || {},
-              star_rating: existing.star_rating || 0
-            };
-            
-            if (preservedAdminFields.video_url) {
-              console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
+          }
+          
+          // 2. festival_id로 못찾았으면 name으로 검색
+          if (!existingFestival) {
+            console.log(`[Transform] 🔍 Searching by name: "${rawData.title}"...`);
+            const festivalByName = await base44.asServiceRole.entities.Festival.filter({ name: rawData.title });
+            if (festivalByName && festivalByName.length > 0) {
+              existingFestival = festivalByName[0];
+              isUpdate = true;
+              console.log(`[Transform] ✓ Found existing Festival by name: ${existingFestival.id}`);
             }
-            if (preservedAdminFields.website) {
-              console.log(`[Transform] ✓ website preserved (admin manual input)`);
-            }
-            if (preservedAdminFields.star_rating > 0) {
-              console.log(`[Transform] ✓ star_rating preserved: ${preservedAdminFields.star_rating}`);
-            }
-            
-            // 기존 Festival 삭제
-            await base44.asServiceRole.entities.Festival.delete(existingFestivalId);
-            console.log(`[Transform] 🗑️ Existing Festival deleted (ID: ${existingFestivalId})`);
-          } else {
-            console.log(`[Transform] ℹ️ No existing Festival found with name "${rawData.title}" - will create new`);
+          }
+          
+          if (!existingFestival) {
+            console.log(`[Transform] ℹ️ No existing Festival found - will create new`);
           }
         } catch (searchError) {
-          console.error(`[Transform] Failed to search/delete existing Festival:`, searchError.message);
-          // 검색/삭제 실패해도 계속 진행
+          console.error(`[Transform] Failed to search existing Festival:`, searchError.message);
+          // 검색 실패해도 계속 진행 (새로 생성)
+        }
+        
+        // 관리자 수동 입력 필드 보존 (업데이트 모드일 때만)
+        let preservedAdminFields = {};
+        let preservedYoutubeShorts = [];
+        
+        if (isUpdate && existingFestival) {
+          preservedAdminFields = {
+            video_url: existingFestival.video_url || '',
+            website: existingFestival.website || '',
+            contact: existingFestival.contact || {},
+            social_media: existingFestival.social_media || {},
+            star_rating: existingFestival.star_rating || 0
+          };
+          
+          // YouTube Shorts 보존 (5개 이상이면)
+          if (existingFestival.youtube_shorts_urls && existingFestival.youtube_shorts_urls.length >= 5) {
+            preservedYoutubeShorts = existingFestival.youtube_shorts_urls;
+            console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
+          }
+          
+          if (preservedAdminFields.video_url) {
+            console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
+          }
+          if (preservedAdminFields.website) {
+            console.log(`[Transform] ✓ website preserved (admin manual input)`);
+          }
+          if (preservedAdminFields.star_rating > 0) {
+            console.log(`[Transform] ✓ star_rating preserved: ${preservedAdminFields.star_rating}`);
+          }
         }
         
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
@@ -1436,8 +1398,10 @@ ${context}
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
         const finalTags = [...new Set([...baseTagsArray, ...aiTags])]; // 중복 제거
         
-        // ===== Festival 엔티티 생성 =====
-        const festival = {
+        // ===== Festival 엔티티 생성/업데이트 =====
+        const festivalData = {
+          // 원본 데이터 ID 저장 (중복 방지용)
+          tour_api_raw_data_id: rawDataId,
           // 기본 정보
           name: nameTranslations.ko,
           name_ko: nameTranslations.ko,
@@ -1483,9 +1447,9 @@ ${context}
           thumbnail_url: detailData.firstimage || rawData.firstimage || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
           
           // 영상 URL: 
-          // - 재변환 모드에서 기존 video_url이 있고 비어있지 않으면 유지
-          // - 그 외에는 YouTube 검색 결과의 조회수 최다 영상 사용
-          video_url: (retransform && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '') 
+          // - 업데이트 모드에서 기존 video_url이 있고 비어있지 않으면 유지
+          // - 그 외에는 YouTube 검색 결과 사용
+          video_url: (isUpdate && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '') 
             ? preservedAdminFields.video_url 
             : topVideoUrl,
           
@@ -1511,8 +1475,8 @@ ${context}
             }))
           ],
           
-          // 웹사이트: 재변환 시 기존값 유지
-          website: retransform && preservedAdminFields.website 
+          // 웹사이트: 업데이트 시 기존값 유지
+          website: isUpdate && preservedAdminFields.website 
             ? preservedAdminFields.website 
             : websiteUrl,
           
@@ -1528,25 +1492,25 @@ ${context}
           
           organizer: organizerInfo,
           
-          // 연락처: 재변환 시 기존값 유지
-          contact: retransform && preservedAdminFields.contact && Object.keys(preservedAdminFields.contact).length > 0
+          // 연락처: 업데이트 시 기존값 유지
+          contact: isUpdate && preservedAdminFields.contact && Object.keys(preservedAdminFields.contact).length > 0
             ? preservedAdminFields.contact
             : { phone: phoneNumber, email: '' },
           
-          // SNS: 재변환 시 기존값 유지
-          social_media: retransform && preservedAdminFields.social_media && Object.keys(preservedAdminFields.social_media).length > 0
+          // SNS: 업데이트 시 기존값 유지
+          social_media: isUpdate && preservedAdminFields.social_media && Object.keys(preservedAdminFields.social_media).length > 0
             ? preservedAdminFields.social_media
             : {},
           
-          // 별점: 재변환 시 기존값 유지
-          star_rating: retransform && preservedAdminFields.star_rating > 0
+          // 별점: 업데이트 시 기존값 유지
+          star_rating: isUpdate && preservedAdminFields.star_rating > 0
             ? preservedAdminFields.star_rating
             : 0,
           
           lineup: [],
-          likes_count: preservedUserData.likes_count,
-          catches_count: preservedUserData.catches_count,
-          comments_count: preservedUserData.comments_count,
+          likes_count: isUpdate ? (existingFestival.likes_count || 0) : 0,
+          catches_count: isUpdate ? (existingFestival.catches_count || 0) : 0,
+          comments_count: isUpdate ? (existingFestival.comments_count || 0) : 0,
           restrictions: introData.agelimit ? [`관람연령: ${introData.agelimit}`] : [],
           recommendations: introData.spendtimefestival ? [`관람 소요시간: ${introData.spendtimefestival}`] : [],
           schedule: scheduleItems,
@@ -1557,71 +1521,31 @@ ${context}
           recommendations_en: []
         };
         
-        const createdFestival = await base44.asServiceRole.entities.Festival.create(festival);
-        festivals.push(createdFestival);
+        // 업데이트 또는 생성
+        let festivalResult;
         
-        // 기존 데이터가 있었다면: 좋아요, 캐치, 댓글 레코드 복원
-        if (existingFestivalId) {
-          console.log(`[Transform] 🔄 Restoring user interaction records...`);
-          
-          // 좋아요 복원
-          for (const like of preservedLikes) {
-            try {
-              await base44.asServiceRole.entities.FestivalLike.create({
-                festival_id: createdFestival.id,
-                user_email: like.user_email
-              });
-            } catch (e) {
-              console.error(`[Transform] Failed to restore like:`, e.message);
-            }
-          }
-          console.log(`[Transform] ✓ Restored ${preservedLikes.length} likes`);
-          
-          // 캐치 복원
-          for (const catchRecord of preservedCatches) {
-            try {
-              await base44.asServiceRole.entities.Catch.create({
-                festival_id: createdFestival.id,
-                festival_name: createdFestival.name,
-                user_email: catchRecord.user_email,
-                user_name: catchRecord.user_name,
-                image_url: catchRecord.image_url,
-                location: catchRecord.location,
-                latitude: catchRecord.latitude,
-                longitude: catchRecord.longitude,
-                likes_count: catchRecord.likes_count
-              });
-            } catch (e) {
-              console.error(`[Transform] Failed to restore catch:`, e.message);
-            }
-          }
-          console.log(`[Transform] ✓ Restored ${preservedCatches.length} catches`);
-          
-          // 댓글 복원
-          for (const comment of preservedComments) {
-            try {
-              await base44.asServiceRole.entities.Comment.create({
-                festival_id: createdFestival.id,
-                user_email: comment.user_email,
-                user_name: comment.user_name,
-                content: comment.content,
-                likes_count: comment.likes_count,
-                parent_id: comment.parent_id
-              });
-            } catch (e) {
-              console.error(`[Transform] Failed to restore comment:`, e.message);
-            }
-          }
-          console.log(`[Transform] ✓ Restored ${preservedComments.length} comments`);
+        if (isUpdate && existingFestival) {
+          // 기존 Festival 업데이트 (ID 유지)
+          console.log(`[Transform] 🔄 Updating existing Festival (ID: ${existingFestival.id})...`);
+          festivalResult = await base44.asServiceRole.entities.Festival.update(existingFestival.id, festivalData);
+          console.log(`[Transform] ✓ Festival updated (ID maintained: ${existingFestival.id})`);
+        } else {
+          // 새로운 Festival 생성
+          console.log(`[Transform] ➕ Creating new Festival...`);
+          festivalResult = await base44.asServiceRole.entities.Festival.create(festivalData);
+          console.log(`[Transform] ✓ New Festival created (ID: ${festivalResult.id})`);
         }
         
+        festivals.push(festivalResult);
+        
+        // TourApiRawData의 festival_id 업데이트
         await base44.asServiceRole.entities.TourApiRawData.update(rawDataId, {
           processing_status: 'processed',
-          festival_id: createdFestival.id,
+          festival_id: festivalResult.id,
           error_message: ''
         });
         
-        console.log(`[Transform] ✓ SUCCESS: ${festival.name} ${retransform ? '(재변환 완료)' : ''}`);
+        console.log(`[Transform] ✓ SUCCESS: ${festivalData.name} ${isUpdate ? '(업데이트 완료)' : '(신규 생성 완료)'}`);
         
       } catch (error) {
         console.error(`[Transform] Exception for ${rawDataId}:`, error);
@@ -1640,7 +1564,6 @@ ${context}
     }
     
     console.log(`[Transform] ========== SUMMARY ==========`);
-    console.log(`[Transform] Mode: ${retransform ? 'RETRANSFORM' : 'NEW'}`);
     console.log(`[Transform] Processed: ${rawDataIds.length}`);
     console.log(`[Transform] Success: ${festivals.length}`);
     console.log(`[Transform] Failed: ${errors.length}`);
@@ -1649,7 +1572,7 @@ ${context}
       success: true,
       festivals_created: festivals.length,
       festivals: festivals,
-      message: `${festivals.length}개의 축제가 ${retransform ? '재' : ''}생성되었습니다.`,
+      message: `${festivals.length}개의 축제가 처리되었습니다.`,
       errors: errors.length > 0 ? errors : undefined
     });
     
