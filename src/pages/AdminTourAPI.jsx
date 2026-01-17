@@ -529,17 +529,15 @@ export default function AdminTourAPI() {
                     const allFilteredIds = filteredRawDataList.map(r => r.id);
                     setSelectedRawData(allFilteredIds);
                   }}
-                  variant="outline"
                   size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="bg-gray-800 border border-cyan-500/50 text-cyan-400 hover:bg-gray-700 hover:border-cyan-400"
                 >
                   {searchQuery ? '검색 결과 전체 선택' : '전체 선택'} ({filteredRawDataList.length}개)
                 </Button>
                 <Button
                   onClick={() => setSelectedRawData([])}
-                  variant="outline"
                   size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="bg-gray-800 border border-gray-600 text-white hover:bg-gray-700"
                   disabled={selectedRawData.length === 0}
                 >
                   선택 해제
@@ -554,9 +552,8 @@ export default function AdminTourAPI() {
                       bulkDeleteMutation.mutate(selectedRawData);
                     }
                   }}
-                  variant="outline"
                   size="sm"
-                  className="border-red-600 text-red-400 hover:bg-red-900/20"
+                  className="bg-red-900/30 border border-red-500 text-red-400 hover:bg-red-900/50 hover:border-red-400"
                   disabled={selectedRawData.length === 0 || bulkDeleteMutation.isPending}
                 >
                   {bulkDeleteMutation.isPending ? (
