@@ -574,7 +574,7 @@ export default function AdminTourAPI() {
                 <div>
                   <h3 className="text-purple-400 font-bold flex items-center gap-2">
                     <Database className="w-5 h-5" />
-                    신규 축제 변환 ({pendingNewData.length}개)
+                    신규 축제 변환 ({newFestivalData.length}개)
                   </h3>
                   <p className="text-gray-400 text-xs mt-1">축제명으로 검색 시 Festival 엔티티에 없는 새로운 데이터</p>
                 </div>
@@ -921,7 +921,7 @@ export default function AdminTourAPI() {
             )}
 
             {/* 데이터가 없을 때 표시 */}
-            {pendingNewData.length === 0 && existingFestivalData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
+            {newFestivalData.length === 0 && existingFestivalData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
                   <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
