@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -511,6 +510,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
     }
 
     console.log('[FestivalDetail] 📊 Total mediaItems:', items.length);
+    console.log('[FestivalDetail] 📊 Final mediaItems array:', items);
 
     return items;
   }, [festival]);
@@ -659,14 +659,14 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         </div>
       </div>
 
-      {/* Hero Media Carousel - 수정된 버전 */}
+      {/* Hero Media Carousel */}
       <div className="relative w-full bg-black" style={{ paddingTop: '56.25%' }}>
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden bg-black">
           {currentMedia?.type === 'youtube' ? (
             (() => {
               const embedUrl = getYoutubeEmbedUrl(currentMedia.url);
               if (!embedUrl) {
-                console.error('Failed to generate embed URL for:', currentMedia.url);
+                console.error('[FestivalDetail] Failed to generate embed URL for:', currentMedia.url);
                 return (
                   <div className="w-full h-full flex items-center justify-center bg-gray-900">
                     <div className="text-center">
@@ -698,7 +698,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               playsInline
               poster={festival.thumbnail_url}
               onError={(e) => {
-                console.error('Video load error:', currentMedia.url);
+                console.error('[FestivalDetail] Video load error:', currentMedia.url);
                 e.target.style.display = 'none'; // Hide the broken video element
               }}
             />
@@ -708,10 +708,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               alt={currentMedia?.caption || festival.name}
               className="w-full h-full object-contain"
               onError={(e) => {
-                console.error('Image load error:', e.target.src);
-                // Fallback to a placeholder image if the image fails to load
-                e.target.src = `https://picsum.photos/seed/${festival.name}/800/600`;
-                e.target.alt = "Failed to load image, displaying placeholder.";
+                console.error('[FestivalDetail] ❌ Image load FAILED in Hero Media:', e.target.src);
+                console.error('[FestivalDetail] This image URL is broken or inaccessible');
               }}
             />
           )}
@@ -1530,7 +1528,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                       alt={allGalleryItems[galleryPopupIndex]?.caption || `미디어 ${galleryPopupIndex + 1}`}
                       className="w-full max-h-[80vh] object-contain"
                       onError={(e) => {
-                        e.target.src = festival.thumbnail_url || `https://picsum.photos/seed/${festival.name}-${galleryPopupIndex}/1200/800`;
+                        console.error('[FestivalDetail] ❌ Image load FAILED in Gallery Popup:', e.target.src);
+                        console.error('[FestivalDetail] This image URL is broken or inaccessible');
                       }}
                     />
                   )}
@@ -1580,7 +1579,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                           alt={`썸네일 ${idx + 1}`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.src = `https://picsum.photos/seed/thumb-${festival.name}-${idx}/100/100`; // Fallback for broken thumbnails
+                            console.error('[FestivalDetail] ❌ Thumbnail load FAILED:', e.target.src);
                           }}
                         />
                       )}
