@@ -175,6 +175,19 @@ export default function AdminTourAPI() {
     },
   });
 
+  const stopProcessingMutation = useMutation({
+    mutationFn: async (id) => {
+      await base44.entities.TourApiRawData.update(id, {
+        processing_status: 'failed',
+        error_message: '관리자에 의해 수동으로 중단됨'
+      });
+    },
+    onSuccess: () => {
+      refetchRawData();
+      alert('처리가 중단되었습니다. 다른 대기 중인 축제가 곧 처리됩니다.');
+    },
+  });
+
 
 
   const runSyncNowMutation = useMutation({
@@ -478,8 +491,8 @@ export default function AdminTourAPI() {
 
             {/* 백그라운드 변환 진행 중 알림 배너 */}
             {processingData.length > 0 && (
-              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4 animate-pulse">
-                <div className="flex items-center gap-3">
+              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4">
+                <div className="flex items-center gap-3 mb-4">
                   <Loader className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0" />
                   <div className="flex-1">
                     <h3 className="text-blue-400 font-bold mb-1">
@@ -487,7 +500,7 @@ export default function AdminTourAPI() {
                     </h3>
                     <p className="text-gray-300 text-sm">
                       현재 {processingData.length}개의 축제가 자동으로 변환되고 있습니다. 
-                      이 페이지를 닫으셔도 작업은 계속되며, 잠시 후 새로고침하여 상태를 확인하세요.
+                      처리가 너무 오래 걸리면 아래에서 중단할 수 있습니다.
                     </p>
                   </div>
                   <Button
@@ -499,6 +512,39 @@ export default function AdminTourAPI() {
                     <RefreshCw className="w-4 h-4 mr-1" />
                     새로고침
                   </Button>
+                </div>
+
+                {/* 처리 중인 축제 목록 */}
+                <div className="space-y-2">
+                  {processingData.map((raw) => (
+                    <div key={raw.id} className="flex items-center justify-between bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Loader className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-medium text-sm truncate">{raw.title}</h4>
+                          <p className="text-gray-400 text-xs">
+                            시작: {safeFormatDate(raw.updated_date, 'HH:mm:ss')}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          if (confirm(`"${raw.title}" 처리를 중단하시겠습니까?\n\n다음 대기 중인 축제가 처리됩니다.`)) {
+                            stopProcessingMutation.mutate(raw.id);
+                          }
+                        }}
+                        size="sm"
+                        className="bg-red-900/30 border border-red-500 text-red-400 hover:bg-red-900/50 hover:border-red-400 flex-shrink-0"
+                        disabled={stopProcessingMutation.isPending}
+                      >
+                        {stopProcessingMutation.isPending ? (
+                          <Loader className="w-4 h-4 animate-spin" />
+                        ) : (
+                          '중단'
+                        )}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </Card>
             )}
