@@ -172,21 +172,21 @@ export default function MyFestee() {
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName) => {
-      console.log('[MyFestee] 이름 업데이트 시작:', newName);
-      await base44.auth.updateMe({ full_name: newName });
+      console.log('[MyFestee] 닉네임 업데이트 시작:', newName);
+      await base44.auth.updateMe({ nickname: newName });
       console.log('[MyFestee] 업데이트 완료, 최신 데이터 조회 중...');
       const updatedUser = await base44.auth.me();
-      console.log('[MyFestee] 최신 사용자 데이터:', updatedUser.full_name);
+      console.log('[MyFestee] 최신 사용자 데이터:', updatedUser.nickname);
       return updatedUser;
     },
     onSuccess: async (updatedUser) => {
-      console.log('[MyFestee] 캐시 업데이트:', updatedUser.full_name);
+      console.log('[MyFestee] 캐시 업데이트:', updatedUser.nickname);
       queryClient.setQueryData(['currentUser'], updatedUser);
       setIsEditingName(false);
       setEditedName("");
     },
     onError: (error) => {
-      console.error('[MyFestee] 이름 업데이트 실패:', error);
+      console.error('[MyFestee] 닉네임 업데이트 실패:', error);
       alert('이름 변경에 실패했습니다. 다시 시도해주세요.');
     },
   });
@@ -226,13 +226,14 @@ export default function MyFestee() {
   };
 
   const handleStartEditName = () => {
-    setEditedName(user?.full_name || "");
+    setEditedName(user?.nickname || user?.full_name || "");
     setIsEditingName(true);
   };
 
   const handleSaveName = async () => {
     const trimmedName = editedName.trim();
-    console.log('[MyFestee] 저장 시도:', trimmedName, '현재:', user?.full_name);
+    const currentName = user?.nickname || user?.full_name;
+    console.log('[MyFestee] 저장 시도:', trimmedName, '현재:', currentName);
     
     if (!trimmedName) {
       console.log('[MyFestee] 빈 이름, 취소');
@@ -240,7 +241,7 @@ export default function MyFestee() {
       return;
     }
     
-    if (trimmedName === user?.full_name) {
+    if (trimmedName === currentName) {
       console.log('[MyFestee] 이름 변경 없음, 취소');
       setIsEditingName(false);
       return;
@@ -662,7 +663,7 @@ export default function MyFestee() {
               </div>
             ) : (
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-white text-xl font-bold">{user.full_name}</h2>
+                <h2 className="text-white text-xl font-bold">{user.nickname || user.full_name}</h2>
                 <button
                   onClick={handleStartEditName}
                   className="w-7 h-7 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
