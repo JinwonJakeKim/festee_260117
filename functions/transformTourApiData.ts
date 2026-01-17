@@ -1408,17 +1408,6 @@ ${context}
         const baseTagsArray = ['국내축제', '한국관광공사', extractCity(detailData.addr1 || rawData.addr1)];
         const finalTags = [...new Set([...baseTagsArray, ...aiTags])]; // 중복 제거
         
-        // ===== 썸네일 결정 로직 =====
-        // TourAPI 이미지 우선, 없으면 Google 검색 첫 이미지 사용
-        const tourApiImage = detailData.firstimage || rawData.firstimage || '';
-        const thumbnailUrl = tourApiImage || (googleImages.length > 0 ? googleImages[0] : null);
-        const usedGoogleImageAsThumbnail = !tourApiImage && googleImages.length > 0;
-        
-        console.log(`[Transform] 📸 Thumbnail decision:`);
-        console.log(`[Transform]   - TourAPI image: ${tourApiImage ? '✓' : '✗'}`);
-        console.log(`[Transform]   - Google fallback: ${usedGoogleImageAsThumbnail ? '✓ (used)' : '✗'}`);
-        console.log(`[Transform]   - Final thumbnail: ${thumbnailUrl || 'null'}`);
-        
         // ===== Festival 엔티티 생성/업데이트 =====
         const festivalData = {
           // 원본 데이터 ID 저장 (중복 방지용)
@@ -1489,7 +1478,7 @@ ${context}
               caption: img.imgname || rawData.title
             })),
             // 3. Google 이미지 검색 결과 (썸네일로 사용된 첫 이미지는 제외)
-            ...(usedGoogleImageAsThumbnail ? googleImages.slice(1) : googleImages).map((imageUrl, index) => ({
+            ...(usedGoogleImageForThumbnail ? googleImages.slice(1) : googleImages).map((imageUrl, index) => ({
               type: 'image',
               url: imageUrl,
               caption: `${rawData.title} - 이미지 ${index + 1}`
