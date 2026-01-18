@@ -631,12 +631,20 @@ Deno.serve(async (req) => {
           '기자단', '보도자료', '브리핑', '언론', '방송촬영'
         ];
 
-        // HTTPS 이미지만 필터링 + URL 검증 + 부정 키워드 필터링
+        // 제외할 도메인 목록 (접근 제한이 있거나 리다이렉트되는 URL)
+        const excludeDomains = [
+          'lookaside.fbsbx.com',  // Facebook/Instagram 프록시 URL (로그인 필요)
+          'scontent.cdninstagram.com',  // Instagram CDN (접근 제한)
+          'scontent.xx.fbcdn.net'  // Facebook CDN (접근 제한)
+        ];
+
+        // HTTPS 이미지만 필터링 + URL 검증 + 부정 키워드 필터링 + 도메인 필터링
         const imageUrls = data.items
           .filter(item => {
             const url = item.link;
             const title = (item.title || '').toLowerCase();
             const snippet = (item.snippet || '').toLowerCase();
+            const displayLink = (item.displayLink || '').toLowerCase();
 
             // 기본 URL 검증
             if (!url || !url.startsWith('https://')) return false;
@@ -644,6 +652,16 @@ Deno.serve(async (req) => {
             // 연속된 슬래시 3개 이상이 있으면 제외
             if (url.includes('///')) {
               console.log(`[Transform] 🚫 Invalid URL (triple slash): ${url}`);
+              return false;
+            }
+
+            // 제외 도메인 체크 (URL 또는 displayLink에 포함된 경우 제외)
+            const hasExcludedDomain = excludeDomains.some(domain => 
+              url.includes(domain) || displayLink.includes(domain)
+            );
+
+            if (hasExcludedDomain) {
+              console.log(`[Transform] 🚫 Filtered out restricted domain: ${displayLink}`);
               return false;
             }
 
