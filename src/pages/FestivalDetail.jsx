@@ -52,6 +52,7 @@ const festivalIcon = new L.Icon({
 // Shorts Section Component
 function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   const [playingIndex, setPlayingIndex] = React.useState(null);
+  const [thumbnailErrors, setThumbnailErrors] = React.useState({});
 
   const handleClick = (idx) => {
     setPlayingIndex(prev => prev === idx ? null : idx);
@@ -60,6 +61,23 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   const handleMoreClick = () => {
     const searchQuery = encodeURIComponent(festivalName);
     window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+  };
+
+  const handleThumbnailError = (e, videoId, idx) => {
+    const errorCount = thumbnailErrors[idx] || 0;
+
+    // 순차적으로 여러 썸네일 옵션 시도
+    if (errorCount === 0) {
+      e.target.src = `https://img.youtube.com/vi/${videoId}/sddefault.jpg`;
+    } else if (errorCount === 1) {
+      e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    } else if (errorCount === 2) {
+      e.target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    } else if (errorCount === 3) {
+      e.target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+    }
+
+    setThumbnailErrors(prev => ({ ...prev, [idx]: errorCount + 1 }));
   };
 
   return (
@@ -73,7 +91,8 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           const videoId = getYoutubeVideoId(shortUrl);
           if (!videoId) return null;
 
-          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+          // 첫 번째 시도는 0.jpg (비디오의 첫 프레임, 가장 안정적)
+          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
           const isPlaying = playingIndex === idx;
 
           return (
@@ -96,14 +115,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                     src={thumbnailUrl}
                     alt={`Short ${idx + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const currentSrc = e.target.src;
-                      if (currentSrc.includes('mqdefault.jpg')) {
-                        e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                      } else if (currentSrc.includes('hqdefault.jpg')) {
-                        e.target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
-                      }
-                    }}
+                    onError={(e) => handleThumbnailError(e, videoId, idx)}
                   />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -115,7 +127,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
             </div>
           );
         })}
-        
+
         <button
           onClick={handleMoreClick}
           className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6 snap-start w-[280px] h-[498px]"
