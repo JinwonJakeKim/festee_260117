@@ -420,7 +420,7 @@ Deno.serve(async (req) => {
           // 언론사 키워드
           const newsOrgs = ['kbs', 'mbc', 'sbs', 'ytn', 'jtbc', '연합뉴스', 'channel a', 'tv조선', 'mbn'];
           // 뉴스 키워드
-          const newsKeywords = ['뉴스', '속보', '보도', '현장', '긴급', '취재', '기자회견', 'news', 'breaking', 'report', 'live coverage'];
+          const newsKeywords = ['뉴스', '속보', '보도', '현장', '긴급', '취재', '기자회견', '방송', 'news', 'breaking', 'report', 'live coverage'];
           
           // 채널명 또는 제목에 언론사/뉴스 키워드 포함 시 제외
           const hasNewsOrg = newsOrgs.some(org => channelTitle.includes(org) || title.includes(org));
