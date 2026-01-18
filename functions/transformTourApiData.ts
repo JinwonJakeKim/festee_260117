@@ -589,11 +589,11 @@ Deno.serve(async (req) => {
           throw new Error(`GOOGLE_SEARCH_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
-        // Google Custom Search API - 이미지 검색 (포스터 이미지 제외)
+        // Google Custom Search API - 이미지 검색 (포스터 및 정치인/공무원 이미지 제외)
         const searchParams = new URLSearchParams({
           key: googleApiKey,
           cx: searchEngineId,
-          q: `${festivalName} -포스터 -poster -현수막 -banner -기간 -일시`,
+          q: `${festivalName} -포스터 -poster -현수막 -banner -기간 -일시 -정치인 -공무원 -관계자 -회의 -간담회 -방문 -협약 -시장 -도지사 -의원 -단체사진 -업무협약 -개막식 -위촉식`,
           searchType: 'image',
           num: '5',
           imgSize: 'large',
@@ -616,19 +616,50 @@ Deno.serve(async (req) => {
           console.log(`[Transform] ⚠️ No images found for: ${festivalName}`);
           return [];
         }
-        
-        // HTTPS 이미지만 필터링 + URL 검증 (연속된 슬래시 3개 이상 제외)
+
+        // 부정 키워드 목록 정의 (정치인/공무원/행사 관련 이미지 필터링)
+        const excludeKeywords = [
+          // 인물 관련
+          '정치인', '공무원', '관계자', '국회의원', '도지사', '시장', '구청장', '단체장',
+          // 행사/이벤트 관련
+          '기자회견', '취임식', '개막식', '폐막식', '시상식', '위촉식', '간담회', '회의', 
+          '업무협약', 'mou', '협력', '협약식', '방문', '시찰', '격려', '축사', '환영사', 
+          '기념촬영', '포토월', '행사준비', '추진위원회', '조직위원회', '운영위원회', 
+          '성공개최', '발전방안', '지원', '예산', '유치', '홍보대사', '서포터즈', 
+          '발대식', '자원봉사자', '안전점검', '현장점검', '점검', '봉사활동',
+          // 뉴스/보도 관련 (뉴스 이미지만 제외, 언론사 자체는 제외하지 않음)
+          '기자단', '보도자료', '브리핑', '언론', '방송촬영'
+        ];
+
+        // HTTPS 이미지만 필터링 + URL 검증 + 부정 키워드 필터링
         const imageUrls = data.items
-          .map(item => item.link)
-          .filter(url => {
+          .filter(item => {
+            const url = item.link;
+            const title = (item.title || '').toLowerCase();
+            const snippet = (item.snippet || '').toLowerCase();
+
+            // 기본 URL 검증
             if (!url || !url.startsWith('https://')) return false;
+
             // 연속된 슬래시 3개 이상이 있으면 제외
             if (url.includes('///')) {
               console.log(`[Transform] 🚫 Invalid URL (triple slash): ${url}`);
               return false;
             }
+
+            // 부정 키워드 체크 (제목 또는 설명에 포함된 경우 제외)
+            const hasExcludedKeyword = excludeKeywords.some(keyword => 
+              title.includes(keyword) || snippet.includes(keyword)
+            );
+
+            if (hasExcludedKeyword) {
+              console.log(`[Transform] 🚫 Filtered out unwanted image: ${title.substring(0, 50)}...`);
+              return false;
+            }
+
             return true;
-          });
+          })
+          .map(item => item.link);
         
         const filteredCount = data.items.length - imageUrls.length;
         if (filteredCount > 0) {
