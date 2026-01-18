@@ -617,16 +617,24 @@ Deno.serve(async (req) => {
           return [];
         }
         
-        // HTTPS 이미지만 필터링
+        // HTTPS 이미지만 필터링 + URL 검증 (연속된 슬래시 3개 이상 제외)
         const imageUrls = data.items
           .map(item => item.link)
-          .filter(url => url && url.startsWith('https://'));
+          .filter(url => {
+            if (!url || !url.startsWith('https://')) return false;
+            // 연속된 슬래시 3개 이상이 있으면 제외
+            if (url.includes('///')) {
+              console.log(`[Transform] 🚫 Invalid URL (triple slash): ${url}`);
+              return false;
+            }
+            return true;
+          });
         
         const filteredCount = data.items.length - imageUrls.length;
         if (filteredCount > 0) {
-          console.log(`[Transform] 🔒 Filtered out ${filteredCount} HTTP images (HTTPS only)`);
+          console.log(`[Transform] 🔒 Filtered out ${filteredCount} invalid images (HTTPS + URL validation)`);
         }
-        console.log(`[Transform] ✅ Found ${imageUrls.length} HTTPS images from Google`);
+        console.log(`[Transform] ✅ Found ${imageUrls.length} valid HTTPS images from Google`);
         
         return imageUrls;
         
