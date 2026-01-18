@@ -92,7 +92,21 @@ export default function MyFestee() {
         }
       }
       
-      return uniqueLikes;
+      // 실제 Festival이 존재하는 like만 필터링
+      const validLikes = [];
+      for (const like of uniqueLikes) {
+        try {
+          const festival = await base44.entities.Festival.filter({ id: like.festival_id });
+          if (festival && festival.length > 0) {
+            validLikes.push(like);
+          }
+        } catch (error) {
+          // Festival이 삭제된 경우 무시
+          console.log(`Festival ${like.festival_id} not found`);
+        }
+      }
+      
+      return validLikes;
     },
     enabled: !!user,
     initialData: [],
