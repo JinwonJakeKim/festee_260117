@@ -73,7 +73,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
           const videoId = getYoutubeVideoId(shortUrl);
           if (!videoId) return null;
 
-          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
           const isPlaying = playingIndex === idx;
 
           return (
@@ -97,7 +97,12 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
                     alt={`Short ${idx + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                      const currentSrc = e.target.src;
+                      if (currentSrc.includes('mqdefault.jpg')) {
+                        e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                      } else if (currentSrc.includes('hqdefault.jpg')) {
+                        e.target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+                      }
                     }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
