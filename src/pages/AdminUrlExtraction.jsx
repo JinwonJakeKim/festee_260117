@@ -893,7 +893,15 @@ export default function AdminUrlExtraction() {
                                 신규
                               </Badge>
                             </div>
-                            <p className="text-gray-400 text-sm mb-1 truncate">{item.source_url}</p>
+                            <a 
+                              href={item.source_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.source_url}
+                            </a>
                             <p className="text-gray-500 text-xs">
                               {item.city}, {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
                             </p>
@@ -965,7 +973,15 @@ export default function AdminUrlExtraction() {
                                 기존
                               </Badge>
                             </div>
-                            <p className="text-gray-400 text-sm mb-1 truncate">{item.source_url}</p>
+                            <a 
+                              href={item.source_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.source_url}
+                            </a>
                             <div className="flex items-center gap-3 text-xs text-gray-500">
                               <span>{item.city}, {item.country}</span>
                               <span>{new Date(item.created_date).toLocaleDateString('ko-KR')}</span>
