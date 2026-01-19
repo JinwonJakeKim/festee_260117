@@ -20,6 +20,28 @@ Deno.serve(async (req) => {
 
     console.log(`Fetching content from: ${url}`);
 
+    // FestivalSourceUrl에서 국가 정보 가져오기
+    let countryFromSource = null;
+    try {
+      const sourceUrls = await base44.asServiceRole.entities.FestivalSourceUrl.list();
+      const matchingSource = sourceUrls.find(source => {
+        try {
+          const sourceHost = new URL(source.url).hostname.toLowerCase();
+          const inputHost = new URL(url).hostname.toLowerCase();
+          return inputHost.includes(sourceHost) || sourceHost.includes(inputHost);
+        } catch (e) {
+          return false;
+        }
+      });
+      
+      if (matchingSource && matchingSource.country) {
+        countryFromSource = matchingSource.country;
+        console.log(`Found matching source URL, using country: ${countryFromSource}`);
+      }
+    } catch (e) {
+      console.log('No matching source URL found, will use LLM detection');
+    }
+
     let html;
     try {
       const controller = new AbortController();
@@ -748,7 +770,7 @@ Deno.serve(async (req) => {
         name_original: festival.name_original || null,
         summary_original: festival.summary_original || null,
         description_original: festival.description_original || null,
-        country: festival.country || 'Unknown',
+        country: countryFromSource || festival.country || 'Unknown',
         city: festival.city || null,
         category: festival.category || null,
         start_date: festival.start_date,
