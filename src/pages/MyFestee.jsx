@@ -738,7 +738,7 @@ export default function MyFestee() {
         {/* Profile Stats - 순서 변경: 좋아요, 캐치, 팔로워, 팔로잉, 코인 */}
         <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myLikes.length}</p>
+            <p className="text-white text-2xl font-bold">{myLikes?.length || 0}</p>
             <p className="text-gray-400 text-xs">좋아요</p>
           </Link>
           <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
