@@ -109,7 +109,8 @@ export default function MyFestee() {
       return validLikes;
     },
     enabled: !!user,
-    initialData: [],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: myComments } = useQuery({
