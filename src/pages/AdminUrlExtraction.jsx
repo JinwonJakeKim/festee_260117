@@ -13,6 +13,7 @@ export default function AdminUrlExtraction() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("extract");
+  const [automations, setAutomations] = useState([]);
   const [urlInput, setUrlInput] = useState("");
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
   const [isExtracting, setIsExtracting] = useState(false);
@@ -50,6 +51,15 @@ export default function AdminUrlExtraction() {
   const { data: sourceUrls } = useQuery({
     queryKey: ['festivalSourceUrls'],
     queryFn: () => base44.entities.FestivalSourceUrl.list('-created_date'),
+    initialData: [],
+  });
+
+  const { data: automationsList } = useQuery({
+    queryKey: ['automations'],
+    queryFn: async () => {
+      const { data } = await base44.functions.invoke('listScheduledTasks');
+      return data.tasks || [];
+    },
     initialData: [],
   });
 
@@ -183,6 +193,43 @@ export default function AdminUrlExtraction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
+    }
+  });
+
+  const toggleAutomationMutation = useMutation({
+    mutationFn: async (taskId) => {
+      const { data } = await base44.functions.invoke('toggleScheduledTask', { taskId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['automations'] });
+      alert('자동화 상태가 변경되었습니다');
+    }
+  });
+
+  const runLinkExtractionMutation = useMutation({
+    mutationFn: async (sourceUrlId) => {
+      const { data } = await base44.functions.invoke('extractFestivalLinksFromSourceUrl', { sourceUrlId });
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        alert(data.message);
+        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+      }
+    }
+  });
+
+  const runPendingProcessMutation = useMutation({
+    mutationFn: async (batchSize = 5) => {
+      const { data } = await base44.functions.invoke('processPendingUrlExtractions', { batchSize });
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        alert(data.message);
+        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+      }
     }
   });
 
@@ -367,12 +414,15 @@ export default function AdminUrlExtraction() {
 
       <div className="px-4 py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-2">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-3">
             <TabsTrigger value="extract" className="data-[state=active]:bg-pink-500">
               URL 추출
             </TabsTrigger>
             <TabsTrigger value="data" className="data-[state=active]:bg-pink-500">
               데이터 관리
+            </TabsTrigger>
+            <TabsTrigger value="automation" className="data-[state=active]:bg-pink-500">
+              자동화
             </TabsTrigger>
           </TabsList>
 
@@ -1038,6 +1088,199 @@ export default function AdminUrlExtraction() {
                 <p className="text-gray-600 text-sm mt-2">"URL 추출" 탭에서 시작하세요</p>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="automation" className="mt-4 space-y-4">
+            <Card className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border-cyan-400/30 p-4">
+              <h3 className="text-white font-bold mb-2">자동화 관리</h3>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>✓ 소스 URL에서 축제 링크를 자동으로 추출합니다</li>
+                <li>✓ 대기 중인 링크를 자동으로 처리합니다</li>
+                <li>✓ 자동화 주기는 필요에 따라 조정하세요</li>
+              </ul>
+            </Card>
+
+            {/* 링크 추출 자동화 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-white font-bold">1. 소스 URL 링크 추출</h3>
+                  <p className="text-gray-400 text-sm mt-1">
+                    저장된 소스 URL에서 축제 링크를 탐색하고 대기열에 추가
+                  </p>
+                </div>
+                {automationsList.find(a => a.name === 'URL 링크 추출 자동화') && (
+                  <Button
+                    onClick={() => {
+                      const automation = automationsList.find(a => a.name === 'URL 링크 추출 자동화');
+                      toggleAutomationMutation.mutate(automation.id);
+                    }}
+                    className={automationsList.find(a => a.name === 'URL 링크 추출 자동화')?.is_active 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-gray-600 hover:bg-gray-700'}
+                  >
+                    {automationsList.find(a => a.name === 'URL 링크 추출 자동화')?.is_active ? '활성화됨' : '비활성화됨'}
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-900/20 border border-blue-400/30 rounded-lg">
+                  <p className="text-blue-400 text-xs font-bold mb-1">📋 동작 방식</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 저장된 소스 URL 목록을 순회합니다</li>
+                    <li>• 각 소스 URL의 모든 페이지를 탐색하여 축제 링크를 추출합니다</li>
+                    <li>• 추출된 링크를 UrlExtractionRawData에 'pending' 상태로 저장합니다</li>
+                    <li>• 기존 링크는 건너뛰고, 실패한 링크는 재시도 대기열에 추가합니다</li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-gray-800 pt-3">
+                  <h4 className="text-gray-300 text-sm font-bold mb-2">수동 실행 (소스 URL 선택)</h4>
+                  <div className="space-y-2">
+                    {sourceUrls.length === 0 ? (
+                      <p className="text-gray-500 text-sm">저장된 소스 URL이 없습니다</p>
+                    ) : (
+                      sourceUrls.map((source) => (
+                        <div key={source.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                          <div className="flex-1">
+                            <p className="text-white font-medium text-sm">{source.name}</p>
+                            <p className="text-gray-400 text-xs">{source.country}</p>
+                          </div>
+                          <Button
+                            onClick={() => runLinkExtractionMutation.mutate(source.id)}
+                            disabled={runLinkExtractionMutation.isPending}
+                            size="sm"
+                            className="bg-cyan-500 hover:bg-cyan-600"
+                          >
+                            {runLinkExtractionMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                추출 중
+                              </>
+                            ) : (
+                              '링크 추출'
+                            )}
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 대기열 처리 자동화 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-white font-bold">2. 대기열 처리</h3>
+                  <p className="text-gray-400 text-sm mt-1">
+                    대기 중인 축제 링크에서 상세 정보를 추출
+                  </p>
+                </div>
+                {automationsList.find(a => a.name === 'URL 대기열 처리 자동화') && (
+                  <Button
+                    onClick={() => {
+                      const automation = automationsList.find(a => a.name === 'URL 대기열 처리 자동화');
+                      toggleAutomationMutation.mutate(automation.id);
+                    }}
+                    className={automationsList.find(a => a.name === 'URL 대기열 처리 자동화')?.is_active 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-gray-600 hover:bg-gray-700'}
+                  >
+                    {automationsList.find(a => a.name === 'URL 대기열 처리 자동화')?.is_active ? '활성화됨' : '비활성화됨'}
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                  <p className="text-purple-400 text-xs font-bold mb-1">📋 동작 방식</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 'pending' 상태의 UrlExtractionRawData를 조회합니다 (최대 5개)</li>
+                    <li>• 각 링크에서 extractFestivalFromUrl 함수를 호출하여 상세 정보를 추출합니다</li>
+                    <li>• 성공 시 'processed' 상태로, 실패 시 'failed' 상태로 업데이트합니다</li>
+                    <li>• 서버 부하를 방지하기 위해 각 처리 사이에 2초 대기합니다</li>
+                  </ul>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">
+                      {rawDataList.filter(r => r.processing_status === 'pending').length}
+                    </div>
+                    <div className="text-xs text-gray-400">대기 중</div>
+                  </div>
+                  <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-blue-400">
+                      {rawDataList.filter(r => r.processing_status === 'processing').length}
+                    </div>
+                    <div className="text-xs text-gray-400">처리 중</div>
+                  </div>
+                  <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-red-400">
+                      {rawDataList.filter(r => r.processing_status === 'failed').length}
+                    </div>
+                    <div className="text-xs text-gray-400">실패</div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-800 pt-3">
+                  <h4 className="text-gray-300 text-sm font-bold mb-2">수동 실행</h4>
+                  <Button
+                    onClick={() => runPendingProcessMutation.mutate(5)}
+                    disabled={runPendingProcessMutation.isPending || rawDataList.filter(r => r.processing_status === 'pending').length === 0}
+                    className="w-full bg-purple-500 hover:bg-purple-600"
+                  >
+                    {runPendingProcessMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        처리 중...
+                      </>
+                    ) : (
+                      `대기열 처리 (최대 5개)`
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* 자동화 상태 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <h3 className="text-white font-bold mb-4">자동화 상태</h3>
+              <div className="space-y-3">
+                {automationsList.length === 0 ? (
+                  <p className="text-gray-500 text-sm">자동화가 설정되지 않았습니다</p>
+                ) : (
+                  automationsList.map((automation) => (
+                    <div key={automation.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-white font-medium text-sm">{automation.name}</p>
+                        <p className="text-gray-400 text-xs">
+                          {automation.schedule_type === 'simple' 
+                            ? `매 ${automation.repeat_interval} ${automation.repeat_unit}마다 실행`
+                            : `Cron: ${automation.cron_expression}`}
+                        </p>
+                      </div>
+                      <Badge className={automation.is_active ? 'bg-green-500' : 'bg-gray-600'}>
+                        {automation.is_active ? '활성' : '비활성'}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
+            <div className="p-4 bg-yellow-900/20 border border-yellow-400/30 rounded-lg">
+              <p className="text-yellow-400 text-xs font-bold mb-2">⚠️ 주의사항</p>
+              <ul className="text-gray-300 text-xs space-y-1">
+                <li>• 자동화는 현재 비활성화 상태로 설정되어 있습니다</li>
+                <li>• 활성화하기 전에 충분히 테스트하세요</li>
+                <li>• 자동화 주기는 서버 부하와 데이터 업데이트 주기를 고려하여 설정하세요</li>
+                <li>• 링크 추출은 페이지 수에 따라 시간이 오래 걸릴 수 있습니다</li>
+              </ul>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
