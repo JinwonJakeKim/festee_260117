@@ -85,6 +85,30 @@ Deno.serve(async (req) => {
           console.error('[Transform] Google Images search failed:', imageError.message);
         }
 
+        // YouTube 하이라이트 영상 검색 (video_url이 비어있는 경우)
+        let videoUrl = festivalData.video_url;
+        if (!videoUrl || videoUrl.trim() === '') {
+          try {
+            console.log(`[Transform] Searching YouTube for highlight video: ${festivalNameForSearch}`);
+            const youtubeApiKey = Deno.env.get('YOUTUBE_API_KEY');
+            
+            if (youtubeApiKey) {
+              const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalNameForSearch + ' festival')}&type=video&maxResults=1&order=relevance&key=${youtubeApiKey}`;
+              const videoResponse = await fetch(videoSearchUrl);
+              
+              if (videoResponse.ok) {
+                const videoData = await videoResponse.json();
+                if (videoData.items && videoData.items.length > 0 && videoData.items[0].id?.videoId) {
+                  videoUrl = `https://www.youtube.com/watch?v=${videoData.items[0].id.videoId}`;
+                  console.log(`[Transform] ✓ Found highlight video: ${videoUrl}`);
+                }
+              }
+            }
+          } catch (videoError) {
+            console.error('[Transform] YouTube video search failed:', videoError.message);
+          }
+        }
+
         // YouTube Shorts 검색
         let youtubeShortUrls = [];
         try {
@@ -234,7 +258,7 @@ ${JSON.stringify(festivalData, null, 2)}
           latitude: festivalData.latitude,
           longitude: festivalData.longitude,
           thumbnail_url: thumbnailUrl,
-          video_url: festivalData.video_url,
+          video_url: videoUrl,
           image_gallery_urls: festivalData.image_gallery_urls,
           media_urls: mediaUrls,
           youtube_shorts_urls: youtubeShortUrls,
