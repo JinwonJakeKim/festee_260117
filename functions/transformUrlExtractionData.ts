@@ -85,26 +85,32 @@ Deno.serve(async (req) => {
           console.error('[Transform] Google Images search failed:', imageError.message);
         }
 
-        // YouTube 하이라이트 영상 & Shorts 검색 (video_url이 비어있는 경우)
+        // YouTube 영상 검색 (중앙화된 함수 사용)
         let videoUrl = festivalData.video_url;
         let youtubeShortUrls = [];
         
-        if (!videoUrl || videoUrl.trim() === '') {
+        const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
+        
+        if (shouldSearchHighlight || true) { // 쇼츠는 항상 검색
           try {
-            console.log(`[Transform] 🎬 Fetching YouTube videos from centralized function...`);
+            console.log(`[Transform] Calling fetchYoutubeVideos function...`);
             const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
-              festivalName: festivalNameForSearch
+              festivalName: festivalNameForSearch,
+              searchHighlightVideo: shouldSearchHighlight,
+              searchShorts: true
             });
             
-            if (youtubeResult.data?.success) {
-              videoUrl = youtubeResult.data.topVideoUrl || '';
+            if (youtubeResult.data.success) {
+              if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
+                videoUrl = youtubeResult.data.highlightVideoUrl;
+                console.log(`[Transform] ✓ Got highlight video from fetchYoutubeVideos: ${videoUrl}`);
+              }
+              
               youtubeShortUrls = youtubeResult.data.shortsUrls || [];
-              console.log(`[Transform] ✓ YouTube results: video=${videoUrl ? '✓' : '✗'}, shorts=${youtubeShortUrls.length}`);
-            } else {
-              console.log(`[Transform] ⚠️ YouTube fetch failed: ${youtubeResult.data?.message || 'Unknown error'}`);
+              console.log(`[Transform] ✓ Got ${youtubeShortUrls.length} YouTube Shorts from fetchYoutubeVideos`);
             }
           } catch (youtubeError) {
-            console.error('[Transform] YouTube fetch error:', youtubeError.message);
+            console.error('[Transform] fetchYoutubeVideos failed:', youtubeError.message);
           }
         }
 

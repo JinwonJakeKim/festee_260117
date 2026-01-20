@@ -366,161 +366,31 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
-    // YouTube 동영상 검색 함수 (공공기관 우선, 4K 우선, 뉴스 제외)
+    // YouTube 동영상 검색 - 중앙화된 함수 사용
     const searchYouTubeVideos = async (festivalName) => {
       try {
-        console.log(`[Transform] 🎬 YouTube video search for: "${festivalName}" (공공기관 우선, 4K 우선, 뉴스 제외)`);
+        console.log(`[Transform] 🎬 Calling fetchYoutubeVideos function for: "${festivalName}"`);
         
-        const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
-        if (!youtubeApiKey) {
-          console.log(`[Transform] ⚠️ YOUTUBE_API_KEY is missing or empty`);
-          return { shortsUrls: [], topVideoUrl: '' };
-        }
-        
-        // API 사용량 체크
-        const usage = await checkAndIncrementApiUsage('youtube_data_api', 100);
-        if (!usage.allowed) {
-          throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
-        }
-        
-        // YouTube Data API v3 search endpoint - 관련성 기준 검색 (10개)
-        const searchParams = new URLSearchParams({
-          part: 'id,snippet',
-          q: festivalName,
-          type: 'video',
-          order: 'relevance',
-          maxResults: '10', // 10개 가져와서 필터링
-          key: youtubeApiKey
+        const result = await base44.functions.invoke('fetchYoutubeVideos', {
+          festivalName,
+          searchHighlightVideo: true,
+          searchShorts: true
         });
         
-        const searchUrl = `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`;
-        console.log(`[Transform] 📡 Calling YouTube API (relevance order, 10 videos)...`);
-        const response = await fetch(searchUrl);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[Transform] ❌ YouTube API error (${response.status}):`, errorText);
+        if (result.data.success) {
+          console.log(`[Transform] ✓ fetchYoutubeVideos result: topVideo=${result.data.highlightVideoUrl ? '✓' : '✗'}, shorts=${result.data.shortsUrls.length}`);
+          return {
+            topVideoUrl: result.data.highlightVideoUrl || '',
+            shortsUrls: result.data.shortsUrls || []
+          };
+        } else {
+          console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
           return { shortsUrls: [], topVideoUrl: '' };
         }
-        
-        const data = await response.json();
-        
-        if (!data.items || data.items.length === 0) {
-          console.log(`[Transform] ⚠️ No videos found for: ${festivalName}`);
-          return { shortsUrls: [], topVideoUrl: '' };
-        }
-        
-        console.log(`[Transform] 📋 Raw API response - ${data.items.length} videos returned`);
-        
-        // 뉴스 영상 판별 함수
-        const isNewsVideo = (item) => {
-          const title = (item.snippet.title || '').toLowerCase();
-          const channelTitle = (item.snippet.channelTitle || '').toLowerCase();
-          
-          // 언론사 키워드
-          const newsOrgs = ['kbs', 'mbc', 'sbs', 'ytn', 'jtbc', '연합뉴스', 'channel a', 'tv조선', 'mbn'];
-          // 뉴스 키워드
-          const newsKeywords = ['뉴스', '속보', '보도', '현장', '긴급', '취재', '기자회견', '방송', 'news', 'breaking', 'report', 'live coverage'];
-          
-          // 채널명 또는 제목에 언론사/뉴스 키워드 포함 시 제외
-          const hasNewsOrg = newsOrgs.some(org => channelTitle.includes(org) || title.includes(org));
-          const hasNewsKeyword = newsKeywords.some(keyword => title.includes(keyword) || channelTitle.includes(keyword));
-          
-          return hasNewsOrg || hasNewsKeyword;
-        };
-        
-        // 공공기관/문화재단 채널 판별 함수
-        const isOfficialChannel = (item) => {
-          const title = (item.snippet.title || '').toLowerCase();
-          const channelTitle = (item.snippet.channelTitle || '').toLowerCase();
-          
-          // 공공기관/문화재단 키워드
-          const officialKeywords = [
-            '문화재청', '한국관광공사', '문화체육관광부', '국립문화재연구원',
-            '국립중앙박물관', '국립국악원', '한국문화재재단', '국가유산진흥원',
-            '공식', 'official'
-          ];
-          
-          // 채널명 또는 제목에 공공기관 키워드 포함 시 우선
-          return officialKeywords.some(keyword => channelTitle.includes(keyword) || title.includes(keyword));
-        };
-        
-        // 4K 여부 판별 함수
-        const is4KVideo = (item) => {
-          const title = (item.snippet.title || '').toUpperCase();
-          const description = (item.snippet.description || '').toUpperCase();
-          return /4K|UHD|2160|4096/.test(title + description);
-        };
-        
-        // 1단계: 뉴스 영상 필터링 (제외)
-        const filteredVideos = data.items.filter(item => !isNewsVideo(item));
-        console.log(`[Transform] 🗑️ Filtered out ${data.items.length - filteredVideos.length} news videos`);
-        
-        if (filteredVideos.length === 0) {
-          console.log(`[Transform] ⚠️ No videos left after news filtering`);
-          return { shortsUrls: [], topVideoUrl: '' };
-        }
-        
-        // 2단계: 우선순위 부여 및 정렬
-        const videosWithPriority = filteredVideos.map((item, idx) => ({
-          item,
-          videoId: item.id.videoId,
-          title: item.snippet.title || '',
-          channelTitle: item.snippet.channelTitle || '',
-          isOfficial: isOfficialChannel(item),
-          is4K: is4KVideo(item),
-          relevanceIndex: idx
-        }));
-        
-        console.log(`[Transform] 📊 Before sorting:`);
-        videosWithPriority.forEach((v, idx) => {
-          console.log(`[Transform]   ${idx + 1}. ${v.isOfficial ? '🏛️ 공공' : ''} ${v.is4K ? '✅ 4K' : ''} - ${v.videoId} | ${v.title.substring(0, 50)}`);
-        });
-        
-        // 정렬: 공공기관 최우선 > 4K 우선 > 관련성 순서
-        videosWithPriority.sort((a, b) => {
-          // 공공기관 채널 최우선
-          if (a.isOfficial && !b.isOfficial) return -1;
-          if (!a.isOfficial && b.isOfficial) return 1;
-          
-          // 공공기관 동일하면 4K 우선
-          if (a.is4K && !b.is4K) return -1;
-          if (!a.is4K && b.is4K) return 1;
-          
-          // 동일하면 원래 관련성 순서
-          return a.relevanceIndex - b.relevanceIndex;
-        });
-        
-        console.log(`[Transform] 📊 After sorting (Official > 4K > Relevance):`);
-        videosWithPriority.forEach((v, idx) => {
-          console.log(`[Transform]   ${idx + 1}. ${v.isOfficial ? '🏛️ 공공' : ''} ${v.is4K ? '✅ 4K' : ''} - ${v.videoId} | ${v.title.substring(0, 50)}`);
-        });
-        
-        // 3단계: 상위 5개 선택
-        const finalVideos = videosWithPriority.slice(0, 5);
-        
-        // 최상위 영상
-        const topVideo = finalVideos[0];
-        const topVideoUrl = topVideo ? `https://www.youtube.com/watch?v=${topVideo.videoId}` : '';
-        
-        if (topVideo) {
-          console.log(`[Transform] ✅ Top video selected:`);
-          console.log(`[Transform]    ${topVideo.isOfficial ? '🏛️ 공공기관' : ''} ${topVideo.is4K ? '✅ 4K' : '일반'}`);
-          console.log(`[Transform]    Title: ${topVideo.title}`);
-          console.log(`[Transform]    Channel: ${topVideo.channelTitle}`);
-          console.log(`[Transform]    URL: ${topVideoUrl}`);
-        }
-        
-        // Shorts URL
-        const shortsUrls = finalVideos.map(v => `https://www.youtube.com/shorts/${v.videoId}`);
-        
-        console.log(`[Transform] ✓ YouTube search result: topVideo=${topVideoUrl ? '✓' : '✗'}, shorts=${shortsUrls.length}`);
-        
-        return { shortsUrls, topVideoUrl };
         
       } catch (error) {
-        console.error(`[Transform] ❌ YouTube search exception:`, error.message);
-        if (error.message.includes('YOUTUBE_API_LIMIT_REACHED')) {
+        console.error(`[Transform] ❌ fetchYoutubeVideos exception:`, error.message);
+        if (error.message.includes('YOUTUBE_API_LIMIT_REACHED') || error.message.includes('API_LIMIT_REACHED')) {
           throw error;
         }
         return { shortsUrls: [], topVideoUrl: '' };
@@ -1252,31 +1122,21 @@ ${context}
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
         
-        // ===== YouTube 동영상 검색 (중앙화된 함수 사용) =====
+        // ===== YouTube 동영상 검색 =====
         let youtubeShorts = [];
         let topVideoUrl = '';
         
-        // YouTube Shorts: 기존값 5개 이상이면 검색 스킵
+        console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
+        const youtubeResult = await searchYouTubeVideos(rawData.title);
+        topVideoUrl = youtubeResult.topVideoUrl;
+        
+        // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
         if (preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
-          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos (skipping API)`);
+          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
         } else {
-          try {
-            console.log(`[Transform] 🎬 Fetching YouTube videos from centralized function for: "${rawData.title}"`);
-            const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
-              festivalName: rawData.title
-            });
-            
-            if (youtubeResult.data?.success) {
-              topVideoUrl = youtubeResult.data.topVideoUrl || '';
-              youtubeShorts = youtubeResult.data.shortsUrls || [];
-              console.log(`[Transform] ✓ YouTube results: video=${topVideoUrl ? '✓' : '✗'}, shorts=${youtubeShorts.length}`);
-            } else {
-              console.log(`[Transform] ⚠️ YouTube fetch failed: ${youtubeResult.data?.message || 'Unknown error'}`);
-            }
-          } catch (youtubeError) {
-            console.error('[Transform] YouTube fetch error:', youtubeError.message);
-          }
+          youtubeShorts = youtubeResult.shortsUrls;
+          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
