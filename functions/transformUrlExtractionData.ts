@@ -85,53 +85,27 @@ Deno.serve(async (req) => {
           console.error('[Transform] Google Images search failed:', imageError.message);
         }
 
-        // YouTube 하이라이트 영상 검색 (video_url이 비어있는 경우)
+        // YouTube 하이라이트 영상 & Shorts 검색 (video_url이 비어있는 경우)
         let videoUrl = festivalData.video_url;
+        let youtubeShortUrls = [];
+        
         if (!videoUrl || videoUrl.trim() === '') {
           try {
-            console.log(`[Transform] Searching YouTube for highlight video: ${festivalNameForSearch}`);
-            const youtubeApiKey = Deno.env.get('YOUTUBE_API_KEY');
+            console.log(`[Transform] 🎬 Fetching YouTube videos from centralized function...`);
+            const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+              festivalName: festivalNameForSearch
+            });
             
-            if (youtubeApiKey) {
-              const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalNameForSearch + ' festival')}&type=video&maxResults=1&order=relevance&key=${youtubeApiKey}`;
-              const videoResponse = await fetch(videoSearchUrl);
-              
-              if (videoResponse.ok) {
-                const videoData = await videoResponse.json();
-                if (videoData.items && videoData.items.length > 0 && videoData.items[0].id?.videoId) {
-                  videoUrl = `https://www.youtube.com/watch?v=${videoData.items[0].id.videoId}`;
-                  console.log(`[Transform] ✓ Found highlight video: ${videoUrl}`);
-                }
-              }
+            if (youtubeResult.data?.success) {
+              videoUrl = youtubeResult.data.topVideoUrl || '';
+              youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+              console.log(`[Transform] ✓ YouTube results: video=${videoUrl ? '✓' : '✗'}, shorts=${youtubeShortUrls.length}`);
+            } else {
+              console.log(`[Transform] ⚠️ YouTube fetch failed: ${youtubeResult.data?.message || 'Unknown error'}`);
             }
-          } catch (videoError) {
-            console.error('[Transform] YouTube video search failed:', videoError.message);
+          } catch (youtubeError) {
+            console.error('[Transform] YouTube fetch error:', youtubeError.message);
           }
-        }
-
-        // YouTube Shorts 검색
-        let youtubeShortUrls = [];
-        try {
-          console.log(`[Transform] Searching YouTube Shorts for: ${festivalNameForSearch}`);
-          const youtubeApiKey = Deno.env.get('YOUTUBE_API_KEY');
-          
-          if (youtubeApiKey) {
-            const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalNameForSearch + ' festival shorts')}&type=video&videoDuration=short&maxResults=5&key=${youtubeApiKey}`;
-            const shortsResponse = await fetch(shortsSearchUrl);
-            
-            if (shortsResponse.ok) {
-              const shortsData = await shortsResponse.json();
-              if (shortsData.items && shortsData.items.length > 0) {
-                youtubeShortUrls = shortsData.items
-                  .filter(item => item.id?.videoId)
-                  .map(item => `https://www.youtube.com/shorts/${item.id.videoId}`)
-                  .slice(0, 5);
-                console.log(`[Transform] ✓ Found ${youtubeShortUrls.length} YouTube Shorts`);
-              }
-            }
-          }
-        } catch (shortsError) {
-          console.error('[Transform] YouTube Shorts search failed:', shortsError.message);
         }
 
         // LLM으로 번역 수행

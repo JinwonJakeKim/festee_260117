@@ -1252,21 +1252,31 @@ ${context}
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
         
-        // ===== YouTube 동영상 검색 =====
+        // ===== YouTube 동영상 검색 (중앙화된 함수 사용) =====
         let youtubeShorts = [];
         let topVideoUrl = '';
         
-        console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
-        const youtubeResult = await searchYouTubeVideos(rawData.title);
-        topVideoUrl = youtubeResult.topVideoUrl;
-        
-        // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
+        // YouTube Shorts: 기존값 5개 이상이면 검색 스킵
         if (preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
-          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
+          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos (skipping API)`);
         } else {
-          youtubeShorts = youtubeResult.shortsUrls;
-          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos`);
+          try {
+            console.log(`[Transform] 🎬 Fetching YouTube videos from centralized function for: "${rawData.title}"`);
+            const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+              festivalName: rawData.title
+            });
+            
+            if (youtubeResult.data?.success) {
+              topVideoUrl = youtubeResult.data.topVideoUrl || '';
+              youtubeShorts = youtubeResult.data.shortsUrls || [];
+              console.log(`[Transform] ✓ YouTube results: video=${topVideoUrl ? '✓' : '✗'}, shorts=${youtubeShorts.length}`);
+            } else {
+              console.log(`[Transform] ⚠️ YouTube fetch failed: ${youtubeResult.data?.message || 'Unknown error'}`);
+            }
+          } catch (youtubeError) {
+            console.error('[Transform] YouTube fetch error:', youtubeError.message);
+          }
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
