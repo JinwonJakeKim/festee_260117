@@ -150,33 +150,81 @@ Deno.serve(async (req) => {
             console.log(`[FetchYoutubeVideos] 🗑️ Filtered out ${data.items.length - filteredVideos.length} news videos`);
             
             if (filteredVideos.length > 0) {
-              // 2단계: 우선순위 부여 및 정렬
-              const videosWithPriority = filteredVideos.map((item, idx) => ({
-                item,
-                videoId: item.id.videoId,
-                title: item.snippet.title || '',
-                channelTitle: item.snippet.channelTitle || '',
-                isOfficial: isOfficialChannel(item),
-                is4K: is4KVideo(item),
-                relevanceIndex: idx
-              }));
+              // 2단계: 임베드 가능 여부 확인 (YouTube videos API 호출)
+              const videoIds = filteredVideos.map(item => item.id.videoId).filter(id => id);
+              const embeddableVideos = [];
               
-              // 정렬: 공공기관 최우선 > 4K 우선 > 관련성 순서
-              videosWithPriority.sort((a, b) => {
-                if (a.isOfficial && !b.isOfficial) return -1;
-                if (!a.isOfficial && b.isOfficial) return 1;
-                if (a.is4K && !b.is4K) return -1;
-                if (!a.is4K && b.is4K) return 1;
-                return a.relevanceIndex - b.relevanceIndex;
-              });
+              if (videoIds.length > 0) {
+                try {
+                  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${videoIds.join(',')}&key=${youtubeApiKey}`;
+                  console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${videoIds.length} videos...`);
+                  const videosResponse = await fetch(videosUrl);
+                  
+                  if (videosResponse.ok) {
+                    const videosData = await videosResponse.json();
+                    const embeddableMap = {};
+                    
+                    videosData.items?.forEach(video => {
+                      const isEmbeddable = video.contentDetails?.embeddable === true;
+                      embeddableMap[video.id] = isEmbeddable;
+                      if (!isEmbeddable) {
+                        console.log(`[FetchYoutubeVideos] 🚫 Filtered out non-embeddable: ${video.id}`);
+                      }
+                    });
+                    
+                    // 임베드 가능한 영상만 필터링
+                    filteredVideos.forEach((item, idx) => {
+                      if (embeddableMap[item.id.videoId] === true) {
+                        embeddableVideos.push({ item, originalIndex: idx });
+                      }
+                    });
+                    
+                    console.log(`[FetchYoutubeVideos] ✅ Embeddable videos: ${embeddableVideos.length}/${filteredVideos.length}`);
+                  } else {
+                    console.error(`[FetchYoutubeVideos] ⚠️ Failed to check embeddable status, using all filtered videos`);
+                    filteredVideos.forEach((item, idx) => {
+                      embeddableVideos.push({ item, originalIndex: idx });
+                    });
+                  }
+                } catch (embedError) {
+                  console.error(`[FetchYoutubeVideos] ⚠️ Embed check error:`, embedError.message);
+                  filteredVideos.forEach((item, idx) => {
+                    embeddableVideos.push({ item, originalIndex: idx });
+                  });
+                }
+              }
               
-              const topVideo = videosWithPriority[0];
-              if (topVideo) {
-                highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
-                console.log(`[FetchYoutubeVideos] ✅ Top video selected:`);
-                console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : ''} ${topVideo.is4K ? '✅ 4K' : '일반'}`);
-                console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
-                console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
+              if (embeddableVideos.length === 0) {
+                console.log(`[FetchYoutubeVideos] ⚠️ No embeddable videos found`);
+              } else {
+                // 3단계: 우선순위 부여 및 정렬
+                const videosWithPriority = embeddableVideos.map(({ item, originalIndex }) => ({
+                  item,
+                  videoId: item.id.videoId,
+                  title: item.snippet.title || '',
+                  channelTitle: item.snippet.channelTitle || '',
+                  isOfficial: isOfficialChannel(item),
+                  is4K: is4KVideo(item),
+                  relevanceIndex: originalIndex
+                }));
+                
+                // 정렬: 공공기관 최우선 > 4K 우선 > 관련성 순서
+                videosWithPriority.sort((a, b) => {
+                  if (a.isOfficial && !b.isOfficial) return -1;
+                  if (!a.isOfficial && b.isOfficial) return 1;
+                  if (a.is4K && !b.is4K) return -1;
+                  if (!a.is4K && b.is4K) return 1;
+                  return a.relevanceIndex - b.relevanceIndex;
+                });
+                
+                const topVideo = videosWithPriority[0];
+                if (topVideo) {
+                  highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
+                  console.log(`[FetchYoutubeVideos] ✅ Top video selected:`);
+                  console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : ''} ${topVideo.is4K ? '✅ 4K' : '일반'}`);
+                  console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
+                  console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
+                }
               }
             } else {
               console.log(`[FetchYoutubeVideos] ⚠️ No videos left after news filtering`);
@@ -203,17 +251,42 @@ Deno.serve(async (req) => {
           throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=5&key=${youtubeApiKey}`;
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=10&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
           const shortsData = await shortsResponse.json();
           if (shortsData.items && shortsData.items.length > 0) {
-            shortsUrls = shortsData.items
+            const shortsVideoIds = shortsData.items
               .filter(item => item.id?.videoId)
-              .map(item => `https://www.youtube.com/shorts/${item.id.videoId}`)
-              .slice(0, 5);
-            console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} YouTube Shorts`);
+              .map(item => item.id.videoId);
+            
+            // Shorts도 임베드 가능 여부 확인
+            if (shortsVideoIds.length > 0) {
+              try {
+                const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${shortsVideoIds.join(',')}&key=${youtubeApiKey}`;
+                console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${shortsVideoIds.length} shorts...`);
+                const videosResponse = await fetch(videosUrl);
+                
+                if (videosResponse.ok) {
+                  const videosData = await videosResponse.json();
+                  const embeddableShorts = videosData.items
+                    ?.filter(video => video.contentDetails?.embeddable === true)
+                    .map(video => `https://www.youtube.com/shorts/${video.id}`)
+                    .slice(0, 5);
+                  
+                  shortsUrls = embeddableShorts || [];
+                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts (filtered ${shortsVideoIds.length - shortsUrls.length})`);
+                } else {
+                  // 임베드 체크 실패 시 그냥 사용
+                  shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                  console.log(`[FetchYoutubeVideos] ⚠️ Could not check embeddable status, using all shorts: ${shortsUrls.length}`);
+                }
+              } catch (embedError) {
+                shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                console.log(`[FetchYoutubeVideos] ⚠️ Embed check failed, using all shorts: ${shortsUrls.length}`);
+              }
+            }
           } else {
             console.log(`[FetchYoutubeVideos] ⚠️ No shorts found for: ${festivalName}`);
           }
