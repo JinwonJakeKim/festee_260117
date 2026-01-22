@@ -30,9 +30,8 @@ Deno.serve(async (req) => {
 
     console.log(`Starting link extraction from: ${sourceUrl.url}`);
     
-    // 날짜 파라미터가 있는 경우 URL 생성
+    // 날짜 매개변수 처리
     let baseUrl = sourceUrl.url;
-    
     if (sourceUrl.use_date_parameters && sourceUrl.date_parameter_template && targetMonth) {
       const [year, month] = targetMonth.split('-');
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
@@ -42,8 +41,7 @@ Deno.serve(async (req) => {
         .replace(/{MM}/g, month)
         .replace(/{LAST_DAY}/g, lastDay.toString());
       
-      console.log(`Using date parameter URL: ${baseUrl}`);
-      console.log(`Target month: ${targetMonth}, Last day: ${lastDay}`);
+      console.log(`Using date-parameterized URL: ${baseUrl}`);
     }
 
     const allExtractedLinks = [];
@@ -181,8 +179,6 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       source_url: sourceUrl.url,
-      base_url_used: baseUrl,
-      target_month: targetMonth || 'all',
       pages_processed: currentPage - 1,
       total_links_found: totalLinksFound,
       unique_links: uniqueLinks.length,

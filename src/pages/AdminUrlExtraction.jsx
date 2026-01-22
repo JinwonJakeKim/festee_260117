@@ -30,6 +30,7 @@ export default function AdminUrlExtraction() {
     use_date_parameters: false,
     date_parameter_template: ""
   });
+  const [selectedMonths, setSelectedMonths] = useState({});
   const [showBatchExtract, setShowBatchExtract] = useState(false);
   const [batchConfig, setBatchConfig] = useState({
     list_page_url: "",
@@ -158,9 +159,7 @@ export default function AdminUrlExtraction() {
         country: "", 
         description: "",
         container_selector: "div.row.small-event-gutter",
-        link_selector: "a",
-        use_date_parameters: false,
-        date_parameter_template: ""
+        link_selector: "a"
       });
       queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
       alert('소스 URL이 추가되었습니다');
@@ -278,10 +277,6 @@ export default function AdminUrlExtraction() {
   const handleAddSourceUrl = () => {
     if (!newSourceUrl.name || !newSourceUrl.url || !newSourceUrl.country) {
       alert('이름, URL, 국가를 모두 입력해주세요');
-      return;
-    }
-    if (newSourceUrl.use_date_parameters && !newSourceUrl.date_parameter_template) {
-      alert('날짜 파라미터 사용 시 템플릿을 입력해주세요');
       return;
     }
     addSourceUrlMutation.mutate(newSourceUrl);
@@ -614,27 +609,32 @@ export default function AdminUrlExtraction() {
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                       />
-                      <div className="flex items-center gap-2 p-3 bg-gray-800 rounded">
+                      <div className="flex items-center gap-2 p-3 bg-purple-900/20 border border-purple-400/30 rounded">
                         <input
                           type="checkbox"
                           checked={newSourceUrl.use_date_parameters}
                           onChange={(e) => setNewSourceUrl({ ...newSourceUrl, use_date_parameters: e.target.checked })}
                           className="w-4 h-4"
                         />
-                        <label className="text-gray-300 text-sm">날짜 파라미터 사용</label>
+                        <label className="text-purple-400 text-sm">날짜 매개변수 사용</label>
                       </div>
                       {newSourceUrl.use_date_parameters && (
                         <div className="space-y-2">
-                          <input
-                            type="text"
-                            placeholder="날짜 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1)"
+                          <textarea
+                            placeholder="날짜 매개변수 템플릿&#10;예: https://en.japantravel.com/events?type=event&from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1"
                             value={newSourceUrl.date_parameter_template}
                             onChange={(e) => setNewSourceUrl({ ...newSourceUrl, date_parameter_template: e.target.value })}
-                            className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                            className="w-full bg-gray-900 border border-purple-700 rounded px-3 py-2 text-white text-sm"
+                            rows={3}
                           />
-                          <p className="text-xs text-gray-400">
-                            사용 가능한 플레이스홀더: {'{YYYY}'} (연도), {'{MM}'} (월), {'{LAST_DAY}'} (월말일)
-                          </p>
+                          <div className="p-2 bg-blue-900/20 border border-blue-400/30 rounded">
+                            <p className="text-blue-400 text-xs font-bold mb-1">💡 플레이스홀더</p>
+                            <ul className="text-gray-300 text-xs space-y-1">
+                              <li>• {"{YYYY}"}: 연도 (예: 2026)</li>
+                              <li>• {"{MM}"}: 월 (예: 01, 02, ..., 12)</li>
+                              <li>• {"{LAST_DAY}"}: 해당 월의 마지막 날 (예: 28, 29, 30, 31)</li>
+                            </ul>
+                          </div>
                         </div>
                       )}
                       <Button
@@ -702,22 +702,22 @@ export default function AdminUrlExtraction() {
                               onChange={(e) => setEditingSourceData({ ...editingSourceData, link_selector: e.target.value })}
                               className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
                             />
-                            <div className="flex items-center gap-2 p-2 bg-gray-800 rounded">
+                            <div className="flex items-center gap-2 p-2 bg-purple-900/20 border border-purple-400/30 rounded">
                               <input
                                 type="checkbox"
-                                checked={editingSourceData.use_date_parameters || false}
+                                checked={editingSourceData.use_date_parameters}
                                 onChange={(e) => setEditingSourceData({ ...editingSourceData, use_date_parameters: e.target.checked })}
                                 className="w-4 h-4"
                               />
-                              <label className="text-gray-300 text-xs">날짜 파라미터 사용</label>
+                              <label className="text-purple-400 text-xs">날짜 매개변수 사용</label>
                             </div>
                             {editingSourceData.use_date_parameters && (
-                              <input
-                                type="text"
-                                placeholder="날짜 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1)"
-                                value={editingSourceData.date_parameter_template || ''}
+                              <textarea
+                                placeholder="날짜 매개변수 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY})"
+                                value={editingSourceData.date_parameter_template}
                                 onChange={(e) => setEditingSourceData({ ...editingSourceData, date_parameter_template: e.target.value })}
-                                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                                className="w-full bg-gray-900 border border-purple-700 rounded px-2 py-1 text-white text-xs"
+                                rows={2}
                               />
                             )}
                             <div className="flex gap-2">
@@ -732,11 +732,16 @@ export default function AdminUrlExtraction() {
                         ) : (
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h5 className="text-white font-medium text-sm truncate">{source.name}</h5>
                                 <Badge className="bg-pink-500/20 text-pink-400 border-pink-400/50 text-xs">
                                   {source.country}
                                 </Badge>
+                                {source.use_date_parameters && (
+                                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-400/50 text-xs">
+                                    📅 날짜 매개변수
+                                  </Badge>
+                                )}
                               </div>
                               <a 
                                 href={source.url} 
@@ -754,6 +759,16 @@ export default function AdminUrlExtraction() {
                                 <p className="text-gray-600 text-xs mt-1">
                                   마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
                                 </p>
+                              )}
+                              {source.use_date_parameters && (
+                                <div className="mt-2">
+                                  <input
+                                    type="month"
+                                    value={selectedMonths[source.id] || '2026-01'}
+                                    onChange={(e) => setSelectedMonths({ ...selectedMonths, [source.id]: e.target.value })}
+                                    className="bg-gray-900 border border-purple-600 rounded px-2 py-1 text-white text-xs"
+                                  />
+                                </div>
                               )}
                             </div>
                             <div className="flex flex-col gap-2">
@@ -779,28 +794,25 @@ export default function AdminUrlExtraction() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSelectSourceUrl(source);
-                                  }}
-                                  className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-auto"
-                                >
-                                  단일
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUseBatchSourceUrl(source);
-                                  }}
-                                  className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
-                                >
-                                  일괄
-                                </Button>
-                              </div>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const targetMonth = source.use_date_parameters ? selectedMonths[source.id] || '2026-01' : undefined;
+                                  runLinkExtractionMutation.mutate({ sourceUrlId: source.id, targetMonth });
+                                }}
+                                disabled={runLinkExtractionMutation.isPending}
+                                className="bg-cyan-600 hover:bg-cyan-700 text-xs px-2 py-1 h-auto"
+                              >
+                                {runLinkExtractionMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    추출중
+                                  </>
+                                ) : (
+                                  '링크 추출'
+                                )}
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -1196,26 +1208,46 @@ export default function AdminUrlExtraction() {
                       <p className="text-gray-500 text-sm">저장된 소스 URL이 없습니다</p>
                     ) : (
                       sourceUrls.map((source) => (
-                        <div key={source.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                          <div className="flex-1">
-                            <p className="text-white font-medium text-sm">{source.name}</p>
-                            <p className="text-gray-400 text-xs">{source.country}</p>
+                        <div key={source.id} className="p-3 bg-gray-800 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-white font-medium text-sm">{source.name}</p>
+                                {source.use_date_parameters && (
+                                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-400/50 text-xs">
+                                    📅
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-gray-400 text-xs">{source.country}</p>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                const targetMonth = source.use_date_parameters ? selectedMonths[source.id] || '2026-01' : undefined;
+                                runLinkExtractionMutation.mutate({ sourceUrlId: source.id, targetMonth });
+                              }}
+                              disabled={runLinkExtractionMutation.isPending}
+                              size="sm"
+                              className="bg-cyan-500 hover:bg-cyan-600"
+                            >
+                              {runLinkExtractionMutation.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                  추출 중
+                                </>
+                              ) : (
+                                '링크 추출'
+                              )}
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => runLinkExtractionMutation.mutate(source.id)}
-                            disabled={runLinkExtractionMutation.isPending}
-                            size="sm"
-                            className="bg-cyan-500 hover:bg-cyan-600"
-                          >
-                            {runLinkExtractionMutation.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                추출 중
-                              </>
-                            ) : (
-                              '링크 추출'
-                            )}
-                          </Button>
+                          {source.use_date_parameters && (
+                            <input
+                              type="month"
+                              value={selectedMonths[source.id] || '2026-01'}
+                              onChange={(e) => setSelectedMonths({ ...selectedMonths, [source.id]: e.target.value })}
+                              className="w-full bg-gray-900 border border-purple-600 rounded px-2 py-1 text-white text-xs"
+                            />
+                          )}
                         </div>
                       ))
                     )}
