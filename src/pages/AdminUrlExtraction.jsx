@@ -26,7 +26,9 @@ export default function AdminUrlExtraction() {
     country: "", 
     description: "",
     container_selector: "div.row.small-event-gutter",
-    link_selector: "a"
+    link_selector: "a",
+    use_date_parameters: false,
+    date_parameter_template: ""
   });
   const [showBatchExtract, setShowBatchExtract] = useState(false);
   const [batchConfig, setBatchConfig] = useState({
@@ -156,7 +158,9 @@ export default function AdminUrlExtraction() {
         country: "", 
         description: "",
         container_selector: "div.row.small-event-gutter",
-        link_selector: "a"
+        link_selector: "a",
+        use_date_parameters: false,
+        date_parameter_template: ""
       });
       queryClient.invalidateQueries({ queryKey: ['festivalSourceUrls'] });
       alert('소스 URL이 추가되었습니다');
@@ -208,8 +212,11 @@ export default function AdminUrlExtraction() {
   });
 
   const runLinkExtractionMutation = useMutation({
-    mutationFn: async (sourceUrlId) => {
-      const { data } = await base44.functions.invoke('extractFestivalLinksFromSourceUrl', { sourceUrlId });
+    mutationFn: async ({ sourceUrlId, targetMonth }) => {
+      const { data } = await base44.functions.invoke('extractFestivalLinksFromSourceUrl', { 
+        sourceUrlId,
+        targetMonth 
+      });
       return data;
     },
     onSuccess: (data) => {
@@ -273,6 +280,10 @@ export default function AdminUrlExtraction() {
       alert('이름, URL, 국가를 모두 입력해주세요');
       return;
     }
+    if (newSourceUrl.use_date_parameters && !newSourceUrl.date_parameter_template) {
+      alert('날짜 파라미터 사용 시 템플릿을 입력해주세요');
+      return;
+    }
     addSourceUrlMutation.mutate(newSourceUrl);
   };
 
@@ -290,7 +301,9 @@ export default function AdminUrlExtraction() {
       country: source.country,
       description: source.description || "",
       container_selector: source.container_selector || "div.row.small-event-gutter",
-      link_selector: source.link_selector || "a"
+      link_selector: source.link_selector || "a",
+      use_date_parameters: source.use_date_parameters || false,
+      date_parameter_template: source.date_parameter_template || ""
     });
   };
 
@@ -601,6 +614,29 @@ export default function AdminUrlExtraction() {
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                       />
+                      <div className="flex items-center gap-2 p-3 bg-gray-800 rounded">
+                        <input
+                          type="checkbox"
+                          checked={newSourceUrl.use_date_parameters}
+                          onChange={(e) => setNewSourceUrl({ ...newSourceUrl, use_date_parameters: e.target.checked })}
+                          className="w-4 h-4"
+                        />
+                        <label className="text-gray-300 text-sm">날짜 파라미터 사용</label>
+                      </div>
+                      {newSourceUrl.use_date_parameters && (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            placeholder="날짜 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1)"
+                            value={newSourceUrl.date_parameter_template}
+                            onChange={(e) => setNewSourceUrl({ ...newSourceUrl, date_parameter_template: e.target.value })}
+                            className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                          />
+                          <p className="text-xs text-gray-400">
+                            사용 가능한 플레이스홀더: {'{YYYY}'} (연도), {'{MM}'} (월), {'{LAST_DAY}'} (월말일)
+                          </p>
+                        </div>
+                      )}
                       <Button
                         onClick={handleAddSourceUrl}
                         disabled={addSourceUrlMutation.isPending}
@@ -666,6 +702,24 @@ export default function AdminUrlExtraction() {
                               onChange={(e) => setEditingSourceData({ ...editingSourceData, link_selector: e.target.value })}
                               className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
                             />
+                            <div className="flex items-center gap-2 p-2 bg-gray-800 rounded">
+                              <input
+                                type="checkbox"
+                                checked={editingSourceData.use_date_parameters || false}
+                                onChange={(e) => setEditingSourceData({ ...editingSourceData, use_date_parameters: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                              <label className="text-gray-300 text-xs">날짜 파라미터 사용</label>
+                            </div>
+                            {editingSourceData.use_date_parameters && (
+                              <input
+                                type="text"
+                                placeholder="날짜 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1)"
+                                value={editingSourceData.date_parameter_template || ''}
+                                onChange={(e) => setEditingSourceData({ ...editingSourceData, date_parameter_template: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              />
+                            )}
                             <div className="flex gap-2">
                               <Button size="sm" onClick={handleSaveEdit} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-xs">
                                 저장
