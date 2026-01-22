@@ -37,6 +37,7 @@ export default function AdminUrlExtraction() {
     link_selector: "a"
   });
   const [isBatchExtracting, setIsBatchExtracting] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState({});
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -780,18 +781,16 @@ export default function AdminUrlExtraction() {
                                 </button>
                               </div>
                               {source.use_date_parameters ? (
-                                <div className="space-y-2">
+                                <div className="space-y-2 w-full">
                                   <select
+                                    value={selectedMonths[source.id] || ''}
                                     onChange={(e) => {
-                                      if (e.target.value) {
-                                        runLinkExtractionMutation.mutate({ 
-                                          sourceUrlId: source.id,
-                                          targetMonth: e.target.value 
-                                        });
-                                      }
+                                      setSelectedMonths({
+                                        ...selectedMonths,
+                                        [source.id]: e.target.value
+                                      });
                                     }}
                                     className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                                    disabled={runLinkExtractionMutation.isPending}
                                   >
                                     <option value="">월 선택</option>
                                     {Array.from({ length: 12 }, (_, i) => {
@@ -803,6 +802,31 @@ export default function AdminUrlExtraction() {
                                       );
                                     })}
                                   </select>
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!selectedMonths[source.id]) {
+                                        alert('월을 선택해주세요');
+                                        return;
+                                      }
+                                      runLinkExtractionMutation.mutate({ 
+                                        sourceUrlId: source.id,
+                                        targetMonth: selectedMonths[source.id]
+                                      });
+                                    }}
+                                    disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
+                                    className="w-full bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
+                                  >
+                                    {runLinkExtractionMutation.isPending ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                        추출 중
+                                      </>
+                                    ) : (
+                                      '링크 추출'
+                                    )}
+                                  </Button>
                                 </div>
                               ) : (
                                 <div className="flex gap-2">
@@ -1234,28 +1258,52 @@ export default function AdminUrlExtraction() {
                             )}
                           </div>
                           {source.use_date_parameters ? (
-                            <select
-                              onChange={(e) => {
-                                if (e.target.value) {
+                            <div className="flex gap-2 items-center">
+                              <select
+                                value={selectedMonths[source.id] || ''}
+                                onChange={(e) => {
+                                  setSelectedMonths({
+                                    ...selectedMonths,
+                                    [source.id]: e.target.value
+                                  });
+                                }}
+                                className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              >
+                                <option value="">월 선택</option>
+                                {Array.from({ length: 12 }, (_, i) => {
+                                  const month = String(i + 1).padStart(2, '0');
+                                  return (
+                                    <option key={month} value={`2026-${month}`}>
+                                      2026년 {month}월
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                              <Button
+                                onClick={() => {
+                                  if (!selectedMonths[source.id]) {
+                                    alert('월을 선택해주세요');
+                                    return;
+                                  }
                                   runLinkExtractionMutation.mutate({ 
                                     sourceUrlId: source.id,
-                                    targetMonth: e.target.value 
+                                    targetMonth: selectedMonths[source.id]
                                   });
-                                }
-                              }}
-                              className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                              disabled={runLinkExtractionMutation.isPending}
-                            >
-                              <option value="">월 선택</option>
-                              {Array.from({ length: 12 }, (_, i) => {
-                                const month = String(i + 1).padStart(2, '0');
-                                return (
-                                  <option key={month} value={`2026-${month}`}>
-                                    2026년 {month}월
-                                  </option>
-                                );
-                              })}
-                            </select>
+                                }}
+                                disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
+                                size="sm"
+                                className="bg-cyan-500 hover:bg-cyan-600 whitespace-nowrap"
+                              >
+                                {runLinkExtractionMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    추출 중
+                                  </>
+                                ) : (
+                                  '링크 추출'
+                                )}
+                              </Button>
+                            </div>
                           ) : (
                             <Button
                               onClick={() => runLinkExtractionMutation.mutate({ sourceUrlId: source.id })}
