@@ -10,9 +10,8 @@ Deno.serve(async (req) => {
     }
 
     const tasks = await base44.asServiceRole.scheduledTasks.list();
-    const syncTasks = tasks.filter(t => t.function_name === 'syncTourApiData');
 
-    return Response.json({ success: true, tasks: syncTasks });
+    return Response.json({ success: true, tasks: tasks });
   } catch (error) {
     console.error('List scheduled tasks error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });

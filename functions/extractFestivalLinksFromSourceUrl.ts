@@ -161,10 +161,10 @@ Deno.serve(async (req) => {
           source_url: link,
           country: sourceUrl.country,
           processing_status: 'pending',
-          name_original: null,
-          city: null,
-          start_date: '2026-01-01',
-          end_date: '2026-01-01',
+          name_original: "",
+          city: "",
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: new Date().toISOString().split('T')[0],
         });
         newCount++;
         console.log(`Created new pending record: ${link}`);
