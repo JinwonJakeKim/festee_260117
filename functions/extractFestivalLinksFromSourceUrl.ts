@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
           existingCount++;
         }
       } else {
-        // 새로운 레코드 생성
+        // 새로운 레코드 생성 - null 대신 빈 문자열 사용
         await base44.asServiceRole.entities.UrlExtractionRawData.create({
           source_url: link,
           country: sourceUrl.country,
