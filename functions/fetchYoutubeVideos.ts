@@ -101,6 +101,9 @@ Deno.serve(async (req) => {
         console.log(`[FetchYoutubeVideos] 📡 Calling YouTube API for highlights...`);
         const response = await fetch(searchUrl);
         
+        // Rate limiting: 500ms 지연
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`[FetchYoutubeVideos] ❌ YouTube API error (${response.status}):`, errorText);
@@ -158,6 +161,9 @@ Deno.serve(async (req) => {
                 try {
                   const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${videoIds.join(',')}&key=${youtubeApiKey}`;
                   console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${videoIds.length} videos...`);
+                  
+                  // Rate limiting: 500ms 지연
+                  await new Promise(resolve => setTimeout(resolve, 500));
                   const videosResponse = await fetch(videosUrl);
                   
                   if (videosResponse.ok) {
@@ -252,6 +258,9 @@ Deno.serve(async (req) => {
         }
         
         const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=10&key=${youtubeApiKey}`;
+        
+        // Rate limiting: 500ms 지연
+        await new Promise(resolve => setTimeout(resolve, 500));
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
@@ -266,6 +275,9 @@ Deno.serve(async (req) => {
               try {
                 const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${shortsVideoIds.join(',')}&key=${youtubeApiKey}`;
                 console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${shortsVideoIds.length} shorts...`);
+                
+                // Rate limiting: 500ms 지연
+                await new Promise(resolve => setTimeout(resolve, 500));
                 const videosResponse = await fetch(videosUrl);
                 
                 if (videosResponse.ok) {
