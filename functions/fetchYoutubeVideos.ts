@@ -97,12 +97,12 @@ Deno.serve(async (req) => {
           key: youtubeApiKey
         });
         
+        // Rate limiting 방지를 위한 지연 (300ms)
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         const searchUrl = `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`;
         console.log(`[FetchYoutubeVideos] 📡 Calling YouTube API for highlights...`);
         const response = await fetch(searchUrl);
-        
-        // Rate limiting: 500ms 지연
-        await new Promise(resolve => setTimeout(resolve, 500));
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -159,11 +159,11 @@ Deno.serve(async (req) => {
               
               if (videoIds.length > 0) {
                 try {
+                  // Rate limiting 방지를 위한 지연 (300ms)
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                  
                   const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${videoIds.join(',')}&key=${youtubeApiKey}`;
                   console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${videoIds.length} videos...`);
-                  
-                  // Rate limiting: 500ms 지연
-                  await new Promise(resolve => setTimeout(resolve, 500));
                   const videosResponse = await fetch(videosUrl);
                   
                   if (videosResponse.ok) {
@@ -257,10 +257,10 @@ Deno.serve(async (req) => {
           throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=10&key=${youtubeApiKey}`;
+        // Rate limiting 방지를 위한 지연 (300ms)
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Rate limiting: 500ms 지연
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=10&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
@@ -273,11 +273,11 @@ Deno.serve(async (req) => {
             // Shorts도 임베드 가능 여부 확인
             if (shortsVideoIds.length > 0) {
               try {
+                // Rate limiting 방지를 위한 지연 (300ms)
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
                 const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${shortsVideoIds.join(',')}&key=${youtubeApiKey}`;
                 console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${shortsVideoIds.length} shorts...`);
-                
-                // Rate limiting: 500ms 지연
-                await new Promise(resolve => setTimeout(resolve, 500));
                 const videosResponse = await fetch(videosUrl);
                 
                 if (videosResponse.ok) {
