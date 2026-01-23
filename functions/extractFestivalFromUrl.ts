@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { url } = await req.json();
+    const { url, rawDataId } = await req.json();
     
     if (!url) {
       return Response.json({ 

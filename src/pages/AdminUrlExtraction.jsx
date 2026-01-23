@@ -13,6 +13,7 @@ export default function AdminUrlExtraction() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("extract");
+  const [extractingLinkId, setExtractingLinkId] = useState(null);
   const [automations, setAutomations] = useState([]);
   const [urlInput, setUrlInput] = useState("");
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
@@ -241,6 +242,27 @@ export default function AdminUrlExtraction() {
     }
   });
 
+  const extractDetailMutation = useMutation({
+    mutationFn: async ({ rawDataId, url }) => {
+      const { data } = await base44.functions.invoke('extractFestivalFromUrl', { url, rawDataId });
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        alert(data.message);
+        setExtractingLinkId(null);
+        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+      } else {
+        alert(`상세 추출 실패: ${data.error}`);
+        setExtractingLinkId(null);
+      }
+    },
+    onError: (error) => {
+      alert('상세 추출 중 오류가 발생했습니다: ' + error.message);
+      setExtractingLinkId(null);
+    }
+  });
+
   const handleExtract = async () => {
     if (!urlInput.trim()) {
       alert('URL을 입력해주세요');
@@ -428,9 +450,12 @@ export default function AdminUrlExtraction() {
 
       <div className="px-4 py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-3">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-4">
             <TabsTrigger value="extract" className="data-[state=active]:bg-pink-500">
               URL 추출
+            </TabsTrigger>
+            <TabsTrigger value="links" className="data-[state=active]:bg-pink-500">
+              링크 관리
             </TabsTrigger>
             <TabsTrigger value="data" className="data-[state=active]:bg-pink-500">
               데이터 관리
@@ -863,6 +888,128 @@ export default function AdminUrlExtraction() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="links" className="mt-4 space-y-4">
+            <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
+              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                <ExternalLink className="w-5 h-5 text-cyan-400" />
+                수집된 링크 관리
+              </h3>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>✓ URL 추출 탭에서 수집한 링크들을 관리합니다</li>
+                <li>✓ "상세 추출" 버튼을 클릭하여 각 링크의 축제 정보를 추출합니다</li>
+                <li>✓ 추출이 완료되면 "데이터 관리" 탭으로 이동합니다</li>
+              </ul>
+            </Card>
+
+            {/* 통계 카드 */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="bg-cyan-900/20 border-cyan-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-cyan-400">
+                    {rawDataList.filter(r => !r.name_original || r.name_original === "").length}
+                  </div>
+                  <div className="text-xs text-gray-400">링크만 수집됨</div>
+                </div>
+              </Card>
+              <Card className="bg-blue-900/20 border-blue-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
+                    {rawDataList.filter(r => r.processing_status === 'processing').length}
+                    {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400">추출 중</div>
+                </div>
+              </Card>
+              <Card className="bg-red-900/20 border-red-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">
+                    {rawDataList.filter(r => r.processing_status === 'failed' && !r.name_original).length}
+                  </div>
+                  <div className="text-xs text-gray-400">추출 실패</div>
+                </div>
+              </Card>
+            </div>
+
+            {/* 링크 목록 */}
+            <div className="space-y-3">
+              {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 ? (
+                rawDataList.filter(r => !r.name_original || r.name_original === "").map((item) => (
+                  <Card key={item.id} className="bg-gray-900 border-gray-800">
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <h3 className="text-white font-medium">링크 수집됨</h3>
+                            {getStatusBadge(item.processing_status)}
+                          </div>
+                          <a 
+                            href={item.source_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {item.source_url}
+                          </a>
+                          <p className="text-gray-500 text-xs">
+                            {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
+                          </p>
+                          {item.error_message && (
+                            <p className="text-red-400 text-xs mt-2">❌ {item.error_message}</p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            onClick={() => {
+                              setExtractingLinkId(item.id);
+                              extractDetailMutation.mutate({ rawDataId: item.id, url: item.source_url });
+                            }}
+                            disabled={extractingLinkId === item.id || item.processing_status === 'processing'}
+                            size="sm"
+                            className="bg-purple-500 hover:bg-purple-600 whitespace-nowrap"
+                          >
+                            {extractingLinkId === item.id || item.processing_status === 'processing' ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                추출 중
+                              </>
+                            ) : (
+                              <>
+                                <ExternalLink className="w-4 h-4 mr-1" />
+                                상세 추출
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              if (confirm('이 링크를 삭제하시겠습니까?')) {
+                                deleteRawDataMutation.mutate([item.id]);
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                  <ExternalLink className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500">수집된 링크가 없습니다</p>
+                  <p className="text-gray-600 text-sm mt-2">"URL 추출" 탭에서 링크를 수집하세요</p>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="data" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
               <h3 className="text-white font-bold mb-2 flex items-center gap-2">
@@ -901,40 +1048,29 @@ export default function AdminUrlExtraction() {
             )}
 
             {/* 통계 카드 */}
-            <div className="grid grid-cols-4 gap-3">
-              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="bg-green-900/20 border-green-400/30 p-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-400">
-                    {rawDataList.filter(r => r.processing_status === 'pending').length}
+                  <div className="text-2xl font-bold text-green-400">
+                    {rawDataList.filter(r => r.name_original && r.name_original !== "").length}
                   </div>
-                  <div className="text-xs text-gray-400">대기 중</div>
+                  <div className="text-xs text-gray-400">상세 정보 추출 완료</div>
                 </div>
               </Card>
               <Card className="bg-blue-900/20 border-blue-400/30 p-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
-                    {rawDataList.filter(r => r.processing_status === 'processing').length}
-                    {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    )}
+                  <div className="text-2xl font-bold text-blue-400">
+                    {rawDataList.filter(r => r.festival_id).length}
                   </div>
-                  <div className="text-xs text-gray-400">처리 중</div>
-                </div>
-              </Card>
-              <Card className="bg-green-900/20 border-green-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">
-                    {rawDataList.filter(r => r.processing_status === 'processed').length}
-                  </div>
-                  <div className="text-xs text-gray-400">완료</div>
+                  <div className="text-xs text-gray-400">Festival 변환 완료</div>
                 </div>
               </Card>
               <Card className="bg-red-900/20 border-red-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {rawDataList.filter(r => r.processing_status === 'failed').length}
+                    {rawDataList.filter(r => r.processing_status === 'failed' && r.name_original).length}
                   </div>
-                  <div className="text-xs text-gray-400">실패</div>
+                  <div className="text-xs text-gray-400">변환 실패</div>
                 </div>
               </Card>
             </div>
@@ -1013,15 +1149,15 @@ export default function AdminUrlExtraction() {
                 <div>
                   <h3 className="text-purple-400 font-bold flex items-center gap-2">
                     <Database className="w-5 h-5" />
-                    신규 축제 변환 ({rawDataList.filter(r => !r.festival_id).length}개)
+                    신규 축제 변환 ({rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").length}개)
                   </h3>
-                  <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 없는 새로운 데이터</p>
+                  <p className="text-gray-400 text-xs mt-1">상세 정보가 추출되었지만 Festival 엔티티에는 없는 데이터</p>
                 </div>
               </div>
 
               <div className="space-y-3 mt-4">
-                {rawDataList.filter(r => !r.festival_id).length > 0 ? (
-                  rawDataList.filter(r => !r.festival_id).map((item) => (
+                {rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").length > 0 ? (
+                  rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").map((item) => (
                     <Card key={item.id} className={`border-2 ${
                       selectedRawIds.has(item.id) 
                         ? 'bg-purple-900/30 border-purple-400' 
@@ -1088,20 +1224,20 @@ export default function AdminUrlExtraction() {
             </div>
 
             {/* 재변환 섹션 */}
-            {rawDataList.filter(r => r.festival_id).length > 0 && (
+            {rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").length > 0 && (
               <div className="space-y-3 border border-orange-800/50 rounded-lg p-4 bg-orange-900/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-orange-400 font-bold flex items-center gap-2">
                       <Database className="w-5 h-5" />
-                      기존 축제 ({rawDataList.filter(r => r.festival_id).length}개)
+                      기존 축제 ({rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").length}개)
                     </h3>
                     <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 이미 존재하는 축제 (재변환 가능)</p>
                   </div>
                 </div>
 
                 <div className="space-y-3 mt-4">
-                  {rawDataList.filter(r => r.festival_id).map((item) => (
+                  {rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").map((item) => (
                     <Card key={item.id} className={`border-2 ${
                       selectedRawIds.has(item.id) 
                         ? 'bg-purple-900/30 border-purple-400' 
