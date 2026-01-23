@@ -280,12 +280,10 @@ ${JSON.stringify(festivalData, null, 2)}
           console.log(`[Transform] ✓ Created new Festival: ${festivalId}`);
         }
 
-        // 상태 업데이트 - processed (YouTube 영상 정보도 함께 저장)
+        // 상태 업데이트 - processed
         await base44.asServiceRole.entities.UrlExtractionRawData.update(rawDataId, {
           processing_status: 'processed',
           festival_id: festivalId,
-          video_url: videoUrl,
-          youtube_shorts_urls: youtubeShortUrls,
           error_message: null
         });
 
