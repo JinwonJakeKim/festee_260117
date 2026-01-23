@@ -23,20 +23,27 @@ Deno.serve(async (req) => {
     // FestivalSourceUrl에서 국가 정보 가져오기
     let countryFromSource = null;
     try {
-      const sourceUrls = await base44.asServiceRole.entities.FestivalSourceUrl.list();
-      const matchingSource = sourceUrls.find(source => {
-        try {
-          const sourceHost = new URL(source.url).hostname.toLowerCase();
-          const inputHost = new URL(url).hostname.toLowerCase();
-          return inputHost.includes(sourceHost) || sourceHost.includes(inputHost);
-        } catch (e) {
-          return false;
+      // japantravel.com은 항상 Japan으로 설정
+      const urlHost = new URL(url).hostname.toLowerCase();
+      if (urlHost.includes('japantravel.com')) {
+        countryFromSource = 'Japan';
+        console.log(`japantravel.com detected, setting country: Japan`);
+      } else {
+        const sourceUrls = await base44.asServiceRole.entities.FestivalSourceUrl.list();
+        const matchingSource = sourceUrls.find(source => {
+          try {
+            const sourceHost = new URL(source.url).hostname.toLowerCase();
+            const inputHost = new URL(url).hostname.toLowerCase();
+            return inputHost.includes(sourceHost) || sourceHost.includes(inputHost);
+          } catch (e) {
+            return false;
+          }
+        });
+        
+        if (matchingSource && matchingSource.country) {
+          countryFromSource = matchingSource.country;
+          console.log(`Found matching source URL, using country: ${countryFromSource}`);
         }
-      });
-      
-      if (matchingSource && matchingSource.country) {
-        countryFromSource = matchingSource.country;
-        console.log(`Found matching source URL, using country: ${countryFromSource}`);
       }
     } catch (e) {
       console.log('No matching source URL found, will use LLM detection');
