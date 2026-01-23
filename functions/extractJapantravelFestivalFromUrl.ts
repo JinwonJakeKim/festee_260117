@@ -18,35 +18,15 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    console.log(`Fetching content from: ${url}`);
+    console.log(`[Japantravel] Fetching content from: ${url}`);
 
-    // FestivalSourceUrl에서 국가 정보 가져오기
-    let countryFromSource = null;
-    try {
-      // japantravel.com은 항상 Japan으로 설정
-      const urlHost = new URL(url).hostname.toLowerCase();
-      if (urlHost.includes('japantravel.com')) {
-        countryFromSource = 'Japan';
-        console.log(`japantravel.com detected, setting country: Japan`);
-      } else {
-        const sourceUrls = await base44.asServiceRole.entities.FestivalSourceUrl.list();
-        const matchingSource = sourceUrls.find(source => {
-          try {
-            const sourceHost = new URL(source.url).hostname.toLowerCase();
-            const inputHost = new URL(url).hostname.toLowerCase();
-            return inputHost.includes(sourceHost) || sourceHost.includes(inputHost);
-          } catch (e) {
-            return false;
-          }
-        });
-        
-        if (matchingSource && matchingSource.country) {
-          countryFromSource = matchingSource.country;
-          console.log(`Found matching source URL, using country: ${countryFromSource}`);
-        }
-      }
-    } catch (e) {
-      console.log('No matching source URL found, will use LLM detection');
+    // japantravel.com은 항상 Japan으로 설정
+    let countryFromSource = 'Japan';
+    const urlHost = new URL(url).hostname.toLowerCase();
+    if (urlHost.includes('japantravel.com')) {
+      console.log(`japantravel.com detected, setting country: Japan`);
+    } else {
+      console.warn(`⚠️ Non-japantravel.com URL detected: ${urlHost}`);
     }
 
     let html;
@@ -83,9 +63,9 @@ Deno.serve(async (req) => {
         });
       }
       
-      console.log(`Content fetched (${html.length} chars)`);
+      console.log(`[Japantravel] Content fetched (${html.length} chars)`);
     } catch (fetchError) {
-      console.error('Fetch error:', fetchError);
+      console.error('[Japantravel] Fetch error:', fetchError);
       
       let errorMessage = '페이지를 불러오는 중 오류가 발생했습니다';
       let userMessage = '';
@@ -131,7 +111,7 @@ Deno.serve(async (req) => {
       return youtubeUrls;
     };
 
-    // HTML에서 직접 날짜 정보 추출 (핵심 개선)
+    // HTML에서 직접 날짜 정보 추출 (japantravel.com 특화)
     const extractDateInfo = (htmlContent) => {
       const dateInfo = [];
       
@@ -305,22 +285,22 @@ Deno.serve(async (req) => {
     };
 
     const extractedYoutubeUrls = extractYoutubeUrls(html);
-    console.log(`Extracted YouTube URLs from HTML:`, extractedYoutubeUrls);
+    console.log(`[Japantravel] Extracted YouTube URLs from HTML:`, extractedYoutubeUrls);
 
     const extractedDateInfo = extractDateInfo(html);
-    console.log(`Extracted date information from HTML:`, extractedDateInfo);
+    console.log(`[Japantravel] Extracted date information from HTML:`, extractedDateInfo);
 
     // HTML 길이를 대폭 늘려서 더 많은 콘텐츠 분석 (50,000 → 100,000자)
     const maxLength = 100000;
     const truncatedHtml = html.length > maxLength ? html.substring(0, maxLength) : html;
     
-    console.log(`Analyzing with LLM (${truncatedHtml.length} chars)...`);
+    console.log(`[Japantravel] Analyzing with LLM (${truncatedHtml.length} chars)...`);
 
     let extraction;
     try {
       extraction = await base44.integrations.Core.InvokeLLM({
         prompt: `
-          다음 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
+          다음 japantravel.com 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
           
           **🎯 추출 규칙 (매우 중요!):**
           
@@ -608,7 +588,7 @@ Deno.serve(async (req) => {
         }
       });
     } catch (llmError) {
-      console.error('LLM error:', llmError);
+      console.error('[Japantravel] LLM error:', llmError);
       return Response.json({
         success: false,
         error: 'AI 분석 중 오류가 발생했습니다',
@@ -616,7 +596,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`Extraction completed, found ${extraction.festivals?.length || 0} festivals`);
+    console.log(`[Japantravel] Extraction completed, found ${extraction.festivals?.length || 0} festivals`);
 
     if (!extraction.festivals || extraction.festivals.length === 0) {
       return Response.json({
@@ -753,7 +733,7 @@ Deno.serve(async (req) => {
         youtube: festival.social_media.youtube ? normalizeUrl(festival.social_media.youtube, url) : null,
       } : null;
 
-      console.log(`Festival "${festival.name_original}" extraction:`, {
+      console.log(`[Japantravel] Festival "${festival.name_original}" extraction:`, {
         date_status: festival.date_status || 'confirmed',
         start_date: festival.start_date,
         end_date: festival.end_date,
@@ -765,7 +745,7 @@ Deno.serve(async (req) => {
       });
 
       // 디버깅: 다국어 필드 확인
-      console.log(`Festival "${festival.name_original}" extracted fields:`, {
+      console.log(`[Japantravel] Festival "${festival.name_original}" extracted fields:`, {
         original_language: festival.original_language,
         description_original_length: festival.description_original?.length || 0,
         summary_original: festival.summary_original?.substring(0, 50),
@@ -777,7 +757,7 @@ Deno.serve(async (req) => {
         name_original: festival.name_original || null,
         summary_original: festival.summary_original || null,
         description_original: festival.description_original || null,
-        country: countryFromSource || festival.country || 'Unknown',
+        country: countryFromSource,
         city: festival.city || null,
         category: festival.category || null,
         start_date: festival.start_date,
@@ -819,15 +799,15 @@ Deno.serve(async (req) => {
       };
     });
 
-    // UrlExtractionRawData 엔티티에 저장
+    // JapantravelUrlExtractionRawData 엔티티에 저장
     const savedRecords = [];
     for (const festival of festivals) {
       try {
-        const rawRecord = await base44.asServiceRole.entities.UrlExtractionRawData.create(festival);
+        const rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(festival);
         savedRecords.push(rawRecord);
-        console.log(`Saved UrlExtractionRawData record: ${rawRecord.id}`);
+        console.log(`[Japantravel] Saved JapantravelUrlExtractionRawData record: ${rawRecord.id}`);
       } catch (saveError) {
-        console.error('Failed to save raw data:', saveError);
+        console.error('[Japantravel] Failed to save raw data:', saveError);
       }
     }
 
@@ -854,7 +834,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Extraction error:', error);
+    console.error('[Japantravel] Extraction error:', error);
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류가 발생했습니다',

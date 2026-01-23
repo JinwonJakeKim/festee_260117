@@ -18,14 +18,14 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    console.log(`[UrlExtraction Transform] Starting transformation of ${rawDataIds.length} records, retransform=${retransform}`);
+    console.log(`[Japantravel Transform] Starting transformation of ${rawDataIds.length} records, retransform=${retransform}`);
 
     const results = [];
     
     for (const rawDataId of rawDataIds) {
       try {
         // 원본 데이터 가져오기
-        const rawDataRecords = await base44.asServiceRole.entities.UrlExtractionRawData.filter({ id: rawDataId });
+        const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({ id: rawDataId });
         const rawData = rawDataRecords[0];
         
         if (!rawData) {
@@ -37,10 +37,10 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        console.log(`[Transform] Processing: ${rawData.name_original}`);
+        console.log(`[Japantravel Transform] Processing: ${rawData.name_original}`);
 
         // 상태 업데이트 - processing
-        await base44.asServiceRole.entities.UrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
           processing_status: 'processing'
         });
 
@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
         let mediaUrls = festivalData.image_gallery_urls || [];
         
         try {
-          console.log(`[Transform] Searching Google Images for: ${festivalNameForSearch}`);
+          console.log(`[Japantravel Transform] Searching Google Images for: ${festivalNameForSearch}`);
           const googleApiKey = Deno.env.get('GOOGLE_CUSTOM_SEARCH_API_KEY');
           const searchEngineId = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
 
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
               if (imageData.items && imageData.items.length > 0) {
                 if (!thumbnailUrl || thumbnailUrl.includes('picsum.photos')) {
                   thumbnailUrl = imageData.items[0].link;
-                  console.log(`[Transform] ✓ Updated thumbnail from Google Images`);
+                  console.log(`[Japantravel Transform] ✓ Updated thumbnail from Google Images`);
                 }
                 
                 imageData.items.slice(1, 5).forEach((item, idx) => {
@@ -77,12 +77,12 @@ Deno.serve(async (req) => {
                     });
                   }
                 });
-                console.log(`[Transform] ✓ Added ${imageData.items.length - 1} images to media_urls`);
+                console.log(`[Japantravel Transform] ✓ Added ${imageData.items.length - 1} images to media_urls`);
               }
             }
           }
         } catch (imageError) {
-          console.error('[Transform] Google Images search failed:', imageError.message);
+          console.error('[Japantravel Transform] Google Images search failed:', imageError.message);
         }
 
         // YouTube 영상 검색 (중앙화된 함수 사용)
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         
         if (shouldSearchHighlight || true) { // 쇼츠는 항상 검색
           try {
-            console.log(`[Transform] Calling fetchYoutubeVideos function...`);
+            console.log(`[Japantravel Transform] Calling fetchYoutubeVideos function...`);
             const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
               festivalName: festivalNameForSearch,
               searchHighlightVideo: shouldSearchHighlight,
@@ -103,25 +103,25 @@ Deno.serve(async (req) => {
             if (youtubeResult.data.success) {
               if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
                 videoUrl = youtubeResult.data.highlightVideoUrl;
-                console.log(`[Transform] ✓ Got highlight video from fetchYoutubeVideos: ${videoUrl}`);
+                console.log(`[Japantravel Transform] ✓ Got highlight video from fetchYoutubeVideos: ${videoUrl}`);
               }
               
               youtubeShortUrls = youtubeResult.data.shortsUrls || [];
-              console.log(`[Transform] ✓ Got ${youtubeShortUrls.length} YouTube Shorts from fetchYoutubeVideos`);
+              console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} YouTube Shorts from fetchYoutubeVideos`);
             }
           } catch (youtubeError) {
-            console.error('[Transform] fetchYoutubeVideos failed:', youtubeError.message);
+            console.error('[Japantravel Transform] fetchYoutubeVideos failed:', youtubeError.message);
           }
         }
 
         // LLM으로 번역 수행
-        console.log(`[Transform] Performing LLM translation for: ${festivalData.name_original}`);
+        console.log(`[Japantravel Transform] Performing LLM translation for: ${festivalData.name_original}`);
 
         let translatedData;
         try {
           translatedData = await base44.integrations.Core.InvokeLLM({
             prompt: `
-다음은 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 한국어와 영어로 번역해주세요.
+다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 한국어와 영어로 번역해주세요.
 
 **원본 데이터:**
 ${JSON.stringify(festivalData, null, 2)}
@@ -161,9 +161,9 @@ ${JSON.stringify(festivalData, null, 2)}
               required: ["name_ko", "name_en", "description_ko", "description_en"]
             }
           });
-          console.log(`[Transform] LLM Translation successful.`);
+          console.log(`[Japantravel Transform] LLM Translation successful.`);
         } catch (llmError) {
-          console.error('[Transform] LLM Translation failed:', llmError);
+          console.error('[Japantravel Transform] LLM Translation failed:', llmError);
           translatedData = { 
             name_ko: festivalData.name_original,
             name_en: festivalData.name_original,
@@ -266,22 +266,22 @@ ${JSON.stringify(festivalData, null, 2)}
           
           if (existingFestival) {
             await base44.asServiceRole.entities.Festival.update(festivalId, festivalPayload);
-            console.log(`[Transform] ✓ Updated existing Festival: ${festivalId}`);
+            console.log(`[Japantravel Transform] ✓ Updated existing Festival: ${festivalId}`);
           } else {
             // 기존 Festival이 없으면 새로 생성
             const newFestival = await base44.asServiceRole.entities.Festival.create(festivalPayload);
             festivalId = newFestival.id;
-            console.log(`[Transform] ✓ Created new Festival (original not found): ${festivalId}`);
+            console.log(`[Japantravel Transform] ✓ Created new Festival (original not found): ${festivalId}`);
           }
         } else {
           // 첫 변환 - 새 Festival 생성
           const newFestival = await base44.asServiceRole.entities.Festival.create(festivalPayload);
           festivalId = newFestival.id;
-          console.log(`[Transform] ✓ Created new Festival: ${festivalId}`);
+          console.log(`[Japantravel Transform] ✓ Created new Festival: ${festivalId}`);
         }
 
         // 상태 업데이트 - processed
-        await base44.asServiceRole.entities.UrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
           processing_status: 'processed',
           festival_id: festivalId,
           error_message: null
@@ -294,16 +294,16 @@ ${JSON.stringify(festivalData, null, 2)}
           festivalName: festivalPayload.name_original
         });
 
-        console.log(`[Transform] Festival translation completed:`, {
+        console.log(`[Japantravel Transform] Festival translation completed:`, {
           original_language: festivalData.original_language,
           description_ko_length: translatedData.description_ko?.length || 0,
           description_en_length: translatedData.description_en?.length || 0,
         });
 
       } catch (itemError) {
-        console.error(`[Transform] Error processing ${rawDataId}:`, itemError);
+        console.error(`[Japantravel Transform] Error processing ${rawDataId}:`, itemError);
         
-        await base44.asServiceRole.entities.UrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
           processing_status: 'failed',
           error_message: itemError.message
         });
@@ -326,7 +326,7 @@ ${JSON.stringify(festivalData, null, 2)}
     });
 
   } catch (error) {
-    console.error('[UrlExtraction Transform] Error:', error);
+    console.error('[Japantravel Transform] Error:', error);
     return Response.json({ 
       success: false,
       error: error.message 

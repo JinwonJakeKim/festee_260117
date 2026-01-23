@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       }, { status: 404 });
     }
 
-    console.log(`Starting link extraction from: ${sourceUrl.url}`);
+    console.log(`[Japantravel] Starting link extraction from: ${sourceUrl.url}`);
     
     // 날짜 매개변수 처리
     let baseUrl = sourceUrl.url;
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         .replace(/{MM}/g, month)
         .replace(/{LAST_DAY}/g, lastDay.toString());
       
-      console.log(`Using date-parameterized URL: ${baseUrl}`);
+      console.log(`[Japantravel] Using date-parameterized URL: ${baseUrl}`);
     }
 
     const allExtractedLinks = [];
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         pageUrl = `${pageUrl}?p=${currentPage}`;
       }
 
-      console.log(`Fetching page ${currentPage}: ${pageUrl}`);
+      console.log(`[Japantravel] Fetching page ${currentPage}: ${pageUrl}`);
 
       let html;
       try {
@@ -79,13 +79,13 @@ Deno.serve(async (req) => {
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-          console.log(`Failed to fetch page ${currentPage}: HTTP ${response.status}`);
+          console.log(`[Japantravel] Failed to fetch page ${currentPage}: HTTP ${response.status}`);
           break;
         }
         
         html = await response.text();
       } catch (fetchError) {
-        console.error(`Error fetching page ${currentPage}:`, fetchError);
+        console.error(`[Japantravel] Error fetching page ${currentPage}:`, fetchError);
         break;
       }
 
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       const links = extractLinksFromHtml(html, sourceUrl.container_selector, sourceUrl.link_selector, pageUrl);
       
       if (links.length === 0) {
-        console.log(`No links found on page ${currentPage}, stopping`);
+        console.log(`[Japantravel] No links found on page ${currentPage}, stopping`);
         break;
       }
 
@@ -102,11 +102,11 @@ Deno.serve(async (req) => {
 
       // 이전 페이지와 동일한 링크인지 확인 (마지막 페이지 판단)
       if (currentPage > 1 && areSetsEqual(currentLinks, previousLinks)) {
-        console.log(`Page ${currentPage} has same links as page ${currentPage - 1}, reached last page`);
+        console.log(`[Japantravel] Page ${currentPage} has same links as page ${currentPage - 1}, reached last page`);
         break;
       }
 
-      console.log(`Found ${links.length} links on page ${currentPage}`);
+      console.log(`[Japantravel] Found ${links.length} links on page ${currentPage}`);
       allExtractedLinks.push(...links);
       totalLinksFound += links.length;
 
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
 
       // 안전장치: 최대 100페이지까지만
       if (currentPage > 100) {
-        console.log('Reached maximum page limit (100), stopping');
+        console.log('[Japantravel] Reached maximum page limit (100), stopping');
         break;
       }
 
@@ -123,22 +123,22 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log(`Total pages processed: ${currentPage - 1}`);
-    console.log(`Total links found: ${totalLinksFound}`);
+    console.log(`[Japantravel] Total pages processed: ${currentPage - 1}`);
+    console.log(`[Japantravel] Total links found: ${totalLinksFound}`);
 
     // 중복 제거
     const uniqueLinks = [...new Set(allExtractedLinks)];
-    console.log(`Unique links: ${uniqueLinks.length}`);
+    console.log(`[Japantravel] Unique links: ${uniqueLinks.length}`);
 
-    // 기존 UrlExtractionRawData 조회
-    const existingRecords = await base44.asServiceRole.entities.UrlExtractionRawData.list();
+    // 기존 JapantravelUrlExtractionRawData 조회
+    const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.list();
     const existingUrls = new Set(existingRecords.map(r => r.source_url));
 
     let newCount = 0;
     let existingCount = 0;
     let retriedCount = 0;
 
-    // 각 링크를 UrlExtractionRawData에 추가 또는 업데이트
+    // 각 링크를 JapantravelUrlExtractionRawData에 추가 또는 업데이트
     for (const link of uniqueLinks) {
       if (existingUrls.has(link)) {
         // 기존 레코드 찾기
@@ -146,18 +146,18 @@ Deno.serve(async (req) => {
         
         if (existingRecord.processing_status === 'failed') {
           // 실패한 레코드는 다시 pending으로
-          await base44.asServiceRole.entities.UrlExtractionRawData.update(existingRecord.id, {
+          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(existingRecord.id, {
             processing_status: 'pending',
             error_message: null
           });
           retriedCount++;
-          console.log(`Reset failed record to pending: ${link}`);
+          console.log(`[Japantravel] Reset failed record to pending: ${link}`);
         } else {
           existingCount++;
         }
       } else {
         // 새로운 레코드 생성 - null 대신 빈 문자열 사용
-        await base44.asServiceRole.entities.UrlExtractionRawData.create({
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create({
           source_url: link,
           country: sourceUrl.country,
           processing_status: 'pending',
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
           end_date: new Date().toISOString().split('T')[0],
         });
         newCount++;
-        console.log(`Created new pending record: ${link}`);
+        console.log(`[Japantravel] Created new pending record: ${link}`);
       }
     }
 
@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Link extraction error:', error);
+    console.error('[Japantravel] Link extraction error:', error);
     return Response.json({ 
       success: false,
       error: error.message || 'Unknown error',
@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// HTML에서 링크 추출 (CSS 선택자 사용)
+// HTML에서 링크 추출 (CSS 선택자 사용, japantravel.com 특화)
 function extractLinksFromHtml(html, containerSelector, linkSelector, baseUrl) {
   const links = [];
   
@@ -233,7 +233,7 @@ function extractLinksFromHtml(html, containerSelector, linkSelector, baseUrl) {
       }
     }
   } catch (e) {
-    console.error('Error parsing HTML:', e);
+    console.error('[Japantravel] Error parsing HTML:', e);
   }
   
   return links;

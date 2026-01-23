@@ -47,8 +47,8 @@ export default function AdminUrlExtraction() {
   });
 
   const { data: rawDataList } = useQuery({
-    queryKey: ['urlExtractionRawData'],
-    queryFn: () => base44.entities.UrlExtractionRawData.list('-created_date'),
+    queryKey: ['japantravelUrlExtractionRawData'],
+    queryFn: () => base44.entities.JapantravelUrlExtractionRawData.list('-created_date'),
     initialData: [],
   });
 
@@ -76,7 +76,7 @@ export default function AdminUrlExtraction() {
 
   const extractMutation = useMutation({
     mutationFn: async (url) => {
-      const { data } = await base44.functions.invoke('extractFestivalFromUrl', { url });
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { url });
       return data;
     },
     onSuccess: (data) => {
@@ -84,7 +84,7 @@ export default function AdminUrlExtraction() {
         alert(data.message);
         setUrlInput("");
         setActiveTab("data");
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
         alert(`추출 실패: ${data.error}\n${data.message || ''}`);
       }
@@ -104,7 +104,7 @@ export default function AdminUrlExtraction() {
         alert(data.message + `\n\n상세 결과:\n총 링크: ${data.links_found}개\n성공: ${data.extraction_results.success}개\n실패: ${data.extraction_results.failed}개`);
         setShowBatchExtract(false);
         setActiveTab("data");
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
         alert(`일괄 추출 실패: ${data.error}\n${data.message || ''}`);
       }
@@ -116,7 +116,7 @@ export default function AdminUrlExtraction() {
 
   const transformMutation = useMutation({
     mutationFn: async ({ rawDataIds, retransform = false }) => {
-      const { data } = await base44.functions.invoke('transformUrlExtractionData', { 
+      const { data } = await base44.functions.invoke('transformJapantravelUrlExtractionData', { 
         rawDataIds,
         retransform 
       });
@@ -126,7 +126,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(data.message);
         setSelectedRawIds(new Set());
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
         queryClient.invalidateQueries({ queryKey: ['festivals'] });
       }
     },
@@ -138,12 +138,12 @@ export default function AdminUrlExtraction() {
   const deleteRawDataMutation = useMutation({
     mutationFn: async (ids) => {
       for (const id of ids) {
-        await base44.entities.UrlExtractionRawData.delete(id);
+        await base44.entities.JapantravelUrlExtractionRawData.delete(id);
       }
     },
     onSuccess: () => {
       setSelectedRawIds(new Set());
-      queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       alert('선택한 데이터가 삭제되었습니다');
     }
   });
@@ -215,7 +215,7 @@ export default function AdminUrlExtraction() {
 
   const runLinkExtractionMutation = useMutation({
     mutationFn: async ({ sourceUrlId, targetMonth }) => {
-      const { data } = await base44.functions.invoke('extractFestivalLinksFromSourceUrl', { 
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalLinksFromSourceUrl', { 
         sourceUrlId,
         targetMonth 
       });
@@ -224,34 +224,34 @@ export default function AdminUrlExtraction() {
     onSuccess: (data) => {
       if (data.success) {
         alert(data.message);
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       }
     }
   });
 
   const runPendingProcessMutation = useMutation({
     mutationFn: async (batchSize = 5) => {
-      const { data } = await base44.functions.invoke('processPendingUrlExtractions', { batchSize });
+      const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', { batchSize });
       return data;
     },
     onSuccess: (data) => {
       if (data.success) {
         alert(data.message);
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       }
     }
   });
 
   const extractDetailMutation = useMutation({
     mutationFn: async ({ rawDataId, url }) => {
-      const { data } = await base44.functions.invoke('extractFestivalFromUrl', { url, rawDataId });
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { url, rawDataId });
       return data;
     },
     onSuccess: (data) => {
       if (data.success) {
         alert(data.message);
         setExtractingLinkId(null);
-        queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
         alert(`상세 추출 실패: ${data.error}`);
         setExtractingLinkId(null);
@@ -1036,7 +1036,7 @@ export default function AdminUrlExtraction() {
                     </p>
                   </div>
                   <Button
-                    onClick={() => queryClient.invalidateQueries({ queryKey: ['urlExtractionRawData'] })}
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
                     size="sm"
                     variant="outline"
                     className="border-blue-400 text-blue-400 hover:bg-blue-900/20"
@@ -1371,7 +1371,7 @@ export default function AdminUrlExtraction() {
                   <ul className="text-gray-300 text-xs space-y-1">
                     <li>• 저장된 소스 URL 목록을 순회합니다</li>
                     <li>• 각 소스 URL의 모든 페이지를 탐색하여 축제 링크를 추출합니다</li>
-                    <li>• 추출된 링크를 UrlExtractionRawData에 'pending' 상태로 저장합니다</li>
+                    <li>• 추출된 링크를 JapantravelUrlExtractionRawData에 'pending' 상태로 저장합니다</li>
                     <li>• 기존 링크는 건너뛰고, 실패한 링크는 재시도 대기열에 추가합니다</li>
                   </ul>
                 </div>
@@ -1493,8 +1493,8 @@ export default function AdminUrlExtraction() {
                 <div className="p-3 bg-purple-900/20 border border-purple-400/30 rounded-lg">
                   <p className="text-purple-400 text-xs font-bold mb-1">📋 동작 방식</p>
                   <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 'pending' 상태의 UrlExtractionRawData를 조회합니다 (최대 5개)</li>
-                    <li>• 각 링크에서 extractFestivalFromUrl 함수를 호출하여 상세 정보를 추출합니다</li>
+                    <li>• 'pending' 상태의 JapantravelUrlExtractionRawData를 조회합니다 (최대 5개)</li>
+                    <li>• 각 링크에서 extractJapantravelFestivalFromUrl 함수를 호출하여 상세 정보를 추출합니다</li>
                     <li>• 성공 시 'processed' 상태로, 실패 시 'failed' 상태로 업데이트합니다</li>
                     <li>• 서버 부하를 방지하기 위해 각 처리 사이에 2초 대기합니다</li>
                   </ul>
