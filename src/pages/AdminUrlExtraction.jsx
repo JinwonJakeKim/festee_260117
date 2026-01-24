@@ -870,50 +870,48 @@ export default function AdminUrlExtraction() {
                     ))
                   )}
                 </div>
-                </div>
 
                 {/* 축제 웹페이지 URL 입력 */}
                 <Card className="bg-gray-900 border-gray-800 p-6 mt-6">
-                <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
-                <div className="space-y-4">
-                  <input
-                    type="url"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    placeholder="https://example.com/festival"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                    disabled={isExtracting}
-                  />
-                  <Button
-                    onClick={handleExtract}
-                    disabled={isExtracting || !urlInput.trim()}
-                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                  >
-                    {isExtracting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        추출 중...
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="w-5 h-5 mr-2" />
-                        축제 정보 추출 시작
-                      </>
-                    )}
-                  </Button>
-                </div>
+                  <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
+                  <div className="space-y-4">
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder="https://example.com/festival"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
+                      disabled={isExtracting}
+                    />
+                    <Button
+                      onClick={handleExtract}
+                      disabled={isExtracting || !urlInput.trim()}
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                    >
+                      {isExtracting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          추출 중...
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-5 h-5 mr-2" />
+                          축제 정보 추출 시작
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-400/30 rounded-lg">
-                  <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
-                  <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
-                    <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
-                    <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
-                  </ul>
-                </div>
+                  <div className="mt-6 p-4 bg-blue-900/20 border border-blue-400/30 rounded-lg">
+                    <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
+                    <ul className="text-gray-300 text-xs space-y-1">
+                      <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
+                      <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
+                      <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
+                    </ul>
+                  </div>
                 </Card>
-                </Card>
-                </TabsContent>
+              </TabsContent>
 
           <TabsContent value="links" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
