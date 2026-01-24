@@ -254,8 +254,8 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
 
         // japantravel.com의 축제 상세 페이지 패턴 필터링
         // 예: https://en.japantravel.com/tokyo/tokyo-firefly-festival/56108
-        // 패턴: /{language}/{prefecture}/{festival-slug}/{id}
-        const festivalUrlPattern = /japantravel\.com\/[a-z]{2}\/[^/]+\/[^/]+\/[0-9]+$/;
+        // 패턴: https://{language}.japantravel.com/{prefecture}/{festival-slug}/{id}
+        const festivalUrlPattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/]+\/[^/]+\/[0-9]+$/;
 
         if (absoluteUrl.match(festivalUrlPattern)) {
           links.add(absoluteUrl);
