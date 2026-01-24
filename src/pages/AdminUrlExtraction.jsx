@@ -17,6 +17,7 @@ export default function AdminUrlExtraction() {
   const [automations, setAutomations] = useState([]);
   const [urlInput, setUrlInput] = useState("");
   const [selectedRawIds, setSelectedRawIds] = useState(new Set());
+  const [selectedLinkIds, setSelectedLinkIds] = useState(new Set());
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAddUrlForm, setShowAddUrlForm] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState(null);
@@ -405,6 +406,48 @@ export default function AdminUrlExtraction() {
     }
     if (confirm(`선택한 ${selectedRawIds.size}개의 데이터를 삭제하시겠습니까?`)) {
       deleteRawDataMutation.mutate(Array.from(selectedRawIds));
+    }
+  };
+
+  const handleSelectAllLinks = () => {
+    const linkOnlyRecords = rawDataList.filter(r => !r.name_original || r.name_original === "");
+    if (selectedLinkIds.size === linkOnlyRecords.length) {
+      setSelectedLinkIds(new Set());
+    } else {
+      setSelectedLinkIds(new Set(linkOnlyRecords.map(r => r.id)));
+    }
+  };
+
+  const handleSelectLink = (id) => {
+    const newSet = new Set(selectedLinkIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedLinkIds(newSet);
+  };
+
+  const handleDeleteSelectedLinks = () => {
+    if (selectedLinkIds.size === 0) {
+      alert('삭제할 링크를 선택해주세요');
+      return;
+    }
+    if (confirm(`선택한 ${selectedLinkIds.size}개의 링크를 삭제하시겠습니까?`)) {
+      deleteRawDataMutation.mutate(Array.from(selectedLinkIds));
+      setSelectedLinkIds(new Set());
+    }
+  };
+
+  const handleDeleteAllLinks = () => {
+    const linkOnlyRecords = rawDataList.filter(r => !r.name_original || r.name_original === "");
+    if (linkOnlyRecords.length === 0) {
+      alert('삭제할 링크가 없습니다');
+      return;
+    }
+    if (confirm(`모든 링크 ${linkOnlyRecords.length}개를 삭제하시겠습니까?`)) {
+      deleteRawDataMutation.mutate(linkOnlyRecords.map(r => r.id));
+      setSelectedLinkIds(new Set());
     }
   };
 
@@ -959,13 +1002,71 @@ export default function AdminUrlExtraction() {
               </Card>
             )}
 
+            {/* 선택 및 삭제 버튼 */}
+            {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 && (
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={handleSelectAllLinks}
+                    className="flex items-center gap-2 text-white hover:text-cyan-400"
+                  >
+                    {selectedLinkIds.size === rawDataList.filter(r => !r.name_original || r.name_original === "").length ? (
+                      <CheckSquare className="w-5 h-5 text-cyan-400" />
+                    ) : (
+                      <Square className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">전체 선택</span>
+                  </button>
+                  {selectedLinkIds.size > 0 && (
+                    <span className="text-cyan-400 text-sm">{selectedLinkIds.size}개 선택됨</span>
+                  )}
+                </div>
+
+                {selectedLinkIds.size > 0 && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleDeleteSelectedLinks}
+                      disabled={deleteRawDataMutation.isPending}
+                      className="flex-1 bg-red-500 hover:bg-red-600"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      선택 삭제 ({selectedLinkIds.size}개)
+                    </Button>
+                    <Button
+                      onClick={handleDeleteAllLinks}
+                      disabled={deleteRawDataMutation.isPending}
+                      className="flex-1 bg-red-700 hover:bg-red-800"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      전체 삭제
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )}
+
             {/* 링크 목록 */}
             <div className="space-y-3">
               {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 ? (
                 rawDataList.filter(r => !r.name_original || r.name_original === "").map((item) => (
-                  <Card key={item.id} className="bg-gray-900 border-gray-800">
+                  <Card key={item.id} className={`border-2 ${
+                    selectedLinkIds.has(item.id) 
+                      ? 'bg-purple-900/30 border-purple-400' 
+                      : 'bg-gray-900 border-gray-800'
+                  }`}>
                     <div className="p-4">
                       <div className="flex items-start gap-3">
+                        <button
+                          onClick={() => handleSelectLink(item.id)}
+                          className="flex-shrink-0 mt-1"
+                        >
+                          {selectedLinkIds.has(item.id) ? (
+                            <CheckSquare className="w-6 h-6 text-cyan-400" />
+                          ) : (
+                            <Square className="w-6 h-6 text-gray-600" />
+                          )}
+                        </button>
+
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <h3 className="text-white font-medium">링크 수집됨</h3>
@@ -1008,20 +1109,8 @@ export default function AdminUrlExtraction() {
                                 <ExternalLink className="w-4 h-4 mr-1" />
                                 상세 추출
                               </>
-                            )}
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              if (confirm('이 링크를 삭제하시겠습니까?')) {
-                                deleteRawDataMutation.mutate([item.id]);
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                              )}
+                              </Button>
                         </div>
                       </div>
                     </div>
