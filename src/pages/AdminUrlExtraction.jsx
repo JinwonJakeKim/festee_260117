@@ -869,10 +869,11 @@ export default function AdminUrlExtraction() {
                       </Card>
                     ))
                   )}
-              </div>
+                  </div>
+                  </div>
 
-              {/* 축제 웹페이지 URL 입력 */}
-              <Card className="bg-gray-900 border-gray-800 p-6 mt-6">
+                  {/* 축제 웹페이지 URL 입력 */}
+                  <Card className="bg-gray-900 border-gray-800 p-6 mt-6">
                 <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
                 <div className="space-y-4">
                   <input
