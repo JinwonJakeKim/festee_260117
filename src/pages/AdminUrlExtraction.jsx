@@ -442,8 +442,8 @@ export default function AdminUrlExtraction() {
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-white">URL 축제 정보 추출</h1>
-            <p className="text-gray-400 text-sm">웹페이지에서 축제 정보 자동 추출</p>
+            <h1 className="text-xl font-bold text-white">Japan - japantravel.com 축제 정보 추출</h1>
+            <p className="text-gray-400 text-sm">japantravel.com 웹페이지에서 축제 정보 자동 추출</p>
           </div>
         </div>
       </div>
