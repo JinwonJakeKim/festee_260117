@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth } = await req.json();
+    const { sourceUrlId, targetMonth, maxPages = 10 } = await req.json();
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -116,9 +116,9 @@ Deno.serve(async (req) => {
       previousLinks = currentLinks;
       currentPage++;
 
-      // 안전장치: 최대 100페이지까지만
-      if (currentPage > 100) {
-        console.log('[Japantravel] Reached maximum page limit (100), stopping');
+      // maxPages 제한
+      if (currentPage > maxPages) {
+        console.log(`[Japantravel] Reached maximum page limit (${maxPages}), stopping`);
         break;
       }
 
