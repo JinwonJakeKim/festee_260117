@@ -40,6 +40,7 @@ export default function AdminUrlExtraction() {
   });
   const [isBatchExtracting, setIsBatchExtracting] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState({});
+  const [deletionProgress, setDeletionProgress] = useState({ isDeleting: false, current: 0, total: 0 });
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -428,26 +429,60 @@ export default function AdminUrlExtraction() {
     setSelectedLinkIds(newSet);
   };
 
-  const handleDeleteSelectedLinks = () => {
+  const handleDeleteSelectedLinks = async () => {
     if (selectedLinkIds.size === 0) {
       alert('삭제할 링크를 선택해주세요');
       return;
     }
-    if (confirm(`선택한 ${selectedLinkIds.size}개의 링크를 삭제하시겠습니까?`)) {
-      deleteRawDataMutation.mutate(Array.from(selectedLinkIds));
+    if (!confirm(`선택한 ${selectedLinkIds.size}개의 링크를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    const idsToDelete = Array.from(selectedLinkIds);
+    setDeletionProgress({ isDeleting: true, current: 0, total: idsToDelete.length });
+
+    try {
+      for (let i = 0; i < idsToDelete.length; i++) {
+        await base44.entities.JapantravelUrlExtractionRawData.delete(idsToDelete[i]);
+        setDeletionProgress({ isDeleting: true, current: i + 1, total: idsToDelete.length });
+      }
+      
       setSelectedLinkIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+      alert('선택한 링크가 모두 삭제되었습니다');
+    } catch (error) {
+      alert('삭제 중 오류가 발생했습니다: ' + error.message);
+    } finally {
+      setDeletionProgress({ isDeleting: false, current: 0, total: 0 });
     }
   };
 
-  const handleDeleteAllLinks = () => {
+  const handleDeleteAllLinks = async () => {
     const linkOnlyRecords = rawDataList.filter(r => !r.name_original || r.name_original === "");
     if (linkOnlyRecords.length === 0) {
       alert('삭제할 링크가 없습니다');
       return;
     }
-    if (confirm(`모든 링크 ${linkOnlyRecords.length}개를 삭제하시겠습니까?`)) {
-      deleteRawDataMutation.mutate(linkOnlyRecords.map(r => r.id));
+    if (!confirm(`모든 링크 ${linkOnlyRecords.length}개를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    const idsToDelete = linkOnlyRecords.map(r => r.id);
+    setDeletionProgress({ isDeleting: true, current: 0, total: idsToDelete.length });
+
+    try {
+      for (let i = 0; i < idsToDelete.length; i++) {
+        await base44.entities.JapantravelUrlExtractionRawData.delete(idsToDelete[i]);
+        setDeletionProgress({ isDeleting: true, current: i + 1, total: idsToDelete.length });
+      }
+      
       setSelectedLinkIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+      alert('모든 링크가 삭제되었습니다');
+    } catch (error) {
+      alert('삭제 중 오류가 발생했습니다: ' + error.message);
+    } finally {
+      setDeletionProgress({ isDeleting: false, current: 0, total: 0 });
     }
   };
 
@@ -476,6 +511,30 @@ export default function AdminUrlExtraction() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      {/* 삭제 진행 상황 팝업 */}
+      {deletionProgress.isDeleting && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
+          <Card className="bg-gray-900 border-gray-700 p-6 w-80">
+            <h3 className="text-white font-bold mb-4 text-center">링크 삭제 중...</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm text-gray-300">
+                <span>진행 상황</span>
+                <span>{deletionProgress.current} / {deletionProgress.total}</span>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 h-full transition-all duration-300"
+                  style={{ width: `${(deletionProgress.current / deletionProgress.total) * 100}%` }}
+                />
+              </div>
+              <p className="text-center text-gray-400 text-sm">
+                {Math.round((deletionProgress.current / deletionProgress.total) * 100)}% 완료
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
           <button
