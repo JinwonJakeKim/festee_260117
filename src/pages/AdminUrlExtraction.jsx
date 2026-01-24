@@ -225,9 +225,15 @@ export default function AdminUrlExtraction() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        alert(data.message);
+        alert(`✅ 링크 추출 완료!\n\n${data.message}`);
         queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+        setActiveTab("links");
+      } else {
+        alert(`❌ 링크 추출 실패\n\n${data.error || data.message}`);
       }
+    },
+    onError: (error) => {
+      alert(`❌ 링크 추출 중 오류 발생\n\n${error.message}`);
     }
   });
 
@@ -916,10 +922,21 @@ export default function AdminUrlExtraction() {
 
           <TabsContent value="links" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
-              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                <ExternalLink className="w-5 h-5 text-cyan-400" />
-                수집된 링크 관리
-              </h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-white font-bold flex items-center gap-2">
+                  <ExternalLink className="w-5 h-5 text-cyan-400" />
+                  수집된 링크 관리
+                </h3>
+                <Button
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
+                  size="sm"
+                  variant="outline"
+                  className="border-cyan-400 text-cyan-400 hover:bg-cyan-900/20"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  새로고침
+                </Button>
+              </div>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ URL 추출 탭에서 수집한 링크들을 관리합니다</li>
                 <li>✓ "상세 추출" 버튼을 클릭하여 각 링크의 축제 정보를 추출합니다</li>
