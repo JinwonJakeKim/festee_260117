@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { DOMParser } from 'npm:deno-dom/deno-dom-wasm';
 
 Deno.serve(async (req) => {
   try {
@@ -29,6 +30,8 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[Japantravel] Starting link extraction from: ${sourceUrl.url}`);
+    console.log(`[Japantravel] Container selector: ${sourceUrl.container_selector}`);
+    console.log(`[Japantravel] Link selector: ${sourceUrl.link_selector}`);
     
     // 날짜 매개변수 처리
     let baseUrl = sourceUrl.url;
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
       }
 
       // CSS 선택자로 링크 추출
-      const links = extractLinksFromHtml(html, sourceUrl.container_selector, sourceUrl.link_selector, pageUrl);
+      const links = await extractLinksFromHtml(html, sourceUrl.container_selector, sourceUrl.link_selector, pageUrl);
       
       if (links.length === 0) {
         console.log(`[Japantravel] No links found on page ${currentPage}, stopping`);
@@ -198,45 +201,74 @@ Deno.serve(async (req) => {
   }
 });
 
-// HTML에서 링크 추출 (CSS 선택자 사용, japantravel.com 특화)
-function extractLinksFromHtml(html, containerSelector, linkSelector, baseUrl) {
-  const links = [];
-  
+// HTML에서 링크 추출 (CSS 선택자 사용, DOMParser 활용)
+async function extractLinksFromHtml(html, containerSelector, linkSelector, baseUrl) {
+  const links = new Set(); // 중복 방지를 위해 Set 사용
+
   try {
-    // 간단한 정규식 기반 추출 (Deno에서 DOM 파서 없이)
-    // container 내부의 링크만 추출하려면 더 정교한 파싱이 필요하지만,
-    // 여기서는 linkSelector로 모든 링크를 찾고 필터링
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    if (!doc) {
+      console.error('[Japantravel] Failed to parse HTML document.');
+      return [];
+    }
+
+    let elementsToSearch = [];
     
-    // 링크 패턴 찾기
-    const linkPattern = new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>`, 'gi');
-    let match;
-    
-    while ((match = linkPattern.exec(html)) !== null) {
-      const href = match[1];
-      
-      // 절대 URL로 변환
-      let absoluteUrl = href;
-      if (href.startsWith('/')) {
-        const base = new URL(baseUrl);
-        absoluteUrl = base.origin + href;
-      } else if (!href.startsWith('http')) {
-        absoluteUrl = new URL(href, baseUrl).href;
+    // 컨테이너 선택자가 있으면 해당 컨테이너 내에서만 링크를 찾음
+    if (containerSelector) {
+      const containers = doc.querySelectorAll(containerSelector);
+      if (containers && containers.length > 0) {
+        elementsToSearch = Array.from(containers);
+        console.log(`[Japantravel] Found ${elementsToSearch.length} containers using selector: ${containerSelector}`);
+      } else {
+        console.warn(`[Japantravel] No containers found with selector: ${containerSelector}, searching entire document`);
+        elementsToSearch = [doc];
       }
-      
-      // japantravel.com의 이벤트 상세 페이지 패턴 필터링
-      // 예: https://en.japantravel.com/.../{event-name}
-      if (absoluteUrl.includes('japantravel.com') && 
-          !absoluteUrl.includes('?') && 
-          !absoluteUrl.includes('/events') &&
-          !absoluteUrl.includes('#')) {
-        links.push(absoluteUrl);
+    } else {
+      elementsToSearch = [doc];
+    }
+
+    for (const container of elementsToSearch) {
+      const linkElements = container.querySelectorAll(linkSelector || 'a');
+      console.log(`[Japantravel] Found ${linkElements.length} link elements with selector: ${linkSelector || 'a'}`);
+
+      for (const el of linkElements) {
+        const href = el.getAttribute('href');
+        if (!href) continue;
+
+        // 절대 URL로 변환
+        let absoluteUrl = href;
+        try {
+          if (href.startsWith('/')) {
+            const base = new URL(baseUrl);
+            absoluteUrl = base.origin + href;
+          } else if (!href.startsWith('http')) {
+            absoluteUrl = new URL(href, baseUrl).href;
+          }
+        } catch (urlError) {
+          console.warn(`[Japantravel] Invalid URL encountered: ${href}, skipping.`);
+          continue;
+        }
+
+        // japantravel.com의 축제 상세 페이지 패턴 필터링
+        // 예: https://en.japantravel.com/tokyo/tokyo-firefly-festival/56108
+        // 패턴: /{language}/{prefecture}/{festival-slug}/{id}
+        const festivalUrlPattern = /japantravel\.com\/[a-z]{2}\/[^/]+\/[^/]+\/[0-9]+$/;
+
+        if (absoluteUrl.match(festivalUrlPattern)) {
+          links.add(absoluteUrl);
+        }
       }
     }
+
+    console.log(`[Japantravel] Total unique links extracted: ${links.size}`);
   } catch (e) {
-    console.error('[Japantravel] Error parsing HTML:', e);
+    console.error('[Japantravel] Error parsing HTML or extracting links:', e);
   }
-  
-  return links;
+
+  return Array.from(links);
 }
 
 // Set 비교 함수
