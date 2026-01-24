@@ -568,123 +568,7 @@ export default function AdminUrlExtraction() {
           </TabsList>
 
           <TabsContent value="extract" className="mt-4">
-            <Card className="bg-gray-900 border-gray-800 p-6">
-              <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
-              <div className="space-y-4">
-                <input
-                  type="url"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  placeholder="https://example.com/festival"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                  disabled={isExtracting}
-                />
-                <Button
-                  onClick={handleExtract}
-                  disabled={isExtracting || !urlInput.trim()}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                >
-                  {isExtracting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      추출 중...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-5 h-5 mr-2" />
-                      축제 정보 추출 시작
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-900/20 border border-blue-400/30 rounded-lg">
-                <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
-                <ul className="text-gray-300 text-xs space-y-1">
-                  <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
-                  <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
-                  <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
-                  <li>• 여러 축제가 나열된 목록 페이지는 "일괄 추출" 기능을 사용하세요</li>
-                </ul>
-              </div>
-
-              {/* 일괄 추출 기능 */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-white font-bold">일괄 추출 (Batch)</h4>
-                  <Button
-                    onClick={() => setShowBatchExtract(!showBatchExtract)}
-                    size="sm"
-                    className="bg-purple-500 hover:bg-purple-600"
-                  >
-                    {showBatchExtract ? '닫기' : '열기'}
-                  </Button>
-                </div>
-
-                {showBatchExtract && (
-                  <Card className="bg-gray-800 border-gray-700 p-4">
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-gray-300 text-xs mb-1 block">목록 페이지 URL *</label>
-                        <input
-                          type="url"
-                          placeholder="https://en.japantravel.com/events"
-                          value={batchConfig.list_page_url}
-                          onChange={(e) => setBatchConfig({ ...batchConfig, list_page_url: e.target.value })}
-                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                          disabled={isBatchExtracting}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-gray-300 text-xs mb-1 block">컨테이너 CSS 선택자</label>
-                        <input
-                          type="text"
-                          placeholder="div.row.small-event-gutter"
-                          value={batchConfig.container_selector}
-                          onChange={(e) => setBatchConfig({ ...batchConfig, container_selector: e.target.value })}
-                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                          disabled={isBatchExtracting}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-gray-300 text-xs mb-1 block">링크 선택자</label>
-                        <input
-                          type="text"
-                          placeholder="a"
-                          value={batchConfig.link_selector}
-                          onChange={(e) => setBatchConfig({ ...batchConfig, link_selector: e.target.value })}
-                          className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                          disabled={isBatchExtracting}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleBatchExtract}
-                        disabled={isBatchExtracting || !batchConfig.list_page_url.trim()}
-                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      >
-                        {isBatchExtracting ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            일괄 추출 중... (시간이 걸릴 수 있습니다)
-                          </>
-                        ) : (
-                          '일괄 추출 시작'
-                        )}
-                      </Button>
-                      <div className="p-3 bg-yellow-900/20 border border-yellow-400/30 rounded-lg">
-                        <p className="text-yellow-400 text-xs font-bold mb-1">⚠️ 주의사항</p>
-                        <ul className="text-gray-300 text-xs space-y-1">
-                          <li>• 여러 축제 링크가 있는 목록 페이지의 URL을 입력하세요</li>
-                          <li>• CSS 선택자는 브라우저 개발자 도구로 확인할 수 있습니다</li>
-                          <li>• 추출 시간은 링크 개수에 따라 수 분이 소요될 수 있습니다</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-              {/* 저장된 소스 URL 관리 */}
+            {/* 저장된 소스 URL 관리 */}
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-white font-bold">저장된 소스 URL</h4>
@@ -986,9 +870,50 @@ export default function AdminUrlExtraction() {
                     ))
                   )}
                 </div>
-              </div>
-            </Card>
-          </TabsContent>
+                </div>
+
+                {/* 축제 웹페이지 URL 입력 */}
+                <Card className="bg-gray-900 border-gray-800 p-6 mt-6">
+                <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
+                <div className="space-y-4">
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    placeholder="https://example.com/festival"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
+                    disabled={isExtracting}
+                  />
+                  <Button
+                    onClick={handleExtract}
+                    disabled={isExtracting || !urlInput.trim()}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                  >
+                    {isExtracting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        추출 중...
+                      </>
+                    ) : (
+                      <>
+                        <ExternalLink className="w-5 h-5 mr-2" />
+                        축제 정보 추출 시작
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-400/30 rounded-lg">
+                  <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
+                    <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
+                    <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
+                  </ul>
+                </div>
+                </Card>
+                </Card>
+                </TabsContent>
 
           <TabsContent value="links" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
