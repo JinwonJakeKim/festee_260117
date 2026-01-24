@@ -254,11 +254,27 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
 
         // japantravel.com의 축제 상세 페이지 패턴 필터링
         // 예: https://en.japantravel.com/tokyo/tokyo-firefly-festival/56108
-        // 패턴: https://{language}.japantravel.com/{prefecture}/{festival-slug}/{id}
-        const festivalUrlPattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/]+\/[^/]+\/[0-9]+$/;
+        // 패턴: https://{language}.japantravel.com/{prefecture}/{festival-slug}/{숫자ID}
+        // 반드시 숫자로 끝나야 함 (도시 이름으로 끝나는 링크 제외)
+        const festivalUrlPattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d+\/?$/;
 
         if (absoluteUrl.match(festivalUrlPattern)) {
-          links.add(absoluteUrl);
+          // URL 끝에 슬래시가 있으면 제거하여 정규화
+          const normalizedUrl = absoluteUrl.replace(/\/$/, '');
+          
+          // URL 경로를 분리하여 마지막 부분이 숫자인지 재확인
+          const pathParts = normalizedUrl.split('/').filter(p => p);
+          const lastPart = pathParts[pathParts.length - 1];
+          
+          // 마지막 부분이 순수 숫자인지 확인
+          if (/^\d+$/.test(lastPart)) {
+            links.add(normalizedUrl);
+            console.log(`[Japantravel] ✓ Valid festival link: ${normalizedUrl}`);
+          } else {
+            console.log(`[Japantravel] ✗ Rejected (not ending with number): ${absoluteUrl}`);
+          }
+        } else {
+          console.log(`[Japantravel] ✗ Rejected (pattern mismatch): ${absoluteUrl}`);
         }
       }
     }
