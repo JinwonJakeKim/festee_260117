@@ -932,6 +932,33 @@ export default function AdminUrlExtraction() {
               </Card>
             </div>
 
+            {/* 일괄 추출 버튼 */}
+            {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 && (
+              <Card className="bg-purple-900/20 border-purple-400/30 p-4">
+                <h3 className="text-white font-bold mb-2">일괄 상세 추출</h3>
+                <p className="text-gray-400 text-sm mb-3">
+                  대기 중인 링크에서 축제 정보를 순차적으로 추출합니다 (최대 5개씩 처리)
+                </p>
+                <Button
+                  onClick={() => runPendingProcessMutation.mutate(5)}
+                  disabled={runPendingProcessMutation.isPending}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  {runPendingProcessMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      일괄 추출 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5 mr-2" />
+                      대기열 일괄 추출 시작
+                    </>
+                  )}
+                </Button>
+              </Card>
+            )}
+
             {/* 링크 목록 */}
             <div className="space-y-3">
               {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 ? (
