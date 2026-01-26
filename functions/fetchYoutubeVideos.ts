@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       searchHighlightVideo = true,
       searchShorts = true 
     } = await req.json();
-    
+
     if (!festivalName) {
       return Response.json({ 
         success: false,
@@ -23,7 +23,14 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
+    // 축제 이름에서 연도 제거 (예: "Festival 2026" -> "Festival")
+    const festivalNameWithoutYear = festivalName.replace(/\s+(19|20)\d{2}(\s|$)/g, ' ').trim();
+    const searchQuery = festivalNameWithoutYear || festivalName;
+
     console.log(`[FetchYoutubeVideos] Starting search for: "${festivalName}"`);
+    if (festivalNameWithoutYear !== festivalName) {
+      console.log(`[FetchYoutubeVideos] Removed year from search: "${searchQuery}"`);
+    }
     console.log(`[FetchYoutubeVideos] Options: highlightVideo=${searchHighlightVideo}, shorts=${searchShorts}`);
 
     const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
@@ -90,7 +97,7 @@ Deno.serve(async (req) => {
         
         const searchParams = new URLSearchParams({
           part: 'id,snippet',
-          q: festivalName,
+          q: searchQuery,
           type: 'video',
           order: 'relevance',
           maxResults: '20',
@@ -266,7 +273,7 @@ Deno.serve(async (req) => {
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery + ' festival shorts')}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
