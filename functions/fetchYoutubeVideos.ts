@@ -200,11 +200,16 @@ Deno.serve(async (req) => {
                 }
               }
               
-              if (embeddableVideos.length === 0) {
-                console.log(`[FetchYoutubeVideos] ⚠️ No embeddable videos found`);
+              // 3단계: 우선순위 부여 및 정렬
+              // 임베드 가능한 영상이 없으면 필터링된 영상(뉴스 제외)을 사용
+              const videosToUse = embeddableVideos.length > 0 
+                ? embeddableVideos 
+                : filteredVideos.map((item, idx) => ({ item, originalIndex: idx }));
+              
+              if (videosToUse.length === 0) {
+                console.log(`[FetchYoutubeVideos] ⚠️ No videos available after filtering`);
               } else {
-                // 3단계: 우선순위 부여 및 정렬
-                const videosWithPriority = embeddableVideos.map(({ item, originalIndex }) => ({
+                const videosWithPriority = videosToUse.map(({ item, originalIndex }) => ({
                   item,
                   videoId: item.id.videoId,
                   title: item.snippet.title || '',
@@ -226,7 +231,8 @@ Deno.serve(async (req) => {
                 const topVideo = videosWithPriority[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
-                  console.log(`[FetchYoutubeVideos] ✅ Top video selected:`);
+                  const embeddableStatus = embeddableVideos.length > 0 ? '✅ 임베드 가능' : '⚠️ 임베드 불가 (YouTube 링크)';
+                  console.log(`[FetchYoutubeVideos] ✅ Top video selected (${embeddableStatus}):`);
                   console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : ''} ${topVideo.is4K ? '✅ 4K' : '일반'}`);
                   console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
                   console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
@@ -287,8 +293,14 @@ Deno.serve(async (req) => {
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
                     .slice(0, 5);
                   
-                  shortsUrls = embeddableShorts || [];
-                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts (filtered ${shortsVideoIds.length - shortsUrls.length})`);
+                  // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 5개)
+                  if (embeddableShorts && embeddableShorts.length > 0) {
+                    shortsUrls = embeddableShorts;
+                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts`);
+                  } else {
+                    shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
+                  }
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
                   shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
