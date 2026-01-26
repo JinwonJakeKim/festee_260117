@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     // 페이지네이션 처리
     while (currentPage <= maxPages) {
-      // URL 객체를 사용하여 p 파라미터를 올바르게 설정 (중복 방지)
+      // URL에 페이지 파라미터 추가 (중복 방지)
       const urlObj = new URL(baseUrl);
       urlObj.searchParams.set('p', currentPage.toString());
       const pageUrl = urlObj.toString();
