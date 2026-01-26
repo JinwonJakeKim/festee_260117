@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
           q: festivalName,
           type: 'video',
           order: 'relevance',
-          maxResults: '10',
+          maxResults: '20',
           key: youtubeApiKey
         });
         
@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=10&key=${youtubeApiKey}`;
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalName + ' festival shorts')}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
