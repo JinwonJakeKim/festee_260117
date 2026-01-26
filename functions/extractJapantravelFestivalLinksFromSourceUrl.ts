@@ -53,15 +53,11 @@ Deno.serve(async (req) => {
     let totalLinksFound = 0;
 
     // 페이지네이션 처리
-    while (true) {
-      let pageUrl = baseUrl;
-      
-      // URL에 페이지 파라미터 추가
-      if (pageUrl.includes('?')) {
-        pageUrl = `${pageUrl}&p=${currentPage}`;
-      } else {
-        pageUrl = `${pageUrl}?p=${currentPage}`;
-      }
+    while (currentPage <= maxPages) {
+      // URL 객체를 사용하여 p 파라미터를 올바르게 설정 (중복 방지)
+      const urlObj = new URL(baseUrl);
+      urlObj.searchParams.set('p', currentPage.toString());
+      const pageUrl = urlObj.toString();
 
       console.log(`[Japantravel] Fetching page ${currentPage}: ${pageUrl}`);
 
@@ -115,12 +111,6 @@ Deno.serve(async (req) => {
 
       previousLinks = currentLinks;
       currentPage++;
-
-      // maxPages 제한
-      if (currentPage > maxPages) {
-        console.log(`[Japantravel] Reached maximum page limit (${maxPages}), stopping`);
-        break;
-      }
 
       // 서버 부하 방지를 위한 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 1000));
