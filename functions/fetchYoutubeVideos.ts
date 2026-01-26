@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       searchHighlightVideo = true,
       searchShorts = true 
     } = await req.json();
-
+    
     if (!festivalName) {
       return Response.json({ 
         success: false,
@@ -23,13 +23,13 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // 축제 이름에서 연도 제거 (예: "Festival 2026" -> "Festival")
-    const festivalNameWithoutYear = festivalName.replace(/\s+(19|20)\d{2}(\s|$)/g, ' ').trim();
-    const searchQuery = festivalNameWithoutYear || festivalName;
-
+    // 축제 이름에서 연도 제거 (YouTube 검색 시 더 많은 결과를 얻기 위함)
+    // 예: "Shizukuishi Winter Festa 2026" -> "Shizukuishi Winter Festa"
+    const festivalNameForSearch = festivalName.replace(/\s*20\d{2}\s*/g, ' ').trim();
+    
     console.log(`[FetchYoutubeVideos] Starting search for: "${festivalName}"`);
-    if (festivalNameWithoutYear !== festivalName) {
-      console.log(`[FetchYoutubeVideos] Removed year from search: "${searchQuery}"`);
+    if (festivalNameForSearch !== festivalName) {
+      console.log(`[FetchYoutubeVideos] Year removed for search: "${festivalNameForSearch}"`);
     }
     console.log(`[FetchYoutubeVideos] Options: highlightVideo=${searchHighlightVideo}, shorts=${searchShorts}`);
 
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         
         const searchParams = new URLSearchParams({
           part: 'id,snippet',
-          q: searchQuery,
+          q: festivalNameForSearch,
           type: 'video',
           order: 'relevance',
           maxResults: '20',
@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery + ' festival shorts')}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(festivalNameForSearch + ' festival shorts')}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {
