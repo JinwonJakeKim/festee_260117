@@ -1140,16 +1140,40 @@ export default function AdminUrlExtraction() {
               </ul>
             </Card>
 
-            {/* 처리 중 알림 */}
+            {/* 처리 중인 축제 표시 및 중지 버튼 */}
             {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
               <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0" />
+                <div className="flex items-start gap-3 mb-3">
+                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0 mt-1" />
                   <div className="flex-1">
-                    <h3 className="text-blue-400 font-bold mb-1">변환 진행 중</h3>
-                    <p className="text-gray-300 text-sm">
-                      현재 {rawDataList.filter(r => r.processing_status === 'processing').length}개의 축제가 변환되고 있습니다.
-                    </p>
+                    <h3 className="text-blue-400 font-bold mb-1">변환 진행 중인 축제</h3>
+                    <div className="space-y-2 mt-2">
+                      {rawDataList.filter(r => r.processing_status === 'processing').map((item) => (
+                        <div key={item.id} className="flex items-center justify-between bg-blue-900/20 rounded p-2">
+                          <div className="flex-1">
+                            <p className="text-white text-sm font-medium">{item.name_original || '이름 없음'}</p>
+                            <p className="text-gray-400 text-xs">{item.city}, {item.country}</p>
+                          </div>
+                          <Button
+                            onClick={async () => {
+                              if (confirm(`"${item.name_original}" 변환을 중지하시겠습니까?`)) {
+                                await base44.entities.JapantravelUrlExtractionRawData.update(item.id, {
+                                  processing_status: 'pending',
+                                  error_message: '사용자에 의해 중지됨'
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+                                alert('변환이 중지되었습니다.');
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-red-400 text-red-400 hover:bg-red-900/20"
+                          >
+                            중지
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <Button
                     onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
@@ -1163,30 +1187,41 @@ export default function AdminUrlExtraction() {
               </Card>
             )}
 
-            {/* 통계 카드 */}
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="bg-green-900/20 border-green-400/30 p-3">
+            {/* 통계 카드 - 4개 (대기중, 처리중, 완료, 실패) */}
+            <div className="grid grid-cols-4 gap-3">
+              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">
-                    {rawDataList.filter(r => r.name_original && r.name_original !== "").length}
+                  <div className="text-2xl font-bold text-yellow-400">
+                    {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
                   </div>
-                  <div className="text-xs text-gray-400">상세 정보 추출 완료</div>
+                  <div className="text-xs text-gray-400">대기중</div>
                 </div>
               </Card>
               <Card className="bg-blue-900/20 border-blue-400/30 p-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">
-                    {rawDataList.filter(r => r.festival_id).length}
+                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
+                    {rawDataList.filter(r => r.processing_status === 'processing').length}
+                    {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
                   </div>
-                  <div className="text-xs text-gray-400">Festival 변환 완료</div>
+                  <div className="text-xs text-gray-400">처리중</div>
+                </div>
+              </Card>
+              <Card className="bg-green-900/20 border-green-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">
+                    {rawDataList.filter(r => r.processing_status === 'processed').length}
+                  </div>
+                  <div className="text-xs text-gray-400">완료</div>
                 </div>
               </Card>
               <Card className="bg-red-900/20 border-red-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {rawDataList.filter(r => r.processing_status === 'failed' && r.name_original).length}
+                    {rawDataList.filter(r => r.processing_status === 'failed').length}
                   </div>
-                  <div className="text-xs text-gray-400">변환 실패</div>
+                  <div className="text-xs text-gray-400">실패</div>
                 </div>
               </Card>
             </div>
@@ -1259,24 +1294,30 @@ export default function AdminUrlExtraction() {
               </Card>
             )}
 
-            {/* 신규 변환 섹션 */}
-            <div className="space-y-3 border border-purple-800/50 rounded-lg p-4 bg-purple-900/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-purple-400 font-bold flex items-center gap-2">
-                    <Database className="w-5 h-5" />
-                    신규 축제 변환 ({rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").length}개)
-                  </h3>
-                  <p className="text-gray-400 text-xs mt-1">상세 정보가 추출되었지만 Festival 엔티티에는 없는 데이터</p>
-                </div>
-              </div>
+            {/* 상태별 탭 섹션 */}
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-4">
+                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
+                  대기중 ({rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
+                </TabsTrigger>
+                <TabsTrigger value="processing" className="data-[state=active]:bg-blue-500">
+                  처리중 ({rawDataList.filter(r => r.processing_status === 'processing').length})
+                </TabsTrigger>
+                <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
+                  완료 ({rawDataList.filter(r => r.processing_status === 'processed').length})
+                </TabsTrigger>
+                <TabsTrigger value="failed" className="data-[state=active]:bg-red-500">
+                  실패 ({rawDataList.filter(r => r.processing_status === 'failed').length})
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="space-y-3 mt-4">
-                {rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").length > 0 ? (
-                  rawDataList.filter(r => !r.festival_id && r.name_original && r.name_original !== "").map((item) => (
+              {/* 대기중 탭 */}
+              <TabsContent value="pending" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 ? (
+                  rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").map((item) => (
                     <Card key={item.id} className={`border-2 ${
                       selectedRawIds.has(item.id) 
-                        ? 'bg-purple-900/30 border-purple-400' 
+                        ? 'bg-yellow-900/30 border-yellow-400' 
                         : 'bg-gray-900 border-gray-800'
                     }`}>
                       <div className="p-4">
@@ -1296,9 +1337,11 @@ export default function AdminUrlExtraction() {
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
                               {getStatusBadge(item.processing_status)}
-                              <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
-                                신규
-                              </Badge>
+                              {!item.festival_id && (
+                                <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
+                                  신규
+                                </Badge>
+                              )}
                             </div>
                             <a 
                               href={item.source_url} 
@@ -1313,7 +1356,7 @@ export default function AdminUrlExtraction() {
                               {item.city}, {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
                             </p>
                             {item.error_message && (
-                              <p className="text-red-400 text-xs mt-2">❌ {item.error_message}</p>
+                              <p className="text-yellow-400 text-xs mt-2">⚠️ {item.error_message}</p>
                             )}
                           </div>
 
@@ -1334,29 +1377,71 @@ export default function AdminUrlExtraction() {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-4">신규 축제 데이터가 없습니다.</p>
+                  <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
                 )}
-              </div>
-            </div>
+              </TabsContent>
 
-            {/* 재변환 섹션 */}
-            {rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").length > 0 && (
-              <div className="space-y-3 border border-orange-800/50 rounded-lg p-4 bg-orange-900/10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-orange-400 font-bold flex items-center gap-2">
-                      <Database className="w-5 h-5" />
-                      기존 축제 ({rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").length}개)
-                    </h3>
-                    <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 이미 존재하는 축제 (재변환 가능)</p>
-                  </div>
-                </div>
+              {/* 처리중 탭 */}
+              <TabsContent value="processing" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'processing').length > 0 ? (
+                  rawDataList.filter(r => r.processing_status === 'processing').map((item) => (
+                    <Card key={item.id} className="border-2 bg-blue-900/30 border-blue-400">
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Loader2 className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0 mt-1" />
 
-                <div className="space-y-3 mt-4">
-                  {rawDataList.filter(r => r.festival_id && r.name_original && r.name_original !== "").map((item) => (
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
+                              {getStatusBadge(item.processing_status)}
+                            </div>
+                            <a 
+                              href={item.source_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.source_url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleString('ko-KR')}
+                            </p>
+                          </div>
+
+                          <Button
+                            onClick={async () => {
+                              if (confirm(`"${item.name_original}" 변환을 중지하시겠습니까?`)) {
+                                await base44.entities.JapantravelUrlExtractionRawData.update(item.id, {
+                                  processing_status: 'pending',
+                                  error_message: '사용자에 의해 중지됨'
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+                                alert('변환이 중지되었습니다.');
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-red-400 text-red-400 hover:bg-red-900/20"
+                          >
+                            중지
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">처리중인 데이터가 없습니다.</p>
+                )}
+              </TabsContent>
+
+              {/* 완료 탭 */}
+              <TabsContent value="processed" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 ? (
+                  rawDataList.filter(r => r.processing_status === 'processed').map((item) => (
                     <Card key={item.id} className={`border-2 ${
                       selectedRawIds.has(item.id) 
-                        ? 'bg-purple-900/30 border-purple-400' 
+                        ? 'bg-green-900/30 border-green-400' 
                         : 'bg-gray-900 border-gray-800'
                     }`}>
                       <div className="p-4">
@@ -1376,9 +1461,11 @@ export default function AdminUrlExtraction() {
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
                               {getStatusBadge(item.processing_status)}
-                              <Badge className="bg-blue-900/50 text-blue-400 border border-blue-400/50">
-                                기존
-                              </Badge>
+                              {item.festival_id && (
+                                <Badge variant="outline" className="text-green-400 border-green-400">
+                                  Festival ID: {item.festival_id.substring(0, 8)}
+                                </Badge>
+                              )}
                             </div>
                             <a 
                               href={item.source_url} 
@@ -1389,27 +1476,16 @@ export default function AdminUrlExtraction() {
                             >
                               {item.source_url}
                             </a>
-                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                              <span>{item.city}, {item.country}</span>
-                              <span>{new Date(item.created_date).toLocaleDateString('ko-KR')}</span>
-                              {item.festival_id && (
-                                <Badge variant="outline" className="text-green-400 border-green-400">
-                                  Festival ID: {item.festival_id.substring(0, 8)}
-                                </Badge>
-                              )}
-                            </div>
-                            {item.error_message && (
-                              <p className="text-red-400 text-xs mt-2">❌ {item.error_message}</p>
-                            )}
+                            <p className="text-gray-500 text-xs">
+                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleDateString('ko-KR')}
+                            </p>
                           </div>
 
                           <div className="flex flex-col gap-2">
                             <Button
                               onClick={() => {
-                                if (confirm(`"${item.name_original}" 데이터를 재변환하시겠습니까?`)) {
-                                  handleRetransform();
-                                  setSelectedRawIds(new Set([item.id]));
-                                }
+                                setSelectedRawIds(new Set([item.id]));
+                                handleRetransform();
                               }}
                               size="sm"
                               className="bg-orange-500 hover:bg-orange-600 text-white"
@@ -1433,10 +1509,96 @@ export default function AdminUrlExtraction() {
                         </div>
                       </div>
                     </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
+                )}
+              </TabsContent>
+
+              {/* 실패 탭 */}
+              <TabsContent value="failed" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'failed').length > 0 ? (
+                  rawDataList.filter(r => r.processing_status === 'failed').map((item) => (
+                    <Card key={item.id} className={`border-2 ${
+                      selectedRawIds.has(item.id) 
+                        ? 'bg-red-900/30 border-red-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleSelectItem(item.id)}
+                            className="flex-shrink-0 mt-1"
+                          >
+                            {selectedRawIds.has(item.id) ? (
+                              <CheckSquare className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                              <Square className="w-6 h-6 text-gray-600" />
+                            )}
+                          </button>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
+                              {getStatusBadge(item.processing_status)}
+                            </div>
+                            <a 
+                              href={item.source_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.source_url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleDateString('ko-KR')}
+                            </p>
+                            {item.error_message && (
+                              <p className="text-red-400 text-xs mt-2 bg-red-900/20 p-2 rounded">❌ {item.error_message}</p>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (confirm('이 데이터를 다시 변환하시겠습니까?')) {
+                                  await base44.entities.JapantravelUrlExtractionRawData.update(item.id, {
+                                    processing_status: 'pending',
+                                    error_message: null
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+                                  alert('대기열에 추가되었습니다.');
+                                }
+                              }}
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                              title="재시도"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
+                                  deleteRawDataMutation.mutate([item.id]);
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">실패한 데이터가 없습니다.</p>
+                )}
+              </TabsContent>
+            </Tabs>
 
             {rawDataList.length === 0 && (
               <Card className="bg-gray-900 border-gray-800 p-12 text-center">
