@@ -226,13 +226,14 @@ Deno.serve(async (req) => {
                   relevanceIndex: originalIndex
                 }));
                 
-                // 정렬: 공공기관 최우선 > 4K 우선 > 관련성 순서
+                // 정렬: 공공기관 최우선 > 관련성 순서 > 4K (최후순위)
                 videosWithPriority.sort((a, b) => {
                   if (a.isOfficial && !b.isOfficial) return -1;
                   if (!a.isOfficial && b.isOfficial) return 1;
+                  if (a.relevanceIndex !== b.relevanceIndex) return a.relevanceIndex - b.relevanceIndex;
                   if (a.is4K && !b.is4K) return -1;
                   if (!a.is4K && b.is4K) return 1;
-                  return a.relevanceIndex - b.relevanceIndex;
+                  return 0;
                 });
                 
                 const topVideo = videosWithPriority[0];
@@ -240,7 +241,8 @@ Deno.serve(async (req) => {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   const embeddableStatus = embeddableVideos.length > 0 ? '✅ 임베드 가능' : '⚠️ 임베드 불가 (YouTube 링크)';
                   console.log(`[FetchYoutubeVideos] ✅ Top video selected (${embeddableStatus}):`);
-                  console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : ''} ${topVideo.is4K ? '✅ 4K' : '일반'}`);
+                  console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : '일반'} ${topVideo.is4K ? '(4K)' : ''}`);
+                  console.log(`[FetchYoutubeVideos]    Relevance: #${topVideo.relevanceIndex + 1}`);
                   console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
                   console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
                 }
