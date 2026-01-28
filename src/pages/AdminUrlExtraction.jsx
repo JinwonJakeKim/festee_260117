@@ -32,6 +32,12 @@ export default function AdminUrlExtraction() {
     use_date_parameters: false,
     date_parameter_template: ""
   });
+  const [imageSelectors, setImageSelectors] = useState({
+    thumbnail_selector: "div.coverphoto figure.coverImgWrapper img",
+    thumbnail_attribute: "src",
+    content_image_selector: "div.article__content figure.shortcode-photo img",
+    content_image_attribute: "data-src"
+  });
   const [showBatchExtract, setShowBatchExtract] = useState(false);
   const [batchConfig, setBatchConfig] = useState({
     list_page_url: "",
@@ -77,8 +83,11 @@ export default function AdminUrlExtraction() {
   }, [user, userLoading, navigate]);
 
   const extractMutation = useMutation({
-    mutationFn: async (url) => {
-      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { url });
+    mutationFn: async ({ url, imageSelectors }) => {
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { 
+        url,
+        imageSelectors 
+      });
       return data;
     },
     onSuccess: (data) => {
@@ -252,7 +261,11 @@ export default function AdminUrlExtraction() {
 
   const extractDetailMutation = useMutation({
     mutationFn: async ({ rawDataId, url }) => {
-      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { url, rawDataId });
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { 
+        url, 
+        rawDataId,
+        imageSelectors 
+      });
       return data;
     },
     onSuccess: (data) => {
@@ -278,7 +291,7 @@ export default function AdminUrlExtraction() {
     }
     setIsExtracting(true);
     try {
-      await extractMutation.mutateAsync(urlInput);
+      await extractMutation.mutateAsync({ url: urlInput, imageSelectors });
       
       // 저장된 URL이라면 last_used_date 업데이트
       const matchingSource = sourceUrls.find(s => s.url === urlInput);
@@ -890,6 +903,53 @@ export default function AdminUrlExtraction() {
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
                     disabled={isExtracting}
                   />
+                  
+                  {/* 이미지 CSS 식별자 설정 */}
+                  <div className="border-t border-gray-700 pt-4 mt-4">
+                    <h4 className="text-white font-medium mb-3 text-sm">🖼️ 이미지 CSS 식별자 (Japantravel 전용)</h4>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-gray-400 text-xs">썸네일 이미지 CSS 선택자</label>
+                        <input
+                          type="text"
+                          value={imageSelectors.thumbnail_selector}
+                          onChange={(e) => setImageSelectors({ ...imageSelectors, thumbnail_selector: e.target.value })}
+                          placeholder="div.coverphoto figure.coverImgWrapper img"
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-gray-400 text-xs">썸네일 이미지 속성</label>
+                        <input
+                          type="text"
+                          value={imageSelectors.thumbnail_attribute}
+                          onChange={(e) => setImageSelectors({ ...imageSelectors, thumbnail_attribute: e.target.value })}
+                          placeholder="src"
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-gray-400 text-xs">본문 이미지 CSS 선택자</label>
+                        <input
+                          type="text"
+                          value={imageSelectors.content_image_selector}
+                          onChange={(e) => setImageSelectors({ ...imageSelectors, content_image_selector: e.target.value })}
+                          placeholder="div.article__content figure.shortcode-photo img"
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-gray-400 text-xs">본문 이미지 속성</label>
+                        <input
+                          type="text"
+                          value={imageSelectors.content_image_attribute}
+                          onChange={(e) => setImageSelectors({ ...imageSelectors, content_image_attribute: e.target.value })}
+                          placeholder="data-src"
+                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <Button
                     onClick={handleExtract}
                     disabled={isExtracting || !urlInput.trim()}

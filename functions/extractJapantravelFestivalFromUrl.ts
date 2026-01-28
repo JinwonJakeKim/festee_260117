@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { url, rawDataId } = await req.json();
+    const { url, rawDataId, imageSelectors } = await req.json();
     
     if (!url) {
       return Response.json({ 
@@ -17,6 +17,16 @@ Deno.serve(async (req) => {
         error: 'URL is required' 
       }, { status: 400 });
     }
+
+    // 기본 이미지 선택자 설정
+    const imgSelectors = imageSelectors || {
+      thumbnail_selector: "div.coverphoto figure.coverImgWrapper img",
+      thumbnail_attribute: "src",
+      content_image_selector: "div.article__content figure.shortcode-photo img",
+      content_image_attribute: "data-src"
+    };
+    
+    console.log(`[Japantravel] Using image selectors:`, imgSelectors);
 
     console.log(`[Japantravel] Fetching content from: ${url}`);
 
@@ -289,6 +299,58 @@ Deno.serve(async (req) => {
 
     const extractedDateInfo = extractDateInfo(html);
     console.log(`[Japantravel] Extracted date information from HTML:`, extractedDateInfo);
+
+    // CSS 선택자로 이미지 직접 추출
+    const extractImagesWithSelectors = async (htmlContent, selectors) => {
+      try {
+        const { DOMParser } = await import('https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts');
+        const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
+        
+        const images = {
+          thumbnail: null,
+          gallery: []
+        };
+
+        // 썸네일 이미지 추출
+        if (selectors.thumbnail_selector && selectors.thumbnail_attribute) {
+          const thumbnailElement = doc.querySelector(selectors.thumbnail_selector);
+          if (thumbnailElement) {
+            const thumbnailUrl = thumbnailElement.getAttribute(selectors.thumbnail_attribute);
+            if (thumbnailUrl) {
+              images.thumbnail = thumbnailUrl;
+              console.log(`[Japantravel] ✅ Extracted thumbnail via CSS: ${thumbnailUrl}`);
+            }
+          }
+        }
+
+        // 본문 이미지들 추출
+        if (selectors.content_image_selector && selectors.content_image_attribute) {
+          const contentImages = doc.querySelectorAll(selectors.content_image_selector);
+          contentImages.forEach((img, index) => {
+            const imgUrl = img.getAttribute(selectors.content_image_attribute) || img.getAttribute('src');
+            if (imgUrl) {
+              images.gallery.push({
+                originimgurl: imgUrl,
+                smallimageurl: imgUrl,
+                imgname: `Gallery Image ${index + 1}`
+              });
+            }
+          });
+          console.log(`[Japantravel] ✅ Extracted ${images.gallery.length} content images via CSS`);
+        }
+
+        return images;
+      } catch (domError) {
+        console.error('[Japantravel] DOM parsing error:', domError);
+        return { thumbnail: null, gallery: [] };
+      }
+    };
+
+    const extractedImages = await extractImagesWithSelectors(html, imgSelectors);
+    console.log(`[Japantravel] CSS-extracted images:`, {
+      thumbnail: extractedImages.thumbnail ? '✓' : '✗',
+      gallery_count: extractedImages.gallery.length
+    });
 
     // HTML 길이를 대폭 늘려서 더 많은 콘텐츠 분석 (50,000 → 100,000자)
     const maxLength = 100000;
@@ -627,7 +689,10 @@ Deno.serve(async (req) => {
         return inputUrl;
       };
 
-      let thumbnailUrl = festival.image_url;
+      // CSS 선택자로 추출한 썸네일을 최우선으로 사용
+      let thumbnailUrl = extractedImages.thumbnail 
+        ? normalizeUrl(extractedImages.thumbnail, url)
+        : festival.image_url;
       
       if (!thumbnailUrl || thumbnailUrl.trim() === '') {
         const randomId = Math.floor(Math.random() * 100) + 1 + index * 10;
@@ -662,8 +727,23 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Process media_urls
+      // Process media_urls - CSS로 추출한 갤러리 이미지를 먼저 추가
       let mediaUrlsArray = festival.media_urls || [];
+      
+      // CSS 선택자로 추출한 갤러리 이미지 추가
+      if (extractedImages.gallery && extractedImages.gallery.length > 0) {
+        extractedImages.gallery.forEach((img) => {
+          const normalizedUrl = normalizeUrl(img.originimgurl, url);
+          if (normalizedUrl !== thumbnailUrl && !mediaUrlsArray.some(m => m.url === normalizedUrl)) {
+            mediaUrlsArray.push({
+              type: 'image',
+              url: normalizedUrl,
+              caption: img.imgname || ''
+            });
+          }
+        });
+        console.log(`[Japantravel] Added ${extractedImages.gallery.length} CSS-extracted gallery images to media_urls`);
+      }
       
       // HTML에서 추출한 YouTube URL 추가 (video_url이 없을 때만)
       if (!videoUrl && extractedYoutubeUrls.length > 0) {
@@ -829,6 +909,10 @@ Deno.serve(async (req) => {
         original_data_check: {
           description_original_length: festivals[0]?.description_original?.length || 0,
           summary_original_length: festivals[0]?.summary_original?.length || 0,
+        },
+        css_image_extraction: {
+          thumbnail_extracted: extractedImages.thumbnail ? true : false,
+          gallery_images_count: extractedImages.gallery.length
         }
       }
     });
