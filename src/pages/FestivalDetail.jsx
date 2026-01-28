@@ -1567,6 +1567,14 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                         {allGalleryItems[galleryPopupIndex].caption}
                       </p>
                     )}
+                    {/* YouTube 영상인 경우 채널 출처 표시 */}
+                    {allGalleryItems[galleryPopupIndex]?.type === 'youtube' && 
+                     galleryPopupIndex === 0 && 
+                     festival.video_channel_name && (
+                      <p className="text-gray-400 text-xs mt-2">
+                        출처: {festival.video_channel_name}
+                      </p>
+                    )}
                   </div>
                 </div>
 
