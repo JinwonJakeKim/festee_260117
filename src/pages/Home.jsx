@@ -74,6 +74,55 @@ const formatNumber = (num) => {
   return num.toString();
 };
 
+const getCountryNameInKorean = (country) => {
+  const countryMap = {
+    'Japan': '일본',
+    'Korea': '한국',
+    'South Korea': '한국',
+    '대한민국': '한국',
+    'China': '중국',
+    'USA': '미국',
+    'United States': '미국',
+    'UK': '영국',
+    'United Kingdom': '영국',
+    'France': '프랑스',
+    'Germany': '독일',
+    'Italy': '이탈리아',
+    'Spain': '스페인',
+    'Thailand': '태국',
+    'Vietnam': '베트남',
+    'Philippines': '필리핀',
+    'Indonesia': '인도네시아',
+    'Malaysia': '말레이시아',
+    'Singapore': '싱가포르',
+    'Australia': '호주',
+    'Canada': '캐나다',
+    'Mexico': '멕시코',
+    'Brazil': '브라질',
+    'Argentina': '아르헨티나',
+    'Netherlands': '네덜란드',
+    'Belgium': '벨기에',
+    'Switzerland': '스위스',
+    'Austria': '오스트리아',
+    'Sweden': '스웨덴',
+    'Norway': '노르웨이',
+    'Denmark': '덴마크',
+    'Poland': '폴란드',
+    'Czech Republic': '체코',
+    'Hungary': '헝가리',
+    'Russia': '러시아',
+    'Turkey': '터키',
+    'India': '인도',
+    'Pakistan': '파키스탄',
+    'Bangladesh': '방글라데시',
+    'Taiwan': '대만',
+    'Hong Kong': '홍콩',
+    'New Zealand': '뉴질랜드',
+  };
+  
+  return countryMap[country] || country;
+};
+
 const getRankColor = (index) => {
   if (index === 0) return "bg-gradient-to-r from-yellow-400 to-orange-500";
   if (index === 1) return "bg-gradient-to-r from-gray-300 to-gray-400";
@@ -724,7 +773,7 @@ export default function Home() {
                 <div className="flex items-center gap-1.5">
                   <Globe className="w-4 h-4 text-cyan-400" />
                   <SelectValue>
-                    {countryFilter === "all" ? "국가" : countryFilter}
+                    {countryFilter === "all" ? "국가" : getCountryNameInKorean(countryFilter)}
                   </SelectValue>
                 </div>
               </SelectTrigger>
@@ -732,7 +781,7 @@ export default function Home() {
                 <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 국가</SelectItem>
                 {countries.map(country => (
                   <SelectItem key={country} value={country} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                    {country}
+                    {getCountryNameInKorean(country)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -827,7 +876,7 @@ export default function Home() {
                   className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
                   onClick={() => setCountryFilter("all")}
                 >
-                  {countryFilter} ✕
+                  {getCountryNameInKorean(countryFilter)} ✕
                 </Badge>
               )}
               {dateRange.from && dateRange.to && (
