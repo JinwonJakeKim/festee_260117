@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
 
         // YouTube 영상 검색 (중앙화된 함수 사용)
         let videoUrl = festivalData.video_url;
+        let videoChannelName = '';
         let youtubeShortUrls = [];
         
         const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
@@ -103,7 +104,9 @@ Deno.serve(async (req) => {
             if (youtubeResult.data.success) {
               if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
                 videoUrl = youtubeResult.data.highlightVideoUrl;
+                videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
                 console.log(`[Japantravel Transform] ✓ Got highlight video from fetchYoutubeVideos: ${videoUrl}`);
+                console.log(`[Japantravel Transform] ✓ Channel: ${videoChannelName}`);
               }
               
               youtubeShortUrls = youtubeResult.data.shortsUrls || [];
@@ -239,6 +242,7 @@ ${JSON.stringify(festivalData, null, 2)}
           longitude: festivalData.longitude,
           thumbnail_url: thumbnailUrl,
           video_url: videoUrl,
+          video_channel_name: videoChannelName,
           image_gallery_urls: festivalData.image_gallery_urls,
           media_urls: mediaUrls,
           youtube_shorts_urls: youtubeShortUrls,

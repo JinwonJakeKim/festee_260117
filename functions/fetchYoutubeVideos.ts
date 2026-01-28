@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
     };
 
     let highlightVideoUrl = '';
+    let highlightVideoChannelName = '';
     let shortsUrls = [];
 
     // ========== 하이라이트 영상 검색 ==========
@@ -239,11 +240,13 @@ Deno.serve(async (req) => {
                 const topVideo = videosWithPriority[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
+                  highlightVideoChannelName = topVideo.channelTitle || '';
                   const embeddableStatus = embeddableVideos.length > 0 ? '✅ 임베드 가능' : '⚠️ 임베드 불가 (YouTube 링크)';
                   console.log(`[FetchYoutubeVideos] ✅ Top video selected (${embeddableStatus}):`);
                   console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : '일반'} ${topVideo.is4K ? '(4K)' : ''}`);
                   console.log(`[FetchYoutubeVideos]    Relevance: #${topVideo.relevanceIndex + 1}`);
                   console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
+                  console.log(`[FetchYoutubeVideos]    Channel: ${highlightVideoChannelName}`);
                   console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
                 }
               }
@@ -342,6 +345,7 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       highlightVideoUrl,
+      highlightVideoChannelName,
       shortsUrls,
       message: `YouTube 검색 완료: 하이라이트 ${highlightVideoUrl ? '✓' : '✗'}, 쇼츠 ${shortsUrls.length}개`
     });
