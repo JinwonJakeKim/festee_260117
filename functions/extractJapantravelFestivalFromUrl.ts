@@ -863,7 +863,7 @@ Deno.serve(async (req) => {
         longitude: festival.longitude || null,
         thumbnail_url: thumbnailUrl,
         video_url: videoUrl,
-        image_gallery_urls: processedMediaUrls,
+        image_gallery_urls: imageGalleryUrls,
         website: websiteUrl,
         price: festival.price || 0,
         price_details: festival.price_details || null,
