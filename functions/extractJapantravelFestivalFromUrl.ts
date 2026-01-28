@@ -727,10 +727,21 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Process media_urls - CSS로 추출한 갤러리 이미지를 먼저 추가
+      // Process media_urls - 썸네일 이미지를 갤러리에 먼저 추가 (메인 이미지)
       let mediaUrlsArray = festival.media_urls || [];
       
-      // CSS 선택자로 추출한 갤러리 이미지 추가
+      // 썸네일 이미지를 image_gallery_urls의 맨 앞에 추가
+      if (extractedImages.thumbnail) {
+        const normalizedThumbnail = normalizeUrl(extractedImages.thumbnail, url);
+        mediaUrlsArray.push({
+          type: 'image',
+          url: normalizedThumbnail,
+          caption: `${festival.name_original || 'Festival'} - 메인 이미지`
+        });
+        console.log(`[Japantravel] ✅ Added thumbnail as main image (first in gallery)`);
+      }
+      
+      // CSS 선택자로 추출한 본문 갤러리 이미지 추가
       if (extractedImages.gallery && extractedImages.gallery.length > 0) {
         extractedImages.gallery.forEach((img) => {
           const normalizedUrl = normalizeUrl(img.originimgurl, url);
@@ -742,8 +753,10 @@ Deno.serve(async (req) => {
             });
           }
         });
-        console.log(`[Japantravel] Added ${extractedImages.gallery.length} CSS-extracted gallery images to media_urls`);
+        console.log(`[Japantravel] ✅ Added ${extractedImages.gallery.length} content images to gallery`);
       }
+      
+      console.log(`[Japantravel] Total gallery images: ${mediaUrlsArray.filter(m => m.type === 'image').length} (1 thumbnail + ${extractedImages.gallery.length} content)`);
       
       // HTML에서 추출한 YouTube URL 추가 (video_url이 없을 때만)
       if (!videoUrl && extractedYoutubeUrls.length > 0) {
