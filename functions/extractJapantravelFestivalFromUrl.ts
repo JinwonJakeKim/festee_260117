@@ -879,15 +879,33 @@ Deno.serve(async (req) => {
       };
     });
 
-    // JapantravelUrlExtractionRawData 엔티티에 저장
+    // JapantravelUrlExtractionRawData 엔티티에 저장 (중복 시 업데이트)
     const savedRecords = [];
     for (const festival of festivals) {
       try {
-        const rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(festival);
+        // 동일한 축제명이 이미 있는지 확인
+        const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+          name_original: festival.name_original
+        });
+        
+        let rawRecord;
+        if (existingRecords && existingRecords.length > 0) {
+          // 기존 레코드 업데이트
+          const existingRecord = existingRecords[0];
+          rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+            existingRecord.id, 
+            festival
+          );
+          console.log(`[Japantravel] ✅ Updated existing record: ${rawRecord.id} (${festival.name_original})`);
+        } else {
+          // 새 레코드 생성
+          rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(festival);
+          console.log(`[Japantravel] ✅ Created new record: ${rawRecord.id} (${festival.name_original})`);
+        }
+        
         savedRecords.push(rawRecord);
-        console.log(`[Japantravel] Saved JapantravelUrlExtractionRawData record: ${rawRecord.id}`);
       } catch (saveError) {
-        console.error('[Japantravel] Failed to save raw data:', saveError);
+        console.error('[Japantravel] Failed to save/update raw data:', saveError);
       }
     }
 
