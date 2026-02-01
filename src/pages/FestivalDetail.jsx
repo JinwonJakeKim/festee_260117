@@ -478,7 +478,23 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       console.log('[FestivalDetail] ✅ Added video_url:', festival.video_url);
     }
 
-    // 2. media_urls 배열을 순서대로 추가 (thumbnail_url은 이미 media_urls[0]에 포함)
+    // 2. image_gallery_urls 배열 추가 (japantravel 추출 이미지 - 하이라이트 영상 바로 다음)
+    if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
+      festival.image_gallery_urls.forEach((imgObj, index) => {
+        const imageUrl = imgObj?.originimgurl || imgObj?.smallimageurl;
+        if (imageUrl && !addedUrls.has(imageUrl)) {
+          items.push({
+            type: 'image',
+            url: imageUrl,
+            caption: imgObj?.imgname || `${festival.name} - 갤러리 이미지 ${index + 1}`
+          });
+          addedUrls.add(imageUrl);
+          console.log(`[FestivalDetail] ✅ image_gallery_urls[${index}] → mediaItems[${items.length - 1}]:`, imageUrl);
+        }
+      });
+    }
+
+    // 3. media_urls 배열을 순서대로 추가 (구글 이미지 등)
     if (festival?.media_urls && festival.media_urls.length > 0) {
       festival.media_urls.forEach((media, index) => {
         let currentUrl = null;
@@ -521,22 +537,6 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           console.log(`[FestivalDetail] ✅ media_urls[${index}] → mediaItems[${items.length - 1}]:`, currentUrl);
         } else if (currentUrl) {
           console.log(`[FestivalDetail] ⏭️ Skipped duplicate media_urls[${index}]:`, currentUrl);
-        }
-      });
-    }
-
-    // 3. image_gallery_urls 배열 추가 (japantravel 추출 이미지)
-    if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
-      festival.image_gallery_urls.forEach((imgObj, index) => {
-        const imageUrl = imgObj?.originimgurl || imgObj?.smallimageurl;
-        if (imageUrl && !addedUrls.has(imageUrl)) {
-          items.push({
-            type: 'image',
-            url: imageUrl,
-            caption: imgObj?.imgname || `${festival.name} - 갤러리 이미지 ${index + 1}`
-          });
-          addedUrls.add(imageUrl);
-          console.log(`[FestivalDetail] ✅ image_gallery_urls[${index}] → mediaItems[${items.length - 1}]:`, imageUrl);
         }
       });
     }
