@@ -490,9 +490,9 @@ Deno.serve(async (req) => {
              - 원본이 5개 문단이면 번역본도 5개 문단이어야 합니다
           
           3. **하이라이트:**
-             - 7-10개 추출
+             - 3개만 추출 (가장 핵심적이고 매력적인 내용)
              - highlights_original, highlights_ko, highlights_en 모두 작성
-             - 각 항목 2-3문장
+             - 각 항목 2-3문장으로 알차게 작성
           
           7. **주최 및 연락처:**
              - organizer: 주최/주관 기관명을 정확히
