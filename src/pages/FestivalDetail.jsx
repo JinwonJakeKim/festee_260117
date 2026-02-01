@@ -525,6 +525,22 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       });
     }
 
+    // 3. image_gallery_urls 배열 추가 (japantravel 추출 이미지)
+    if (festival?.image_gallery_urls && festival.image_gallery_urls.length > 0) {
+      festival.image_gallery_urls.forEach((imgObj, index) => {
+        const imageUrl = imgObj?.originimgurl || imgObj?.smallimageurl;
+        if (imageUrl && !addedUrls.has(imageUrl)) {
+          items.push({
+            type: 'image',
+            url: imageUrl,
+            caption: imgObj?.imgname || `${festival.name} - 갤러리 이미지 ${index + 1}`
+          });
+          addedUrls.add(imageUrl);
+          console.log(`[FestivalDetail] ✅ image_gallery_urls[${index}] → mediaItems[${items.length - 1}]:`, imageUrl);
+        }
+      });
+    }
+
     console.log('[FestivalDetail] 📊 Total mediaItems:', items.length);
     console.log('[FestivalDetail] 📊 Final mediaItems array:', items);
 
