@@ -59,25 +59,37 @@ Deno.serve(async (req) => {
           if (googleApiKey && searchEngineId) {
             const imageSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(festivalNameForSearch + ' festival')}&searchType=image&num=5`;
             const imageResponse = await fetch(imageSearchUrl);
-            
+
             if (imageResponse.ok) {
               const imageData = await imageResponse.json();
               if (imageData.items && imageData.items.length > 0) {
-                if (!thumbnailUrl || thumbnailUrl.includes('picsum.photos')) {
-                  thumbnailUrl = imageData.items[0].link;
-                  console.log(`[Japantravel Transform] ✓ Updated thumbnail from Google Images`);
-                }
-                
-                imageData.items.slice(1, 5).forEach((item, idx) => {
-                  if (!mediaUrls.some(m => m.url === item.link)) {
-                    mediaUrls.push({
-                      type: 'image',
-                      url: item.link,
-                      caption: `${festivalNameForSearch} - 이미지 ${idx + 1}`
-                    });
+                // Instagram 링크 필터링 (로그인 필요로 인한 접근 불가)
+                const validImages = imageData.items.filter(item => {
+                  const url = item.link || '';
+                  const isInstagram = url.includes('instagram.com') || url.includes('cdninstagram.com');
+                  if (isInstagram) {
+                    console.log(`[Japantravel Transform] 🚫 Filtered out Instagram image: ${url}`);
                   }
+                  return !isInstagram;
                 });
-                console.log(`[Japantravel Transform] ✓ Added ${imageData.items.length - 1} images to media_urls`);
+
+                if (validImages.length > 0) {
+                  if (!thumbnailUrl || thumbnailUrl.includes('picsum.photos')) {
+                    thumbnailUrl = validImages[0].link;
+                    console.log(`[Japantravel Transform] ✓ Updated thumbnail from Google Images`);
+                  }
+
+                  validImages.slice(1, 5).forEach((item, idx) => {
+                    if (!mediaUrls.some(m => m.url === item.link)) {
+                      mediaUrls.push({
+                        type: 'image',
+                        url: item.link,
+                        caption: `${festivalNameForSearch} - 이미지 ${idx + 1}`
+                      });
+                    }
+                  });
+                  console.log(`[Japantravel Transform] ✓ Added ${validImages.length - 1} images to media_urls (Instagram filtered)`);
+                }
               }
             }
           }
