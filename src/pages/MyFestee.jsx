@@ -67,10 +67,14 @@ export default function MyFestee() {
     retry: false,
   });
 
-  const { data: myCatches, isLoading: myCatchesLoading } = useQuery({
+  const { data: myCatches, isLoading: myCatchesLoading, isFetching: myCatchesFetching } = useQuery({
     queryKey: ['myCatches', user?.email],
     queryFn: () => user ? base44.entities.Catch.filter({ user_email: user.email }) : [],
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { data: myLikes, isLoading: myLikesLoading, isFetching: myLikesFetching } = useQuery({
@@ -110,9 +114,8 @@ export default function MyFestee() {
     enabled: !!user,
     staleTime: 0,
     gcTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
-    placeholderData: undefined,
   });
 
   const { data: myComments } = useQuery({
@@ -122,30 +125,46 @@ export default function MyFestee() {
   });
 
   // 팔로워/팔로잉 데이터 가져오기
-  const { data: myFollowers } = useQuery({
+  const { data: myFollowers, isFetching: myFollowersFetching } = useQuery({
     queryKey: ['myFollowers', user?.email],
     queryFn: () => user ? base44.entities.Follow.filter({ following_email: user.email }) : [],
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
-  const { data: myFollowing } = useQuery({
+  const { data: myFollowing, isFetching: myFollowingFetching } = useQuery({
     queryKey: ['myFollowing', user?.email],
     queryFn: () => user ? base44.entities.Follow.filter({ follower_email: user.email }) : [],
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   // 내가 추천한 친구 수 조회
-  const { data: myReferrals } = useQuery({
+  const { data: myReferrals, isFetching: myReferralsFetching } = useQuery({
     queryKey: ['myReferrals', user?.email],
     queryFn: () => user ? base44.entities.ReferralLog.filter({ referrer_email: user.email }) : [],
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   // 내가 추천 코드를 사용했는지 확인
-  const { data: myReferralUsage } = useQuery({
+  const { data: myReferralUsage, isFetching: myReferralUsageFetching } = useQuery({
     queryKey: ['myReferralUsage', user?.email],
     queryFn: () => user ? base44.entities.ReferralLog.filter({ referred_email: user.email }) : [],
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const uploadProfileImageMutation = useMutation({
@@ -426,7 +445,7 @@ export default function MyFestee() {
 
   const referralCode = generateReferralCode(user.email);
   const userCoins = user.coins || 0;
-  const hasUsedReferralCode = (myReferralUsage?.length || 0) > 0;
+  const hasUsedReferralCode = !myReferralUsageFetching && (myReferralUsage?.length || 0) > 0;
 
   // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
@@ -727,7 +746,9 @@ export default function MyFestee() {
             {/* 추천 현황 표시 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-800">
               <p className="text-gray-400 text-xs">내가 추천한 친구</p>
-              <p className="text-cyan-400 font-bold text-sm">{myReferrals?.length || 0}명</p>
+              <p className="text-cyan-400 font-bold text-sm">
+                {myReferralsFetching ? '-' : `${myReferrals?.length || 0}명`}
+              </p>
             </div>
           </div>
         </div>
@@ -736,7 +757,7 @@ export default function MyFestee() {
         <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
-              {(myLikesLoading || myLikesFetching || myLikes === undefined) ? (
+              {(myLikesLoading || myLikesFetching) ? (
                 <span className="text-gray-600">-</span>
               ) : (
                 myLikes?.length || 0
@@ -746,7 +767,7 @@ export default function MyFestee() {
           </Link>
           <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
-              {myCatchesLoading ? (
+              {(myCatchesLoading || myCatchesFetching) ? (
                 <span className="text-gray-600">-</span>
               ) : (
                 myCatches?.length || 0
@@ -755,11 +776,23 @@ export default function MyFestee() {
             <p className="text-gray-400 text-xs">캐치</p>
           </Link>
           <Link to={createPageUrl("MyFollowers")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myFollowers?.length || 0}</p>
+            <p className="text-white text-2xl font-bold">
+              {myFollowersFetching ? (
+                <span className="text-gray-600">-</span>
+              ) : (
+                myFollowers?.length || 0
+              )}
+            </p>
             <p className="text-gray-400 text-xs">팔로워</p>
           </Link>
           <Link to={createPageUrl("MyFollowing")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myFollowing?.length || 0}</p>
+            <p className="text-white text-2xl font-bold">
+              {myFollowingFetching ? (
+                <span className="text-gray-600">-</span>
+              ) : (
+                myFollowing?.length || 0
+              )}
+            </p>
             <p className="text-gray-400 text-xs">팔로잉</p>
           </Link>
           <div className="text-center">
