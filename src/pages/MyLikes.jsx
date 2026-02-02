@@ -51,10 +51,29 @@ export default function MyLikes() {
       
       console.log('[MyLikes] 중복 제거 후:', uniqueLikes.length, '개');
       
-      return uniqueLikes;
+      // 2단계: 실제 Festival이 존재하는 like만 필터링
+      const validLikes = [];
+      for (const like of uniqueLikes) {
+        try {
+          const festival = await base44.entities.Festival.filter({ id: like.festival_id });
+          if (festival && festival.length > 0) {
+            validLikes.push(like);
+          }
+        } catch (error) {
+          // Festival이 삭제된 경우 무시
+          console.log(`[MyLikes] Festival ${like.festival_id} not found`);
+        }
+      }
+      
+      console.log('[MyLikes] Festival 존재 여부 확인 후:', validLikes.length, '개');
+      
+      return validLikes;
     },
     enabled: !!user,
-    initialData: [],
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { data: festivals } = useQuery({
