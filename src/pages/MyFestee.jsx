@@ -110,7 +110,9 @@ export default function MyFestee() {
     },
     enabled: !!user,
     staleTime: 0,
-    refetchOnMount: true,
+    cacheTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { data: myComments } = useQuery({
