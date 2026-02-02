@@ -736,7 +736,7 @@ export default function MyFestee() {
         <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
-              {myLikesLoading ? (
+              {(myLikesLoading || myLikesFetching || myLikes === undefined) ? (
                 <span className="text-gray-600">-</span>
               ) : (
                 myLikes?.length || 0
