@@ -67,14 +67,13 @@ export default function MyFestee() {
     retry: false,
   });
 
-  const { data: myCatches } = useQuery({
+  const { data: myCatches, isLoading: myCatchesLoading } = useQuery({
     queryKey: ['myCatches', user?.email],
     queryFn: () => user ? base44.entities.Catch.filter({ user_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
-  const { data: myLikes } = useQuery({
+  const { data: myLikes, isLoading: myLikesLoading } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: async () => {
       if (!user) return [];
@@ -119,38 +118,33 @@ export default function MyFestee() {
     queryKey: ['myComments', user?.email],
     queryFn: () => user ? base44.entities.Comment.filter({ user_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
   // 팔로워/팔로잉 데이터 가져오기
-  const { data: myFollowers = [] } = useQuery({
+  const { data: myFollowers } = useQuery({
     queryKey: ['myFollowers', user?.email],
     queryFn: () => user ? base44.entities.Follow.filter({ following_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
-  const { data: myFollowing = [] } = useQuery({
+  const { data: myFollowing } = useQuery({
     queryKey: ['myFollowing', user?.email],
     queryFn: () => user ? base44.entities.Follow.filter({ follower_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
   // 내가 추천한 친구 수 조회
-  const { data: myReferrals = [] } = useQuery({
+  const { data: myReferrals } = useQuery({
     queryKey: ['myReferrals', user?.email],
     queryFn: () => user ? base44.entities.ReferralLog.filter({ referrer_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
   // 내가 추천 코드를 사용했는지 확인
-  const { data: myReferralUsage = [] } = useQuery({
+  const { data: myReferralUsage } = useQuery({
     queryKey: ['myReferralUsage', user?.email],
     queryFn: () => user ? base44.entities.ReferralLog.filter({ referred_email: user.email }) : [],
     enabled: !!user,
-    initialData: [],
   });
 
   const uploadProfileImageMutation = useMutation({
@@ -431,7 +425,7 @@ export default function MyFestee() {
 
   const referralCode = generateReferralCode(user.email);
   const userCoins = user.coins || 0;
-  const hasUsedReferralCode = myReferralUsage.length > 0;
+  const hasUsedReferralCode = (myReferralUsage?.length || 0) > 0;
 
   // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
@@ -732,7 +726,7 @@ export default function MyFestee() {
             {/* 추천 현황 표시 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-800">
               <p className="text-gray-400 text-xs">내가 추천한 친구</p>
-              <p className="text-cyan-400 font-bold text-sm">{myReferrals.length}명</p>
+              <p className="text-cyan-400 font-bold text-sm">{myReferrals?.length || 0}명</p>
             </div>
           </div>
         </div>
@@ -740,19 +734,31 @@ export default function MyFestee() {
         {/* Profile Stats - 순서 변경: 좋아요, 캐치, 팔로워, 팔로잉, 코인 */}
         <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myLikes?.length || 0}</p>
+            <p className="text-white text-2xl font-bold">
+              {myLikesLoading ? (
+                <span className="text-gray-600">-</span>
+              ) : (
+                myLikes?.length || 0
+              )}
+            </p>
             <p className="text-gray-400 text-xs">좋아요</p>
           </Link>
           <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myCatches.length}</p>
+            <p className="text-white text-2xl font-bold">
+              {myCatchesLoading ? (
+                <span className="text-gray-600">-</span>
+              ) : (
+                myCatches?.length || 0
+              )}
+            </p>
             <p className="text-gray-400 text-xs">캐치</p>
           </Link>
           <Link to={createPageUrl("MyFollowers")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myFollowers.length}</p>
+            <p className="text-white text-2xl font-bold">{myFollowers?.length || 0}</p>
             <p className="text-gray-400 text-xs">팔로워</p>
           </Link>
           <Link to={createPageUrl("MyFollowing")} className="text-center hover:opacity-80 transition-opacity">
-            <p className="text-white text-2xl font-bold">{myFollowing.length}</p>
+            <p className="text-white text-2xl font-bold">{myFollowing?.length || 0}</p>
             <p className="text-gray-400 text-xs">팔로잉</p>
           </Link>
           <div className="text-center">
