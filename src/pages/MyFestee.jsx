@@ -73,7 +73,7 @@ export default function MyFestee() {
     enabled: !!user,
   });
 
-  const { data: myLikes, isLoading: myLikesLoading } = useQuery({
+  const { data: myLikes, isLoading: myLikesLoading, isFetching: myLikesFetching } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: async () => {
       if (!user) return [];
@@ -109,9 +109,10 @@ export default function MyFestee() {
     },
     enabled: !!user,
     staleTime: 0,
-    cacheTime: 0,
-    refetchOnMount: 'always',
+    gcTime: 0,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
+    placeholderData: undefined,
   });
 
   const { data: myComments } = useQuery({
