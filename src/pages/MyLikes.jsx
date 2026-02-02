@@ -79,11 +79,14 @@ export default function MyLikes() {
   const { data: festivals } = useQuery({
     queryKey: ['festivals'],
     queryFn: () => base44.entities.Festival.list(),
-    initialData: [],
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   // 🔥 실제로 존재하는 축제만 필터링 (중복 제거 + 삭제된 축제 제외)
-  const likedFestivals = festivals.filter(f =>
+  const likedFestivals = (festivals || []).filter(f =>
     myLikes.some(like => like.festival_id === f.id)
   );
 
