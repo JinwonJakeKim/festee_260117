@@ -352,6 +352,63 @@ Deno.serve(async (req) => {
       gallery_count: extractedImages.gallery.length
     });
 
+    // 운영시간과 주소를 DOM에서 직접 추출
+    const extractOpeningHoursAndAddress = async (htmlContent) => {
+      try {
+        const { DOMParser } = await import('https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts');
+        const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
+        
+        let openingHours = null;
+        let address = null;
+
+        // 운영시간 추출: <i class="fas fa-2x fa-clock"></i> 다음의 <p> 태그
+        const clockIcons = doc.querySelectorAll('i.fa-clock');
+        for (const icon of clockIcons) {
+          let nextElement = icon.parentElement?.nextElementSibling;
+          while (nextElement) {
+            if (nextElement.tagName === 'P') {
+              const text = nextElement.textContent?.trim();
+              if (text && text.includes(':')) {
+                openingHours = text;
+                console.log(`[Japantravel] ✅ Extracted opening hours: ${openingHours}`);
+                break;
+              }
+            }
+            nextElement = nextElement.nextElementSibling;
+          }
+          if (openingHours) break;
+        }
+
+        // 주소 추출: <div class="address event col-xs-12" title="Address"> 안의 <p> 태그
+        const addressDiv = doc.querySelector('div.address.event[title="Address"]');
+        if (addressDiv) {
+          const addressP = addressDiv.querySelector('p');
+          if (addressP) {
+            // 텍스트만 추출 (링크 제외)
+            let addressText = '';
+            for (const node of addressP.childNodes) {
+              if (node.nodeType === 3) { // Text node
+                addressText += node.textContent;
+              }
+            }
+            address = addressText.trim().replace(/\s+/g, ' ');
+            console.log(`[Japantravel] ✅ Extracted address: ${address}`);
+          }
+        }
+
+        return { openingHours, address };
+      } catch (domError) {
+        console.error('[Japantravel] DOM parsing error for hours/address:', domError);
+        return { openingHours: null, address: null };
+      }
+    };
+
+    const extractedInfo = await extractOpeningHoursAndAddress(html);
+    console.log(`[Japantravel] Extracted info:`, {
+      openingHours: extractedInfo.openingHours || 'not found',
+      address: extractedInfo.address || 'not found'
+    });
+
     // HTML 길이를 대폭 늘려서 더 많은 콘텐츠 분석 (50,000 → 100,000자)
     const maxLength = 100000;
     const truncatedHtml = html.length > maxLength ? html.substring(0, maxLength) : html;
@@ -374,14 +431,13 @@ Deno.serve(async (req) => {
              - 그 안의 4번째 `<li class="separated-list-item">` (index 3)의 텍스트를 `category` 필드에 저장하세요.
              - 예: Activities, Food & Drink, Nature, Culture 등
 
-          3. **운영시간 (Opening Hours) - 우선 추출:**
-             - `<i class="fas fa-2x fa-clock"></i>` 아이콘 다음에 오는 `<p>` 태그의 텍스트를 찾으세요.
-             - 해당 텍스트를 `opening_hours_original` 필드에 저장하세요.
-             - 예: "Time: 21:30 - 00:10"
+          3. **🔥 운영시간 (Opening Hours) - DOM 추출 값 사용:**
+             - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** `opening_hours_original` 필드에 사용하세요.
+             - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "Time: 21:30 - 00:10")
 
-          4. **주소 (Address) - 최우선 추출:**
-             - `<div class="address event col-xs-12" title="Address">` 태그를 찾으세요.
-             - 그 안의 `<p>` 태그에 있는 전체 텍스트(Map, Directions 링크 포함)를 `access_info_original` 필드에 정확히 저장하세요. 이 정보가 가장 중요한 교통/접근 정보입니다.
+          4. **🔥 주소 (Address) - DOM 추출 값 사용:**
+             - 위에 "DOM에서 직접 추출한 정보"에 주소가 있다면, 그 값을 **반드시 그대로** `access_info_original` 필드에 사용하세요.
+             - 수정하거나 재작성하지 마세요. 정확한 주소 형식 그대로 (예: "2 Chome-8-1 Nishishinjuku, Shinjuku City, Tokyo 163-8001, Japan")
 
           5. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
