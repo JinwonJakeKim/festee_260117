@@ -506,9 +506,11 @@ Deno.serve(async (req) => {
              - 모든 중요한 축제 정보는 `<div id="info" class="info row">` 태그 내에 있을 가능성이 높습니다. 이 컨테이너 내부의 정보를 우선적으로 분석하여 데이터를 추출하세요.
 
           2. **카테고리 (Category) - 우선 추출:**
-             - `<ul class="separated-list context-heading-list">` 태그를 찾으세요.
-             - 그 안의 4번째 `<li class="separated-list-item">` (index 3)의 텍스트를 `category` 필드에 저장하세요.
-             - 예: Activities, Food & Drink, Nature, Culture 등
+             - `<ul class="separated-list context-heading-list">` 태그 안의 모든 `<li>` 항목을 확인하세요.
+             - `<a>` 태그의 `href` 속성에 "/activity/" 또는 "/activities"가 포함된 링크의 텍스트를 `category` 필드에 저장하세요.
+             - 예시 HTML: `<a href="https://en.japantravel.com/activity/tokyo">Activities</a>` → category = "Activities"
+             - 다른 예: Food & Drink, Nature, Culture, Festivals 등
+             - 주의: "Events"는 너무 일반적이므로 카테고리로 사용하지 마세요. href에 "/activity/"가 포함된 더 구체적인 카테고리를 찾으세요.
 
           3. **🔥 운영시간 (Opening Hours) - DOM 추출 값 사용:**
              - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** `opening_hours_original` 필드에 사용하세요.
