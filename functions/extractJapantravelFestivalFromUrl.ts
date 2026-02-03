@@ -421,6 +421,12 @@ Deno.serve(async (req) => {
         prompt: `
           다음 japantravel.com 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
           
+          **🔥 DOM에서 직접 추출한 정보 (반드시 사용!):**
+          ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
+          ${extractedInfo.address ? `- 주소: "${extractedInfo.address}"` : '- 주소: (없음)'}
+          
+          ⚠️ **중요**: 위 운영시간과 주소는 DOM에서 정확히 추출한 것입니다. 이 값들을 **절대 수정하지 말고 그대로** opening_hours_original과 access_info_original에 사용하세요!
+          
           **🎯 추출 규칙 (매우 중요!):**
           
           1. **정보 컨테이너 우선순위:**
