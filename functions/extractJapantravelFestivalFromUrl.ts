@@ -361,74 +361,56 @@ Deno.serve(async (req) => {
         let openingHours = null;
         let address = null;
 
-        // 운영시간 추출: <i class="fas fa-2x fa-clock"></i> 근처 텍스트
-        const clockIcons = doc.querySelectorAll('i.fa-clock');
-        for (const icon of clockIcons) {
-          // 방법 1: 아이콘의 부모 요소의 다음 형제 <p> 태그
-          let nextElement = icon.parentElement?.nextElementSibling;
-          while (nextElement && !openingHours) {
-            if (nextElement.tagName === 'P') {
-              const text = nextElement.textContent?.trim();
-              if (text && text.length > 3) {
-                openingHours = text;
-                console.log(`[Japantravel] ✅ Extracted opening hours (method 1): ${openingHours}`);
-                break;
+        // 운영시간 추출: 여러 패턴 시도
+        // 방법 1: <div id="info"> 내의 시계 아이콘 근처 <p> 태그
+        const infoDiv = doc.querySelector('div#info');
+        if (infoDiv) {
+          const clockIcons = infoDiv.querySelectorAll('i.fa-clock');
+          for (const icon of clockIcons) {
+            let sibling = icon.parentElement?.nextElementSibling;
+            while (sibling && !openingHours) {
+              if (sibling.tagName === 'P') {
+                const text = sibling.textContent?.trim();
+                if (text && text.length > 3 && text.match(/\d+:\d+/)) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours (info div): ${openingHours}`);
+                  break;
+                }
+              }
+              sibling = sibling.nextElementSibling;
+            }
+            if (openingHours) break;
+          }
+        }
+
+        // 방법 2: 전체 페이지에서 시계 아이콘 탐색
+        if (!openingHours) {
+          const allClockIcons = doc.querySelectorAll('i.fa-clock, i.far.fa-clock');
+          for (const icon of allClockIcons) {
+            const parent = icon.parentElement;
+            if (parent) {
+              let sibling = parent.nextElementSibling;
+              while (sibling && !openingHours) {
+                if (sibling.tagName === 'P') {
+                  const text = sibling.textContent?.trim();
+                  if (text && text.match(/\d+:\d+/)) {
+                    openingHours = text.replace(/\s+/g, ' ').trim();
+                    console.log(`[Japantravel] ✅ Extracted opening hours (general): ${openingHours}`);
+                    break;
+                  }
+                }
+                sibling = sibling.nextElementSibling;
               }
             }
-            nextElement = nextElement.nextElementSibling;
+            if (openingHours) break;
           }
-
-          // 방법 2: 아이콘과 같은 컨테이너 내의 모든 <p> 태그
-          if (!openingHours && icon.parentElement) {
-            const parentContainer = icon.parentElement;
-            const pTags = parentContainer.querySelectorAll('p');
-            for (const p of pTags) {
-              const text = p.textContent?.trim();
-              if (text && text.length > 3 && !text.includes('Address')) {
-                openingHours = text;
-                console.log(`[Japantravel] ✅ Extracted opening hours (method 2): ${openingHours}`);
-                break;
-              }
-            }
-          }
-
-          // 방법 3: 아이콘의 조부모 컨테이너 내의 모든 텍스트 노드
-          if (!openingHours && icon.parentElement?.parentElement) {
-            const grandParent = icon.parentElement.parentElement;
-            const allPTags = grandParent.querySelectorAll('p');
-            for (const p of allPTags) {
-              const text = p.textContent?.trim();
-              if (text && text.length > 3 && !text.includes('Address') && !text.includes('Map')) {
-                openingHours = text;
-                console.log(`[Japantravel] ✅ Extracted opening hours (method 3): ${openingHours}`);
-                break;
-              }
-            }
-          }
-
-          if (openingHours) break;
         }
 
         // 주소 추출: 여러 선택자 시도
-        // 방법 1: <div class="address event col-xs-12" title="Address">
-        let addressDiv = doc.querySelector('div.address.event[title="Address"]');
-        if (addressDiv) {
-          const addressP = addressDiv.querySelector('p');
-          if (addressP) {
-            let addressText = '';
-            for (const node of addressP.childNodes) {
-              if (node.nodeType === 3) { // Text node
-                addressText += node.textContent;
-              }
-            }
-            address = addressText.trim().replace(/\s+/g, ' ');
-            console.log(`[Japantravel] ✅ Extracted address (method 1): ${address}`);
-          }
-        }
-
-        // 방법 2: div.address 클래스만 사용
-        if (!address) {
-          addressDiv = doc.querySelector('div.address');
+        // 방법 1: <div id="info"> 내의 "Address" title을 가진 div
+        const infoDiv2 = doc.querySelector('div#info');
+        if (infoDiv2) {
+          const addressDiv = infoDiv2.querySelector('div[title="Address"]');
           if (addressDiv) {
             const addressP = addressDiv.querySelector('p');
             if (addressP) {
@@ -440,35 +422,48 @@ Deno.serve(async (req) => {
               }
               address = addressText.trim().replace(/\s+/g, ' ');
               if (address && address.length > 5) {
-                console.log(`[Japantravel] ✅ Extracted address (method 2): ${address}`);
-              } else {
-                address = null;
+                console.log(`[Japantravel] ✅ Extracted address (info div): ${address}`);
               }
             }
           }
         }
 
-        // 방법 3: "Address" 텍스트가 포함된 title 속성을 가진 div
+        // 방법 2: 전체 페이지에서 title="Address"인 div
         if (!address) {
-          const allDivs = doc.querySelectorAll('div[title]');
-          for (const div of allDivs) {
-            const title = div.getAttribute('title');
-            if (title && title.toLowerCase().includes('address')) {
-              const addressP = div.querySelector('p');
-              if (addressP) {
-                let addressText = '';
-                for (const node of addressP.childNodes) {
-                  if (node.nodeType === 3) {
-                    addressText += node.textContent;
-                  }
+          const allAddressDivs = doc.querySelectorAll('div[title="Address"]');
+          for (const div of allAddressDivs) {
+            const addressP = div.querySelector('p');
+            if (addressP) {
+              let addressText = '';
+              for (const node of addressP.childNodes) {
+                if (node.nodeType === 3) {
+                  addressText += node.textContent;
                 }
-                address = addressText.trim().replace(/\s+/g, ' ');
-                if (address && address.length > 5) {
-                  console.log(`[Japantravel] ✅ Extracted address (method 3): ${address}`);
-                  break;
-                } else {
-                  address = null;
+              }
+              address = addressText.trim().replace(/\s+/g, ' ');
+              if (address && address.length > 5) {
+                console.log(`[Japantravel] ✅ Extracted address (general): ${address}`);
+                break;
+              }
+            }
+          }
+        }
+
+        // 방법 3: div.address 클래스
+        if (!address) {
+          const addressDivByClass = doc.querySelector('div.address');
+          if (addressDivByClass) {
+            const addressP = addressDivByClass.querySelector('p');
+            if (addressP) {
+              let addressText = '';
+              for (const node of addressP.childNodes) {
+                if (node.nodeType === 3) {
+                  addressText += node.textContent;
                 }
+              }
+              address = addressText.trim().replace(/\s+/g, ' ');
+              if (address && address.length > 5) {
+                console.log(`[Japantravel] ✅ Extracted address (class): ${address}`);
               }
             }
           }
