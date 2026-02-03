@@ -136,22 +136,59 @@ Deno.serve(async (req) => {
         try {
           translatedData = await base44.integrations.Core.InvokeLLM({
             prompt: `
-          다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 한국어, 영어, 일본어, 중국어로 번역해주세요.
+          다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 **반드시** 한국어, 영어, 일본어, 중국어 4개 언어로 모두 번역해주세요.
 
           **원본 데이터:**
-          ${JSON.stringify(festivalData, null, 2)}
+          - 원본 언어: ${festivalData.original_language || 'unknown'}
+          - 축제명: ${festivalData.name_original || ''}
+          - 요약: ${festivalData.summary_original || ''}
+          - 설명: ${festivalData.description_original || ''}
+          - 하이라이트: ${JSON.stringify(festivalData.highlights_original || [])}
+          - 운영시간: ${festivalData.opening_hours_original || ''}
+          - 교통정보: ${festivalData.access_info_original || ''}
+          - 주차정보: ${festivalData.parking_info_original || ''}
+          - 금지사항: ${JSON.stringify(festivalData.restrictions_original || [])}
+          - 추천사항: ${JSON.stringify(festivalData.recommendations_original || [])}
+          - 카테고리: ${festivalData.category || ''}
+          - 태그: ${JSON.stringify(festivalData.tags || [])}
 
-          **번역 규칙:**
-          1. 원본 필드(_original)는 그대로 유지하고, _ko, _en, _jp, _zh 필드를 생성해주세요.
-          2. 모든 번역은 정확하고 자연스럽게 해주세요.
-          3. 고유명사는 번역하지 말고 원문을 유지해주세요.
-          4. 한국어: 존댓말 사용, "~입니다" 체
-          5. 영어: 명확하고 간결하게
-          6. 일본어: 정중한 표현 사용
-          7. 중국어: 간체자 사용
-          8. 원본과 번역본의 문장 수, 문단 수가 동일해야 합니다.
-          9. **교통 정보(access_info) 번역:** `access_info_original` 필드에는 주소와 함께 "(Map)", "(Directions)"와 같은 링크 텍스트가 포함될 수 있습니다. 번역 시 주소 부분만 번역하고, 괄호 안의 링크 텍스트는 원본 그대로 유지해주세요. (예: `2 Chome-8-1 Nishishinjuku... (Map) (Directions)` -> `도쿄도 신주쿠구 니시신주쿠 2-8-1... (Map) (Directions)`)
-          9. **교통 정보(access_info) 번역:** `access_info_original` 필드에는 주소와 함께 "(Map)", "(Directions)"와 같은 링크 텍스트가 포함될 수 있습니다. 번역 시 주소 부분만 번역하고, 괄호 안의 링크 텍스트는 원본 그대로 유지해주세요. (예: `2 Chome-8-1 Nishishinjuku... (Map) (Directions)` -> `도쿄도 신주쿠구 니시신주쿠 2-8-1... (Map) (Directions)`)
+          **번역 규칙 (⚠️ 매우 중요!):**
+          
+          🔥 **모든 필드를 4개 언어로 번역 필수:**
+          - _ko (한국어) - 반드시 번역
+          - _en (영어) - 반드시 번역
+          - _jp (일본어) - 반드시 번역
+          - _zh (중국어) - 반드시 번역
+          
+          **언어별 번역 스타일:**
+          - 한국어 (_ko): 존댓말 사용, "~입니다" 체, 정중하고 친근하게
+          - 영어 (_en): 명확하고 간결하게, 자연스러운 표현
+          - 일본어 (_jp): 정중한 표현(です・ます調), 일본 현지식 표현
+          - 중국어 (_zh): 간체자 사용, 중국어 관용 표현
+          
+          **고유명사 처리:**
+          - 축제명, 장소명, 인명 등 고유명사는 원문 유지
+          - 필요시 괄호 안에 현지 표기 추가 가능
+          
+          **구조 유지:**
+          - 원본과 동일한 문장 수, 문단 수 유지
+          - 줄바꿈(\\n\\n)도 동일하게 유지
+          
+          **배열 필드 번역:**
+          - highlights, restrictions, recommendations, tags는 각 항목을 개별 번역
+          - 항목 수는 원본과 동일
+          
+          **교통 정보(access_info) 특별 처리:**
+          - 주소 부분은 각 언어로 번역
+          - "(Map)", "(Directions)" 같은 영어 링크 텍스트는 원본 그대로 유지
+          - 예시: "東京都新宿区西新宿2-8-1 (Map) (Directions)" 
+            → 한국어: "도쿄도 신주쿠구 니시신주쿠 2-8-1 (Map) (Directions)"
+            → 영어: "2-8-1 Nishishinjuku, Shinjuku-ku, Tokyo (Map) (Directions)"
+          
+          ⚠️ **경고: 번역 누락 금지!**
+          - 모든 필드에 대해 4개 언어 번역을 반드시 제공하세요
+          - 빈 문자열이나 null로 두지 마세요
+          - 원본이 비어있어도 적절한 번역 제공
             `,
             response_json_schema: {
               type: "object",
