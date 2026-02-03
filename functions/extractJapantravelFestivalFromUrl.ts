@@ -361,56 +361,26 @@ Deno.serve(async (req) => {
         let openingHours = null;
         let address = null;
 
-        // 운영시간 추출: 여러 패턴 시도
-        // 방법 1: <div id="info"> 내의 시계 아이콘 근처 <p> 태그
+        // 운영시간 추출: <div id="info"> 내의 <div class="event"> 구조에서 시계 아이콘과 p 태그 찾기
         const infoDiv = doc.querySelector('div#info');
         if (infoDiv) {
-          const clockIcons = infoDiv.querySelectorAll('i.fa-clock');
-          for (const icon of clockIcons) {
-            // 1-1. 아이콘의 부모 div에서 모든 p 태그 확인
-            const parentDiv = icon.closest('div');
-            if (parentDiv) {
-              const allParagraphs = parentDiv.querySelectorAll('p');
-              for (const p of allParagraphs) {
-                const text = p.textContent?.trim();
+          // div.event 요소들을 모두 찾기
+          const eventDivs = infoDiv.querySelectorAll('div.event');
+          for (const eventDiv of eventDivs) {
+            // 시계 아이콘이 있는지 확인
+            const clockIcon = eventDiv.querySelector('i.fa-clock, i.fas.fa-clock');
+            if (clockIcon) {
+              // 같은 div.event 내의 p 태그 찾기
+              const pTag = eventDiv.querySelector('p');
+              if (pTag) {
+                const text = pTag.textContent?.trim();
                 if (text && text.match(/\d+:\d+/)) {
                   openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (parent div p): ${openingHours}`);
+                  console.log(`[Japantravel] ✅ Extracted opening hours from div.event: ${openingHours}`);
                   break;
                 }
               }
             }
-            if (openingHours) break;
-
-            // 1-2. 아이콘 바로 다음 형제 요소 확인
-            let sibling = icon.nextElementSibling;
-            while (sibling && !openingHours) {
-              if (sibling.tagName === 'P') {
-                const text = sibling.textContent?.trim();
-                if (text && text.match(/\d+:\d+/)) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (icon sibling): ${openingHours}`);
-                  break;
-                }
-              }
-              sibling = sibling.nextElementSibling;
-            }
-            if (openingHours) break;
-
-            // 1-3. 아이콘 부모의 다음 형제 요소 확인
-            sibling = icon.parentElement?.nextElementSibling;
-            while (sibling && !openingHours) {
-              if (sibling.tagName === 'P') {
-                const text = sibling.textContent?.trim();
-                if (text && text.match(/\d+:\d+/)) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (parent sibling): ${openingHours}`);
-                  break;
-                }
-              }
-              sibling = sibling.nextElementSibling;
-            }
-            if (openingHours) break;
           }
         }
 
