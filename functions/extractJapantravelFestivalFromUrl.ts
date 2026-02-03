@@ -374,11 +374,16 @@ Deno.serve(async (req) => {
              - 그 안의 4번째 `<li class="separated-list-item">` (index 3)의 텍스트를 `category` 필드에 저장하세요.
              - 예: Activities, Food & Drink, Nature, Culture 등
 
-          3. **주소 (Address) - 최우선 추출:**
+          3. **운영시간 (Opening Hours) - 우선 추출:**
+             - `<i class="fas fa-2x fa-clock"></i>` 아이콘 다음에 오는 `<p>` 태그의 텍스트를 찾으세요.
+             - 해당 텍스트를 `opening_hours_original` 필드에 저장하세요.
+             - 예: "Time: 21:30 - 00:10"
+
+          4. **주소 (Address) - 최우선 추출:**
              - `<div class="address event col-xs-12" title="Address">` 태그를 찾으세요.
              - 그 안의 `<p>` 태그에 있는 전체 텍스트(Map, Directions 링크 포함)를 `access_info_original` 필드에 정확히 저장하세요. 이 정보가 가장 중요한 교통/접근 정보입니다.
 
-          4. **원본 언어 감지:**
+          5. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
              - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등).
           
