@@ -366,12 +366,19 @@ Deno.serve(async (req) => {
           
           **🎯 추출 규칙 (매우 중요!):**
           
-          1. **원본 언어 감지:**
+          1. **정보 컨테이너 우선순위:**
+             - 모든 중요한 축제 정보는 `<div id="info" class="info row">` 태그 내에 있을 가능성이 높습니다. 이 컨테이너 내부의 정보를 우선적으로 분석하여 데이터를 추출하세요.
+
+          2. **주소 (Address) - 최우선 추출:**
+             - `<div class="address event col-xs-12" title="Address">` 태그를 찾으세요.
+             - 그 안의 `<p>` 태그에 있는 전체 텍스트(Map, Directions 링크 포함)를 `access_info_original` 필드에 정확히 저장하세요. 이 정보가 가장 중요한 교통/접근 정보입니다.
+
+          3. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
              - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등).
           
-          2. **텍스트 필드 (_original 접미사):**
-             - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original, opening_hours_original, access_info_original, parking_info_original
+          4. **텍스트 필드 (_original 접미사):**
+             - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original, opening_hours_original, parking_info_original
              - **웹페이지의 원본 언어 텍스트를 그대로** 추출해야 합니다.
              - **절대 번역하거나 요약하지 마세요!**
              - description_original은 웹페이지의 축제 소개 전체 내용을 100% 원문 그대로 복사 (최소 10문장 이상, 문단 구분은 \\n\\n 사용).
