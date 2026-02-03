@@ -150,6 +150,7 @@ Deno.serve(async (req) => {
           6. 일본어: 정중한 표현 사용
           7. 중국어: 간체자 사용
           8. 원본과 번역본의 문장 수, 문단 수가 동일해야 합니다.
+          9. **교통 정보(access_info) 번역:** `access_info_original` 필드에는 주소와 함께 "(Map)", "(Directions)"와 같은 링크 텍스트가 포함될 수 있습니다. 번역 시 주소 부분만 번역하고, 괄호 안의 링크 텍스트는 원본 그대로 유지해주세요. (예: `2 Chome-8-1 Nishishinjuku... (Map) (Directions)` -> `도쿄도 신주쿠구 니시신주쿠 2-8-1... (Map) (Directions)`)
             `,
             response_json_schema: {
               type: "object",
