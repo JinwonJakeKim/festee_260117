@@ -369,11 +369,16 @@ Deno.serve(async (req) => {
           1. **정보 컨테이너 우선순위:**
              - 모든 중요한 축제 정보는 `<div id="info" class="info row">` 태그 내에 있을 가능성이 높습니다. 이 컨테이너 내부의 정보를 우선적으로 분석하여 데이터를 추출하세요.
 
-          2. **주소 (Address) - 최우선 추출:**
+          2. **카테고리 (Category) - 우선 추출:**
+             - `<ul class="separated-list context-heading-list">` 태그를 찾으세요.
+             - 그 안의 4번째 `<li class="separated-list-item">` (index 3)의 텍스트를 `category` 필드에 저장하세요.
+             - 예: Activities, Food & Drink, Nature, Culture 등
+
+          3. **주소 (Address) - 최우선 추출:**
              - `<div class="address event col-xs-12" title="Address">` 태그를 찾으세요.
              - 그 안의 `<p>` 태그에 있는 전체 텍스트(Map, Directions 링크 포함)를 `access_info_original` 필드에 정확히 저장하세요. 이 정보가 가장 중요한 교통/접근 정보입니다.
 
-          3. **원본 언어 감지:**
+          4. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
              - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등).
           
