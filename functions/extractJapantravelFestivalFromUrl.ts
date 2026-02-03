@@ -367,13 +367,44 @@ Deno.serve(async (req) => {
         if (infoDiv) {
           const clockIcons = infoDiv.querySelectorAll('i.fa-clock');
           for (const icon of clockIcons) {
-            let sibling = icon.parentElement?.nextElementSibling;
+            // 1-1. 아이콘의 부모 div에서 모든 p 태그 확인
+            const parentDiv = icon.closest('div');
+            if (parentDiv) {
+              const allParagraphs = parentDiv.querySelectorAll('p');
+              for (const p of allParagraphs) {
+                const text = p.textContent?.trim();
+                if (text && text.match(/\d+:\d+/)) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours (parent div p): ${openingHours}`);
+                  break;
+                }
+              }
+            }
+            if (openingHours) break;
+
+            // 1-2. 아이콘 바로 다음 형제 요소 확인
+            let sibling = icon.nextElementSibling;
             while (sibling && !openingHours) {
               if (sibling.tagName === 'P') {
                 const text = sibling.textContent?.trim();
-                if (text && text.length > 3 && text.match(/\d+:\d+/)) {
+                if (text && text.match(/\d+:\d+/)) {
                   openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (info div): ${openingHours}`);
+                  console.log(`[Japantravel] ✅ Extracted opening hours (icon sibling): ${openingHours}`);
+                  break;
+                }
+              }
+              sibling = sibling.nextElementSibling;
+            }
+            if (openingHours) break;
+
+            // 1-3. 아이콘 부모의 다음 형제 요소 확인
+            sibling = icon.parentElement?.nextElementSibling;
+            while (sibling && !openingHours) {
+              if (sibling.tagName === 'P') {
+                const text = sibling.textContent?.trim();
+                if (text && text.match(/\d+:\d+/)) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours (parent sibling): ${openingHours}`);
                   break;
                 }
               }
@@ -387,6 +418,22 @@ Deno.serve(async (req) => {
         if (!openingHours) {
           const allClockIcons = doc.querySelectorAll('i.fa-clock, i.far.fa-clock');
           for (const icon of allClockIcons) {
+            // 2-1. 아이콘의 부모 div에서 모든 p 태그 확인
+            const parentDiv = icon.closest('div');
+            if (parentDiv) {
+              const allParagraphs = parentDiv.querySelectorAll('p');
+              for (const p of allParagraphs) {
+                const text = p.textContent?.trim();
+                if (text && text.match(/\d+:\d+/)) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours (general parent div): ${openingHours}`);
+                  break;
+                }
+              }
+            }
+            if (openingHours) break;
+
+            // 2-2. 기존 로직 유지
             const parent = icon.parentElement;
             if (parent) {
               let sibling = parent.nextElementSibling;
@@ -403,6 +450,19 @@ Deno.serve(async (req) => {
               }
             }
             if (openingHours) break;
+          }
+        }
+
+        // 방법 3: "Time:", "Hours:" 키워드로 직접 검색
+        if (!openingHours) {
+          const allParagraphs = doc.querySelectorAll('p');
+          for (const p of allParagraphs) {
+            const text = p.textContent?.trim();
+            if (text && (text.toLowerCase().includes('time:') || text.toLowerCase().includes('hours:')) && text.match(/\d+:\d+/)) {
+              openingHours = text.replace(/\s+/g, ' ').trim();
+              console.log(`[Japantravel] ✅ Extracted opening hours (keyword search): ${openingHours}`);
+              break;
+            }
           }
         }
 
