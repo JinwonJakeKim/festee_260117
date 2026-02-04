@@ -78,39 +78,22 @@ export default function MyFestee() {
     placeholderData: undefined,
   });
 
-  const { data: myLikes, isLoading: myLikesLoading, isFetching: myLikesFetching } = useQuery({
-    queryKey: ['myLikes', user?.email],
+  const { data: myLikesCount, isLoading: myLikesLoading, isFetching: myLikesFetching } = useQuery({
+    queryKey: ['myLikesCount', user?.email],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return 0;
       
       const likes = await base44.entities.FestivalLike.filter({ user_email: user.email });
+      const uniqueFestivalIds = Array.from(new Set(likes.map(like => like.festival_id)));
       
-      // festival_id 기준 중복 제거
-      const uniqueFestivalIds = new Set();
-      const uniqueLikes = [];
+      if (uniqueFestivalIds.length === 0) return 0;
       
-      for (const like of likes) {
-        if (!uniqueFestivalIds.has(like.festival_id)) {
-          uniqueFestivalIds.add(like.festival_id);
-          uniqueLikes.push(like);
-        }
-      }
+      // $in 연산자로 한 번에 여러 축제 존재 확인
+      const existingFestivals = await base44.entities.Festival.filter({ 
+        id: { $in: uniqueFestivalIds } 
+      }, null, uniqueFestivalIds.length);
       
-      // 실제 Festival이 존재하는 like만 필터링
-      const validLikes = [];
-      for (const like of uniqueLikes) {
-        try {
-          const festival = await base44.entities.Festival.filter({ id: like.festival_id });
-          if (festival && festival.length > 0) {
-            validLikes.push(like);
-          }
-        } catch (error) {
-          // Festival이 삭제된 경우 무시
-          console.log(`Festival ${like.festival_id} not found`);
-        }
-      }
-      
-      return validLikes;
+      return existingFestivals.length;
     },
     enabled: !!user,
     staleTime: 0,
@@ -767,10 +750,10 @@ export default function MyFestee() {
         <div className="grid grid-cols-5 gap-2">
           <Link to={createPageUrl("MyLikes")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
-              {(myLikesLoading || myLikesFetching || myLikes === undefined) ? (
+              {(myLikesLoading || myLikesFetching || myLikesCount === undefined) ? (
                 <span className="text-gray-600">-</span>
               ) : (
-                myLikes?.length || 0
+                myLikesCount || 0
               )}
             </p>
             <p className="text-gray-400 text-xs">좋아요</p>
