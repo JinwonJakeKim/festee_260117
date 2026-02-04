@@ -434,10 +434,10 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 카테고리 추출 (ul.separated-list > li > a[href*="/activity/"]) ===
+        // === 카테고리 추출 (ul.separated-list > li > span.context-heading > a[href*="/activity/"]) ===
         const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
         if (categoryList) {
-          const links = categoryList.querySelectorAll('li a');
+          const links = categoryList.querySelectorAll('li > span.context-heading > a');
           for (const link of links) {
             const href = link.getAttribute('href');
             if (href && href.includes('/activity/')) {
