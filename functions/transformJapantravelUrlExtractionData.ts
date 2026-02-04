@@ -144,9 +144,6 @@ Deno.serve(async (req) => {
           - 요약: ${festivalData.summary_original || ''}
           - 설명: ${festivalData.description_original || ''}
           - 하이라이트: ${JSON.stringify(festivalData.highlights_original || [])}
-          - 운영시간: ${festivalData.opening_hours_original || ''}
-          - 교통정보: ${festivalData.access_info_original || ''}
-          - 주차정보: ${festivalData.parking_info_original || ''}
           - 금지사항: ${JSON.stringify(festivalData.restrictions_original || [])}
           - 추천사항: ${JSON.stringify(festivalData.recommendations_original || [])}
           - 카테고리: ${festivalData.category || ''}
@@ -178,24 +175,7 @@ Deno.serve(async (req) => {
           - highlights, restrictions, recommendations, tags는 각 항목을 개별 번역
           - 항목 수는 원본과 동일
           
-          🔥 **운영시간(opening_hours) 특별 처리 - 최우선 규칙:**
-          - **절대로 요약하거나 재해석하지 마세요!**
-          - 원본의 시간 형식을 **100% 그대로** 유지하세요
-          - 예시: "Time: 21:30 - 00:10" → 한국어: "시간: 21:30 - 00:10" (시간 숫자는 절대 변경 금지)
-          - 예시: "9:00 AM - 5:00 PM" → 한국어: "오전 9시 - 오후 5시" (숫자와 AM/PM 정보 유지)
-          - 날짜가 포함되어 있으면 그것도 그대로 유지
-          - "Time:", "Hours:" 같은 접두어만 번역하고 나머지는 원본 그대로
-          
-          🔥 **교통/접근 정보(access_info) 특별 처리 - 최우선 규칙:**
-          - **주소는 절대로 요약하거나 생략하지 마세요!**
-          - 정확한 주소 전체를 번역하되, 주소 형식은 각 언어에 맞게 변환
-          - 예시: "東京都新宿区西新宿2-8-1" 
-            → 한국어: "도쿄도 신주쿠구 니시신주쿠 2-8-1" (번지수 그대로)
-            → 영어: "2-8-1 Nishishinjuku, Shinjuku-ku, Tokyo" (영어식 순서)
-          - "(Map)", "(Directions)" 같은 영어 링크 텍스트는 원본 그대로 유지
-          - "도보 5분", "지하철역에서 10분" 같은 교통 정보도 정확히 번역
-          - **절대로 "도코도성 시민광장에서 열리며..."와 같이 일반적인 설명으로 바꾸지 마세요**
-          
+
           ⚠️ **경고: 번역 누락 금지!**
           - 모든 필드에 대해 4개 언어 번역을 반드시 제공하세요
           - 빈 문자열이나 null로 두지 마세요
@@ -220,12 +200,6 @@ Deno.serve(async (req) => {
                 highlights_en: { type: "array", items: { type: "string" } },
                 highlights_jp: { type: "array", items: { type: "string" } },
                 highlights_zh: { type: "array", items: { type: "string" } },
-                opening_hours_ko: { type: "string" },
-                opening_hours_en: { type: "string" },
-                access_info_ko: { type: "string" },
-                access_info_en: { type: "string" },
-                parking_info_ko: { type: "string" },
-                parking_info_en: { type: "string" },
                 restrictions_ko: { type: "array", items: { type: "string" } },
                 restrictions_en: { type: "array", items: { type: "string" } },
                 recommendations_ko: { type: "array", items: { type: "string" } },
@@ -260,12 +234,6 @@ Deno.serve(async (req) => {
             highlights_en: festivalData.highlights_original,
             highlights_jp: festivalData.highlights_original,
             highlights_zh: festivalData.highlights_original,
-            opening_hours_ko: festivalData.opening_hours_original,
-            opening_hours_en: festivalData.opening_hours_original,
-            access_info_ko: festivalData.access_info_original,
-            access_info_en: festivalData.access_info_original,
-            parking_info_ko: festivalData.parking_info_original,
-            parking_info_en: festivalData.parking_info_original,
             restrictions_ko: festivalData.restrictions_original,
             restrictions_en: festivalData.restrictions_original,
             recommendations_ko: festivalData.recommendations_original,
@@ -304,12 +272,6 @@ Deno.serve(async (req) => {
           highlights_en: translatedData.highlights_en || [],
           highlights_jp: translatedData.highlights_jp || [],
           highlights_zh: translatedData.highlights_zh || [],
-          opening_hours_ko: translatedData.opening_hours_ko,
-          opening_hours_en: translatedData.opening_hours_en,
-          access_info_ko: translatedData.access_info_ko,
-          access_info_en: translatedData.access_info_en,
-          parking_info_ko: translatedData.parking_info_ko,
-          parking_info_en: translatedData.parking_info_en,
           restrictions_ko: translatedData.restrictions_ko || [],
           restrictions_en: translatedData.restrictions_en || [],
           recommendations_ko: translatedData.recommendations_ko || [],
@@ -324,9 +286,9 @@ Deno.serve(async (req) => {
           name: translatedData.name_ko || festivalData.name_original,
           summary: translatedData.summary_ko || festivalData.summary_original,
           description: translatedData.description_ko || festivalData.description_original,
-          opening_hours: translatedData.opening_hours_ko || festivalData.opening_hours_original,
-          access_info: translatedData.access_info_ko || festivalData.access_info_original,
-          parking_info: translatedData.parking_info_ko || festivalData.parking_info_original,
+          opening_hours: festivalData.opening_hours_original,
+          access_info: festivalData.access_info_original,
+          parking_info: festivalData.parking_info_original,
           restrictions: translatedData.restrictions_ko || festivalData.restrictions_original || [],
           recommendations: translatedData.recommendations_ko || festivalData.recommendations_original || [],
           highlights: translatedData.highlights_ko || festivalData.highlights_original || [],
