@@ -379,28 +379,23 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 주소/접근 정보 추출 (div.sidebar > div.event 내 또는 div#info) ===
+        // === 주소/접근 정보 추출 (div.sidebar > div.event[title="Address"] 또는 div#info) ===
+        // 1순위: div.sidebar 내의 div.event[title="Address"] > p
         if (sidebar) {
-          const eventDivs = sidebar.querySelectorAll('div.event');
-          for (const eventDiv of eventDivs) {
-            const pTag = eventDiv.querySelector('p');
+          const addressDiv = sidebar.querySelector('div.event[title="Address"]');
+          if (addressDiv) {
+            const pTag = addressDiv.querySelector('p');
             if (pTag) {
               const text = pTag.textContent?.trim();
-              // Address, Location, Access 등의 키워드 확인
-              if (text && (
-                text.toLowerCase().includes('address:') || 
-                text.toLowerCase().includes('location:') ||
-                text.toLowerCase().includes('access:')
-              )) {
+              if (text && text.length > 10) {
                 accessInfo = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted access info from sidebar: ${accessInfo}`);
-                break;
+                console.log(`[Japantravel] ✅ Extracted access info from sidebar div.event[title="Address"]: ${accessInfo}`);
               }
             }
           }
         }
 
-        // 만약 sidebar에서 못 찾으면 기존 div#info에서 찾기
+        // 2순위: div#info 내의 div[title="Address"]
         if (!accessInfo) {
           const infoDiv = doc.querySelector('div#info');
           if (infoDiv) {
