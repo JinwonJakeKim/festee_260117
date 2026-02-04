@@ -379,23 +379,44 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 주소/접근 정보 추출 (div.sidebar > div.event[title="Address"] 또는 div#info) ===
-        // 1순위: div.sidebar 내의 div.event[title="Address"] > p
+        // === 주소/접근 정보 추출 (div.sidebar > div.address.event[title="Address"]) ===
         if (sidebar) {
-          const addressDiv = sidebar.querySelector('div.event[title="Address"]');
+          // 우선순위 1: div.address.event[title="Address"] 내의 <p> 태그
+          const addressDiv = sidebar.querySelector('div.address.event[title="Address"]');
           if (addressDiv) {
-            const pTag = addressDiv.querySelector('p');
-            if (pTag) {
-              const text = pTag.textContent?.trim();
+            const addressP = addressDiv.querySelector('p');
+            if (addressP) {
+              const text = addressP.textContent?.trim();
               if (text && text.length > 10) {
                 accessInfo = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted access info from sidebar div.event[title="Address"]: ${accessInfo}`);
+                console.log(`[Japantravel] ✅ Extracted access info from sidebar div.address.event: ${accessInfo}`);
+              }
+            }
+          }
+
+          // 우선순위 2: 일반 div.event 내의 Address 키워드
+          if (!accessInfo) {
+            const eventDivs = sidebar.querySelectorAll('div.event');
+            for (const eventDiv of eventDivs) {
+              const pTag = eventDiv.querySelector('p');
+              if (pTag) {
+                const text = pTag.textContent?.trim();
+                // Address, Location, Access 등의 키워드 확인
+                if (text && (
+                  text.toLowerCase().includes('address:') || 
+                  text.toLowerCase().includes('location:') ||
+                  text.toLowerCase().includes('access:')
+                )) {
+                  accessInfo = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted access info from sidebar div.event: ${accessInfo}`);
+                  break;
+                }
               }
             }
           }
         }
 
-        // 2순위: div#info 내의 div[title="Address"]
+        // 우선순위 3: div#info에서 찾기 (fallback)
         if (!accessInfo) {
           const infoDiv = doc.querySelector('div#info');
           if (infoDiv) {
