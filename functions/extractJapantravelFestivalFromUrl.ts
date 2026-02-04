@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -352,164 +352,100 @@ Deno.serve(async (req) => {
       gallery_count: extractedImages.gallery.length
     });
 
-    // 운영시간과 주소를 DOM에서 직접 추출
-    const extractOpeningHoursAndAddress = async (htmlContent) => {
+    // 운영시간, 주소, 카테고리를 DOM에서 직접 추출
+    const extractStructuredInfo = async (htmlContent) => {
       try {
         const { DOMParser } = await import('https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts');
         const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
         
         let openingHours = null;
-        let address = null;
+        let accessInfo = null;
+        let category = null;
 
-        // 운영시간 추출: <div id="info"> 내의 <div class="event"> 구조에서 시계 아이콘과 p 태그 찾기
-        const infoDiv = doc.querySelector('div#info');
-        if (infoDiv) {
-          // div.event 요소들을 모두 찾기
-          const eventDivs = infoDiv.querySelectorAll('div.event');
+        // === 운영시간 추출 (div.sidebar > div.event 내의 Time: 텍스트) ===
+        const sidebar = doc.querySelector('div.sidebar');
+        if (sidebar) {
+          const eventDivs = sidebar.querySelectorAll('div.event');
           for (const eventDiv of eventDivs) {
-            // 시계 아이콘이 있는지 확인
-            const clockIcon = eventDiv.querySelector('i.fa-clock, i.fas.fa-clock');
-            if (clockIcon) {
-              // 같은 div.event 내의 p 태그 찾기
-              const pTag = eventDiv.querySelector('p');
-              if (pTag) {
-                const text = pTag.textContent?.trim();
-                if (text && text.match(/\d+:\d+/)) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours from div.event: ${openingHours}`);
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        // 방법 2: 전체 페이지에서 시계 아이콘 탐색
-        if (!openingHours) {
-          const allClockIcons = doc.querySelectorAll('i.fa-clock, i.far.fa-clock');
-          for (const icon of allClockIcons) {
-            // 2-1. 아이콘의 부모 div에서 모든 p 태그 확인
-            const parentDiv = icon.closest('div');
-            if (parentDiv) {
-              const allParagraphs = parentDiv.querySelectorAll('p');
-              for (const p of allParagraphs) {
-                const text = p.textContent?.trim();
-                if (text && text.match(/\d+:\d+/)) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (general parent div): ${openingHours}`);
-                  break;
-                }
-              }
-            }
-            if (openingHours) break;
-
-            // 2-2. 기존 로직 유지
-            const parent = icon.parentElement;
-            if (parent) {
-              let sibling = parent.nextElementSibling;
-              while (sibling && !openingHours) {
-                if (sibling.tagName === 'P') {
-                  const text = sibling.textContent?.trim();
-                  if (text && text.match(/\d+:\d+/)) {
-                    openingHours = text.replace(/\s+/g, ' ').trim();
-                    console.log(`[Japantravel] ✅ Extracted opening hours (general): ${openingHours}`);
-                    break;
-                  }
-                }
-                sibling = sibling.nextElementSibling;
-              }
-            }
-            if (openingHours) break;
-          }
-        }
-
-        // 방법 3: "Time:", "Hours:" 키워드로 직접 검색
-        if (!openingHours) {
-          const allParagraphs = doc.querySelectorAll('p');
-          for (const p of allParagraphs) {
-            const text = p.textContent?.trim();
-            if (text && (text.toLowerCase().includes('time:') || text.toLowerCase().includes('hours:')) && text.match(/\d+:\d+/)) {
-              openingHours = text.replace(/\s+/g, ' ').trim();
-              console.log(`[Japantravel] ✅ Extracted opening hours (keyword search): ${openingHours}`);
-              break;
-            }
-          }
-        }
-
-        // 주소 추출: 여러 선택자 시도
-        // 방법 1: <div id="info"> 내의 "Address" title을 가진 div
-        const infoDiv2 = doc.querySelector('div#info');
-        if (infoDiv2) {
-          const addressDiv = infoDiv2.querySelector('div[title="Address"]');
-          if (addressDiv) {
-            const addressP = addressDiv.querySelector('p');
-            if (addressP) {
-              let addressText = '';
-              for (const node of addressP.childNodes) {
-                if (node.nodeType === 3) {
-                  addressText += node.textContent;
-                }
-              }
-              address = addressText.trim().replace(/\s+/g, ' ');
-              if (address && address.length > 5) {
-                console.log(`[Japantravel] ✅ Extracted address (info div): ${address}`);
-              }
-            }
-          }
-        }
-
-        // 방법 2: 전체 페이지에서 title="Address"인 div
-        if (!address) {
-          const allAddressDivs = doc.querySelectorAll('div[title="Address"]');
-          for (const div of allAddressDivs) {
-            const addressP = div.querySelector('p');
-            if (addressP) {
-              let addressText = '';
-              for (const node of addressP.childNodes) {
-                if (node.nodeType === 3) {
-                  addressText += node.textContent;
-                }
-              }
-              address = addressText.trim().replace(/\s+/g, ' ');
-              if (address && address.length > 5) {
-                console.log(`[Japantravel] ✅ Extracted address (general): ${address}`);
+            const pTag = eventDiv.querySelector('p');
+            if (pTag) {
+              const text = pTag.textContent?.trim();
+              if (text && text.toLowerCase().includes('time:')) {
+                openingHours = text.replace(/\s+/g, ' ').trim();
+                console.log(`[Japantravel] ✅ Extracted opening hours from sidebar: ${openingHours}`);
                 break;
               }
             }
           }
         }
 
-        // 방법 3: div.address 클래스
-        if (!address) {
-          const addressDivByClass = doc.querySelector('div.address');
-          if (addressDivByClass) {
-            const addressP = addressDivByClass.querySelector('p');
-            if (addressP) {
-              let addressText = '';
-              for (const node of addressP.childNodes) {
-                if (node.nodeType === 3) {
-                  addressText += node.textContent;
-                }
-              }
-              address = addressText.trim().replace(/\s+/g, ' ');
-              if (address && address.length > 5) {
-                console.log(`[Japantravel] ✅ Extracted address (class): ${address}`);
+        // === 주소/접근 정보 추출 (div.sidebar > div.event 내 또는 div#info) ===
+        if (sidebar) {
+          const eventDivs = sidebar.querySelectorAll('div.event');
+          for (const eventDiv of eventDivs) {
+            const pTag = eventDiv.querySelector('p');
+            if (pTag) {
+              const text = pTag.textContent?.trim();
+              // Address, Location, Access 등의 키워드 확인
+              if (text && (
+                text.toLowerCase().includes('address:') || 
+                text.toLowerCase().includes('location:') ||
+                text.toLowerCase().includes('access:')
+              )) {
+                accessInfo = text.replace(/\s+/g, ' ').trim();
+                console.log(`[Japantravel] ✅ Extracted access info from sidebar: ${accessInfo}`);
+                break;
               }
             }
           }
         }
 
-        return { openingHours, address };
+        // 만약 sidebar에서 못 찾으면 기존 div#info에서 찾기
+        if (!accessInfo) {
+          const infoDiv = doc.querySelector('div#info');
+          if (infoDiv) {
+            const addressDiv = infoDiv.querySelector('div[title="Address"]');
+            if (addressDiv) {
+              const addressP = addressDiv.querySelector('p');
+              if (addressP) {
+                const text = addressP.textContent?.trim();
+                if (text && text.length > 10) {
+                  accessInfo = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted access info from div#info: ${accessInfo}`);
+                }
+              }
+            }
+          }
+        }
+
+        // === 카테고리 추출 (ul.separated-list > li > a[href*="/activity/"]) ===
+        const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
+        if (categoryList) {
+          const links = categoryList.querySelectorAll('li a');
+          for (const link of links) {
+            const href = link.getAttribute('href');
+            if (href && href.includes('/activity/')) {
+              category = link.textContent?.trim();
+              if (category && category !== 'Events') {
+                console.log(`[Japantravel] ✅ Extracted category from activity link: ${category}`);
+                break;
+              }
+            }
+          }
+        }
+
+        return { openingHours, accessInfo, category };
       } catch (domError) {
-        console.error('[Japantravel] DOM parsing error for hours/address:', domError);
-        return { openingHours: null, address: null };
+        console.error('[Japantravel] DOM parsing error:', domError);
+        return { openingHours: null, accessInfo: null, category: null };
       }
     };
 
-    const extractedInfo = await extractOpeningHoursAndAddress(html);
-    console.log(`[Japantravel] Extracted info:`, {
+    const extractedInfo = await extractStructuredInfo(html);
+    console.log(`[Japantravel] Extracted structured info:`, {
       openingHours: extractedInfo.openingHours || 'not found',
-      address: extractedInfo.address || 'not found'
+      accessInfo: extractedInfo.accessInfo || 'not found',
+      category: extractedInfo.category || 'not found'
     });
 
     // HTML 길이를 대폭 늘려서 더 많은 콘텐츠 분석 (50,000 → 100,000자)
@@ -526,180 +462,52 @@ Deno.serve(async (req) => {
           
           **🔥 DOM에서 직접 추출한 정보 (반드시 사용!):**
           ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
-          ${extractedInfo.address ? `- 주소: "${extractedInfo.address}"` : '- 주소: (없음)'}
+          ${extractedInfo.accessInfo ? `- 교통/접근 정보: "${extractedInfo.accessInfo}"` : '- 교통/접근 정보: (없음)'}
+          ${extractedInfo.category ? `- 카테고리: "${extractedInfo.category}"` : '- 카테고리: (없음)'}
           
-          ⚠️ **중요**: 위 운영시간과 주소는 DOM에서 정확히 추출한 것입니다. 이 값들을 **절대 수정하지 말고 그대로** opening_hours_original과 access_info_original에 사용하세요!
+          ⚠️ **중요**: 위에 명시된 운영시간, 교통/접근 정보, 카테고리는 DOM에서 정확히 추출한 것입니다. 
+          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, access_info_original, category 필드에 사용하세요!
           
           **🎯 추출 규칙 (매우 중요!):**
           
-          1. **정보 컨테이너 우선순위:**
-             - 모든 중요한 축제 정보는 `<div id="info" class="info row">` 태그 내에 있을 가능성이 높습니다. 이 컨테이너 내부의 정보를 우선적으로 분석하여 데이터를 추출하세요.
+          1. **카테고리 (Category):**
+             - 위에 "DOM에서 직접 추출한 정보"에 카테고리가 있다면, 그 값을 **반드시 그대로** category 필드에 사용하세요.
+             - 만약 DOM 추출 값이 없다면, 페이지 내용에서 축제 유형을 찾아 적절한 카테고리를 지정하세요.
 
-          2. **카테고리 (Category) - 우선 추출:**
-             - `<ul class="separated-list context-heading-list">` 태그 안의 모든 `<li>` 항목을 확인하세요.
-             - `<a>` 태그의 `href` 속성에 "/activity/" 또는 "/activities"가 포함된 링크의 텍스트를 `category` 필드에 저장하세요.
-             - 예시 HTML: `<a href="https://en.japantravel.com/activity/tokyo">Activities</a>` → category = "Activities"
-             - 다른 예: Food & Drink, Nature, Culture, Festivals 등
-             - 주의: "Events"는 너무 일반적이므로 카테고리로 사용하지 마세요. href에 "/activity/"가 포함된 더 구체적인 카테고리를 찾으세요.
-
-          3. **🔥 운영시간 (Opening Hours) - DOM 추출 값 사용:**
-             - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** `opening_hours_original` 필드에 사용하세요.
+          2. **운영시간 (Opening Hours):**
+             - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** opening_hours_original 필드에 사용하세요.
              - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "Time: 21:30 - 00:10")
 
-          4. **🔥 주소 (Address) - DOM 추출 값 사용:**
-             - 위에 "DOM에서 직접 추출한 정보"에 주소가 있다면, 그 값을 **반드시 그대로** `access_info_original` 필드에 사용하세요.
-             - 수정하거나 재작성하지 마세요. 정확한 주소 형식 그대로 (예: "2 Chome-8-1 Nishishinjuku, Shinjuku City, Tokyo 163-8001, Japan")
+          3. **교통/접근 정보 (Access Info):**
+             - 위에 "DOM에서 직접 추출한 정보"에 교통/접근 정보가 있다면, 그 값을 **반드시 그대로** access_info_original 필드에 사용하세요.
+             - 수정하거나 재작성하지 마세요. 정확한 주소 또는 교통 정보 형식 그대로
 
-          5. **원본 언어 감지:**
+          4. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
-             - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어, th=태국어 등).
+             - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어 등).
           
-          4. **텍스트 필드 (_original 접미사):**
-             - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original, opening_hours_original, parking_info_original
+          5. **텍스트 필드 (_original 접미사):**
+             - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original
              - **웹페이지의 원본 언어 텍스트를 그대로** 추출해야 합니다.
              - **절대 번역하거나 요약하지 마세요!**
              - description_original은 웹페이지의 축제 소개 전체 내용을 100% 원문 그대로 복사 (최소 10문장 이상, 문단 구분은 \\n\\n 사용).
-          
-          3. **URL 필드:**
-             - thumbnail_url, video_url, website, social_media
-             - 유효한 URL만 추출하고, 필요한 경우 절대 경로로 정규화하세요.
-             - video_url은 재생 가능한 YouTube URL만 추출합니다.
-          
-          4. **날짜:**
-             - 아래에 제시된 **HTML에서 추출한 날짜 정보를 최우선으로 사용**하여 정확한 YYYY-MM-DD 형식으로 추출합니다.
-             - 날짜 정보가 명확하지 않으면 date_status를 "tentative" 또는 "estimated"로 설정합니다.
-             
-          5. **기타 필드:**
-             - country, city, category, price, organizer, contact, schedule, lineup, nearby_attractions, tags, expected_visitors
-             - 웹페이지에서 해당 정보를 정확히 찾아 추출합니다.
           
           ${extractedDateInfo.length > 0 ? `
           **🎯 HTML에서 추출한 날짜 정보:**
           ${extractedDateInfo.map(d => `- [${d.source}] ${d.text}`).join('\n')}
           ` : ''}
           
-          **날짜 추출 규칙 (매우 중요):**
+          **날짜 추출 규칙:**
+          - HTML에서 추출한 날짜 정보를 최우선으로 사용하여 정확한 YYYY-MM-DD 형식으로 추출합니다.
+          - 날짜 정보가 명확하지 않으면 date_status를 "tentative" 또는 "estimated"로 설정합니다.
           
-          0. **⭐ 요일이 포함된 하루짜리 축제 (최우선 처리!):**
-             - "Sunday - Mar 8th 2026" → 2026-03-08 ~ 2026-03-08 (하루), date_status: "confirmed"
-             - "Monday - April 15th 2025" → 2025-04-15 ~ 2025-04-15 (하루), date_status: "confirmed"
-             - "Friday - Dec 25th 2025" → 2025-12-25 ~ 2025-12-25 (하루), date_status: "confirmed"
-             - 요일(Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday) 뒤에 "-"가 오고 월/일/년도가 오면
-             - 이것은 하루만 진행하는 축제입니다!
-             - start_date와 end_date를 동일하게 설정하세요
-          
-          1. **확정된 날짜 형식:**
-             - "Sep 13th - Nov 30th 2025" → 2025-09-13 ~ 2025-11-30, date_status: "confirmed"
-             - "2025.9.13 - 11.30" → 2025-09-13 ~ 2025-11-30, date_status: "confirmed"
-             - "January 15 - 20, 2026" → 2026-01-15 ~ 2026-01-20, date_status: "confirmed"
-             - "Mar 8th 2026" (날짜만 있고 범위 없음) → 2026-03-08 ~ 2026-03-08 (하루), date_status: "confirmed"
-             - "January 15, 2026" (날짜만 있고 범위 없음) → 2026-01-15 ~ 2026-01-15 (하루), date_status: "confirmed"
-          
-          2. **단일 월의 불명확한 날짜:**
-             - "Mid Feb 2026" → 2026-02-01 ~ 2026-02-29 (2월 전체), date_status: "tentative"
-             - "Early March 2025" → 2025-03-01 ~ 2025-03-31 (3월 전체), date_status: "tentative"
-             - "Late April 2026" → 2026-04-01 ~ 2026-04-30 (4월 전체), date_status: "tentative"
-             - "February 2026" → 2026-02-01 ~ 2026-02-29 (2월 전체), date_status: "tentative"
-          
-          3. **두 달에 걸친 불명확한 날짜 (매우 중요):**
-             - "Late Jan - Mid Feb 2026" → 2026-01-20 ~ 2026-02-15, date_status: "tentative"
-               * Late Jan = 1월 20일부터
-               * Mid Feb = 2월 15일까지
-             - "Early Jan - Late Jan 2026" → 2026-01-01 ~ 2026-01-31, date_status: "tentative"
-               * Early Jan = 1월 1일부터
-               * Late Jan = 1월 31일까지
-             - "Mid Dec 2025 - Early Jan 2026" → 2025-12-15 ~ 2026-01-10, date_status: "tentative"
-               * Mid Dec = 12월 15일
-               * Early Jan = 1월 10일
-          
-          4. **Early/Mid/Late의 정확한 의미:**
-             - Early (초) = 해당 월의 1일~10일 → 대표값: 5일
-             - Mid (중순) = 해당 월의 11일~20일 → 대표값: 15일
-             - Late (말) = 해당 월의 21일~말일 → 대표값: 25일 (또는 해당 월 마지막 날)
-          
-          5. **월(Month) 정보를 정확히 변환하세요:**
-             - Jan=1, Feb=2, Mar=3, Apr=4, May=5, Jun=6
-             - Jul=7, Aug=8, Sep=9, Oct=10, Nov=11, Dec=12
-          
-          6. **연도 처리:**
-             - 연도가 명시되어 있으면 그 연도를 사용
-             - 연도가 없으면 2025년으로 가정
-          
-          7. **HTML에서 추출한 날짜 정보를 최우선으로 사용하세요**
-             - 위에 명시된 날짜 정보를 반드시 사용하세요
-             - 다른 곳에서 추측하거나 찾지 마세요
-             - 날짜 정보가 명확하지 않으면 date_status를 "tentative" 또는 "estimated"로 설정
-             - 특히 요일이 포함된 패턴을 정확히 처리하세요!
-          
-          **영상 추출 규칙 (매우 엄격):**
-          ⚠️ 영상이 실제로 페이지에 임베드되어 재생 가능한 경우에만 추출하세요!
-          
-          1. HTML <iframe> 태그 안에 실제로 있는 YouTube URL만 추출:
-             - <iframe src="https://www.youtube.com/embed/VIDEO_ID">
-             - <iframe data-src="https://www.youtube.com/embed/VIDEO_ID">
-          
-          2. YouTube URL 형식 검증:
-             - 올바른 형식: https://www.youtube.com/watch?v=VIDEO_ID (VIDEO_ID는 정확히 11자)
-             - 올바른 형식: https://youtu.be/VIDEO_ID
-             - 잘못된 형식이거나 VIDEO_ID가 11자가 아니면 제외
-          
-          3. 다음 경우에는 영상이 없는 것으로 처리 (video_url 비워두기):
-             - 페이지에 "영상", "비디오" 텍스트만 있고 실제 <iframe>이 없는 경우
-             - og:video 메타 태그만 있고 실제 임베드가 없는 경우
-             - 주석(comment)에만 있는 URL
-             - 404 또는 삭제된 영상
-          
-          4. video_url 필드:
-             - 실제로 재생 가능한 첫 번째 YouTube URL만 넣으세요
-             - 확실하지 않으면 비워두세요 (null 또는 빈 문자열)
-          
-          5. media_urls 필드:
-             - type은 반드시 "youtube", "video", "image" 중 하나
-             - YouTube URL인 경우에만 type: "youtube" 사용
-             - 일반 비디오 파일(.mp4, .webm 등)인 경우에만 type: "video" 사용
+          **영상 추출 규칙:**
+          - 실제로 페이지에 임베드되어 재생 가능한 YouTube URL만 추출하세요.
+          - video_url 필드: 실제로 재생 가능한 첫 번째 YouTube URL만 넣으세요.
           
           **텍스트 수집 규칙:**
-          
-          1. **축제 요약 (summary):**
-             - 1-2줄로 간단하게 핵심만 요약
-             - summary_original, summary_ko, summary_en 모두 작성
-          
-          2. **축제 설명 (description) - 🔥 가장 중요!:**
-             - ⚠️ 웹페이지의 축제 소개 전체 내용을 그대로 복사 (절대 요약 금지!)
-             - description_original: 원본 언어 그대로 모든 텍스트
-             - description_ko: 위 원본을 한국어로 완전 번역 (모든 문장 포함!)
-             - description_en: 위 원본을 영어로 완전 번역 (모든 문장 포함!)
-             - 최소 10문장 이상
-             - 문단 구분 \\n\\n 사용
-             - 원본이 5개 문단이면 번역본도 5개 문단이어야 합니다
-          
-          3. **하이라이트:**
-             - 3개만 추출 (가장 핵심적이고 매력적인 내용)
-             - highlights_original, highlights_ko, highlights_en 모두 작성
-             - 각 항목 2-3문장으로 알차게 작성
-          
-          7. **주최 및 연락처:**
-             - organizer: 주최/주관 기관명을 정확히
-             - contact: 전화번호, 이메일, 팩스 등 모든 연락처 수집
-          
-          8. **근처 명소 (nearby_attractions):**
-             - 웹페이지에서 "nearby", "around", "근처", "주변" 등의 키워드로 찾은 명소를 모두 수집
-             - 각 명소마다 이름, 거리, 설명을 포함
-             - 최소 3-5개 수집
-             - 예: [{name: "나고야 성", distance: "도보 10분", description: "일본의 대표적인 성곽으로 벚꽃 명소"}]
-          
-          9. **가격 정보 (price_details):**
-             - 일반 입장료뿐만 아니라 VIP, 조기 예매, 학생 할인 등 모든 가격 정보를 수집
-             - 예: "일반: 50,000원, VIP: 150,000원, 학생 할인: 35,000원, 조기 예매 10% 할인"
-          
-          10. **기타:**
-             - 관련 태그 7-10개 (더 많아도 좋음)
-             - 예상 방문객 수 (웹페이지에 명시되어 있다면)
-          
-          ⚠️⚠️⚠️ 최종 확인: description_original 필드에 웹페이지의 축제 설명 텍스트를 **100% 원문 그대로** 복사했는지 확인하세요!
-          - 요약하지 마세요!
-          - 모든 문장을 포함하세요!
-          - 단락 구분을 위해 \\n\\n을 사용하세요!
+          - description_original: 웹페이지의 축제 설명 전체를 100% 원문 그대로 복사 (절대 요약 금지!)
+          - 최소 10문장 이상, 문단 구분 \\n\\n 사용
           
           HTML 내용:
           ${truncatedHtml}
@@ -712,47 +520,38 @@ Deno.serve(async (req) => {
               items: {
                 type: "object",
                 properties: {
-                  original_language: { type: "string", description: "원본 언어 코드 (ja, ko, en, zh, th 등)" },
-                  name_original: { type: "string", description: "축제 이름 (원본 언어)" },
-                  summary_original: { type: "string", description: "축제 요약 (원본 언어, 1-2줄)" },
-                  description_original: { type: "string", description: "축제 설명 (원본 언어, 웹페이지의 모든 설명 텍스트, 절대 요약 금지, 최소 10문장)" },
-                  
-                  // 날짜 및 기본 정보
-                  start_date: { type: "string", description: "YYYY-MM-DD 형식" },
-                  end_date: { type: "string", description: "YYYY-MM-DD 형식" },
+                  original_language: { type: "string" },
+                  name_original: { type: "string" },
+                  summary_original: { type: "string" },
+                  description_original: { type: "string" },
+                  start_date: { type: "string" },
+                  end_date: { type: "string" },
                   date_status: { 
                     type: "string", 
-                    enum: ["confirmed", "tentative", "estimated"],
-                    description: "날짜 상태" 
+                    enum: ["confirmed", "tentative", "estimated"]
                   },
-                  date_confidence: { type: "number", description: "날짜 정확도 (0-1)" },
-                  date_source: { type: "string", description: "날짜 추출 위치" },
+                  date_confidence: { type: "number" },
+                  date_source: { type: "string" },
                   city: { type: "string" },
                   location: { type: "string" },
                   latitude: { type: "number" },
                   longitude: { type: "number" },
                   category: { type: "string" },
-                  
                   price: { type: "number" },
-                  price_details: { type: "string", description: "모든 티켓 종류의 가격 상세 정보" },
-                  opening_hours_original: { type: "string", description: "운영 시간 (원본 언어)" },
-                  organizer: { type: "string", description: "주최/주관 기관" },
+                  price_details: { type: "string" },
+                  opening_hours_original: { type: "string" },
+                  organizer: { type: "string" },
                   contact: {
                     type: "object",
                     properties: {
                       phone: { type: "string" },
                       email: { type: "string" }
-                    },
-                    description: "연락처 정보"
+                    }
                   },
-                  
-                  access_info_original: { type: "string", description: "교통 정보 (원본 언어)" },
-                  parking_info_original: { type: "string", description: "주차 정보 (원본 언어)" },
-                  
-                  restrictions_original: { type: "array", items: { type: "string" }, description: "금지사항/주의사항 (원본 언어)" },
-                  recommendations_original: { type: "array", items: { type: "string" }, description: "추천 복장/준비물 (원본 언어)" },
-                  
-                  // 웹사이트 및 SNS
+                  access_info_original: { type: "string" },
+                  parking_info_original: { type: "string" },
+                  restrictions_original: { type: "array", items: { type: "string" } },
+                  recommendations_original: { type: "array", items: { type: "string" } },
                   website: { type: "string" },
                   social_media: {
                     type: "object",
@@ -761,12 +560,10 @@ Deno.serve(async (req) => {
                       instagram: { type: "string" },
                       twitter: { type: "string" },
                       youtube: { type: "string" }
-                    },
-                    description: "SNS 링크"
+                    }
                   },
-                  
-                  thumbnail_url: { type: "string", description: "썸네일 이미지 URL" },
-                  video_url: { type: "string", description: "유효한 YouTube URL만, 없으면 빈 문자열" },
+                  thumbnail_url: { type: "string" },
+                  video_url: { type: "string" },
                   image_gallery_urls: {
                     type: "array",
                     items: {
@@ -776,12 +573,9 @@ Deno.serve(async (req) => {
                         smallimageurl: { type: "string" },
                         imgname: { type: "string" }
                       }
-                    },
-                    description: "이미지 갤러리 URL 목록"
+                    }
                   },
-                  highlights_original: { type: "array", items: { type: "string" }, description: "하이라이트 포인트 (원본 언어)" },
-                  
-                  // 일정 및 라인업
+                  highlights_original: { type: "array", items: { type: "string" } },
                   schedule: {
                     type: "array",
                     items: {
@@ -791,23 +585,20 @@ Deno.serve(async (req) => {
                         activity: { type: "string" },
                         location: { type: "string" }
                       }
-                    },
-                    description: "웹페이지의 모든 일정 포함"
+                    }
                   },
                   lineup: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
-                        date: { type: "string", description: "공연 날짜 (예: Day 1 - 4월 12일)" },
+                        date: { type: "string" },
                         artists: { 
                           type: "array", 
-                          items: { type: "string" },
-                          description: "출연 아티스트 목록"
+                          items: { type: "string" }
                         }
                       }
-                    },
-                    description: "라인업 정보 (날짜별 아티스트)"
+                    }
                   },
                   nearby_attractions: {
                     type: "array",
@@ -818,15 +609,13 @@ Deno.serve(async (req) => {
                         distance: { type: "string" },
                         description: { type: "string" }
                       }
-                    },
-                    description: "근처 명소 최소 3-5개"
+                    }
                   },
                   tags: {
                     type: "array",
-                    items: { type: "string" },
-                    description: "관련 태그 7-10개"
+                    items: { type: "string" }
                   },
-                  expected_visitors: { type: "number", description: "예상 방문객 수" }
+                  expected_visitors: { type: "number" }
                 }
               }
             }
@@ -911,10 +700,9 @@ Deno.serve(async (req) => {
         }
       }
 
-      // image_gallery_urls 구성 (originimgurl, smallimageurl, imgname 형식)
+      // image_gallery_urls 구성
       const imageGalleryUrls = [];
       
-      // 1. 썸네일 이미지를 맨 앞에 추가 (메인 이미지)
       if (extractedImages.thumbnail) {
         const normalizedThumbnail = normalizeUrl(extractedImages.thumbnail, url);
         imageGalleryUrls.push({
@@ -922,10 +710,8 @@ Deno.serve(async (req) => {
           smallimageurl: normalizedThumbnail,
           imgname: `${festival.name_original || 'Festival'} - 메인 이미지`
         });
-        console.log(`[Japantravel] ✅ Added thumbnail as main image (first in gallery)`);
       }
       
-      // 2. CSS 선택자로 추출한 본문 갤러리 이미지 추가
       if (extractedImages.gallery && extractedImages.gallery.length > 0) {
         extractedImages.gallery.forEach((img) => {
           const normalizedUrl = normalizeUrl(img.originimgurl, url);
@@ -937,15 +723,10 @@ Deno.serve(async (req) => {
             });
           }
         });
-        console.log(`[Japantravel] ✅ Added ${extractedImages.gallery.length} content images to gallery`);
       }
       
-      console.log(`[Japantravel] Total gallery images: ${imageGalleryUrls.length} (1 thumbnail + ${extractedImages.gallery.length} content)`);
-      
-      // media_urls는 별도로 관리 (YouTube 영상 등)
       let mediaUrlsArray = festival.media_urls || [];
       
-      // HTML에서 추출한 YouTube URL 추가 (video_url이 없을 때만)
       if (!videoUrl && extractedYoutubeUrls.length > 0) {
         extractedYoutubeUrls.forEach((ytUrl, idx) => {
           const normalizedYtUrl = normalizeUrl(ytUrl, url);
@@ -953,13 +734,10 @@ Deno.serve(async (req) => {
             const videoId = extractYoutubeVideoId(normalizedYtUrl);
             if (videoId) {
               const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
-              // Only assign to video_url if it's the first and still empty
               if (idx === 0 && !videoUrl) {
                 videoUrl = cleanUrl;
                 videoValidationResult = { isValid: true, videoId: videoId, source: "HTML extraction" };
-                console.log(`✅ Using first HTML-extracted YouTube URL as video_url: ${cleanUrl}`);
               } else {
-                // Add to media_urls if not already the main video_url or duplicate
                 if (!mediaUrlsArray.some(m => m.url === cleanUrl)) {
                   mediaUrlsArray.push({
                     type: 'youtube',
@@ -979,7 +757,7 @@ Deno.serve(async (req) => {
           let normalizedMediaUrl = normalizeUrl(media.url, url);
           
           if (normalizedMediaUrl === thumbnailUrl || normalizedMediaUrl === videoUrl) {
-            return null; // Avoid duplicate with thumbnail or main video
+            return null;
           }
           
           if (media.type === 'youtube') {
@@ -987,13 +765,10 @@ Deno.serve(async (req) => {
               const videoId = extractYoutubeVideoId(normalizedMediaUrl);
               if (videoId) {
                 normalizedMediaUrl = `https://www.youtube.com/watch?v=${videoId}`;
-                console.log(`✅ Valid YouTube URL in media_urls: ${normalizedMediaUrl}`);
               } else {
-                console.warn(`⚠️ Invalid YouTube URL in media_urls, removing: ${normalizedMediaUrl}`);
                 return null;
               }
             } else {
-              console.warn(`⚠️ Invalid YouTube URL in media_urls, removing: ${normalizedMediaUrl}`);
               return null;
             }
           }
@@ -1002,34 +777,14 @@ Deno.serve(async (req) => {
         })
         .filter(item => item !== null);
 
-      // Normalize website URL
       const websiteUrl = festival.website ? normalizeUrl(festival.website, url) : url;
 
-      // Normalize social media URLs
       const socialMedia = festival.social_media ? {
         facebook: festival.social_media.facebook ? normalizeUrl(festival.social_media.facebook, url) : null,
         instagram: festival.social_media.instagram ? normalizeUrl(festival.social_media.instagram, url) : null,
         twitter: festival.social_media.twitter ? normalizeUrl(festival.social_media.twitter, url) : null,
         youtube: festival.social_media.youtube ? normalizeUrl(festival.social_media.youtube, url) : null,
       } : null;
-
-      console.log(`[Japantravel] Festival "${festival.name_original}" extraction:`, {
-        date_status: festival.date_status || 'confirmed',
-        start_date: festival.start_date,
-        end_date: festival.end_date,
-        date_source: festival.date_source,
-        video_url: videoUrl || "(none)",
-        video_validation: videoValidationResult,
-        media_urls_count: processedMediaUrls.length,
-        original_language: festival.original_language,
-      });
-
-      // 디버깅: 다국어 필드 확인
-      console.log(`[Japantravel] Festival "${festival.name_original}" extracted fields:`, {
-        original_language: festival.original_language,
-        description_original_length: festival.description_original?.length || 0,
-        summary_original: festival.summary_original?.substring(0, 50),
-      });
 
       return {
         source_url: url,
@@ -1039,7 +794,7 @@ Deno.serve(async (req) => {
         description_original: festival.description_original || null,
         country: countryFromSource,
         city: festival.city || null,
-        category: festival.category || null,
+        category: extractedInfo.category || festival.category || null,
         start_date: festival.start_date,
         end_date: festival.end_date,
         date_status: festival.date_status || 'confirmed',
@@ -1051,8 +806,8 @@ Deno.serve(async (req) => {
         website: websiteUrl,
         price: festival.price || 0,
         price_details: festival.price_details || null,
-        opening_hours_original: festival.opening_hours_original || null,
-        access_info_original: festival.access_info_original || null,
+        opening_hours_original: extractedInfo.openingHours || festival.opening_hours_original || null,
+        access_info_original: extractedInfo.accessInfo || festival.access_info_original || null,
         parking_info_original: festival.parking_info_original || null,
         organizer: festival.organizer || null,
         contact: festival.contact || null,
@@ -1079,28 +834,25 @@ Deno.serve(async (req) => {
       };
     });
 
-    // JapantravelUrlExtractionRawData 엔티티에 저장 (중복 시 업데이트)
+    // JapantravelUrlExtractionRawData 엔티티에 저장
     const savedRecords = [];
     for (const festival of festivals) {
       try {
-        // 동일한 축제명이 이미 있는지 확인
         const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
           name_original: festival.name_original
         });
         
         let rawRecord;
         if (existingRecords && existingRecords.length > 0) {
-          // 기존 레코드 업데이트
           const existingRecord = existingRecords[0];
           rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
             existingRecord.id, 
             festival
           );
-          console.log(`[Japantravel] ✅ Updated existing record: ${rawRecord.id} (${festival.name_original})`);
+          console.log(`[Japantravel] ✅ Updated existing record: ${rawRecord.id}`);
         } else {
-          // 새 레코드 생성
           rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(festival);
-          console.log(`[Japantravel] ✅ Created new record: ${rawRecord.id} (${festival.name_original})`);
+          console.log(`[Japantravel] ✅ Created new record: ${rawRecord.id}`);
         }
         
         savedRecords.push(rawRecord);
@@ -1114,24 +866,12 @@ Deno.serve(async (req) => {
       source_url: url,
       festivals_found: festivals.length,
       raw_records_saved: savedRecords.length,
-      message: `${festivals.length}개의 축제 정보를 추출하여 저장했습니다. 이제 데이터 관리 탭에서 변환할 수 있습니다.`,
+      message: `${festivals.length}개의 축제 정보를 추출하여 저장했습니다.`,
       extraction_quality: {
         date_info_found: extractedDateInfo.length,
-        date_info: extractedDateInfo,
-        date_confidence: festivals[0]?._metadata?.date_confidence || 0,
-        date_source: festivals[0]?._metadata?.date_source || 'unknown',
-        date_status: festivals[0]?.date_status || 'confirmed',
-        video_found: festivals[0]?.video_url ? true : false,
-        video_validation: festivals[0]?._metadata?.video_validation,
-        html_youtube_urls_found: extractedYoutubeUrls.length,
-        original_data_check: {
-          description_original_length: festivals[0]?.description_original?.length || 0,
-          summary_original_length: festivals[0]?.summary_original?.length || 0,
-        },
-        css_image_extraction: {
-          thumbnail_extracted: extractedImages.thumbnail ? true : false,
-          gallery_images_count: extractedImages.gallery.length
-        }
+        category_extracted: extractedInfo.category ? true : false,
+        opening_hours_extracted: extractedInfo.openingHours ? true : false,
+        access_info_extracted: extractedInfo.accessInfo ? true : false
       }
     });
 
@@ -1140,8 +880,7 @@ Deno.serve(async (req) => {
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류가 발생했습니다',
-      message: '다시 시도해주세요.',
-      details: error.toString()
+      message: '다시 시도해주세요.'
     }, { status: 500 });
   }
 });
