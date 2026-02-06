@@ -424,57 +424,28 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 주소 정보 추출 (div.sidebar > div.address.event[title="Address"]) ===
-        if (sidebar) {
-          // 우선순위 1: div.address.event[title="Address"] 내의 <p> 태그
-          const addressDiv = sidebar.querySelector('div.address.event[title="Address"]');
-          if (addressDiv) {
-            const addressP = addressDiv.querySelector('p');
-            if (addressP) {
-              const text = addressP.textContent?.trim();
-              if (text && text.length > 10) {
-                accessInfo = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted address info from sidebar div.address.event: ${accessInfo}`);
-              }
+        // === 주소 정보 추출 (div#info > div.event 내의 Address) ===
+        if (infoDiv) {
+          const eventDivs = infoDiv.querySelectorAll('div.event');
+          for (const eventDiv of eventDivs) {
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            
+            // Address, Location, Venue 키워드 찾기
+            const addressPattern = /(?:address|location|venue)\s*:\s*(.+)/i;
+            const match = eventDivText.match(addressPattern);
+            
+            if (match && match[1]) {
+              accessInfo = match[1].trim();
+              console.log(`[Japantravel] ✅ Extracted address info from div#info: ${accessInfo}`);
+              break;
             }
-          }
-
-          // 우선순위 2: 일반 div.event 내의 Address 키워드
-          if (!accessInfo) {
-            const eventDivs = sidebar.querySelectorAll('div.event');
-            for (const eventDiv of eventDivs) {
-              const pTag = eventDiv.querySelector('p');
-              if (pTag) {
-                const text = pTag.textContent?.trim();
-                // Address, Location, Access 등의 키워드 확인
-                if (text && (
-                  text.toLowerCase().includes('address:') || 
-                  text.toLowerCase().includes('location:') ||
-                  text.toLowerCase().includes('access:')
-                )) {
-                  accessInfo = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted address info from sidebar div.event: ${accessInfo}`);
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        // 우선순위 3: div#info에서 찾기 (fallback)
-        if (!accessInfo) {
-          const infoDiv = doc.querySelector('div#info');
-          if (infoDiv) {
-            const addressDiv = infoDiv.querySelector('div[title="Address"]');
-            if (addressDiv) {
-              const addressP = addressDiv.querySelector('p');
-              if (addressP) {
-                const text = addressP.textContent?.trim();
-                if (text && text.length > 10) {
-                  accessInfo = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted address info from div#info: ${accessInfo}`);
-                }
-              }
+            
+            // 아이콘 기반 추출 (map-marker icon)
+            const mapIcon = eventDiv.querySelector('i[class*="map-marker"]');
+            if (mapIcon && eventDivText.length > 10) {
+              accessInfo = eventDivText;
+              console.log(`[Japantravel] ✅ Extracted address info (map icon): ${accessInfo}`);
+              break;
             }
           }
         }
