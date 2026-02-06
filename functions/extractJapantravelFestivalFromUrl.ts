@@ -396,7 +396,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 주소/접근 정보 추출 (div.sidebar > div.address.event[title="Address"]) ===
+        // === 주소 정보 추출 (div.sidebar > div.address.event[title="Address"]) ===
         if (sidebar) {
           // 우선순위 1: div.address.event[title="Address"] 내의 <p> 태그
           const addressDiv = sidebar.querySelector('div.address.event[title="Address"]');
@@ -406,7 +406,7 @@ Deno.serve(async (req) => {
               const text = addressP.textContent?.trim();
               if (text && text.length > 10) {
                 accessInfo = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted access info from sidebar div.address.event: ${accessInfo}`);
+                console.log(`[Japantravel] ✅ Extracted address info from sidebar div.address.event: ${accessInfo}`);
               }
             }
           }
@@ -425,7 +425,7 @@ Deno.serve(async (req) => {
                   text.toLowerCase().includes('access:')
                 )) {
                   accessInfo = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted access info from sidebar div.event: ${accessInfo}`);
+                  console.log(`[Japantravel] ✅ Extracted address info from sidebar div.event: ${accessInfo}`);
                   break;
                 }
               }
@@ -444,7 +444,7 @@ Deno.serve(async (req) => {
                 const text = addressP.textContent?.trim();
                 if (text && text.length > 10) {
                   accessInfo = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted access info from div#info: ${accessInfo}`);
+                  console.log(`[Japantravel] ✅ Extracted address info from div#info: ${accessInfo}`);
                 }
               }
             }
@@ -495,14 +495,14 @@ Deno.serve(async (req) => {
 
           **🔥 DOM에서 직접 추출한 정보 (반드시 사용!):**
           ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
-          ${extractedInfo.accessInfo ? `- 교통/접근 정보: "${extractedInfo.accessInfo}"` : '- 교통/접근 정보: (없음)'}
+          ${extractedInfo.accessInfo ? `- 주소 정보: "${extractedInfo.accessInfo}"` : '- 주소 정보: (없음)'}
           ${extractedInfo.category ? `- 카테고리: "${extractedInfo.category}"` : '- 카테고리: (없음)'}
 
-          ⚠️ **중요**: 위에 명시된 운영시간, 교통/접근 정보, 카테고리는 DOM에서 정확히 추출한 것입니다. 
-          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, access_info_original, category 필드에 사용하세요!
+          ⚠️ **중요**: 위에 명시된 운영시간, 주소 정보, 카테고리는 DOM에서 정확히 추출한 것입니다. 
+          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, address_info_original, category 필드에 사용하세요!
 
           🗺️ **지리적 좌표 추출 (매우 중요!):**
-          - 위에 명시된 "교통/접근 정보" 데이터를 **최우선적으로 활용**하여 정확한 위도(latitude)와 경도(longitude)를 추출하세요.
+          - 위에 명시된 "주소 정보" 데이터를 **최우선적으로 활용**하여 정확한 위도(latitude)와 경도(longitude)를 추출하세요.
           - 주소, 장소명, 지역명 등을 분석하여 가능한 한 정확한 좌표를 제공하세요.
           - 정확한 좌표를 찾을 수 없는 경우, 해당 도시의 중심 좌표라도 제공하세요.
           
@@ -516,9 +516,9 @@ Deno.serve(async (req) => {
              - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** opening_hours_original 필드에 사용하세요.
              - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "Time: 21:30 - 00:10")
 
-          3. **교통/접근 정보 (Access Info):**
-             - 위에 "DOM에서 직접 추출한 정보"에 교통/접근 정보가 있다면, 그 값을 **반드시 그대로** access_info_original 필드에 사용하세요.
-             - 수정하거나 재작성하지 마세요. 정확한 주소 또는 교통 정보 형식 그대로
+          3. **주소 정보 (Address Info):**
+             - 위에 "DOM에서 직접 추출한 정보"에 주소 정보가 있다면, 그 값을 **반드시 그대로** address_info_original 필드에 사용하세요.
+             - 수정하거나 재작성하지 마세요. 정확한 주소 형식 그대로
 
           4. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
@@ -586,7 +586,7 @@ Deno.serve(async (req) => {
                       email: { type: "string" }
                     }
                   },
-                  access_info_original: { type: "string" },
+                  address_info_original: { type: "string" },
                   parking_info_original: { type: "string" },
                   restrictions_original: { type: "array", items: { type: "string" } },
                   recommendations_original: { type: "array", items: { type: "string" } },
@@ -845,7 +845,7 @@ Deno.serve(async (req) => {
         price: festival.price || 0,
         price_details: festival.price_details || null,
         opening_hours_original: extractedInfo.openingHours || festival.opening_hours_original || null,
-        access_info_original: extractedInfo.accessInfo || festival.access_info_original || null,
+        address_info_original: extractedInfo.accessInfo || festival.address_info_original || null,
         parking_info_original: festival.parking_info_original || null,
         organizer: festival.organizer || null,
         contact: festival.contact || null,
@@ -909,7 +909,7 @@ Deno.serve(async (req) => {
         date_info_found: extractedDateInfo.length,
         category_extracted: extractedInfo.category ? true : false,
         opening_hours_extracted: extractedInfo.openingHours ? true : false,
-        access_info_extracted: extractedInfo.accessInfo ? true : false
+        address_info_extracted: extractedInfo.accessInfo ? true : false
       }
     });
 

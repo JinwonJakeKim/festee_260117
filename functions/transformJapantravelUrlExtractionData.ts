@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
           summary: translatedData.summary_ko || festivalData.summary_original,
           description: translatedData.description_ko || festivalData.description_original,
           opening_hours: festivalData.opening_hours_original,
-          access_info: festivalData.access_info_original,
+          access_info: festivalData.address_info_original,
           parking_info: festivalData.parking_info_original,
           restrictions: translatedData.restrictions_ko || festivalData.restrictions_original || [],
           recommendations: translatedData.recommendations_ko || festivalData.recommendations_original || [],
