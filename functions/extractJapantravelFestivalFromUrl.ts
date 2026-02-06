@@ -366,56 +366,52 @@ Deno.serve(async (req) => {
         const sidebar = doc.querySelector('div.sidebar');
         if (sidebar) {
           const eventDivs = sidebar.querySelectorAll('div.event');
-          console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in sidebar`);
+          console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in sidebar for opening hours`);
           
           for (const eventDiv of eventDivs) {
-            // 모든 텍스트 소스를 수집
-            const allTexts = [];
-            
-            // 1. pTag 텍스트
-            const pTag = eventDiv.querySelector('p');
-            if (pTag && pTag.textContent) {
-              allTexts.push(pTag.textContent.trim());
-            }
-            
-            // 2. eventDiv 직접 텍스트
-            if (eventDiv.textContent) {
-              allTexts.push(eventDiv.textContent.trim());
-            }
-            
-            // 3. 모든 자식 노드의 텍스트
-            const allDescendants = eventDiv.querySelectorAll('*');
-            allDescendants.forEach(el => {
-              if (el.textContent) {
-                allTexts.push(el.textContent.trim());
-              }
-            });
-            
-            console.log(`[Japantravel] Checking eventDiv, found ${allTexts.length} text sources`);
-            
-            // 각 텍스트 소스에서 "Time:" 패턴 찾기
-            for (const text of allTexts) {
-              if (!text || text.length === 0) continue;
+            // eventDiv 전체 텍스트를 한 번에 가져와서 정규화
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            console.log(`[Japantravel] Checking eventDiv text (${eventDivText.length} chars): "${eventDivText.substring(0, 200)}..."`);
+
+            // 1. 키워드 패턴으로 운영시간 추출 (Time:, 時間:, 営業時間: 등)
+            // 더 유연한 패턴: 키워드 뒤의 모든 텍스트 캡처 (줄 끝까지)
+            const keywordTimePattern = /(?:시간|time|duration|營業時間|開催時間|hours)\s*:\s*(.+?)(?=\s{3,}|$)/i;
+            let match = eventDivText.match(keywordTimePattern);
+
+            if (match && match[1]) {
+              let extracted = match[1].trim();
+              console.log(`[Japantravel] 🔍 Found keyword match, raw text: "${extracted}"`);
               
-              // 정규화된 텍스트 (공백 정리)
-              const normalizedText = text.replace(/\s+/g, ' ').trim();
+              // 추출된 텍스트에서 실제 시간 형식만 정제
+              // HH:MM 형식 찾기 (범위나 단독)
+              const timeFormatPattern = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?)/i;
+              const timeMatch = extracted.match(timeFormatPattern);
               
-              // "Time:" 또는 "time:" 패턴 체크 (대소문자 무시)
-              const timePattern = /time\s*:\s*(.+)/i;
-              const match = normalizedText.match(timePattern);
-              
-              if (match && match[1]) {
-                openingHours = match[1].trim();
-                console.log(`[Japantravel] ✅ Extracted opening hours: "${openingHours}" from text: "${normalizedText}"`);
+              if (timeMatch && timeMatch[1]) {
+                openingHours = timeMatch[1].trim();
+                console.log(`[Japantravel] ✅ Extracted opening hours (keyword + time format): "${openingHours}"`);
+                break;
+              } else {
+                // 시간 형식이 없어도 추출된 텍스트가 있으면 사용
+                openingHours = extracted.substring(0, 100); // 최대 100자
+                console.log(`[Japantravel] ✅ Extracted opening hours (keyword only): "${openingHours}"`);
                 break;
               }
-              
-              // clock 아이콘이 있고 텍스트가 시간 형식(숫자:숫자)을 포함하면 사용
+            }
+
+            // 2. Fallback: clock 아이콘이 있으면 일반 시간 패턴 찾기
+            if (!openingHours) {
               const clockIcon = eventDiv.querySelector('i[class*="clock"]');
-              if (clockIcon && /\d{1,2}:\d{2}/.test(normalizedText)) {
-                openingHours = normalizedText;
-                console.log(`[Japantravel] ✅ Extracted opening hours from clock icon: "${openingHours}"`);
-                break;
+              if (clockIcon) {
+                console.log(`[Japantravel] 🕐 Found clock icon, searching for general time pattern...`);
+                const generalTimePattern = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?)/i;
+                
+                match = eventDivText.match(generalTimePattern);
+                if (match && match[1]) {
+                  openingHours = match[1].trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours (clock icon + general pattern): "${openingHours}"`);
+                  break;
+                }
               }
             }
             
@@ -423,7 +419,7 @@ Deno.serve(async (req) => {
           }
           
           if (!openingHours) {
-            console.log(`[Japantravel] ⚠️ No opening hours found in ${eventDivs.length} div.event elements`);
+            console.log(`[Japantravel] ⚠️ No opening hours found after checking all div.event elements.`);
           }
         }
 
