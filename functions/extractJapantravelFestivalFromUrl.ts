@@ -362,11 +362,11 @@ Deno.serve(async (req) => {
         let accessInfo = null;
         let category = null;
 
-        // === 운영시간 추출 (div.sidebar > div.event 내의 Time: 텍스트) ===
-        const sidebar = doc.querySelector('div.sidebar');
-        if (sidebar) {
-          const eventDivs = sidebar.querySelectorAll('div.event');
-          console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in sidebar for opening hours`);
+        // === 운영시간 추출 (div#info > div.event 내의 Time: 텍스트) ===
+        const infoDiv = doc.querySelector('div#info');
+        if (infoDiv) {
+          const eventDivs = infoDiv.querySelectorAll('div.event');
+          console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in div#info for opening hours`);
           
           for (const eventDiv of eventDivs) {
             // Get all text content from the current eventDiv, normalize spaces
