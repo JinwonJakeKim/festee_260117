@@ -1141,11 +1141,8 @@ ${context}
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
         
-        // ===== Google 이미지 검색 =====
-        let googleImages = [];
-        console.log(`[Transform] 🖼️ Searching Google Images for: "${rawData.title}"`);
-        googleImages = await searchGoogleImages(rawData.title);
-        console.log(`[Transform] 📸 Google Images: ${googleImages.length} images found`);
+        // ===== Google 이미지 검색 제외 (이미지 저작권 및 정확성 우려) =====
+        // Google 이미지 검색 로직 제거됨
         
         // ===== 설명 구성 (섹션별) =====
         const sections = [];
@@ -1317,18 +1314,13 @@ ${context}
         const phoneNumber = detailData.tel || rawData.tel || introData.sponsor1tel || rawData.sponsor1tel || '';
         
         // ===== 썸네일 이미지 결정 =====
-        // 1. TourAPI 이미지가 있으면 우선 사용
-        // 2. 없으면 Google 검색 이미지 첫 번째 사용
-        // 3. 둘 다 없으면 null
+        // TourAPI 이미지만 사용 (Google 이미지 검색 제외)
         const tourApiImage = detailData.firstimage || rawData.firstimage || '';
-        const thumbnailUrl = tourApiImage || (googleImages.length > 0 ? googleImages[0] : null);
-        const usedGoogleImageForThumbnail = !tourApiImage && googleImages.length > 0;
+        const thumbnailUrl = tourApiImage || null;
         
         console.log(`[Transform] 📸 Image summary:`);
         console.log(`[Transform]   - TourAPI thumbnail: ${tourApiImage ? '✓' : '✗'}`);
         console.log(`[Transform]   - TourAPI gallery (detailImage1): ${imageGallery.length} images`);
-        console.log(`[Transform]   - Google Images: ${googleImages.length} images`);
-        console.log(`[Transform]   - Using Google image as thumbnail: ${usedGoogleImageForThumbnail ? 'YES' : 'NO'}`);
         console.log(`[Transform]   - Final thumbnail: ${thumbnailUrl || 'null'}`);
         
         // ===== 최종 태그 구성 =====
@@ -1403,12 +1395,6 @@ ${context}
               type: 'image',
               url: img.originimgurl,
               caption: img.imgname || rawData.title
-            })),
-            // 3. Google 이미지 검색 결과 (썸네일로 사용된 첫 이미지는 제외)
-            ...(usedGoogleImageForThumbnail ? googleImages.slice(1) : googleImages).map((imageUrl, index) => ({
-              type: 'image',
-              url: imageUrl,
-              caption: `${rawData.title} - 이미지 ${index + 1}`
             }))
           ],
           
