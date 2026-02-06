@@ -465,6 +465,19 @@ Deno.serve(async (req) => {
             }
           }
         }
+        
+        // Fallback: breadcrumb에서 카테고리 찾기
+        if (!category) {
+          const breadcrumbs = doc.querySelectorAll('a[href*="/activity/"]');
+          for (const link of breadcrumbs) {
+            const text = link.textContent?.trim();
+            if (text && text !== 'Events' && text.length < 20) {
+              category = text;
+              console.log(`[Japantravel] ✅ Extracted category from breadcrumb: ${category}`);
+              break;
+            }
+          }
+        }
 
         return { openingHours, accessInfo, category };
       } catch (domError) {
