@@ -367,13 +367,29 @@ Deno.serve(async (req) => {
         if (sidebar) {
           const eventDivs = sidebar.querySelectorAll('div.event');
           for (const eventDiv of eventDivs) {
-            const pTag = eventDiv.querySelector('p');
-            if (pTag) {
-              const text = pTag.textContent?.trim();
-              if (text && text.toLowerCase().includes('time:')) {
-                openingHours = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted opening hours from sidebar: ${openingHours}`);
-                break;
+            // clock 아이콘이 있는지 확인
+            const clockIcon = eventDiv.querySelector('i.fa-clock');
+            if (clockIcon) {
+              // clock 아이콘이 있으면 해당 div.event의 p 태그 텍스트를 가져옴
+              const pTag = eventDiv.querySelector('p');
+              if (pTag) {
+                const text = pTag.textContent?.trim();
+                if (text && text.length > 0) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours from sidebar (clock icon): ${openingHours}`);
+                  break;
+                }
+              }
+            } else {
+              // clock 아이콘이 없으면 기존 방식으로 "time:" 키워드 검색
+              const pTag = eventDiv.querySelector('p');
+              if (pTag) {
+                const text = pTag.textContent?.trim();
+                if (text && text.toLowerCase().includes('time:')) {
+                  openingHours = text.replace(/\s+/g, ' ').trim();
+                  console.log(`[Japantravel] ✅ Extracted opening hours from sidebar: ${openingHours}`);
+                  break;
+                }
               }
             }
           }
