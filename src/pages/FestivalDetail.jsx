@@ -968,6 +968,22 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               </pre>
             </div>
 
+            {/* 운영 시간 */}
+            {localizedOpeningHours && (
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">운영 시간</h3>
+                <p className="text-gray-300">{localizedOpeningHours}</p>
+              </div>
+            )}
+
+            {/* 주소 정보 */}
+            {localizedAccessInfo && (
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">주소</h3>
+                <p className="text-gray-300 whitespace-pre-line">{localizedAccessInfo}</p>
+              </div>
+            )}
+
             {/* 주최 정보 */}
             {festival.organizer && (
               <div>
