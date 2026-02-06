@@ -369,52 +369,53 @@ Deno.serve(async (req) => {
           console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in sidebar for opening hours`);
           
           for (const eventDiv of eventDivs) {
-            // eventDiv 전체 텍스트를 한 번에 가져와서 정규화
+            // Get all text content from the current eventDiv, normalize spaces
             const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
-            console.log(`[Japantravel] Checking eventDiv text (${eventDivText.length} chars): "${eventDivText.substring(0, 200)}..."`);
+            console.log(`[Japantravel] Checking eventDiv text: "${eventDivText.substring(0, 150)}..."`);
 
-            // 1. 키워드 패턴으로 운영시간 추출 (Time:, 時間:, 営業時間: 등)
-            // 더 유연한 패턴: 키워드 뒤의 모든 텍스트 캡처 (줄 끝까지)
-            const keywordTimePattern = /(?:시간|time|duration|營業時間|開催時間|hours)\s*:\s*(.+?)(?=\s{3,}|$)/i;
+            // 1. Prioritize finding text immediately after "Time:", "営業時間:", "開催時間:", etc.
+            const keywordTimePattern = /(?:시간|time|duration|営業時間|開催時間)\s*:\s*(.+)/i;
             let match = eventDivText.match(keywordTimePattern);
 
             if (match && match[1]) {
-              let extracted = match[1].trim();
-              console.log(`[Japantravel] 🔍 Found keyword match, raw text: "${extracted}"`);
+              let extractedText = match[1].trim();
+              console.log(`[Japantravel] Found text after keyword: "${extractedText}"`);
               
-              // 추출된 텍스트에서 실제 시간 형식만 정제
-              // HH:MM 형식 찾기 (범위나 단독)
-              const timeFormatPattern = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?)/i;
-              const timeMatch = extracted.match(timeFormatPattern);
+              // Try to extract clean time format from the matched text
+              const commonTimeFormats = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?)/i;
+              const timeMatch = extractedText.match(commonTimeFormats);
               
               if (timeMatch && timeMatch[1]) {
                 openingHours = timeMatch[1].trim();
                 console.log(`[Japantravel] ✅ Extracted opening hours (keyword + time format): "${openingHours}"`);
-                break;
+                break; 
               } else {
-                // 시간 형식이 없어도 추출된 텍스트가 있으면 사용
-                openingHours = extracted.substring(0, 100); // 최대 100자
-                console.log(`[Japantravel] ✅ Extracted opening hours (keyword only): "${openingHours}"`);
+                // If no clear time pattern found, use the full extracted text after keyword
+                openingHours = extractedText;
+                console.log(`[Japantravel] ✅ Extracted opening hours (keyword): "${openingHours}"`);
                 break;
               }
             }
 
-            // 2. Fallback: clock 아이콘이 있으면 일반 시간 패턴 찾기
+            // 2. Fallback: If still no specific keyword match, and a clock icon is present,
+            //    search for general time patterns in eventDivText.
             if (!openingHours) {
-              const clockIcon = eventDiv.querySelector('i[class*="clock"]');
-              if (clockIcon) {
-                console.log(`[Japantravel] 🕐 Found clock icon, searching for general time pattern...`);
-                const generalTimePattern = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?)/i;
-                
-                match = eventDivText.match(generalTimePattern);
-                if (match && match[1]) {
-                  openingHours = match[1].trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours (clock icon + general pattern): "${openingHours}"`);
-                  break;
+                const clockIcon = eventDiv.querySelector('i[class*="clock"]');
+                if (clockIcon) {
+                    console.log(`[Japantravel] Clock icon found, searching for general time pattern...`);
+                    // General time patterns (e.g., HH:MM - HH:MM, HH:MM~HH:MM, HH:MM AM/PM)
+                    const generalTimePattern = /(\d{1,2}:\d{2}(?:\s*[\-~]\s*\d{1,2}:\d{2})?(?:\s*(?:AM|PM|오전|오후))?(?:\s*\([\w\s]+\))?)/i;
+                    
+                    match = eventDivText.match(generalTimePattern);
+                    if (match && match[1]) {
+                        openingHours = match[1].trim();
+                        console.log(`[Japantravel] ✅ Extracted opening hours (clock icon + general pattern): "${openingHours}"`);
+                        break; 
+                    }
                 }
-              }
             }
             
+            // If openingHours found, break out of the loop
             if (openingHours) break;
           }
           
@@ -541,7 +542,7 @@ Deno.serve(async (req) => {
 
           2. **운영시간 (Opening Hours):**
              - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** opening_hours_original 필드에 사용하세요.
-             - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "Time: 21:30 - 00:10")
+             - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "21:30 - 00:10")
 
           3. **주소 정보 (Address Info):**
              - 위에 "DOM에서 직접 추출한 정보"에 주소 정보가 있다면, 그 값을 **반드시 그대로** address_info_original 필드에 사용하세요.
