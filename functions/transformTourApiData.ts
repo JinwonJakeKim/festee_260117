@@ -1421,8 +1421,8 @@ ${context}
           opening_hours: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
           opening_hours_ko: formatText(introData.playtime || rawData.playtime || introData.usetimefestival || ''),
           
-          access_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
-          access_info_ko: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
+          address_info: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
+          address_info_ko: (detailData.addr1 || rawData.addr1) ? `${detailData.addr1 || rawData.addr1} ${detailData.addr2 || rawData.addr2 || ''}`.trim() : '',
           
           parking_info: formatText(introData.parkingfee || introData.parkingfestival || ''),
           parking_info_ko: formatText(introData.parkingfee || introData.parkingfestival || ''),
