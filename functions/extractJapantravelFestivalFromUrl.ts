@@ -475,14 +475,19 @@ Deno.serve(async (req) => {
       extraction = await base44.integrations.Core.InvokeLLM({
         prompt: `
           다음 japantravel.com 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
-          
+
           **🔥 DOM에서 직접 추출한 정보 (반드시 사용!):**
           ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
           ${extractedInfo.accessInfo ? `- 교통/접근 정보: "${extractedInfo.accessInfo}"` : '- 교통/접근 정보: (없음)'}
           ${extractedInfo.category ? `- 카테고리: "${extractedInfo.category}"` : '- 카테고리: (없음)'}
-          
+
           ⚠️ **중요**: 위에 명시된 운영시간, 교통/접근 정보, 카테고리는 DOM에서 정확히 추출한 것입니다. 
           이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, access_info_original, category 필드에 사용하세요!
+
+          🗺️ **지리적 좌표 추출 (매우 중요!):**
+          - 위에 명시된 "교통/접근 정보" 데이터를 **최우선적으로 활용**하여 정확한 위도(latitude)와 경도(longitude)를 추출하세요.
+          - 주소, 장소명, 지역명 등을 분석하여 가능한 한 정확한 좌표를 제공하세요.
+          - 정확한 좌표를 찾을 수 없는 경우, 해당 도시의 중심 좌표라도 제공하세요.
           
           **🎯 추출 규칙 (매우 중요!):**
           
