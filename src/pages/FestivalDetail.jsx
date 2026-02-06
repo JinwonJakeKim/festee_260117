@@ -1101,25 +1101,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               </div>
             )}
 
-            {/* 운영 시간 */}
-            {localizedOpeningHours && (
-              <div className="bg-gray-900 rounded-lg p-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2">
-                  🕐 운영 시간
-                </h3>
-                <p className="text-gray-300">{localizedOpeningHours}</p>
-              </div>
-            )}
 
-            {/* 교통 정보 */}
-            {localizedAccessInfo && (
-              <div className="bg-gray-900 rounded-lg p-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2">
-                  🚇 교통/접근 정보
-                </h3>
-                <p className="text-gray-300 whitespace-pre-line">{localizedAccessInfo}</p>
-              </div>
-            )}
 
             {/* 주차 정보 */}
             {localizedParkingInfo && (
