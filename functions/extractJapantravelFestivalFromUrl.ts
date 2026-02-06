@@ -370,27 +370,35 @@ Deno.serve(async (req) => {
             // 방법 1: clock 아이콘이 있는 div.event 찾기
             const clockIcon = eventDiv.querySelector('i[class*="clock"]');
             if (clockIcon) {
+              let text = '';
               const pTag = eventDiv.querySelector('p');
               if (pTag) {
-                const text = pTag.textContent?.trim();
-                if (text && text.length > 0) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours from clock icon: ${openingHours}`);
-                  break;
-                }
+                text = pTag.textContent?.trim() || '';
+              }
+              // pTag가 없거나 비어있으면 eventDiv의 직접 텍스트 사용
+              if (!text || text.length === 0) {
+                text = eventDiv.textContent?.trim() || '';
+              }
+              if (text && text.length > 0) {
+                openingHours = text.replace(/\s+/g, ' ').trim();
+                console.log(`[Japantravel] ✅ Extracted opening hours from clock icon: ${openingHours}`);
+                break;
               }
             }
             
             // 방법 2: "Time:"을 포함하는 텍스트 찾기 (fallback)
             if (!openingHours) {
-              const pTag = eventDiv.querySelector('p');
-              if (pTag) {
-                const text = pTag.textContent?.trim();
-                if (text && text.toLowerCase().includes('time:')) {
-                  openingHours = text.replace(/\s+/g, ' ').trim();
-                  console.log(`[Japantravel] ✅ Extracted opening hours from 'time:' keyword: ${openingHours}`);
-                  break;
+              let text = eventDiv.textContent?.trim() || ''; // div의 직접 텍스트 우선
+              if (!text || !text.toLowerCase().includes('time:')) {
+                const pTag = eventDiv.querySelector('p');
+                if (pTag) {
+                  text = pTag.textContent?.trim() || '';
                 }
+              }
+              if (text && text.toLowerCase().includes('time:')) {
+                openingHours = text.replace(/\s+/g, ' ').trim();
+                console.log(`[Japantravel] ✅ Extracted opening hours from 'time:' keyword: ${openingHours}`);
+                break;
               }
             }
           }
