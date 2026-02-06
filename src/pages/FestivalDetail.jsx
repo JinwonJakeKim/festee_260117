@@ -7,7 +7,7 @@ import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, Extern
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -923,17 +923,9 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         </div>
       </div>
 
-      {/* Tabs - 탭 수정 */}
-      <Tabs defaultValue="intro" className="px-4">
-        <TabsList className="w-full bg-gray-900 grid grid-cols-4">
-          <TabsTrigger value="intro" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">소개</TabsTrigger>
-          <TabsTrigger value="visit" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">방문정보</TabsTrigger>
-          <TabsTrigger value="lineup" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">라인업</TabsTrigger>
-          <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">일정</TabsTrigger>
-        </TabsList>
-
-        {/* 소개 탭 (기존 summary) */}
-        <TabsContent value="intro" className="text-white mt-4">
+      {/* 소개 섹션 */}
+      <div className="px-4 mt-4">
+        <div className="text-white">
           <div className="space-y-6">
             {/* 축제 요약 */}
             {localizedSummary && (
@@ -1070,122 +1062,49 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 festivalName={localizedName}
               />
             )}
-          </div>
-        </TabsContent>
-
-        {/* 방문 탭 - 위치 정보 통합 */}
-        <TabsContent value="visit" className="text-white mt-4">
-          <div className="space-y-4">
-            {/* 위치 정보 섹션 추가 */}
-            {festival.latitude && festival.longitude && (
-              <div className="bg-gray-900 rounded-lg p-4 mb-4">
-                <h3 className="font-bold mb-3 flex items-center gap-2 text-white">
-                  <MapPin className="w-5 h-5 text-pink-500" />
-                  위치
-                </h3>
-                <p className="text-white font-bold mb-4">{festival.city}, {festival.country}</p>
-                <div className="flex flex-col gap-2">
-                  <Link to={createPageUrl("FestivalMap")}>
-                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
-                      <Map className="w-5 h-5 mr-2" />
-                      지도에서 보기
-                    </Button>
-                  </Link>
-                  <Link to={createPageUrl(`FestivalVenueMap?id=${festival.id}&name=${encodeURIComponent(festival.name)}`)}>
-                    <Button className="w-full bg-pink-500 hover:bg-pink-600">
-                      <Map className="w-5 h-5 mr-2" />
-                      행사장 내부 지도
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-
-
-            {/* 주차 정보 */}
-            {localizedParkingInfo && (
-              <div className="bg-gray-900 rounded-lg p-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2">
-                  🅿️ 주차 정보
-                </h3>
-                <p className="text-gray-300">{localizedParkingInfo}</p>
-              </div>
-            )}
-
-            {/* 금지사항/주의사항 */}
-            {localizedRestrictions && localizedRestrictions.length > 0 && (
-              <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2 text-red-400">
-                  ⚠️ 금지사항/주의사항
-                </h3>
-                <ul className="space-y-1">
-                  {localizedRestrictions.map((restriction, idx) => (
-                    <li key={idx} className="text-gray-300 text-sm">• {restriction}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* 추천 복장/준비물 */}
-            {localizedRecommendations && localizedRecommendations.length > 0 && (
-              <div className="bg-cyan-900/20 border border-cyan-400/30 rounded-lg p-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2 text-cyan-400">
-                  💡 추천 복장/준비물
-                </h3>
-                <ul className="space-y-1">
-                  {localizedRecommendations.map((rec, idx) => (
-                    <li key={idx} className="text-gray-300 text-sm">• {rec}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* 라인업 탭 */}
-        <TabsContent value="lineup" className="text-white mt-4">
-          {festival.lineup && festival.lineup.length > 0 ? (
-            <div className="space-y-4">
-              {festival.lineup.map((day, idx) => (
-                <div key={idx} className="bg-gray-900 rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-2">{day.date}</h3>
-                  <div className="space-y-1">
-                    {day.artists.map((artist, artistIdx) => (
-                      <div key={artistIdx} className="text-gray-300">• {artist}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400">라인업 정보가 없습니다.</p>
-          )}
-        </TabsContent>
-
-        {/* 일정 탭 */}
-        <TabsContent value="schedule" className="text-white mt-4">
-          {festival.schedule && festival.schedule.length > 0 ? (
-            <div className="space-y-3">
-              {festival.schedule.map((item, idx) => (
-                <div key={idx} className="bg-gray-900 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-cyan-400 font-bold min-w-[60px]">{item.time}</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold mb-1">{item.activity}</h4>
-                      {item.location && (
-                        <p className="text-gray-400 text-sm">📍 {item.location}</p>
-                      )}
+          {/* 라인업 */}
+          {festival.lineup && festival.lineup.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-xl font-bold mb-3 text-cyan-400">라인업</h3>
+              <div className="space-y-4">
+                {festival.lineup.map((day, idx) => (
+                  <div key={idx} className="bg-gray-900 rounded-lg p-4">
+                    <h4 className="text-lg font-bold mb-2">{day.date}</h4>
+                    <div className="space-y-1">
+                      {day.artists.map((artist, artistIdx) => (
+                        <div key={artistIdx} className="text-gray-300">• {artist}</div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          ) : (
-            <p className="text-gray-400">상세 일정이 곧 공개됩니다.</p>
           )}
-        </TabsContent>
-      </Tabs>
+
+          {/* 일정 */}
+          {festival.schedule && festival.schedule.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-xl font-bold mb-3 text-cyan-400">일정</h3>
+              <div className="space-y-3">
+                {festival.schedule.map((item, idx) => (
+                  <div key={idx} className="bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-cyan-400 font-bold min-w-[60px]">{item.time}</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold mb-1">{item.activity}</h4>
+                        {item.location && (
+                          <p className="text-gray-400 text-sm">📍 {item.location}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          </div>
+          </div>
+          </div>
 
       {/* Comments Section */}
       <div className="px-4 py-6">
