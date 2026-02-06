@@ -366,41 +366,64 @@ Deno.serve(async (req) => {
         const sidebar = doc.querySelector('div.sidebar');
         if (sidebar) {
           const eventDivs = sidebar.querySelectorAll('div.event');
+          console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in sidebar`);
+          
           for (const eventDiv of eventDivs) {
-            // 방법 1: clock 아이콘이 있는 div.event 찾기
-            const clockIcon = eventDiv.querySelector('i[class*="clock"]');
-            if (clockIcon) {
-              let text = '';
-              const pTag = eventDiv.querySelector('p');
-              if (pTag) {
-                text = pTag.textContent?.trim() || '';
+            // 모든 텍스트 소스를 수집
+            const allTexts = [];
+            
+            // 1. pTag 텍스트
+            const pTag = eventDiv.querySelector('p');
+            if (pTag && pTag.textContent) {
+              allTexts.push(pTag.textContent.trim());
+            }
+            
+            // 2. eventDiv 직접 텍스트
+            if (eventDiv.textContent) {
+              allTexts.push(eventDiv.textContent.trim());
+            }
+            
+            // 3. 모든 자식 노드의 텍스트
+            const allDescendants = eventDiv.querySelectorAll('*');
+            allDescendants.forEach(el => {
+              if (el.textContent) {
+                allTexts.push(el.textContent.trim());
               }
-              // pTag가 없거나 비어있으면 eventDiv의 직접 텍스트 사용
-              if (!text || text.length === 0) {
-                text = eventDiv.textContent?.trim() || '';
+            });
+            
+            console.log(`[Japantravel] Checking eventDiv, found ${allTexts.length} text sources`);
+            
+            // 각 텍스트 소스에서 "Time:" 패턴 찾기
+            for (const text of allTexts) {
+              if (!text || text.length === 0) continue;
+              
+              // 정규화된 텍스트 (공백 정리)
+              const normalizedText = text.replace(/\s+/g, ' ').trim();
+              
+              // "Time:" 또는 "time:" 패턴 체크 (대소문자 무시)
+              const timePattern = /time\s*:\s*(.+)/i;
+              const match = normalizedText.match(timePattern);
+              
+              if (match && match[1]) {
+                openingHours = match[1].trim();
+                console.log(`[Japantravel] ✅ Extracted opening hours: "${openingHours}" from text: "${normalizedText}"`);
+                break;
               }
-              if (text && text.length > 0) {
-                openingHours = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted opening hours from clock icon: ${openingHours}`);
+              
+              // clock 아이콘이 있고 텍스트가 시간 형식(숫자:숫자)을 포함하면 사용
+              const clockIcon = eventDiv.querySelector('i[class*="clock"]');
+              if (clockIcon && /\d{1,2}:\d{2}/.test(normalizedText)) {
+                openingHours = normalizedText;
+                console.log(`[Japantravel] ✅ Extracted opening hours from clock icon: "${openingHours}"`);
                 break;
               }
             }
             
-            // 방법 2: "Time:"을 포함하는 텍스트 찾기 (fallback)
-            if (!openingHours) {
-              let text = eventDiv.textContent?.trim() || ''; // div의 직접 텍스트 우선
-              if (!text || !text.toLowerCase().includes('time:')) {
-                const pTag = eventDiv.querySelector('p');
-                if (pTag) {
-                  text = pTag.textContent?.trim() || '';
-                }
-              }
-              if (text && text.toLowerCase().includes('time:')) {
-                openingHours = text.replace(/\s+/g, ' ').trim();
-                console.log(`[Japantravel] ✅ Extracted opening hours from 'time:' keyword: ${openingHours}`);
-                break;
-              }
-            }
+            if (openingHours) break;
+          }
+          
+          if (!openingHours) {
+            console.log(`[Japantravel] ⚠️ No opening hours found in ${eventDivs.length} div.event elements`);
           }
         }
 
