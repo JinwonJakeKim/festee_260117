@@ -361,9 +361,67 @@ Deno.serve(async (req) => {
         let openingHours = null;
         let accessInfo = null;
         let category = null;
+        let priceYen = null;
+        let priceDetails = null;
+
+        // === 입장료 정보 추출 (div#info > div.event 내의 ¥, JPY 패턴) ===
+        const infoDiv = doc.querySelector('div#info');
+        if (infoDiv) {
+          const eventDivs = infoDiv.querySelectorAll('div.event');
+          console.log(`[Japantravel] Searching for price in ${eventDivs.length} div.event elements`);
+          
+          for (const eventDiv of eventDivs) {
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            
+            // 1. 엔화 기호 패턴 매칭: ¥1,800 또는 ¥ 1,800
+            const yenPattern = /¥\s*([\d,]+)/;
+            let match = eventDivText.match(yenPattern);
+            
+            if (match && match[1]) {
+              const numericPrice = parseInt(match[1].replace(/,/g, ''));
+              if (!isNaN(numericPrice) && numericPrice > 0) {
+                priceYen = numericPrice;
+                priceDetails = eventDivText;
+                console.log(`[Japantravel] ✅ Extracted price (yen symbol): ¥${numericPrice}`);
+                break;
+              }
+            }
+            
+            // 2. JPY 패턴 매칭
+            const jpyPattern = /(\d{1,}[,\d]*)\s*JPY/i;
+            match = eventDivText.match(jpyPattern);
+            
+            if (match && match[1]) {
+              const numericPrice = parseInt(match[1].replace(/,/g, ''));
+              if (!isNaN(numericPrice) && numericPrice > 0) {
+                priceYen = numericPrice;
+                priceDetails = eventDivText;
+                console.log(`[Japantravel] ✅ Extracted price (JPY): ${numericPrice} JPY`);
+                break;
+              }
+            }
+            
+            // 3. "Price:" 또는 "Admission:" 키워드 찾기
+            const priceKeywordPattern = /(?:price|admission|fee|cost|料金|入場料)\s*:\s*¥?\s*([\d,]+)/i;
+            match = eventDivText.match(priceKeywordPattern);
+            
+            if (match && match[1]) {
+              const numericPrice = parseInt(match[1].replace(/,/g, ''));
+              if (!isNaN(numericPrice) && numericPrice > 0) {
+                priceYen = numericPrice;
+                priceDetails = eventDivText;
+                console.log(`[Japantravel] ✅ Extracted price (keyword): ${numericPrice}`);
+                break;
+              }
+            }
+          }
+          
+          if (!priceYen) {
+            console.log(`[Japantravel] ⚠️ No price found in div#info elements`);
+          }
+        }
 
         // === 운영시간 추출 (div#info > div.event 내의 Time: 텍스트) ===
-        const infoDiv = doc.querySelector('div#info');
         if (infoDiv) {
           const eventDivs = infoDiv.querySelectorAll('div.event');
           console.log(`[Japantravel] Found ${eventDivs.length} div.event elements in div#info for opening hours`);
