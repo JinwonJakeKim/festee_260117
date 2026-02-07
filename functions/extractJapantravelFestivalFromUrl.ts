@@ -953,9 +953,7 @@ Deno.serve(async (req) => {
         video_url: videoUrl,
         image_gallery_urls: imageGalleryUrls,
         website: websiteUrl,
-        price: extractedInfo.priceYen 
-          ? Math.round(extractedInfo.priceYen * 9.5)
-          : (festival.price || 0),
+        price_yen: extractedInfo.priceYen || null,
         price_details: extractedInfo.priceDetails || festival.price_details || null,
         opening_hours_original: extractedInfo.openingHours || festival.opening_hours_original || null,
         address_info_original: extractedInfo.accessInfo || festival.address_info_original || null,

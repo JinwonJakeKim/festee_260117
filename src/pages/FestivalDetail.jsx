@@ -860,6 +860,11 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         <div className="text-white text-xl font-bold mb-3">
           {isFreeEntry ? (
             <span className="text-green-400">₩0 (무료)</span>
+          ) : festival.country === 'Japan' && festival.price_yen ? (
+            <div className="flex flex-col gap-1">
+              <span>¥{festival.price_yen.toLocaleString()}</span>
+              <span className="text-sm text-gray-400">(약 ₩{festival.price.toLocaleString()})</span>
+            </div>
           ) : (
             <span>₩{festival.price.toLocaleString()}</span>
           )}
