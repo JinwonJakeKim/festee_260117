@@ -101,17 +101,39 @@ export default function FestivalChatbot({ festival }) {
       {/* 챗봇 플로팅 버튼 */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <MessageCircle className="w-6 h-6 text-white" />
-          </motion.button>
+          <div className="fixed bottom-20 right-4 z-50">
+            {/* 말풍선 */}
+            <AnimatePresence>
+              {showBubble && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                  className="absolute bottom-16 right-0 mb-2 bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200"
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  <p className="text-gray-800 text-sm font-medium">궁금한 게 있으신가요? 🤖</p>
+                  {/* 말풍선 꼬리 */}
+                  <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white" />
+                  <div className="absolute bottom-[-9px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-200 z-[-1]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 챗봇 버튼 */}
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              onClick={() => setIsOpen(true)}
+              className="w-14 h-14 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MessageCircle className="w-6 h-6 text-white" />
+            </motion.button>
+          </div>
         )}
       </AnimatePresence>
 
