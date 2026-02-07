@@ -450,32 +450,43 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 카테고리 추출 (ul.separated-list > li > span.context-heading > a[href*="/activity/"]) ===
+        // === 카테고리 추출 (ul.separated-list > li > span.context-heading > a) ===
         const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
         if (categoryList) {
           const links = categoryList.querySelectorAll('li > span.context-heading > a');
           for (const link of links) {
             const href = link.getAttribute('href');
-            if (href && href.includes('/activity/')) {
-              category = link.textContent?.trim();
-              if (category && category !== 'Events') {
-                console.log(`[Japantravel] ✅ Extracted category from activity link: ${category}`);
+            const text = link.textContent?.trim();
+
+            // Events가 아니고, 유효한 카테고리 링크인 경우 (/culture/, /food/, /nature/, /activity/ 등)
+            if (href && text && text !== 'Events' && text.length < 30) {
+              // japantravel.com의 카테고리 패턴: /culture/, /food/, /nature/, /activity/, /history/ 등
+              const categoryPatterns = ['/culture/', '/food/', '/nature/', '/activity/', '/history/', '/art/', '/festival/', '/sports/'];
+              const hasValidPattern = categoryPatterns.some(pattern => href.includes(pattern));
+
+              if (hasValidPattern) {
+                category = text;
+                console.log(`[Japantravel] ✅ Extracted category from context-heading link: ${category} (${href})`);
                 break;
               }
             }
           }
         }
-        
-        // Fallback: breadcrumb에서 카테고리 찾기
+
+        // Fallback: 모든 카테고리 링크에서 찾기
         if (!category) {
-          const breadcrumbs = doc.querySelectorAll('a[href*="/activity/"]');
-          for (const link of breadcrumbs) {
-            const text = link.textContent?.trim();
-            if (text && text !== 'Events' && text.length < 20) {
-              category = text;
-              console.log(`[Japantravel] ✅ Extracted category from breadcrumb: ${category}`);
-              break;
+          const categoryPatterns = ['/culture/', '/food/', '/nature/', '/activity/', '/history/', '/art/', '/festival/', '/sports/'];
+          for (const pattern of categoryPatterns) {
+            const links = doc.querySelectorAll(`a[href*="${pattern}"]`);
+            for (const link of links) {
+              const text = link.textContent?.trim();
+              if (text && text !== 'Events' && text.length > 0 && text.length < 30) {
+                category = text;
+                console.log(`[Japantravel] ✅ Extracted category from fallback (${pattern}): ${category}`);
+                break;
+              }
             }
+            if (category) break;
           }
         }
 
