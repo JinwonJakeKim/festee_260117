@@ -587,10 +587,12 @@ export default function AdminUrlExtraction() {
           </TabsList>
 
           <TabsContent value="extract" className="mt-4 space-y-6">
-            {/* 1. 단일 URL 추출 섹션 */}
-            <div>
-                <Card className="bg-gray-900 border-gray-800 p-6">
-                  <h3 className="text-white font-bold mb-2">축제 웹페이지 URL 입력</h3>
+            {/* 1. 단일 URL 추출 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-black font-bold">1</div>
+                <h3 className="text-white font-bold text-lg">단일 URL 추출</h3>
+              </div>
                   <p className="text-gray-400 text-sm mb-4">
                     japantravel.com의 축제 상세 페이지 URL을 입력하여 정보를 추출합니다
                   </p>
@@ -636,27 +638,28 @@ export default function AdminUrlExtraction() {
                     </Button>
                   </div>
 
-                  <div className="mt-6 p-4 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
-                    <h4 className="text-cyan-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
-                    <ul className="text-gray-300 text-xs space-y-1">
-                      <li>• japantravel.com의 축제 상세 페이지 URL을 붙여넣으세요</li>
-                      <li>• AI가 자동으로 축제 이름, 날짜, 위치, 설명, 이미지 등을 추출합니다</li>
-                      <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인 및 변환할 수 있습니다</li>
-                    </ul>
-                  </div>
-                </Card>
+              <div className="mt-6 p-4 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
+                <h4 className="text-cyan-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• japantravel.com의 축제 상세 페이지 URL을 붙여넣으세요</li>
+                  <li>• AI가 자동으로 축제 이름, 날짜, 위치, 설명, 이미지 등을 추출합니다</li>
+                  <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인 및 변환할 수 있습니다</li>
+                </ul>
               </div>
+            </Card>
 
-            {/* 2. 멀티 URL 추출 섹션 */}
-            <div>
-                <Card className="bg-gray-900 border-gray-800 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-white font-bold">저장된 소스 URL</h3>
-                      <p className="text-gray-400 text-sm mt-1">
-                        월별로 여러 축제 링크를 한 번에 추출합니다
-                      </p>
-                    </div>
+            {/* 2. 멀티 URL 추출 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-black font-bold">2</div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">멀티 URL 추출</h3>
+                    <p className="text-gray-400 text-sm mt-0.5">
+                      월별로 여러 축제 링크를 한 번에 추출
+                    </p>
+                  </div>
+                </div>
                     <Button
                       onClick={() => setShowAddUrlForm(!showAddUrlForm)}
                       size="sm"
@@ -913,17 +916,16 @@ export default function AdminUrlExtraction() {
                     )}
                   </div>
 
-                  <div className="mt-6 p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
-                    <h4 className="text-purple-400 font-bold mb-2 text-sm">💡 멀티 URL 추출이란?</h4>
-                    <ul className="text-gray-300 text-xs space-y-1">
-                      <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
-                      <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
-                      <li>• 추출된 링크는 "링크 관리" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
-                    </ul>
-                  </div>
-                </Card>
+              <div className="mt-6 p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                <h4 className="text-purple-400 font-bold mb-2 text-sm">💡 멀티 URL 추출이란?</h4>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
+                  <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
+                  <li>• 추출된 링크는 "링크 관리" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
+                </ul>
               </div>
-            </TabsContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="links" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
