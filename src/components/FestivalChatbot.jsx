@@ -15,7 +15,6 @@ export default function FestivalChatbot({ festival }) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showBubble, setShowBubble] = useState(true);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -25,20 +24,6 @@ export default function FestivalChatbot({ festival }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // 말풍선 애니메이션 (5초마다 보였다 사라짐)
-  useEffect(() => {
-    if (isOpen) return;
-    
-    const interval = setInterval(() => {
-      setShowBubble(true);
-      setTimeout(() => {
-        setShowBubble(false);
-      }, 3000);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, [isOpen]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -103,22 +88,14 @@ export default function FestivalChatbot({ festival }) {
         {!isOpen && (
           <div className="fixed bottom-20 right-4 z-50">
             {/* 말풍선 */}
-            <AnimatePresence>
-              {showBubble && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                  transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                  className="absolute bottom-16 right-0 mb-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl px-4 py-2 shadow-lg"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  <p className="text-white text-sm font-bold">궁금한 게 있으신가요?</p>
-                  {/* 말풍선 꼬리 */}
-                  <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-cyan-500" />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div
+              className="absolute bottom-16 right-0 mb-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl px-4 py-2 shadow-lg"
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <p className="text-white text-sm font-bold">이 축제에 대해서 궁금한 게 있으신가요?</p>
+              {/* 말풍선 꼬리 */}
+              <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-cyan-500" />
+            </div>
 
             {/* 챗봇 버튼 */}
             <motion.button
