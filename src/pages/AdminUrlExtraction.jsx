@@ -586,19 +586,9 @@ export default function AdminUrlExtraction() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="extract" className="mt-4">
-            <Tabs defaultValue="single" className="w-full">
-              <TabsList className="w-full bg-gray-900 grid grid-cols-2 mb-6">
-                <TabsTrigger value="single" className="data-[state=active]:bg-cyan-500">
-                  단일 URL 추출
-                </TabsTrigger>
-                <TabsTrigger value="multi" className="data-[state=active]:bg-purple-500">
-                  멀티 URL 추출
-                </TabsTrigger>
-              </TabsList>
-
-              {/* 단일 URL 추출 탭 */}
-              <TabsContent value="single" className="mt-4">
+          <TabsContent value="extract" className="mt-4 space-y-6">
+            {/* 1. 단일 URL 추출 섹션 */}
+            <div>
                 <Card className="bg-gray-900 border-gray-800 p-6">
                   <h3 className="text-white font-bold mb-2">축제 웹페이지 URL 입력</h3>
                   <p className="text-gray-400 text-sm mb-4">
@@ -655,10 +645,10 @@ export default function AdminUrlExtraction() {
                     </ul>
                   </div>
                 </Card>
-              </TabsContent>
+              </div>
 
-              {/* 멀티 URL 추출 탭 */}
-              <TabsContent value="multi" className="mt-4">
+            {/* 2. 멀티 URL 추출 섹션 */}
+            <div>
                 <Card className="bg-gray-900 border-gray-800 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -932,8 +922,7 @@ export default function AdminUrlExtraction() {
                     </ul>
                   </div>
                 </Card>
-              </TabsContent>
-            </Tabs>
+              </div>
             </TabsContent>
 
           <TabsContent value="links" className="mt-4 space-y-4">
