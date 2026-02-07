@@ -872,18 +872,19 @@ export default function AdminUrlExtraction() {
                                         {(() => {
                                           const [year, month] = selectedMonths[source.id].split('-');
                                           const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+                                          const paddedLastDay = lastDay.toString().padStart(2, '0');
                                           
-                                          // 템플릿이 있으면 템플릿 사용, 없으면 URL에서 날짜 파라미터 교체
+                                          // 템플릿이 있으면 템플릿 사용
                                           if (source.date_parameter_template) {
                                             return source.date_parameter_template
-                                              .replace(/{YYYY}/g, year)
-                                              .replace(/{MM}/g, month)
-                                              .replace(/{LAST_DAY}/g, lastDay.toString());
+                                              .replaceAll('{YYYY}', year)
+                                              .replaceAll('{MM}', month)
+                                              .replaceAll('{LAST_DAY}', paddedLastDay);
                                           } else {
                                             // URL 파라미터 방식으로 날짜 교체
                                             const url = new URL(source.url);
                                             url.searchParams.set('from', `${year}-${month}-01`);
-                                            url.searchParams.set('to', `${year}-${month}-${lastDay.toString().padStart(2, '0')}`);
+                                            url.searchParams.set('to', `${year}-${month}-${paddedLastDay}`);
                                             return url.toString();
                                           }
                                         })()}
