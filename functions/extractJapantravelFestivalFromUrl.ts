@@ -490,10 +490,10 @@ Deno.serve(async (req) => {
           }
         }
 
-        return { openingHours, accessInfo, category };
+        return { openingHours, accessInfo, category, priceYen, priceDetails };
       } catch (domError) {
         console.error('[Japantravel] DOM parsing error:', domError);
-        return { openingHours: null, accessInfo: null, category: null };
+        return { openingHours: null, accessInfo: null, category: null, priceYen: null, priceDetails: null };
       }
     };
 
@@ -501,7 +501,9 @@ Deno.serve(async (req) => {
     console.log(`[Japantravel] Extracted structured info:`, {
       openingHours: extractedInfo.openingHours || 'not found',
       accessInfo: extractedInfo.accessInfo || 'not found',
-      category: extractedInfo.category || 'not found'
+      category: extractedInfo.category || 'not found',
+      priceYen: extractedInfo.priceYen || 'not found',
+      priceDetails: extractedInfo.priceDetails || 'not found'
     });
 
     // HTML 길이를 대폭 늘려서 더 많은 콘텐츠 분석 (50,000 → 100,000자)
@@ -520,9 +522,16 @@ Deno.serve(async (req) => {
           ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
           ${extractedInfo.accessInfo ? `- 주소 정보: "${extractedInfo.accessInfo}"` : '- 주소 정보: (없음)'}
           ${extractedInfo.category ? `- 카테고리: "${extractedInfo.category}"` : '- 카테고리: (없음)'}
+          ${extractedInfo.priceYen ? `- 입장료 (엔화): ¥${extractedInfo.priceYen}` : '- 입장료: (없음)'}
 
-          ⚠️ **중요**: 위에 명시된 운영시간, 주소 정보, 카테고리는 DOM에서 정확히 추출한 것입니다. 
-          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, address_info_original, category 필드에 사용하세요!
+          ⚠️ **중요**: 위에 명시된 운영시간, 주소 정보, 카테고리, 입장료는 DOM에서 정확히 추출한 것입니다. 
+          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, address_info_original, category, price 필드에 사용하세요!
+
+          🚨 **입장료 처리 규칙:**
+          - DOM에서 추출된 priceYen 값이 있으면, 이를 **한화로 환산**하여 price 필드에 저장하세요
+          - 환율: 1엔 = 약 9.5원 (예: ¥1,800 → 17,100원)
+          - DOM에서 추출된 가격이 없으면 price는 0 또는 null로 설정하세요
+          - 절대로 임의의 금액을 생성하지 마세요!
 
           🚨 **절대 금지 - 정보 생성/추측 금지:**
           - parking_info_original: 웹페이지에 주차 정보가 **명확하게** 적혀있지 않으면 빈 문자열("")로 두세요
@@ -549,11 +558,18 @@ Deno.serve(async (req) => {
              - 위에 "DOM에서 직접 추출한 정보"에 주소 정보가 있다면, 그 값을 **반드시 그대로** address_info_original 필드에 사용하세요.
              - 수정하거나 재작성하지 마세요. 정확한 주소 형식 그대로
 
-          4. **원본 언어 감지:**
+          4. **입장료 (Price):**
+             - DOM에서 추출된 priceYen 값이 있다면, 이를 한화로 환산하여 price 필드에 저장하세요 (1엔 = 9.5원)
+             - 예: ¥1,800 → 17,100 (원)
+             - DOM에서 추출된 가격이 없으면 price는 0으로 설정하세요
+             - 절대로 임의의 금액을 생성하지 마세요!
+             - price_details 필드에는 DOM에서 추출된 원문 가격 정보를 그대로 저장하세요
+
+          5. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
              - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어 등).
           
-          5. **텍스트 필드 (_original 접미사):**
+          6. **텍스트 필드 (_original 접미사):**
              - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original
              - **웹페이지의 원본 언어 텍스트를 그대로** 추출해야 합니다.
              - **절대 번역하거나 요약하지 마세요!**
@@ -879,8 +895,10 @@ Deno.serve(async (req) => {
         video_url: videoUrl,
         image_gallery_urls: imageGalleryUrls,
         website: websiteUrl,
-        price: festival.price || 0,
-        price_details: festival.price_details || null,
+        price: extractedInfo.priceYen 
+          ? Math.round(extractedInfo.priceYen * 9.5)
+          : (festival.price || 0),
+        price_details: extractedInfo.priceDetails || festival.price_details || null,
         opening_hours_original: extractedInfo.openingHours || festival.opening_hours_original || null,
         address_info_original: extractedInfo.accessInfo || festival.address_info_original || null,
         parking_info_original: festival.parking_info_original || null,
