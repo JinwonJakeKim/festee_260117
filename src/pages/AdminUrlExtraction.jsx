@@ -587,21 +587,97 @@ export default function AdminUrlExtraction() {
           </TabsList>
 
           <TabsContent value="extract" className="mt-4">
-            {/* 저장된 소스 URL 관리 */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-white font-bold">저장된 소스 URL</h4>
-                  <Button
-                    onClick={() => setShowAddUrlForm(!showAddUrlForm)}
-                    size="sm"
-                    className="bg-cyan-500 hover:bg-cyan-600"
-                  >
-                    {showAddUrlForm ? '취소' : '+ 추가'}
-                  </Button>
-                </div>
+            <Tabs defaultValue="single" className="w-full">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-2 mb-6">
+                <TabsTrigger value="single" className="data-[state=active]:bg-cyan-500">
+                  단일 URL 추출
+                </TabsTrigger>
+                <TabsTrigger value="multi" className="data-[state=active]:bg-purple-500">
+                  멀티 URL 추출
+                </TabsTrigger>
+              </TabsList>
+
+              {/* 단일 URL 추출 탭 */}
+              <TabsContent value="single" className="mt-4">
+                <Card className="bg-gray-900 border-gray-800 p-6">
+                  <h3 className="text-white font-bold mb-2">축제 웹페이지 URL 입력</h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    japantravel.com의 축제 상세 페이지 URL을 입력하여 정보를 추출합니다
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder="https://en.japantravel.com/tokyo/30th-anniversary-tamagotchi-exhibition-2026/..."
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
+                      disabled={isExtracting}
+                    />
+
+                    <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-4">
+                      <h4 className="text-blue-400 font-bold mb-2 text-sm flex items-center gap-2">
+                        🖼️ 이미지 추출 설정
+                      </h4>
+                      <ul className="text-gray-300 text-xs space-y-1.5">
+                        <li>• <span className="text-white">썸네일 이미지:</span> 커버 사진 영역의 메인 이미지 자동 추출</li>
+                        <li>• <span className="text-white">본문 이미지:</span> 기사 본문의 모든 갤러리 이미지 자동 수집</li>
+                        <li>• <span className="text-white">영상:</span> YouTube 임베드 영상 자동 감지</li>
+                        <li>• <span className="text-white">날짜:</span> 웹페이지에서 축제 일정 자동 파싱</li>
+                      </ul>
+                    </div>
+                    
+                    <Button
+                      onClick={handleExtract}
+                      disabled={isExtracting || !urlInput.trim()}
+                      className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-base font-bold"
+                    >
+                      {isExtracting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          축제 정보 추출 중...
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-5 h-5 mr-2" />
+                          축제 정보 추출 시작
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
+                    <h4 className="text-cyan-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
+                    <ul className="text-gray-300 text-xs space-y-1">
+                      <li>• japantravel.com의 축제 상세 페이지 URL을 붙여넣으세요</li>
+                      <li>• AI가 자동으로 축제 이름, 날짜, 위치, 설명, 이미지 등을 추출합니다</li>
+                      <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인 및 변환할 수 있습니다</li>
+                    </ul>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* 멀티 URL 추출 탭 */}
+              <TabsContent value="multi" className="mt-4">
+                <Card className="bg-gray-900 border-gray-800 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-white font-bold">저장된 소스 URL</h3>
+                      <p className="text-gray-400 text-sm mt-1">
+                        월별로 여러 축제 링크를 한 번에 추출합니다
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowAddUrlForm(!showAddUrlForm)}
+                      size="sm"
+                      className="bg-cyan-500 hover:bg-cyan-600"
+                    >
+                      {showAddUrlForm ? '취소' : '+ 소스 추가'}
+                    </Button>
+                  </div>
 
                 {showAddUrlForm && (
-                  <Card className="bg-gray-800 border-gray-700 p-4 mb-3">
+                  <Card className="bg-gray-800 border-gray-700 p-4 mb-4">
                     <div className="space-y-3">
                       <input
                         type="text"
@@ -612,7 +688,7 @@ export default function AdminUrlExtraction() {
                       />
                       <input
                         type="url"
-                        placeholder="URL"
+                        placeholder="URL 템플릿"
                         value={newSourceUrl.url}
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, url: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
@@ -630,20 +706,6 @@ export default function AdminUrlExtraction() {
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, description: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                         rows={2}
-                      />
-                      <input
-                        type="text"
-                        placeholder="컨테이너 CSS 선택자 (예: div.row.small-event-gutter)"
-                        value={newSourceUrl.container_selector}
-                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, container_selector: e.target.value })}
-                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                      />
-                      <input
-                        type="text"
-                        placeholder="링크 CSS 선택자 (예: a 또는 a.article-item-link)"
-                        value={newSourceUrl.link_selector}
-                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
-                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                       />
                       <div className="flex items-center gap-2 p-3 bg-gray-800 rounded">
                         <input
@@ -668,6 +730,20 @@ export default function AdminUrlExtraction() {
                           </p>
                         </div>
                       )}
+                      <input
+                        type="text"
+                        placeholder="컨테이너 CSS 선택자 (예: div.row.small-event-gutter)"
+                        value={newSourceUrl.container_selector}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, container_selector: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="링크 CSS 선택자 (예: a 또는 a.article-item-link)"
+                        value={newSourceUrl.link_selector}
+                        onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
+                        className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                      />
                       <Button
                         onClick={handleAddSourceUrl}
                         disabled={addSourceUrlMutation.isPending}
@@ -680,138 +756,98 @@ export default function AdminUrlExtraction() {
                   </Card>
                 )}
 
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {sourceUrls.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">저장된 URL이 없습니다</p>
-                  ) : (
-                    sourceUrls.map((source) => (
-                      <Card
-                        key={source.id}
-                        className="bg-gray-800 border-gray-700 p-3 hover:bg-gray-750 transition-colors"
-                      >
-                        {editingSourceId === source.id ? (
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              placeholder="이름"
-                              value={editingSourceData.name}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, name: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                            />
-                            <input
-                              type="url"
-                              placeholder="URL"
-                              value={editingSourceData.url}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, url: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                            />
-                            <input
-                              type="text"
-                              placeholder="국가"
-                              value={editingSourceData.country}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, country: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                            />
-                            <textarea
-                              placeholder="설명"
-                              value={editingSourceData.description}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, description: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                              rows={2}
-                            />
-                            <input
-                              type="text"
-                              placeholder="컨테이너 CSS 선택자"
-                              value={editingSourceData.container_selector}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, container_selector: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                            />
-                            <input
-                              type="text"
-                              placeholder="링크 CSS 선택자"
-                              value={editingSourceData.link_selector}
-                              onChange={(e) => setEditingSourceData({ ...editingSourceData, link_selector: e.target.value })}
-                              className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
-                            />
-                            <div className="flex items-center gap-2 p-2 bg-gray-800 rounded">
-                              <input
-                                type="checkbox"
-                                checked={editingSourceData.use_date_parameters || false}
-                                onChange={(e) => setEditingSourceData({ ...editingSourceData, use_date_parameters: e.target.checked })}
-                                className="w-4 h-4"
-                              />
-                              <label className="text-gray-300 text-xs">날짜 파라미터 사용</label>
-                            </div>
-                            {editingSourceData.use_date_parameters && (
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                    {sourceUrls.filter(s => s.use_date_parameters).length === 0 ? (
+                      <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+                        <p className="text-gray-500 text-sm">등록된 멀티 URL 소스가 없습니다</p>
+                        <p className="text-gray-600 text-xs mt-2">상단의 "+ 소스 추가" 버튼으로 날짜 파라미터를 사용하는 소스를 추가하세요</p>
+                      </Card>
+                    ) : (
+                      sourceUrls.filter(s => s.use_date_parameters).map((source) => (
+                        <Card
+                          key={source.id}
+                          className="bg-gray-800 border-gray-700 p-4 hover:bg-gray-750 transition-colors"
+                        >
+                          {editingSourceId === source.id ? (
+                            <div className="space-y-2">
                               <input
                                 type="text"
-                                placeholder="날짜 템플릿 (예: https://example.com/events?from={YYYY}-{MM}-01&to={YYYY}-{MM}-{LAST_DAY}&p=1)"
+                                placeholder="이름"
+                                value={editingSourceData.name}
+                                onChange={(e) => setEditingSourceData({ ...editingSourceData, name: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              />
+                              <input
+                                type="text"
+                                placeholder="날짜 템플릿"
                                 value={editingSourceData.date_parameter_template || ''}
                                 onChange={(e) => setEditingSourceData({ ...editingSourceData, date_parameter_template: e.target.value })}
                                 className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
                               />
-                            )}
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={handleSaveEdit} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-xs">
-                                저장
-                              </Button>
-                              <Button size="sm" onClick={handleCancelEdit} className="flex-1 bg-gray-600 hover:bg-gray-700 text-xs">
-                                취소
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h5 className="text-white font-medium text-sm truncate">{source.name}</h5>
-                                <Badge className="bg-pink-500/20 text-pink-400 border-pink-400/50 text-xs">
-                                  {source.country}
-                                </Badge>
+                              <input
+                                type="text"
+                                placeholder="컨테이너 CSS 선택자"
+                                value={editingSourceData.container_selector}
+                                onChange={(e) => setEditingSourceData({ ...editingSourceData, container_selector: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              />
+                              <input
+                                type="text"
+                                placeholder="링크 CSS 선택자"
+                                value={editingSourceData.link_selector}
+                                onChange={(e) => setEditingSourceData({ ...editingSourceData, link_selector: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={handleSaveEdit} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-xs">
+                                  저장
+                                </Button>
+                                <Button size="sm" onClick={handleCancelEdit} className="flex-1 bg-gray-600 hover:bg-gray-700 text-xs">
+                                  취소
+                                </Button>
                               </div>
-                              <a 
-                                href={source.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-cyan-400 hover:text-cyan-300 text-xs truncate mb-1 block underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {source.url}
-                              </a>
-                              {source.description && (
-                                <p className="text-gray-500 text-xs">{source.description}</p>
-                              )}
-                              {source.last_used_date && (
-                                <p className="text-gray-600 text-xs mt-1">
-                                  마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
-                                </p>
-                              )}
                             </div>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditSourceUrl(source);
-                                  }}
-                                  className="flex-shrink-0 text-yellow-400 hover:text-yellow-300"
-                                  title="수정"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteSourceUrl(source.id);
-                                  }}
-                                  className="flex-shrink-0 text-red-400 hover:text-red-300"
-                                  title="삭제"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                          ) : (
+                            <div>
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h5 className="text-white font-bold text-base">{source.name}</h5>
+                                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-400/50 text-xs">
+                                      {source.country}
+                                    </Badge>
+                                  </div>
+                                  {source.description && (
+                                    <p className="text-gray-400 text-sm mb-2">{source.description}</p>
+                                  )}
+                                  {source.last_used_date && (
+                                    <p className="text-gray-600 text-xs">
+                                      마지막 사용: {new Date(source.last_used_date).toLocaleDateString('ko-KR')}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEditSourceUrl(source)}
+                                    className="text-yellow-400 hover:text-yellow-300"
+                                    title="수정"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteSourceUrl(source.id)}
+                                    className="text-red-400 hover:text-red-300"
+                                    title="삭제"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                              {source.use_date_parameters ? (
-                                <div className="space-y-2 w-full">
+
+                              {/* 월 선택 및 URL 미리보기 */}
+                              <div className="space-y-3 bg-gray-900 rounded-lg p-4">
+                                <div className="flex items-center gap-3">
+                                  <label className="text-gray-400 text-sm font-medium flex-shrink-0">추출 월:</label>
                                   <select
                                     value={selectedMonths[source.id] || ''}
                                     onChange={(e) => {
@@ -820,164 +856,84 @@ export default function AdminUrlExtraction() {
                                         [source.id]: e.target.value
                                       });
                                     }}
-                                    className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs"
+                                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                                   >
-                                    <option value="">월 선택</option>
+                                    <option value="">월을 선택하세요</option>
                                     {Array.from({ length: 12 }, (_, i) => {
                                       const month = String(i + 1).padStart(2, '0');
                                       return (
                                         <option key={month} value={`2026-${month}`}>
-                                          2026년 {month}월
+                                          2026년 {i + 1}월
                                         </option>
                                       );
                                     })}
                                   </select>
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!selectedMonths[source.id]) {
-                                        alert('월을 선택해주세요');
-                                        return;
-                                      }
-                                      runLinkExtractionMutation.mutate({ 
-                                        sourceUrlId: source.id,
-                                        targetMonth: selectedMonths[source.id]
-                                      });
-                                    }}
-                                    disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
-                                    className="w-full bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
-                                  >
-                                    {runLinkExtractionMutation.isPending ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                        추출 중
-                                      </>
-                                    ) : (
-                                      '링크 추출'
-                                    )}
-                                  </Button>
                                 </div>
-                              ) : (
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSelectSourceUrl(source);
-                                    }}
-                                    className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-auto"
-                                  >
-                                    단일
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUseBatchSourceUrl(source);
-                                    }}
-                                    className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1 h-auto"
-                                  >
-                                    일괄
-                                  </Button>
-                                </div>
-                              )}
+
+                                {/* 완성된 URL 미리보기 */}
+                                {selectedMonths[source.id] && (
+                                  <div className="space-y-2">
+                                    <label className="text-gray-400 text-xs font-medium">생성될 URL:</label>
+                                    <div className="bg-black/50 border border-cyan-400/30 rounded-lg p-3">
+                                      <p className="text-cyan-400 text-sm font-mono break-all">
+                                        {(() => {
+                                          const [year, month] = selectedMonths[source.id].split('-');
+                                          const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+                                          return (source.date_parameter_template || source.url)
+                                            .replace('{YYYY}', year)
+                                            .replace('{MM}', month)
+                                            .replace('{LAST_DAY}', lastDay.toString());
+                                        })()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <Button
+                                  onClick={() => {
+                                    if (!selectedMonths[source.id]) {
+                                      alert('월을 선택해주세요');
+                                      return;
+                                    }
+                                    runLinkExtractionMutation.mutate({ 
+                                      sourceUrlId: source.id,
+                                      targetMonth: selectedMonths[source.id]
+                                    });
+                                  }}
+                                  disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
+                                  className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-base font-bold"
+                                >
+                                  {runLinkExtractionMutation.isPending ? (
+                                    <>
+                                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                      링크 추출 중...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ExternalLink className="w-5 h-5 mr-2" />
+                                      링크 정보 추출 시작
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </Card>
-                    ))
-                  )}
-                  </div>
-                  </div>
-
-                  {/* 축제 웹페이지 URL 입력 */}
-                  <Card className="bg-gray-900 border-gray-800 p-6 mt-6">
-                <h3 className="text-white font-bold mb-4">축제 웹페이지 URL 입력</h3>
-                <div className="space-y-4">
-                  <input
-                    type="url"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    placeholder="https://example.com/festival"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                    disabled={isExtracting}
-                  />
-                  
-                  {/* 이미지 CSS 식별자 설정 */}
-                  <div className="border-t border-gray-700 pt-4 mt-4">
-                    <h4 className="text-white font-medium mb-3 text-sm">🖼️ 이미지 CSS 식별자 (Japantravel 전용)</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-gray-400 text-xs">썸네일 이미지 CSS 선택자</label>
-                        <input
-                          type="text"
-                          value={imageSelectors.thumbnail_selector}
-                          onChange={(e) => setImageSelectors({ ...imageSelectors, thumbnail_selector: e.target.value })}
-                          placeholder="div.coverphoto figure.coverImgWrapper img"
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-gray-400 text-xs">썸네일 이미지 속성</label>
-                        <input
-                          type="text"
-                          value={imageSelectors.thumbnail_attribute}
-                          onChange={(e) => setImageSelectors({ ...imageSelectors, thumbnail_attribute: e.target.value })}
-                          placeholder="src"
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-gray-400 text-xs">본문 이미지 CSS 선택자</label>
-                        <input
-                          type="text"
-                          value={imageSelectors.content_image_selector}
-                          onChange={(e) => setImageSelectors({ ...imageSelectors, content_image_selector: e.target.value })}
-                          placeholder="div.article__content figure.shortcode-photo img"
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-gray-400 text-xs">본문 이미지 속성</label>
-                        <input
-                          type="text"
-                          value={imageSelectors.content_image_attribute}
-                          onChange={(e) => setImageSelectors({ ...imageSelectors, content_image_attribute: e.target.value })}
-                          placeholder="data-src"
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={handleExtract}
-                    disabled={isExtracting || !urlInput.trim()}
-                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                  >
-                    {isExtracting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        추출 중...
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="w-5 h-5 mr-2" />
-                        축제 정보 추출 시작
-                      </>
+                          )}
+                        </Card>
+                      ))
                     )}
-                  </Button>
-                </div>
+                  </div>
 
-                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-400/30 rounded-lg">
-                  <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
-                  <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 축제 공식 웹사이트 또는 상세 페이지 URL을 입력하세요</li>
-                    <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인할 수 있습니다</li>
-                    <li>• 변환 시 Google 이미지, YouTube Shorts가 자동으로 추가됩니다</li>
-                  </ul>
-                </div>
-              </Card>
+                  <div className="mt-6 p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                    <h4 className="text-purple-400 font-bold mb-2 text-sm">💡 멀티 URL 추출이란?</h4>
+                    <ul className="text-gray-300 text-xs space-y-1">
+                      <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
+                      <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
+                      <li>• 추출된 링크는 "링크 관리" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
+                    </ul>
+                  </div>
+                </Card>
+              </TabsContent>
+            </Tabs>
             </TabsContent>
 
           <TabsContent value="links" className="mt-4 space-y-4">
