@@ -26,6 +26,20 @@ export default function FestivalChatbot({ festival }) {
     scrollToBottom();
   }, [messages]);
 
+  // 말풍선 애니메이션 (5초마다 보였다 사라짐)
+  useEffect(() => {
+    if (isOpen) return;
+    
+    const interval = setInterval(() => {
+      setShowBubble(true);
+      setTimeout(() => {
+        setShowBubble(false);
+      }, 3000);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
