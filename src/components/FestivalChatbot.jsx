@@ -110,13 +110,12 @@ export default function FestivalChatbot({ festival }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
                   transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                  className="absolute bottom-16 right-0 mb-2 bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200"
+                  className="absolute bottom-16 right-0 mb-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl px-4 py-2 shadow-lg"
                   style={{ whiteSpace: 'nowrap' }}
                 >
-                  <p className="text-gray-800 text-sm font-medium">궁금한 게 있으신가요? 🤖</p>
+                  <p className="text-white text-sm font-bold">궁금한 게 있으신가요?</p>
                   {/* 말풍선 꼬리 */}
-                  <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white" />
-                  <div className="absolute bottom-[-9px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-200 z-[-1]" />
+                  <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-cyan-500" />
                 </motion.div>
               )}
             </AnimatePresence>
