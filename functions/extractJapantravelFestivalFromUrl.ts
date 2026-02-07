@@ -567,6 +567,11 @@ Deno.serve(async (req) => {
           **날짜 추출 규칙:**
           - HTML에서 추출한 날짜 정보를 최우선으로 사용하여 정확한 YYYY-MM-DD 형식으로 추출합니다.
           - 날짜 정보가 명확하지 않으면 date_status를 "tentative" 또는 "estimated"로 설정합니다.
+
+          **카테고리 정규화 규칙:**
+          - category 필드는 반드시 다음 6가지 중 하나로 지정하세요: "Activities", "Culture", "Food", "Nightlife", "Beauty & Spa", "Shopping"
+          - DOM에서 추출된 카테고리나 페이지 내용을 분석하여 가장 적합한 카테고리로 매핑하세요
+          - 예: "Art", "Festival", "History" → "Culture", "Sports" → "Activities", "Restaurant" → "Food"
           
           **영상 추출 규칙:**
           - 실제로 페이지에 임베드되어 재생 가능한 YouTube URL만 추출하세요.
@@ -603,7 +608,10 @@ Deno.serve(async (req) => {
                   location: { type: "string" },
                   latitude: { type: "number" },
                   longitude: { type: "number" },
-                  category: { type: "string" },
+                  category: { 
+                    type: "string",
+                    enum: ["Activities", "Culture", "Food", "Nightlife", "Beauty & Spa", "Shopping"]
+                  },
                   price: { type: "number" },
                   price_details: { type: "string" },
                   opening_hours_original: { type: "string" },
