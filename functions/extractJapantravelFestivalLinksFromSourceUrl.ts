@@ -10,11 +10,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth, maxPages: reqMaxPages = 5 } = await req.json();
+    const { sourceUrlId, targetMonth, maxPages: reqMaxPages } = await req.json();
     
-    // 안전장치: maxPages 강제 제한 (최대 5페이지) 및 타임아웃 방지
-    // 사용자가 요청한 maxPages가 100이라도 5로 제한하여 504 에러 방지
-    const maxPages = Math.min(Number(reqMaxPages) || 5, 5);
+    // 🔒 안전장치: maxPages 강제 제한 (최대 5페이지) - 절대 변경 불가!
+    const MAX_PAGES_LIMIT = 5;
+    const maxPages = 5; // 하드코딩: 항상 5페이지만 탐색
+    
+    console.log(`[Japantravel] 🔒 HARDCODED maxPages=${maxPages} (requested: ${reqMaxPages})`);
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -33,10 +35,13 @@ Deno.serve(async (req) => {
       }, { status: 404 });
     }
 
-    console.log(`[Japantravel] Starting link extraction from: ${sourceUrl.url}`);
-    console.log(`[Japantravel] Requested maxPages: ${reqMaxPages}, Applied maxPages: ${maxPages}`);
-    console.log(`[Japantravel] Container selector: ${sourceUrl.container_selector}`);
-    console.log(`[Japantravel] Link selector: ${sourceUrl.link_selector}`);
+    console.log(`[Japantravel] ================================`);
+    console.log(`[Japantravel] 🚀 Starting link extraction`);
+    console.log(`[Japantravel] 📄 Source URL: ${sourceUrl.url}`);
+    console.log(`[Japantravel] 📊 maxPages LIMIT: ${maxPages} (HARDCODED)`);
+    console.log(`[Japantravel] 🎯 Container: ${sourceUrl.container_selector}`);
+    console.log(`[Japantravel] 🔗 Link selector: ${sourceUrl.link_selector}`);
+    console.log(`[Japantravel] ================================`);
     
     const startTime = Date.now();
     const TIME_LIMIT_MS = 40000; // 40초 제한 (504 타임아웃 방지)
@@ -60,8 +65,9 @@ Deno.serve(async (req) => {
     let previousLinks = new Set();
     let totalLinksFound = 0;
 
-    // 페이지네이션 처리 - maxPages 제한 명확히
-    while (currentPage <= maxPages) {
+    // 페이지네이션 처리 - for 루프로 명확히 제한
+    for (let currentPage = 1; currentPage <= maxPages; currentPage++) {
+      console.log(`[Japantravel] 🔄 Loop START: page ${currentPage}/${maxPages}`);
       // URL에 페이지 파라미터 추가 (중복 방지)
       const urlObj = new URL(baseUrl);
       urlObj.searchParams.set('p', currentPage.toString());
@@ -113,18 +119,11 @@ Deno.serve(async (req) => {
         break;
       }
 
-      console.log(`[Japantravel] Found ${links.length} festival links on page ${currentPage}`);
+      console.log(`[Japantravel] ✅ Found ${links.length} festival links on page ${currentPage}`);
       allExtractedLinks.push(...links);
       totalLinksFound += links.length;
 
       previousLinks = currentLinks;
-      currentPage++;
-
-      // maxPages 도달 확인
-      if (currentPage > maxPages) {
-        console.log(`[Japantravel] Reached max pages limit (${maxPages}), stopping loop.`);
-        break;
-      }
       
       // 전체 실행 시간 체크 (타임아웃 방지)
       if (Date.now() - startTime > TIME_LIMIT_MS) {
@@ -136,8 +135,11 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log(`[Japantravel] Total pages processed: ${currentPage - 1}`);
-    console.log(`[Japantravel] Total links found: ${totalLinksFound}`);
+    console.log(`[Japantravel] ================================`);
+    console.log(`[Japantravel] ✅ EXTRACTION COMPLETE`);
+    console.log(`[Japantravel] 📄 Pages processed: ${Math.min(currentPage, maxPages)}`);
+    console.log(`[Japantravel] 🔗 Total links found: ${totalLinksFound}`);
+    console.log(`[Japantravel] ================================`);
 
     // 중복 제거
     const uniqueLinks = [...new Set(allExtractedLinks)];
@@ -189,16 +191,19 @@ Deno.serve(async (req) => {
       last_used_date: new Date().toISOString()
     });
 
+    const pagesProcessed = Math.min(currentPage || maxPages, maxPages);
+    
     return Response.json({
       success: true,
       source_url: sourceUrl.url,
-      pages_processed: currentPage - 1,
+      pages_processed: pagesProcessed,
+      max_pages_limit: maxPages,
       total_links_found: totalLinksFound,
       unique_links: uniqueLinks.length,
       new_records: newCount,
       existing_records: existingCount,
       retried_failed: retriedCount,
-      message: `${uniqueLinks.length}개의 축제 링크를 추출했습니다. (신규: ${newCount}, 기존: ${existingCount}, 재시도: ${retriedCount})`
+      message: `✅ ${uniqueLinks.length}개의 축제 링크 추출 완료 (${pagesProcessed}/${maxPages} 페이지 탐색)\n신규: ${newCount}, 기존: ${existingCount}, 재시도: ${retriedCount}`
     });
 
   } catch (error) {
