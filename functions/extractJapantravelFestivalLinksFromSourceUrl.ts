@@ -204,72 +204,75 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
       return [];
     }
 
-    let elementsToSearch = [];
+    // 이벤트 목록의 각 카드를 개별적으로 선택
+    // div.recommended-event-wrapper는 각 이벤트 카드를 의미
+    const eventCards = doc.querySelectorAll('div.recommended-event-wrapper');
     
-    // 컨테이너 선택자가 있으면 해당 컨테이너 내에서만 링크를 찾음
-    if (containerSelector) {
-      const containers = doc.querySelectorAll(containerSelector);
+    if (!eventCards || eventCards.length === 0) {
+      console.warn(`[Japantravel] No event cards found, trying fallback selector`);
+      // 폴백: 컨테이너 선택자 사용
+      const containers = doc.querySelectorAll(containerSelector || 'div.row.small-event-gutter');
       if (containers && containers.length > 0) {
-        elementsToSearch = Array.from(containers);
-        console.log(`[Japantravel] Found ${elementsToSearch.length} containers using selector: ${containerSelector}`);
+        console.log(`[Japantravel] Found ${containers.length} containers using fallback selector`);
       } else {
-        console.warn(`[Japantravel] No containers found with selector: ${containerSelector}, searching entire document`);
-        elementsToSearch = [doc];
+        console.error(`[Japantravel] No containers found with any selector`);
+        return [];
       }
     } else {
-      elementsToSearch = [doc];
+      console.log(`[Japantravel] Found ${eventCards.length} event cards on this page`);
     }
 
-    for (const container of elementsToSearch) {
-      const linkElements = container.querySelectorAll(linkSelector || 'a');
-      console.log(`[Japantravel] Found ${linkElements.length} link elements with selector: ${linkSelector || 'a'}`);
+    // 각 이벤트 카드에서 링크 추출
+    for (const card of eventCards) {
+      // 각 카드 내에서 링크를 찾음 (일반적으로 a.article-item-link 또는 첫 번째 a 태그)
+      const linkElement = card.querySelector(linkSelector || 'a');
+      
+      if (!linkElement) {
+        console.warn(`[Japantravel] No link found in event card, skipping`);
+        continue;
+      }
 
-      for (const el of linkElements) {
-        const href = el.getAttribute('href');
-        if (!href) continue;
+      const href = linkElement.getAttribute('href');
+      if (!href) {
+        console.warn(`[Japantravel] Link element has no href, skipping`);
+        continue;
+      }
 
-        // 절대 URL로 변환
-        let absoluteUrl = href;
-        try {
-          if (href.startsWith('/')) {
-            const base = new URL(baseUrl);
-            absoluteUrl = base.origin + href;
-          } else if (!href.startsWith('http')) {
-            absoluteUrl = new URL(href, baseUrl).href;
-          }
-        } catch (urlError) {
-          console.warn(`[Japantravel] Invalid URL encountered: ${href}, skipping.`);
-          continue;
+      // 절대 URL로 변환
+      let absoluteUrl = href;
+      try {
+        if (href.startsWith('/')) {
+          const base = new URL(baseUrl);
+          absoluteUrl = base.origin + href;
+        } else if (!href.startsWith('http')) {
+          absoluteUrl = new URL(href, baseUrl).href;
         }
+      } catch (urlError) {
+        console.warn(`[Japantravel] Invalid URL encountered: ${href}, skipping.`);
+        continue;
+      }
 
-        // japantravel.com의 축제 상세 페이지 패턴 필터링
-        // 예: https://en.japantravel.com/tokyo/tokyo-firefly-festival/56108
-        // 패턴: https://{language}.japantravel.com/{prefecture}/{festival-slug}/{숫자ID}
-        // 반드시 숫자로 끝나야 함 (도시 이름으로 끝나는 링크 제외)
-        const festivalUrlPattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d+\/?$/;
+      // japantravel.com의 축제 상세 페이지 패턴 필터링
+      // 예: https://en.japantravel.com/tokyo/setagaya-plum-blossom-festival/60941
+      // 패턴: https://{language}.japantravel.com/{prefecture}/{festival-slug}/{5자리 이상 숫자ID}
+      const festivalUrlPattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/;
 
-        if (absoluteUrl.match(festivalUrlPattern)) {
-          // URL 끝에 슬래시가 있으면 제거하여 정규화
-          const normalizedUrl = absoluteUrl.replace(/\/$/, '');
-          
-          // URL 경로를 분리하여 마지막 부분이 숫자인지 재확인
-          const pathParts = normalizedUrl.split('/').filter(p => p);
-          const lastPart = pathParts[pathParts.length - 1];
-          
-          // 마지막 부분이 순수 숫자인지 확인
-          if (/^\d+$/.test(lastPart)) {
-            links.add(normalizedUrl);
-            console.log(`[Japantravel] ✓ Valid festival link: ${normalizedUrl}`);
-          } else {
-            console.log(`[Japantravel] ✗ Rejected (not ending with number): ${absoluteUrl}`);
-          }
-        } else {
-          console.log(`[Japantravel] ✗ Rejected (pattern mismatch): ${absoluteUrl}`);
+      if (absoluteUrl.match(festivalUrlPattern)) {
+        // URL 끝에 슬래시가 있으면 제거하여 정규화
+        const normalizedUrl = absoluteUrl.replace(/\/$/, '');
+        
+        // URL 경로를 분리하여 마지막 부분이 5자리 이상 숫자인지 재확인
+        const pathParts = normalizedUrl.split('/').filter(p => p);
+        const lastPart = pathParts[pathParts.length - 1];
+        
+        // 마지막 부분이 5자리 이상의 순수 숫자인지 확인
+        if (/^\d{5,}$/.test(lastPart)) {
+          links.add(normalizedUrl);
         }
       }
     }
 
-    console.log(`[Japantravel] Total unique links extracted: ${links.size}`);
+    console.log(`[Japantravel] Extracted ${links.size} unique festival links from this page`);
   } catch (e) {
     console.error('[Japantravel] Error parsing HTML or extracting links:', e);
   }
