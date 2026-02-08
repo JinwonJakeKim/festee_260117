@@ -204,39 +204,21 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
       return [];
     }
 
-    // 이벤트 목록의 각 카드를 개별적으로 선택
-    // div.recommended-event-wrapper는 각 이벤트 카드를 의미
-    const eventCards = doc.querySelectorAll('div.recommended-event-wrapper');
+    // div.row.small-event-gutter 컨테이너 찾기 (페이지당 1개)
+    const container = doc.querySelector(containerSelector || 'div.row.small-event-gutter');
     
-    if (!eventCards || eventCards.length === 0) {
-      console.warn(`[Japantravel] No event cards found, trying fallback selector`);
-      // 폴백: 컨테이너 선택자 사용
-      const containers = doc.querySelectorAll(containerSelector || 'div.row.small-event-gutter');
-      if (containers && containers.length > 0) {
-        console.log(`[Japantravel] Found ${containers.length} containers using fallback selector`);
-      } else {
-        console.error(`[Japantravel] No containers found with any selector`);
-        return [];
-      }
-    } else {
-      console.log(`[Japantravel] Found ${eventCards.length} event cards on this page`);
+    if (!container) {
+      console.warn(`[Japantravel] Container not found with selector: ${containerSelector}`);
+      return [];
     }
 
-    // 각 이벤트 카드에서 링크 추출
-    for (const card of eventCards) {
-      // 각 카드 내에서 링크를 찾음 (일반적으로 a.article-item-link 또는 첫 번째 a 태그)
-      const linkElement = card.querySelector(linkSelector || 'a');
-      
-      if (!linkElement) {
-        console.warn(`[Japantravel] No link found in event card, skipping`);
-        continue;
-      }
+    // 컨테이너 안에서 모든 링크 찾기
+    const linkElements = container.querySelectorAll(linkSelector || 'a');
+    console.log(`[Japantravel] Found ${linkElements.length} link elements in container`);
 
+    for (const linkElement of linkElements) {
       const href = linkElement.getAttribute('href');
-      if (!href) {
-        console.warn(`[Japantravel] Link element has no href, skipping`);
-        continue;
-      }
+      if (!href) continue;
 
       // 절대 URL로 변환
       let absoluteUrl = href;
@@ -248,7 +230,6 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
           absoluteUrl = new URL(href, baseUrl).href;
         }
       } catch (urlError) {
-        console.warn(`[Japantravel] Invalid URL encountered: ${href}, skipping.`);
         continue;
       }
 
