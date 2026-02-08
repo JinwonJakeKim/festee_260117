@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth, maxPages = 10 } = await req.json();
+    const { sourceUrlId, targetMonth, maxPages = 5 } = await req.json();
     
     if (!sourceUrlId) {
       return Response.json({ 
