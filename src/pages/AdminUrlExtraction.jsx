@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -790,7 +789,7 @@ export default function AdminUrlExtraction() {
                   <div>
                     <h3 className="text-white font-bold text-lg">멀티 URL 추출</h3>
                     <p className="text-gray-400 text-sm mt-0.5">
-                      월별로 여러 축제 링크를 한 번에 추출 (최대 5페이지) {/* Updated description */}
+                      월별로 여러 축제 링크를 한 번에 추출 (최대 5페이지)
                     </p>
                   </div>
                 </div>
@@ -866,7 +865,7 @@ export default function AdminUrlExtraction() {
                       />
                       <input
                         type="text"
-                        placeholder="링크 CSS 선택자 (예: div.recommended-event-wrapper a)" {/* Updated placeholder */}
+                        placeholder="링크 CSS 선택자 (예: div.recommended-event-wrapper a)"
                         value={newSourceUrl.link_selector}
                         onChange={(e) => setNewSourceUrl({ ...newSourceUrl, link_selector: e.target.value })}
                         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"
