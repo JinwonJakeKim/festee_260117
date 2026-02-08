@@ -61,13 +61,14 @@ Deno.serve(async (req) => {
     }
 
     const allExtractedLinks = [];
-    let currentPage = 1;
     let previousLinks = new Set();
     let totalLinksFound = 0;
+    let pagesProcessed = 0;
 
     // 페이지네이션 처리 - for 루프로 명확히 제한
     for (let currentPage = 1; currentPage <= maxPages; currentPage++) {
       console.log(`[Japantravel] 🔄 Loop START: page ${currentPage}/${maxPages}`);
+      pagesProcessed = currentPage;
       // URL에 페이지 파라미터 추가 (중복 방지)
       const urlObj = new URL(baseUrl);
       urlObj.searchParams.set('p', currentPage.toString());
@@ -137,7 +138,7 @@ Deno.serve(async (req) => {
 
     console.log(`[Japantravel] ================================`);
     console.log(`[Japantravel] ✅ EXTRACTION COMPLETE`);
-    console.log(`[Japantravel] 📄 Pages processed: ${Math.min(currentPage, maxPages)}`);
+    console.log(`[Japantravel] 📄 Pages processed: ${pagesProcessed}`);
     console.log(`[Japantravel] 🔗 Total links found: ${totalLinksFound}`);
     console.log(`[Japantravel] ================================`);
 
@@ -146,6 +147,7 @@ Deno.serve(async (req) => {
     console.log(`[Japantravel] Unique links: ${uniqueLinks.length}`);
 
     // 기존 JapantravelUrlExtractionRawData 조회
+    console.log(`[Japantravel] 🔍 Checking existing records...`);
     const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.list();
     const existingUrls = new Set(existingRecords.map(r => r.source_url));
 
@@ -153,26 +155,21 @@ Deno.serve(async (req) => {
     let existingCount = 0;
     let retriedCount = 0;
 
-    // 각 링크를 JapantravelUrlExtractionRawData에 추가 또는 업데이트
+    // 일괄 생성할 레코드와 업데이트할 레코드 분리
+    const recordsToCreate = [];
+    const recordsToUpdate = [];
+
     for (const link of uniqueLinks) {
       if (existingUrls.has(link)) {
-        // 기존 레코드 찾기
         const existingRecord = existingRecords.find(r => r.source_url === link);
-        
         if (existingRecord.processing_status === 'failed') {
-          // 실패한 레코드는 다시 pending으로
-          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(existingRecord.id, {
-            processing_status: 'pending',
-            error_message: null
-          });
+          recordsToUpdate.push({ id: existingRecord.id, link });
           retriedCount++;
-          console.log(`[Japantravel] Reset failed record to pending: ${link}`);
         } else {
           existingCount++;
         }
       } else {
-        // 새로운 레코드 생성 - null 대신 빈 문자열 사용
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create({
+        recordsToCreate.push({
           source_url: link,
           country: sourceUrl.country,
           processing_status: 'pending',
@@ -182,7 +179,26 @@ Deno.serve(async (req) => {
           end_date: new Date().toISOString().split('T')[0],
         });
         newCount++;
-        console.log(`[Japantravel] Created new pending record: ${link}`);
+      }
+    }
+
+    // 일괄 생성 (최대 10개씩)
+    if (recordsToCreate.length > 0) {
+      console.log(`[Japantravel] 💾 Creating ${recordsToCreate.length} new records...`);
+      for (let i = 0; i < recordsToCreate.length; i += 10) {
+        const batch = recordsToCreate.slice(i, i + 10);
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.bulkCreate(batch);
+      }
+    }
+
+    // 실패한 레코드 업데이트
+    if (recordsToUpdate.length > 0) {
+      console.log(`[Japantravel] 🔄 Updating ${recordsToUpdate.length} failed records...`);
+      for (const { id } of recordsToUpdate) {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(id, {
+          processing_status: 'pending',
+          error_message: null
+        });
       }
     }
 
@@ -191,8 +207,6 @@ Deno.serve(async (req) => {
       last_used_date: new Date().toISOString()
     });
 
-    const pagesProcessed = Math.min(currentPage || maxPages, maxPages);
-    
     return Response.json({
       success: true,
       source_url: sourceUrl.url,
