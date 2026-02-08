@@ -10,11 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const requestBody = await req.json();
-    const { sourceUrlId, targetMonth } = requestBody;
-    const maxPages = requestBody.maxPages !== undefined ? requestBody.maxPages : 5;
-    
-    console.log(`[Japantravel] Max pages set to: ${maxPages}`);
+    const { sourceUrlId, targetMonth, maxPages = 5 } = await req.json();
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -34,6 +30,7 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[Japantravel] Starting link extraction from: ${sourceUrl.url}`);
+    console.log(`[Japantravel] Max pages: ${maxPages}`);
     console.log(`[Japantravel] Container selector: ${sourceUrl.container_selector}`);
     console.log(`[Japantravel] Link selector: ${sourceUrl.link_selector}`);
     
@@ -56,7 +53,7 @@ Deno.serve(async (req) => {
     let previousLinks = new Set();
     let totalLinksFound = 0;
 
-    // 페이지네이션 처리
+    // 페이지네이션 처리 - maxPages 제한 명확히
     while (currentPage <= maxPages) {
       // URL에 페이지 파라미터 추가 (중복 방지)
       const urlObj = new URL(baseUrl);
@@ -109,12 +106,18 @@ Deno.serve(async (req) => {
         break;
       }
 
-      console.log(`[Japantravel] Found ${links.length} valid festival links on page ${currentPage}`);
+      console.log(`[Japantravel] Found ${links.length} festival links on page ${currentPage}`);
       allExtractedLinks.push(...links);
       totalLinksFound += links.length;
 
       previousLinks = currentLinks;
       currentPage++;
+
+      // maxPages 도달 확인
+      if (currentPage > maxPages) {
+        console.log(`[Japantravel] Reached max pages limit (${maxPages}), stopping`);
+        break;
+      }
 
       // 서버 부하 방지를 위한 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -208,7 +211,7 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
       return [];
     }
 
-    // div.row.small-event-gutter 컨테이너를 찾음
+    // div.row.small-event-gutter 컨테이너를 찾음 (각 페이지당 1개)
     const container = doc.querySelector(containerSelector || 'div.row.small-event-gutter');
     
     if (!container) {
@@ -218,11 +221,10 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
 
     console.log(`[Japantravel] Found container, extracting links...`);
 
-    // 축제 링크는 div.recommended-event-wrapper 안의 a 태그
-    // 또는 사용자가 지정한 linkSelector 사용
-    const eventLinkSelector = linkSelector || 'div.recommended-event-wrapper > a';
-    const linkElements = container.querySelectorAll(eventLinkSelector);
-    console.log(`[Japantravel] Found ${linkElements.length} event link elements with selector: ${eventLinkSelector}`);
+    // 컨테이너 안의 축제 링크만 추출 (div.recommended-event-wrapper 안의 a 태그)
+    // 기본값을 더 구체적으로 변경하여 축제 링크만 가져오도록 함
+    const linkElements = container.querySelectorAll(linkSelector || 'div.recommended-event-wrapper a');
+    console.log(`[Japantravel] Found ${linkElements.length} link elements in container`);
 
     // 각 링크를 확인하고 축제 상세 페이지 링크만 필터링
     for (const linkElement of linkElements) {
