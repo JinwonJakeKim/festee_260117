@@ -204,18 +204,21 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
       return [];
     }
 
-    // div.row.small-event-gutter 컨테이너 찾기 (페이지당 1개)
+    // div.row.small-event-gutter 컨테이너를 찾음 (각 페이지당 1개)
     const container = doc.querySelector(containerSelector || 'div.row.small-event-gutter');
     
     if (!container) {
-      console.warn(`[Japantravel] Container not found with selector: ${containerSelector}`);
+      console.error(`[Japantravel] Container not found with selector: ${containerSelector}`);
       return [];
     }
 
-    // 컨테이너 안에서 모든 링크 찾기
+    console.log(`[Japantravel] Found container, extracting links...`);
+
+    // 컨테이너 안의 모든 링크 요소 찾기 (페이지당 8개 예상)
     const linkElements = container.querySelectorAll(linkSelector || 'a');
     console.log(`[Japantravel] Found ${linkElements.length} link elements in container`);
 
+    // 각 링크를 확인하고 축제 상세 페이지 링크만 필터링
     for (const linkElement of linkElements) {
       const href = linkElement.getAttribute('href');
       if (!href) continue;
@@ -230,6 +233,7 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
           absoluteUrl = new URL(href, baseUrl).href;
         }
       } catch (urlError) {
+        console.warn(`[Japantravel] Invalid URL encountered: ${href}, skipping.`);
         continue;
       }
 
