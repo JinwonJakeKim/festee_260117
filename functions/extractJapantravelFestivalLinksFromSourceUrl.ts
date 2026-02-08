@@ -10,7 +10,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth, maxPages = 5 } = await req.json();
+    const requestBody = await req.json();
+    const { sourceUrlId, targetMonth } = requestBody;
+    const maxPages = requestBody.maxPages !== undefined ? requestBody.maxPages : 5;
+    
+    console.log(`[Japantravel] Max pages set to: ${maxPages}`);
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -59,7 +63,7 @@ Deno.serve(async (req) => {
       urlObj.searchParams.set('p', currentPage.toString());
       const pageUrl = urlObj.toString();
 
-      console.log(`[Japantravel] Fetching page ${currentPage}: ${pageUrl}`);
+      console.log(`[Japantravel] Fetching page ${currentPage}/${maxPages}: ${pageUrl}`);
 
       let html;
       try {
@@ -105,7 +109,7 @@ Deno.serve(async (req) => {
         break;
       }
 
-      console.log(`[Japantravel] Found ${links.length} links on page ${currentPage}`);
+      console.log(`[Japantravel] Found ${links.length} valid festival links on page ${currentPage}`);
       allExtractedLinks.push(...links);
       totalLinksFound += links.length;
 
@@ -204,7 +208,7 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
       return [];
     }
 
-    // div.row.small-event-gutter 컨테이너를 찾음 (각 페이지당 1개)
+    // div.row.small-event-gutter 컨테이너를 찾음
     const container = doc.querySelector(containerSelector || 'div.row.small-event-gutter');
     
     if (!container) {
@@ -214,9 +218,11 @@ async function extractLinksFromHtml(html, containerSelector, linkSelector, baseU
 
     console.log(`[Japantravel] Found container, extracting links...`);
 
-    // 컨테이너 안의 모든 링크 요소 찾기 (페이지당 8개 예상)
-    const linkElements = container.querySelectorAll(linkSelector || 'a');
-    console.log(`[Japantravel] Found ${linkElements.length} link elements in container`);
+    // 축제 링크는 div.recommended-event-wrapper 안의 a 태그
+    // 또는 사용자가 지정한 linkSelector 사용
+    const eventLinkSelector = linkSelector || 'div.recommended-event-wrapper > a';
+    const linkElements = container.querySelectorAll(eventLinkSelector);
+    console.log(`[Japantravel] Found ${linkElements.length} event link elements with selector: ${eventLinkSelector}`);
 
     // 각 링크를 확인하고 축제 상세 페이지 링크만 필터링
     for (const linkElement of linkElements) {
