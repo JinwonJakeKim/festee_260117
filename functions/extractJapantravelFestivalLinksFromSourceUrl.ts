@@ -10,7 +10,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth, maxPages = 5 } = await req.json();
+    const { sourceUrlId, targetMonth, maxPages: reqMaxPages = 5 } = await req.json();
+    
+    // 안전장치: maxPages 강제 제한 (최대 5페이지) 및 타임아웃 방지
+    // 사용자가 요청한 maxPages가 100이라도 5로 제한하여 504 에러 방지
+    const maxPages = Math.min(Number(reqMaxPages) || 5, 5);
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -30,9 +34,12 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[Japantravel] Starting link extraction from: ${sourceUrl.url}`);
-    console.log(`[Japantravel] Max pages: ${maxPages}`);
+    console.log(`[Japantravel] Requested maxPages: ${reqMaxPages}, Applied maxPages: ${maxPages}`);
     console.log(`[Japantravel] Container selector: ${sourceUrl.container_selector}`);
     console.log(`[Japantravel] Link selector: ${sourceUrl.link_selector}`);
+    
+    const startTime = Date.now();
+    const TIME_LIMIT_MS = 40000; // 40초 제한 (504 타임아웃 방지)
     
     // 날짜 매개변수 처리
     let baseUrl = sourceUrl.url;
@@ -115,7 +122,13 @@ Deno.serve(async (req) => {
 
       // maxPages 도달 확인
       if (currentPage > maxPages) {
-        console.log(`[Japantravel] Reached max pages limit (${maxPages}), stopping`);
+        console.log(`[Japantravel] Reached max pages limit (${maxPages}), stopping loop.`);
+        break;
+      }
+      
+      // 전체 실행 시간 체크 (타임아웃 방지)
+      if (Date.now() - startTime > TIME_LIMIT_MS) {
+        console.log(`[Japantravel] ⚠️ Time limit reached (${TIME_LIMIT_MS}ms), stopping loop to prevent 504 error.`);
         break;
       }
 
