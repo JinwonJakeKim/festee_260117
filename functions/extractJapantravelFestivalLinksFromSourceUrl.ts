@@ -2,69 +2,53 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { DOMParser } from 'npm:deno-dom/deno-dom-wasm';
 
 Deno.serve(async (req) => {
+  const VERSION = "v2026-02-10-2";
   const startTime = Date.now();
-  const ABSOLUTE_TIME_LIMIT = 30000; // 30초 강제 제한
+  const ABSOLUTE_TIME_LIMIT = 30000;
+  const MAX_PAGES = 5;
+  const MAX_LINKS_PER_PAGE = 8;
   
   try {
     const base44 = createClientFromRequest(req);
     
     const user = await base44.auth.me();
     if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
+      return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
     const { sourceUrlId, targetMonth } = await req.json();
     
-    // 🔒 하드코딩: 절대 5페이지만 탐색
-    const MAX_PAGES = 5;
-    
-    console.log(`[NEW VERSION] 🔒 MAX_PAGES=${MAX_PAGES} (HARDCODED)`);
+    console.log(`[${VERSION}] 🚀 START - Max ${MAX_PAGES} pages, ${MAX_LINKS_PER_PAGE} links/page`);
     
     if (!sourceUrlId) {
-      return Response.json({ 
-        success: false,
-        error: 'sourceUrlId is required' 
-      }, { status: 400 });
+      return Response.json({ success: false, error: 'sourceUrlId required' }, { status: 400 });
     }
 
     const sourceUrl = await base44.asServiceRole.entities.FestivalSourceUrl.get(sourceUrlId);
-    
     if (!sourceUrl) {
-      return Response.json({
-        success: false,
-        error: 'Source URL not found'
-      }, { status: 404 });
+      return Response.json({ success: false, error: 'Source not found' }, { status: 404 });
     }
 
-    console.log(`[NEW VERSION] 🚀 Starting extraction`);
-    console.log(`[NEW VERSION] Container: ${sourceUrl.container_selector}`);
-    console.log(`[NEW VERSION] Link selector: ${sourceUrl.link_selector}`);
-    
-    // 날짜 파라미터 처리
     let baseUrl = sourceUrl.url;
     if (sourceUrl.use_date_parameters && sourceUrl.date_parameter_template && targetMonth) {
       const [year, month] = targetMonth.split('-');
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      
       baseUrl = sourceUrl.date_parameter_template
         .replace(/{YYYY}/g, year)
         .replace(/{MM}/g, month)
         .replace(/{LAST_DAY}/g, lastDay.toString());
-      
-      console.log(`[NEW VERSION] URL: ${baseUrl}`);
+      console.log(`[${VERSION}] URL: ${baseUrl}`);
     }
 
     const allLinks = [];
     let pagesProcessed = 0;
 
-    // 🔒 for 루프로 명확히 5페이지만
     for (let page = 1; page <= MAX_PAGES; page++) {
-      console.log(`[NEW VERSION] 📄 Page ${page}/${MAX_PAGES}`);
+      console.log(`[${VERSION}] Page ${page}/${MAX_PAGES}`);
       pagesProcessed = page;
       
-      // 시간 체크 - 30초 초과시 즉시 중단
       if (Date.now() - startTime > ABSOLUTE_TIME_LIMIT) {
-        console.log(`[NEW VERSION] ⏰ 30초 초과, 강제 중단`);
+        console.log(`[${VERSION}] Timeout, stopping`);
         break;
       }
       
@@ -75,40 +59,36 @@ Deno.serve(async (req) => {
       let html;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 페이지당 8초
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         
         const response = await fetch(pageUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          },
+          headers: { 'User-Agent': 'Mozilla/5.0' },
           signal: controller.signal,
         });
         
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-          console.log(`[NEW VERSION] ❌ HTTP ${response.status}, stopping`);
+          console.log(`[${VERSION}] HTTP ${response.status}, stopping`);
           break;
         }
         
         html = await response.text();
       } catch (fetchError) {
-        console.error(`[NEW VERSION] ❌ Fetch error: ${fetchError.message}`);
+        console.error(`[${VERSION}] Fetch error: ${fetchError.message}`);
         break;
       }
 
-      // 링크 추출 - 각 페이지당 최대 8개만
-      const links = extractLinks(html, sourceUrl.container_selector, sourceUrl.link_selector, 8);
+      const links = extractLinks(html, sourceUrl.container_selector, sourceUrl.link_selector, MAX_LINKS_PER_PAGE);
       
       if (links.length === 0) {
-        console.log(`[NEW VERSION] No links found, stopping`);
+        console.log(`[${VERSION}] No links, stopping`);
         break;
       }
 
-      console.log(`[NEW VERSION] ✅ Found ${links.length} links (max 8 per page)`);
+      console.log(`[${VERSION}] ✅ ${links.length} links found`);
       allLinks.push(...links);
 
-      // 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
