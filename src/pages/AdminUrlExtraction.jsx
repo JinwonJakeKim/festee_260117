@@ -250,10 +250,9 @@ export default function AdminUrlExtraction() {
 
   const runLinkExtractionMutation = useMutation({
     mutationFn: async ({ sourceUrlId, targetMonth, abortSignal }) => {
-      const { data } = await base44.functions.invoke('extractJapantravelFestivalLinksFromSourceUrl', { 
+      const { data } = await base44.functions.invoke('extractJapantravelLinks', { 
         sourceUrlId,
-        targetMonth,
-        maxPages: 5 // Hardcoded maxPages for now
+        targetMonth
       }, { signal: abortSignal }); // Pass abortSignal to the invoke call
       return data;
     },
