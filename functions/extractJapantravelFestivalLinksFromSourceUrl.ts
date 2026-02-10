@@ -116,10 +116,14 @@ Deno.serve(async (req) => {
 
     // 중복 제거
     const uniqueLinks = [...new Set(allLinks)];
+    console.log(`[NEW VERSION] 🔍 Checking ${uniqueLinks.length} unique links in DB`);
     
-    // DB 저장
-    const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.list();
-    const existingUrls = new Set(existingRecords.map(r => r.source_url));
+    // DB 최적화: 추출된 링크에 대해서만 필터 쿼리
+    const existingMatches = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+      source_url: { $in: uniqueLinks }
+    });
+    const existingUrls = new Set(existingMatches.map(r => r.source_url));
+    console.log(`[NEW VERSION] 📊 Found ${existingUrls.size} existing, ${uniqueLinks.length - existingUrls.size} new`);
 
     let newCount = 0;
     const recordsToCreate = [];
@@ -139,9 +143,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 일괄 생성
+    // 청크로 나눠서 일괄 생성 (한 번에 100개씩)
     if (recordsToCreate.length > 0) {
-      await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.bulkCreate(recordsToCreate);
+      const CHUNK_SIZE = 100;
+      for (let i = 0; i < recordsToCreate.length; i += CHUNK_SIZE) {
+        const chunk = recordsToCreate.slice(i, i + CHUNK_SIZE);
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.bulkCreate(chunk);
+        console.log(`[NEW VERSION] 💾 Saved ${Math.min(i + CHUNK_SIZE, recordsToCreate.length)}/${recordsToCreate.length}`);
+      }
     }
 
     await base44.asServiceRole.entities.FestivalSourceUrl.update(sourceUrlId, {
