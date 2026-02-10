@@ -97,15 +97,15 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // 링크 추출
-      const links = extractLinks(html, sourceUrl.container_selector, sourceUrl.link_selector);
+      // 링크 추출 - 각 페이지당 최대 8개만
+      const links = extractLinks(html, sourceUrl.container_selector, sourceUrl.link_selector, 8);
       
       if (links.length === 0) {
         console.log(`[NEW VERSION] No links found, stopping`);
         break;
       }
 
-      console.log(`[NEW VERSION] ✅ Found ${links.length} links`);
+      console.log(`[NEW VERSION] ✅ Found ${links.length} links (max 8 per page)`);
       allLinks.push(...links);
 
       // 짧은 대기
@@ -176,9 +176,9 @@ Deno.serve(async (req) => {
   }
 });
 
-// 링크 추출 함수
-function extractLinks(html, containerSelector, linkSelector) {
-  const links = new Set();
+// 링크 추출 함수 - 페이지당 최대 개수 제한
+function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
+  const links = [];
 
   try {
     const parser = new DOMParser();
@@ -192,6 +192,9 @@ function extractLinks(html, containerSelector, linkSelector) {
     const linkElements = container.querySelectorAll(linkSelector || 'div.recommended-event-wrapper a');
     
     for (const linkElement of linkElements) {
+      // 최대 개수에 도달하면 중단
+      if (links.length >= maxLinks) break;
+      
       const href = linkElement.getAttribute('href');
       if (!href) continue;
 
@@ -205,12 +208,15 @@ function extractLinks(html, containerSelector, linkSelector) {
       
       if (pattern.test(absoluteUrl)) {
         const normalized = absoluteUrl.replace(/\/$/, '');
-        links.add(normalized);
+        // 중복 체크 후 추가
+        if (!links.includes(normalized)) {
+          links.push(normalized);
+        }
       }
     }
   } catch (e) {
     console.error('[NEW VERSION] Parse error:', e);
   }
 
-  return Array.from(links);
+  return links;
 }
