@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { DOMParser } from 'npm:deno-dom/deno-dom-wasm';
+import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "CLEAN-2026-V1";
+  const VERSION = "CLEAN-2026-V2";
   const startTime = Date.now();
   const MAX_PAGES = 5;
   const MAX_LINKS_PER_PAGE = 8;
