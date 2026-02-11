@@ -68,6 +68,7 @@ export default function AdminUrlExtraction() {
     failed: 0,
     isComplete: false
   });
+  const [batchExtractionAborted, setBatchExtractionAborted] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -313,6 +314,7 @@ export default function AdminUrlExtraction() {
       return;
     }
 
+    setBatchExtractionAborted(false);
     setBatchExtractionProgress({
       isExtracting: true,
       currentIndex: 0,
@@ -328,6 +330,19 @@ export default function AdminUrlExtraction() {
     const linksToProcess = pendingLinks.slice(0, 5);
 
     for (let i = 0; i < linksToProcess.length; i++) {
+      // 중지 확인
+      if (batchExtractionAborted) {
+        setBatchExtractionProgress(prev => ({
+          ...prev,
+          isExtracting: false,
+          isComplete: true
+        }));
+        alert(`추출이 중지되었습니다.\n성공: ${succeeded}개, 실패: ${failed}개`);
+        queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+        return;
+      }
+
       const link = linksToProcess[i];
       
       setBatchExtractionProgress(prev => ({
@@ -1320,6 +1335,15 @@ export default function AdminUrlExtraction() {
                       />
                     ))}
                   </div>
+
+                  {/* 중지 버튼 */}
+                  <Button
+                    onClick={() => setBatchExtractionAborted(true)}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold"
+                  >
+                    <XCircle className="w-5 h-5 mr-2" />
+                    추출 중지
+                  </Button>
                 </div>
               </Card>
             )}
