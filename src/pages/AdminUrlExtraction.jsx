@@ -1193,23 +1193,35 @@ export default function AdminUrlExtraction() {
                     : '모든 대기 중인 링크에서 축제 정보를 추출합니다 (최대 5개씩 처리)'
                   }
                 </p>
-                <Button
-                  onClick={handleBatchExtraction}
-                  disabled={batchExtractionProgress.isExtracting}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                >
-                  {batchExtractionProgress.isExtracting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      일괄 추출 중...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-5 h-5 mr-2" />
-                      축제정보 일괄 추출 시작
-                    </>
-                  )}
-                </Button>
+                {batchExtractionProgress.isExtracting ? (
+                  <Button
+                    onClick={() => {
+                      setBatchExtractionProgress({
+                        isExtracting: false,
+                        currentIndex: 0,
+                        total: 0,
+                        currentFestivalName: '',
+                        succeeded: 0,
+                        failed: 0,
+                        isComplete: false
+                      });
+                      alert('추출이 중지되었습니다');
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold"
+                  >
+                    <XCircle className="w-5 h-5 mr-2" />
+                    추출 중지
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleBatchExtraction}
+                    disabled={batchExtractionProgress.isExtracting}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <RefreshCw className="w-5 h-5 mr-2" />
+                    축제정보 일괄 추출 시작
+                  </Button>
+                )}
               </Card>
             )}
 
