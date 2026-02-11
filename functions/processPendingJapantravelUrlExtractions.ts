@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
           url: link.url
         });
 
-        if (extractResult?.success && extractResult?.records_saved > 0) {
+        if (extractResult?.success && extractResult?.raw_records_saved > 0) {
           // 성공: processed 상태로 업데이트하고 raw_data_id 저장
           const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
             source_url: link.url

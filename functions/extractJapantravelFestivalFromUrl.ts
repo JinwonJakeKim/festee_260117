@@ -969,6 +969,7 @@ Deno.serve(async (req) => {
         nearby_attractions: festival.nearby_attractions || [],
         tags: festival.tags || [],
         expected_visitors: festival.expected_visitors || null,
+        extract_status: 'processed',
         processing_status: 'pending',
         festival_id: null,
         error_message: null,
