@@ -317,15 +317,20 @@ export default function AdminUrlExtraction() {
     onSuccess: (data) => {
       setBatchExtractionProgress(prev => ({
         ...prev,
-        succeeded: data.succeededCount || 0,
-        failed: data.failedCount || 0,
-        currentIndex: (data.succeededCount || 0) + (data.failedCount || 0),
+        succeeded: data.processed || 0,
+        failed: 0,
+        currentIndex: data.processed || 0,
+        total: (data.processed || 0) + (data.remaining || 0),
         isExtracting: false,
-        isComplete: true
+        isComplete: data.remaining === 0
       }));
 
       if (data.success) {
-        alert(`✅ 일괄 추출 완료!\n\n성공: ${data.succeededCount}개\n실패: ${data.failedCount}개`);
+        if (data.remaining > 0) {
+          alert(`✅ 첫 ${data.processed}개 링크 처리 완료!\n\n남은 ${data.remaining}개 링크는 5분마다 자동으로 처리됩니다.\n다음 실행: ${new Date(data.next_run).toLocaleString('ko-KR')}\n\n자동화가 완료될 때까지 기다려주세요.`);
+        } else {
+          alert(`✅ 모든 ${data.processed}개 링크 처리 완료!`);
+        }
       } else {
         alert(`❌ 일괄 추출 실패\n\n${data.error || data.message}`);
       }
@@ -346,10 +351,10 @@ export default function AdminUrlExtraction() {
   });
 
   const handleBatchExtraction = async () => {
-    // 선택된 링크가 있으면 선택된 것만, 없으면 모든 pending 링크 처리
+    // 선택된 링크가 있으면 선택된 것만, 없으면 모든 pending/failed 링크 처리
     const targetLinkIds = selectedLinkIds.size > 0 
       ? Array.from(selectedLinkIds)
-      : linksList.filter(r => r.processing_status === 'pending').map(r => r.id);
+      : linksList.filter(r => r.processing_status === 'pending' || r.processing_status === 'failed').map(r => r.id);
 
     if (targetLinkIds.length === 0) {
       alert('처리할 링크가 없습니다');
@@ -360,8 +365,8 @@ export default function AdminUrlExtraction() {
     setBatchExtractionProgress({
       isExtracting: true,
       currentIndex: 0,
-      total: Math.min(targetLinkIds.length, 5),
-      currentFestivalName: '백엔드 함수 실행 중...',
+      total: targetLinkIds.length,
+      currentFestivalName: `자동화 체인 시작 중... (총 ${targetLinkIds.length}개)`,
       succeeded: 0,
       failed: 0,
       isComplete: false
@@ -1183,44 +1188,42 @@ export default function AdminUrlExtraction() {
             </div>
 
             {/* 일괄 추출 버튼 */}
-            {linksList.filter(r => r.processing_status === 'pending').length > 0 && (
+            {(linksList.filter(r => r.processing_status === 'pending').length > 0 || 
+              linksList.filter(r => r.processing_status === 'failed').length > 0) && (
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
-                <h3 className="text-white font-bold mb-2">축제정보 일괄 추출</h3>
+                <h3 className="text-white font-bold mb-2">🤖 축제정보 자동 일괄 추출</h3>
                 <p className="text-gray-400 text-sm mb-3">
                   {selectedLinkIds.size > 0 
-                    ? `선택한 ${selectedLinkIds.size}개의 링크에서 축제 정보를 추출합니다 (1회 최대 3개 처리)`
-                    : '모든 대기 중인 링크에서 축제 정보를 추출합니다 (1회 최대 3개 처리)'
+                    ? `선택한 ${selectedLinkIds.size}개의 링크를 3개씩 자동 처리합니다 (5분 간격)`
+                    : `모든 대기중/실패 링크를 3개씩 자동 처리합니다 (5분 간격)`
                   }
                 </p>
-                {batchExtractionProgress.isExtracting ? (
-                  <Button
-                    onClick={() => {
-                      setBatchExtractionProgress({
-                        isExtracting: false,
-                        currentIndex: 0,
-                        total: 0,
-                        currentFestivalName: '',
-                        succeeded: 0,
-                        failed: 0,
-                        isComplete: false
-                      });
-                      alert('추출이 중지되었습니다');
-                    }}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold"
-                  >
-                    <XCircle className="w-5 h-5 mr-2" />
-                    추출 중지
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleBatchExtraction}
-                    disabled={batchExtractionProgress.isExtracting}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  >
-                    <RefreshCw className="w-5 h-5 mr-2" />
-                    축제정보 일괄 추출 시작
-                  </Button>
-                )}
+                <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
+                  <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 첫 3개 즉시 추출 시작</li>
+                    <li>• 남은 링크들은 5분마다 3개씩 자동 추출</li>
+                    <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
+                    <li>• 페이지를 새로고침하여 진행 상황 확인</li>
+                  </ul>
+                </div>
+                <Button
+                  onClick={handleBatchExtraction}
+                  disabled={batchExtractionProgress.isExtracting}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
+                >
+                  {batchExtractionProgress.isExtracting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      자동화 시작 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5 mr-2" />
+                      자동 일괄 추출 시작
+                    </>
+                  )}
+                </Button>
               </Card>
             )}
 
