@@ -1205,7 +1205,7 @@ export default function AdminUrlExtraction() {
                   수집된 링크 관리
                 </h3>
                 <Button
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] })}
                   size="sm"
                   variant="outline"
                   className="border-cyan-400 text-cyan-400 hover:bg-cyan-900/20"
