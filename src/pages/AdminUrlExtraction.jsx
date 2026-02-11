@@ -58,6 +58,17 @@ export default function AdminUrlExtraction() {
   });
   const [extractionAbortController, setExtractionAbortController] = useState(null);
 
+  // Batch extraction progress state
+  const [batchExtractionProgress, setBatchExtractionProgress] = useState({
+    isExtracting: false,
+    currentIndex: 0,
+    total: 0,
+    currentFestivalName: '',
+    succeeded: 0,
+    failed: 0,
+    isComplete: false
+  });
+
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
