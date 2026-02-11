@@ -18,86 +18,27 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    console.log(`[Batch Extraction] Starting batch extraction for ${linkIds.length} links`);
+    console.log(`[Batch Extraction] Setting status of ${linkIds.length} links to 'pending' for continuous processing.`);
 
-    // 첫 3개 링크 처리
-    const batchSize = 3;
-    const currentBatch = linkIds.slice(0, batchSize);
-    const remainingLinks = linkIds.slice(batchSize);
-
-    console.log(`[Batch Extraction] Processing first ${currentBatch.length} links`);
-    console.log(`[Batch Extraction] Remaining links: ${remainingLinks.length}`);
-
-    // processPendingJapantravelUrlExtractions 함수 호출
-    try {
-      const result = await base44.asServiceRole.functions.invoke('processPendingJapantravelUrlExtractions', {
-        batchSize: batchSize,
-        linkIds: currentBatch
-      });
-
-      console.log(`[Batch Extraction] First batch processed:`, result);
-    } catch (processingError) {
-      console.error('[Batch Extraction] Error processing first batch:', processingError);
-      return Response.json({
-        success: false,
-        error: 'Failed to process first batch',
-        details: processingError.message
-      }, { status: 500 });
-    }
-
-    // 남은 링크가 있으면 5분 후에 다음 배치 예약
-    if (remainingLinks.length > 0) {
-      const nextRunTime = new Date();
-      nextRunTime.setMinutes(nextRunTime.getMinutes() + 5);
-
-      console.log(`[Batch Extraction] Scheduling next batch of ${Math.min(batchSize, remainingLinks.length)} links at ${nextRunTime.toISOString()}`);
-
-      // 자동화 생성 (one-time)
-      const automationName = `Japantravel Batch ${nextRunTime.getTime()}`;
-      
+    let successfullyUpdated = 0;
+    for (const linkId of linkIds) {
       try {
-        await base44.asServiceRole.automations.create({
-          automation_type: 'scheduled',
-          name: automationName,
-          description: `Auto-scheduled batch extraction for remaining ${remainingLinks.length} links`,
-          function_name: 'startJapantravelBatchExtraction',
-          function_args: {
-            linkIds: remainingLinks
-          },
-          schedule_mode: 'one-time',
-          one_time_date: nextRunTime.toISOString(),
-          is_active: true
+        await base44.asServiceRole.entities.JapantravelLinks.update(linkId, {
+          processing_status: 'pending',
+          error_message: null
         });
-
-        console.log(`[Batch Extraction] Successfully scheduled next batch`);
-
-        return Response.json({
-          success: true,
-          message: `첫 ${currentBatch.length}개 링크 처리 완료. 남은 ${remainingLinks.length}개 링크는 5분 후 자동 처리됩니다.`,
-          processed: currentBatch.length,
-          remaining: remainingLinks.length,
-          next_run: nextRunTime.toISOString()
-        });
-      } catch (automationError) {
-        console.error('[Batch Extraction] Error creating automation:', automationError);
-        return Response.json({
-          success: false,
-          error: 'Failed to schedule next batch',
-          details: automationError.message,
-          processed: currentBatch.length,
-          remaining: remainingLinks.length
-        }, { status: 500 });
+        successfullyUpdated++;
+      } catch (updateError) {
+        console.error(`[Batch Extraction] Failed to update link ${linkId}:`, updateError);
       }
-    } else {
-      console.log(`[Batch Extraction] All links processed, no more batches to schedule`);
-      
-      return Response.json({
-        success: true,
-        message: `모든 ${currentBatch.length}개 링크 처리 완료!`,
-        processed: currentBatch.length,
-        remaining: 0
-      });
     }
+
+    return Response.json({
+      success: true,
+      message: `${successfullyUpdated}개 링크가 대기열에 추가되었습니다. 5분마다 자동으로 처리됩니다.`,
+      processed: successfullyUpdated,
+      remaining: linkIds.length - successfullyUpdated
+    });
 
   } catch (error) {
     console.error('[Batch Extraction] Unexpected error:', error);
