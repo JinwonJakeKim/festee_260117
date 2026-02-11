@@ -1189,8 +1189,8 @@ export default function AdminUrlExtraction() {
                 <h3 className="text-white font-bold mb-2">축제정보 일괄 추출</h3>
                 <p className="text-gray-400 text-sm mb-3">
                   {selectedLinkIds.size > 0 
-                    ? `선택한 ${selectedLinkIds.size}개의 링크에서 축제 정보를 추출합니다 (최대 5개)`
-                    : '모든 대기 중인 링크에서 축제 정보를 추출합니다 (최대 5개씩 처리)'
+                    ? `선택한 ${selectedLinkIds.size}개의 링크에서 축제 정보를 추출합니다 (1회 최대 3개 처리)`
+                    : '모든 대기 중인 링크에서 축제 정보를 추출합니다 (1회 최대 3개 처리)'
                   }
                 </p>
                 {batchExtractionProgress.isExtracting ? (
