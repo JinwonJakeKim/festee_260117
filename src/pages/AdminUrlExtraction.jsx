@@ -1500,72 +1500,16 @@ export default function AdminUrlExtraction() {
               </ul>
             </Card>
 
-            {/* 처리 중인 축제 표시 및 중지 버튼 */}
-            {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
-              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4">
-                <div className="flex items-start gap-3 mb-3">
-                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0 mt-1" />
-                  <div className="flex-1">
-                    <h3 className="text-blue-400 font-bold mb-1">변환 진행 중인 축제</h3>
-                    <div className="space-y-2 mt-2">
-                      {rawDataList.filter(r => r.processing_status === 'processing').map((item) => (
-                        <div key={item.id} className="flex items-center justify-between bg-blue-900/20 rounded p-2">
-                          <div className="flex-1">
-                            <p className="text-white text-sm font-medium">{item.name_original || '이름 없음'}</p>
-                            <p className="text-gray-400 text-xs">{item.city}, {item.country}</p>
-                          </div>
-                          <Button
-                            onClick={async () => {
-                              if (confirm(`"${item.name_original}" 변환을 중지하시겠습니까?`)) {
-                                await base44.entities.JapantravelUrlExtractionRawData.update(item.id, {
-                                  processing_status: 'pending',
-                                  error_message: '사용자에 의해 중지됨'
-                                });
-                                queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
-                                alert('변환이 중지되었습니다.');
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-red-400 text-red-400 hover:bg-red-900/20"
-                          >
-                            중지
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
-                    size="sm"
-                    variant="outline"
-                    className="border-blue-400 text-blue-400 hover:bg-blue-900/20"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            )}
 
-            {/* 통계 카드 - 4개 (대기중, 처리중, 완료, 실패) */}
-            <div className="grid grid-cols-4 gap-3">
+
+            {/* 통계 카드 - 3개 (대기중, 완료, 실패) */}
+            <div className="grid grid-cols-3 gap-3">
               <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-400">
                     {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
                   </div>
                   <div className="text-xs text-gray-400">대기중</div>
-                </div>
-              </Card>
-              <Card className="bg-blue-900/20 border-blue-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
-                    {rawDataList.filter(r => r.processing_status === 'processing').length}
-                    {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-400">처리중</div>
                 </div>
               </Card>
               <Card className="bg-green-900/20 border-green-400/30 p-3">
@@ -1590,12 +1534,9 @@ export default function AdminUrlExtraction() {
 
             {/* 상태별 탭 섹션 */}
             <Tabs defaultValue="pending" className="w-full">
-              <TabsList className="w-full bg-gray-900 grid grid-cols-4">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-3">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
                   대기중 ({rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
-                </TabsTrigger>
-                <TabsTrigger value="processing" className="data-[state=active]:bg-blue-500">
-                  처리중 ({rawDataList.filter(r => r.processing_status === 'processing').length})
                 </TabsTrigger>
                 <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
                   완료 ({rawDataList.filter(r => r.processing_status === 'processed').length})
@@ -1738,59 +1679,6 @@ export default function AdminUrlExtraction() {
                 )}
               </TabsContent>
 
-              {/* 처리중 탭 */}
-              <TabsContent value="processing" className="mt-4 space-y-3">
-                {rawDataList.filter(r => r.processing_status === 'processing').length > 0 ? (
-                  rawDataList.filter(r => r.processing_status === 'processing').map((item) => (
-                    <Card key={item.id} className="border-2 bg-blue-900/30 border-blue-400">
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <Loader2 className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0 mt-1" />
-
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
-                              {getStatusBadge(item.processing_status)}
-                            </div>
-                            <a 
-                              href={item.source_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {item.source_url}
-                            </a>
-                            <p className="text-gray-500 text-xs">
-                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleString('ko-KR')}
-                            </p>
-                          </div>
-
-                          <Button
-                            onClick={async () => {
-                              if (confirm(`"${item.name_original}" 변환을 중지하시겠습니까?`)) {
-                                await base44.entities.JapantravelUrlExtractionRawData.update(item.id, {
-                                  processing_status: 'pending',
-                                  error_message: '사용자에 의해 중지됨'
-                                });
-                                queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
-                                alert('변환이 중지되었습니다.');
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-red-400 text-red-400 hover:bg-red-900/20"
-                          >
-                            중지
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm text-center py-8">처리중인 데이터가 없습니다.</p>
-                )}
-              </TabsContent>
 
               {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
