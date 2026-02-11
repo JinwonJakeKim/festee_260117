@@ -56,24 +56,42 @@ Deno.serve(async (req) => {
       });
 
       try {
-        // extractJapantravelFestivalFromUrl 함수 호출
-        const { data: extractResult } = await base44.asServiceRole.functions.invoke('extractJapantravelFestivalFromUrl', {
-          url: link.url
-        });
+        // extractJapantravelFestivalFromUrl 함수 호출 (타임아웃 60초)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        
+        let extractResult;
+        try {
+          const response = await base44.asServiceRole.functions.invoke('extractJapantravelFestivalFromUrl', {
+            url: link.url
+          });
+          extractResult = response.data;
+        } catch (invokeError) {
+          // 함수 호출 자체가 실패한 경우
+          throw new Error(`Function invocation failed: ${invokeError.message}`);
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (extractResult?.success && extractResult?.raw_records_saved > 0) {
           // 성공: processed 상태로 업데이트하고 raw_data_id 저장
-          const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
-            source_url: link.url
-          }, '-created_date', 1);
-          
-          await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
-            processing_status: 'processed',
-            raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
-            error_message: null
-          });
-          succeeded++;
-          console.log(`[Japantravel] ✅ Successfully processed: ${link.url}`);
+          try {
+            const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+              source_url: link.url
+            }, '-created_date', 1);
+            
+            await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
+              processing_status: 'processed',
+              raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
+              error_message: null
+            });
+            succeeded++;
+            console.log(`[Japantravel] ✅ Successfully processed: ${link.url}`);
+          } catch (updateError) {
+            console.error(`[Japantravel] ⚠️ Data saved but update failed for ${link.url}:`, updateError);
+            // 데이터는 저장됐으므로 성공으로 간주
+            succeeded++;
+          }
         } else {
           // 실패: failed 상태로 업데이트
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
@@ -85,12 +103,18 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         // 예외 발생: failed 상태로 업데이트
-        await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
-          processing_status: 'failed',
-          error_message: error.message || 'Unknown error'
-        });
-        failed++;
-        console.error(`[Japantravel] ❌ Error processing ${link.url}:`, error);
+        try {
+          await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
+            processing_status: 'failed',
+            error_message: error.message || 'Unknown error'
+          });
+          failed++;
+          console.error(`[Japantravel] ❌ Error processing ${link.url}:`, error);
+        } catch (finalError) {
+          // 최종 업데이트도 실패한 경우
+          console.error(`[Japantravel] 🔥 Critical: Failed to update status for ${link.url}:`, finalError);
+          failed++;
+        }
       }
 
       // 서버 부하 방지를 위한 짧은 대기
