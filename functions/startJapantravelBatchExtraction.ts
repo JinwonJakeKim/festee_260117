@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    console.log(`[Batch Extraction] Setting status of ${linkIds.length} links to 'pending' for continuous processing.`);
+    console.log(`[Batch Extraction] Processing ${linkIds.length} links - first 3 immediately, rest via automation.`);
 
+    // 모든 링크를 pending 상태로 설정
     let successfullyUpdated = 0;
     for (const linkId of linkIds) {
       try {
@@ -33,11 +34,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 첫 3개 즉시 처리
+    const firstBatch = linkIds.slice(0, 3);
+    console.log(`[Batch Extraction] Immediately processing first ${firstBatch.length} links...`);
+    
+    const { data: processResult } = await base44.asServiceRole.functions.invoke('processPendingJapantravelUrlExtractions', {
+      linkIds: firstBatch,
+      batchSize: 3
+    });
+
+    console.log(`[Batch Extraction] First batch result:`, processResult);
+
+    const remaining = linkIds.length - firstBatch.length;
+    const message = remaining > 0 
+      ? `✅ 첫 ${processResult?.processed || firstBatch.length}개 처리 시작!\n\n남은 ${remaining}개는 5분마다 자동으로 처리됩니다.`
+      : `✅ 모든 ${linkIds.length}개 링크 처리 시작!`;
+
     return Response.json({
       success: true,
-      message: `${successfullyUpdated}개의 링크가 자동 처리를 위해 대기열에 추가되었습니다. 5분마다 자동화에 의해 순차적으로 처리됩니다.`,
-      processed: successfullyUpdated,
-      remaining: linkIds.length - successfullyUpdated
+      message: message,
+      processed: processResult?.processed || firstBatch.length,
+      succeeded: processResult?.succeededCount || 0,
+      failed: processResult?.failedCount || 0,
+      remaining: remaining
     });
 
   } catch (error) {
