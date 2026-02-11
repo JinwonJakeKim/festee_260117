@@ -1362,104 +1362,116 @@ export default function AdminUrlExtraction() {
               </Card>
             )}
 
-            {/* 선택 및 삭제 버튼 */}
-            {linksList.length > 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={handleSelectAllLinks}
-                    className="flex items-center gap-2 text-white hover:text-cyan-400"
-                  >
-                    {selectedLinkIds.size === linksList.length ? (
-                      <CheckSquare className="w-5 h-5 text-cyan-400" />
-                    ) : (
-                      <Square className="w-5 h-5" />
-                    )}
-                    <span className="font-medium">전체 선택</span>
-                  </button>
-                  {selectedLinkIds.size > 0 && (
-                    <span className="text-cyan-400 text-sm">{selectedLinkIds.size}개 선택됨</span>
-                  )}
-                </div>
+            {/* 상태별 탭 섹션 */}
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-3">
+                <TabsTrigger value="pending" className="data-[state=active]:bg-cyan-500">
+                  대기중 ({linksList.filter(r => r.processing_status === 'pending').length})
+                </TabsTrigger>
+                <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
+                  완료 ({linksList.filter(r => r.processing_status === 'processed').length})
+                </TabsTrigger>
+                <TabsTrigger value="failed" className="data-[state=active]:bg-red-500">
+                  실패 ({linksList.filter(r => r.processing_status === 'failed').length})
+                </TabsTrigger>
+              </TabsList>
 
-                {selectedLinkIds.size > 0 && (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleDeleteSelectedLinks}
-                      disabled={deletionProgress.isDeleting}
-                      className="flex-1 bg-red-500 hover:bg-red-600"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      선택 삭제 ({selectedLinkIds.size}개)
-                    </Button>
-                    <Button
-                      onClick={handleDeleteAllLinks}
-                      disabled={deletionProgress.isDeleting}
-                      className="flex-1 bg-red-700 hover:bg-red-800"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      전체 삭제
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* 링크 목록 */}
-            <div className="space-y-3">
-              {linksList.length > 0 ? (
-                linksList.map((item) => (
-                  <Card key={item.id} className={`border-2 ${
-                    selectedLinkIds.has(item.id) 
-                      ? 'bg-purple-900/30 border-purple-400' 
-                      : 'bg-gray-900 border-gray-800'
-                  }`}>
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <button
-                          onClick={() => handleSelectLink(item.id)}
-                          className="flex-shrink-0 mt-1"
-                        >
-                          {selectedLinkIds.has(item.id) ? (
-                            <CheckSquare className="w-6 h-6 text-cyan-400" />
+              {/* 대기중 탭 */}
+              <TabsContent value="pending" className="mt-4 space-y-3">
+                {linksList.filter(r => r.processing_status === 'pending').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const pendingItems = linksList.filter(r => r.processing_status === 'pending');
+                          const pendingIds = new Set(pendingItems.map(r => r.id));
+                          const allSelected = pendingItems.every(item => selectedLinkIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedLinkIds(new Set([...selectedLinkIds].filter(id => !pendingIds.has(id))));
+                          } else {
+                            setSelectedLinkIds(new Set([...selectedLinkIds, ...pendingIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const pendingItems = linksList.filter(r => r.processing_status === 'pending');
+                          const allSelected = pendingItems.every(item => selectedLinkIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
                           ) : (
-                            <Square className="w-6 h-6 text-gray-600" />
-                          )}
-                        </button>
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedLinkIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedLinkIds.size}개 선택됨</span>
+                      )}
+                    </div>
 
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="text-white font-medium">수집된 링크</h3>
-                            {getStatusBadge(item.processing_status)}
-                          </div>
-                          <a 
-                            href={item.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
-                            onClick={(e) => e.stopPropagation()}
+                    {selectedLinkIds.size > 0 && (
+                      <Button
+                        onClick={handleDeleteSelectedLinks}
+                        disabled={deletionProgress.isDeleting}
+                        className="w-full bg-red-500 hover:bg-red-600"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        선택 삭제 ({selectedLinkIds.size}개)
+                      </Button>
+                    )}
+                  </Card>
+                )}
+
+                {linksList.filter(r => r.processing_status === 'pending').length > 0 ? (
+                  linksList.filter(r => r.processing_status === 'pending').map((item) => (
+                    <Card key={item.id} className={`border-2 ${
+                      selectedLinkIds.has(item.id) 
+                        ? 'bg-cyan-900/30 border-cyan-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleSelectLink(item.id)}
+                            className="flex-shrink-0 mt-1"
                           >
-                            {item.url}
-                          </a>
-                          <p className="text-gray-500 text-xs">
-                            {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
-                          </p>
-                          {item.error_message && (
-                            <p className="text-red-400 text-xs mt-2">❌ {item.error_message}</p>
-                          )}
-                        </div>
+                            {selectedLinkIds.has(item.id) ? (
+                              <CheckSquare className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                              <Square className="w-6 h-6 text-gray-600" />
+                            )}
+                          </button>
 
-                        <div className="flex flex-col gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-medium">수집된 링크</h3>
+                              {getStatusBadge(item.processing_status)}
+                            </div>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+
                           <Button
                             onClick={() => {
                               setExtractingLinkId(item.id);
                               extractDetailMutation.mutate({ linkId: item.id, url: item.url });
                             }}
-                            disabled={extractingLinkId === item.id || item.processing_status === 'processing'}
+                            disabled={extractingLinkId === item.id}
                             size="sm"
                             className="bg-purple-500 hover:bg-purple-600 whitespace-nowrap"
                           >
-                            {extractingLinkId === item.id || item.processing_status === 'processing' ? (
+                            {extractingLinkId === item.id ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                 추출 중
@@ -1469,21 +1481,279 @@ export default function AdminUrlExtraction() {
                                 <ExternalLink className="w-4 h-4 mr-1" />
                                 상세 추출
                               </>
-                              )}
-                              </Button>
+                            )}
+                          </Button>
                         </div>
                       </div>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">대기중인 링크가 없습니다.</p>
+                )}
+              </TabsContent>
+
+              {/* 완료 탭 */}
+              <TabsContent value="processed" className="mt-4 space-y-3">
+                {linksList.filter(r => r.processing_status === 'processed').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const processedItems = linksList.filter(r => r.processing_status === 'processed');
+                          const processedIds = new Set(processedItems.map(r => r.id));
+                          const allSelected = processedItems.every(item => selectedLinkIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedLinkIds(new Set([...selectedLinkIds].filter(id => !processedIds.has(id))));
+                          } else {
+                            setSelectedLinkIds(new Set([...selectedLinkIds, ...processedIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const processedItems = linksList.filter(r => r.processing_status === 'processed');
+                          const allSelected = processedItems.every(item => selectedLinkIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedLinkIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedLinkIds.size}개 선택됨</span>
+                      )}
                     </div>
+
+                    {selectedLinkIds.size > 0 && (
+                      <Button
+                        onClick={handleDeleteSelectedLinks}
+                        disabled={deletionProgress.isDeleting}
+                        className="w-full bg-red-500 hover:bg-red-600"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        선택 삭제 ({selectedLinkIds.size}개)
+                      </Button>
+                    )}
                   </Card>
-                ))
-              ) : (
-                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                  <ExternalLink className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500">수집된 링크가 없습니다</p>
-                  <p className="text-gray-600 text-sm mt-2">"URL 추출" 탭에서 링크를 수집하세요</p>
-                </Card>
-              )}
-            </div>
+                )}
+
+                {linksList.filter(r => r.processing_status === 'processed').length > 0 ? (
+                  linksList.filter(r => r.processing_status === 'processed').map((item) => (
+                    <Card key={item.id} className={`border-2 ${
+                      selectedLinkIds.has(item.id) 
+                        ? 'bg-green-900/30 border-green-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleSelectLink(item.id)}
+                            className="flex-shrink-0 mt-1"
+                          >
+                            {selectedLinkIds.has(item.id) ? (
+                              <CheckSquare className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                              <Square className="w-6 h-6 text-gray-600" />
+                            )}
+                          </button>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-medium">수집된 링크</h3>
+                              {getStatusBadge(item.processing_status)}
+                              {item.raw_data_id && (
+                                <Badge variant="outline" className="text-green-400 border-green-400">
+                                  RawData 생성 완료
+                                </Badge>
+                              )}
+                            </div>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              if (confirm('이 링크를 삭제하시겠습니까?')) {
+                                handleDeleteSelectedLinks();
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">완료된 링크가 없습니다.</p>
+                )}
+              </TabsContent>
+
+              {/* 실패 탭 */}
+              <TabsContent value="failed" className="mt-4 space-y-3">
+                {linksList.filter(r => r.processing_status === 'failed').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const failedItems = linksList.filter(r => r.processing_status === 'failed');
+                          const failedIds = new Set(failedItems.map(r => r.id));
+                          const allSelected = failedItems.every(item => selectedLinkIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedLinkIds(new Set([...selectedLinkIds].filter(id => !failedIds.has(id))));
+                          } else {
+                            setSelectedLinkIds(new Set([...selectedLinkIds, ...failedIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const failedItems = linksList.filter(r => r.processing_status === 'failed');
+                          const allSelected = failedItems.every(item => selectedLinkIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedLinkIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedLinkIds.size}개 선택됨</span>
+                      )}
+                    </div>
+
+                    {selectedLinkIds.size > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            if (confirm(`선택한 ${selectedLinkIds.size}개 항목을 대기 상태로 되돌리시겠습니까?`)) {
+                              for (const id of selectedLinkIds) {
+                                await base44.entities.JapantravelLinks.update(id, {
+                                  processing_status: 'pending',
+                                  error_message: null
+                                });
+                              }
+                              setSelectedLinkIds(new Set());
+                              queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+                              alert('대기 상태로 변경되었습니다.');
+                            }
+                          }}
+                          className="flex-1 bg-yellow-500 hover:bg-yellow-600"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          재시도
+                        </Button>
+                        <Button
+                          onClick={handleDeleteSelectedLinks}
+                          disabled={deletionProgress.isDeleting}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {linksList.filter(r => r.processing_status === 'failed').length > 0 ? (
+                  linksList.filter(r => r.processing_status === 'failed').map((item) => (
+                    <Card key={item.id} className={`border-2 ${
+                      selectedLinkIds.has(item.id) 
+                        ? 'bg-red-900/30 border-red-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleSelectLink(item.id)}
+                            className="flex-shrink-0 mt-1"
+                          >
+                            {selectedLinkIds.has(item.id) ? (
+                              <CheckSquare className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                              <Square className="w-6 h-6 text-gray-600" />
+                            )}
+                          </button>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-medium">수집된 링크</h3>
+                              {getStatusBadge(item.processing_status)}
+                            </div>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
+                            </p>
+                            {item.error_message && (
+                              <p className="text-red-400 text-xs mt-2 bg-red-900/20 p-2 rounded">❌ {item.error_message}</p>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (confirm('이 링크를 다시 추출하시겠습니까?')) {
+                                  await base44.entities.JapantravelLinks.update(item.id, {
+                                    processing_status: 'pending',
+                                    error_message: null
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+                                  alert('대기열에 추가되었습니다.');
+                                }
+                              }}
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                              title="재시도"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (confirm('이 링크를 삭제하시겠습니까?')) {
+                                  base44.entities.JapantravelLinks.delete(item.id);
+                                  queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">실패한 링크가 없습니다.</p>
+                )}
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="data" className="mt-4 space-y-4">
