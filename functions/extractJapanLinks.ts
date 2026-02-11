@@ -106,26 +106,23 @@ Deno.serve(async (req) => {
 
     console.log(`[${VERSION}] Total: ${allLinks.length} links`);
 
-    const existing = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
-      source_url: { $in: allLinks }
+    const existing = await base44.asServiceRole.entities.JapantravelLinks.filter({
+      url: { $in: allLinks }
     });
-    const existingUrls = new Set(existing.map(r => r.source_url));
+    const existingUrls = new Set(existing.map(r => r.url));
 
     const toCreate = allLinks
       .filter(link => !existingUrls.has(link))
       .map(link => ({
-        source_url: link,
+        url: link,
         country: sourceUrl.country,
+        source_url_id: sourceUrlId,
         processing_status: 'pending',
-        name_original: "",
-        city: "",
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date().toISOString().split('T')[0],
       }));
 
     if (toCreate.length > 0) {
       for (let i = 0; i < toCreate.length; i += 100) {
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.bulkCreate(
+        await base44.asServiceRole.entities.JapantravelLinks.bulkCreate(
           toCreate.slice(i, i + 100)
         );
       }
