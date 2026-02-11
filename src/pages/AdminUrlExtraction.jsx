@@ -1904,6 +1904,71 @@ export default function AdminUrlExtraction() {
 
               {/* 실패 탭 */}
               <TabsContent value="failed" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'failed').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const failedItems = rawDataList.filter(r => r.processing_status === 'failed');
+                          const failedIds = new Set(failedItems.map(r => r.id));
+                          const allSelected = failedItems.every(item => selectedRawIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedRawIds(new Set([...selectedRawIds].filter(id => !failedIds.has(id))));
+                          } else {
+                            setSelectedRawIds(new Set([...selectedRawIds, ...failedIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const failedItems = rawDataList.filter(r => r.processing_status === 'failed');
+                          const allSelected = failedItems.every(item => selectedRawIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedRawIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
+                      )}
+                    </div>
+
+                    {selectedRawIds.size > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            if (confirm(`선택한 ${selectedRawIds.size}개 항목을 대기 상태로 되돌리시겠습니까?`)) {
+                              for (const id of selectedRawIds) {
+                                await base44.entities.JapantravelUrlExtractionRawData.update(id, {
+                                  processing_status: 'pending',
+                                  error_message: null
+                                });
+                              }
+                              setSelectedRawIds(new Set());
+                              queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+                              alert('대기 상태로 변경되었습니다.');
+                            }
+                          }}
+                          className="flex-1 bg-yellow-500 hover:bg-yellow-600"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          재시도
+                        </Button>
+                        <Button
+                          onClick={handleDelete}
+                          disabled={deleteRawDataMutation.isPending}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
                 {rawDataList.filter(r => r.processing_status === 'failed').length > 0 ? (
                   rawDataList.filter(r => r.processing_status === 'failed').map((item) => (
                     <Card key={item.id} className={`border-2 ${
