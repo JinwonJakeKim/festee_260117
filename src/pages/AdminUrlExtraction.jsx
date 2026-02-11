@@ -136,7 +136,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(data.message);
         setUrlInput("");
-        setActiveTab("data");
+        setActiveTab("rawdataTransform");
         queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
         alert(`추출 실패: ${data.error}\n${data.message || ''}`);
@@ -156,7 +156,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(data.message + `\n\n상세 결과:\n총 링크: ${data.links_found}개\n성공: ${data.extraction_results.success}개\n실패: ${data.extraction_results.failed}개`);
         setShowBatchExtract(false);
-        setActiveTab("data");
+        setActiveTab("rawdataTransform");
         queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
         alert(`일괄 추출 실패: ${data.error}\n${data.message || ''}`);
@@ -290,7 +290,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(`✅ 링크 추출 완료!\n\n${data.message}`);
         queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
-        setActiveTab("links");
+        setActiveTab("festivalExtraction");
       } else {
         alert(`❌ 링크 추출 실패\n\n${data.error || data.message}`);
       }
@@ -796,11 +796,11 @@ export default function AdminUrlExtraction() {
             <TabsTrigger value="extract" className="data-[state=active]:bg-pink-500">
               URL 추출
             </TabsTrigger>
-            <TabsTrigger value="links" className="data-[state=active]:bg-pink-500">
-              링크 관리
+            <TabsTrigger value="festivalExtraction" className="data-[state=active]:bg-pink-500">
+              축제정보추출
             </TabsTrigger>
-            <TabsTrigger value="data" className="data-[state=active]:bg-pink-500">
-              데이터 관리
+            <TabsTrigger value="rawdataTransform" className="data-[state=active]:bg-pink-500">
+              RawData 변환
             </TabsTrigger>
             <TabsTrigger value="automation" className="data-[state=active]:bg-pink-500">
               자동화
@@ -808,72 +808,9 @@ export default function AdminUrlExtraction() {
           </TabsList>
 
           <TabsContent value="extract" className="mt-4 space-y-6">
-            {/* 1. 단일 URL 추출 */}
-            <Card className="bg-gray-900 border-gray-800 p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-black font-bold">1</div>
-                <h3 className="text-white font-bold text-lg">단일 URL 추출</h3>
-              </div>
-                  <p className="text-gray-400 text-sm mb-4">
-                    japantravel.com의 축제 상세 페이지 URL을 입력하여 정보를 추출합니다
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <input
-                      type="url"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder="https://en.japantravel.com/tokyo/30th-anniversary-tamagotchi-exhibition-2026/..."
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                      disabled={isExtracting}
-                    />
-
-                    <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-4">
-                      <h4 className="text-blue-400 font-bold mb-2 text-sm flex items-center gap-2">
-                        🖼️ 이미지 추출 설정
-                      </h4>
-                      <ul className="text-gray-300 text-xs space-y-1.5">
-                        <li>• <span className="text-white">썸네일 이미지:</span> 커버 사진 영역의 메인 이미지 자동 추출</li>
-                        <li>• <span className="text-white">본문 이미지:</span> 기사 본문의 모든 갤러리 이미지 자동 수집</li>
-                        <li>• <span className="text-white">영상:</span> YouTube 임베드 영상 자동 감지</li>
-                        <li>• <span className="text-white">날짜:</span> 웹페이지에서 축제 일정 자동 파싱</li>
-                      </ul>
-                    </div>
-                    
-                    <Button
-                      onClick={handleExtract}
-                      disabled={isExtracting || !urlInput.trim()}
-                      className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-base font-bold"
-                    >
-                      {isExtracting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          축제 정보 추출 중...
-                        </>
-                      ) : (
-                        <>
-                          <ExternalLink className="w-5 h-5 mr-2" />
-                          축제 정보 추출 시작
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-              <div className="mt-6 p-4 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
-                <h4 className="text-cyan-400 font-bold mb-2 text-sm">💡 사용 방법</h4>
-                <ul className="text-gray-300 text-xs space-y-1">
-                  <li>• japantravel.com의 축제 상세 페이지 URL을 붙여넣으세요</li>
-                  <li>• AI가 자동으로 축제 이름, 날짜, 위치, 설명, 이미지 등을 추출합니다</li>
-                  <li>• 추출된 데이터는 "데이터 관리" 탭에서 확인 및 변환할 수 있습니다</li>
-                </ul>
-              </div>
-            </Card>
-
-            {/* 2. 멀티 URL 추출 */}
             <Card className="bg-gray-900 border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-black font-bold">2</div>
                   <div>
                     <h3 className="text-white font-bold text-lg">멀티 URL 추출</h3>
                     <p className="text-gray-400 text-sm mt-0.5">
@@ -1158,7 +1095,40 @@ export default function AdminUrlExtraction() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="links" className="mt-4 space-y-4">
+          <TabsContent value="festivalExtraction" className="mt-4 space-y-4">
+            {/* 단일 URL 축제정보추출 */}
+            <Card className="bg-gray-900 border-gray-800 p-6">
+              <h3 className="text-white font-bold text-lg mb-4">단일 URL 축제정보추출</h3>
+              <div className="space-y-4">
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://en.japantravel.com/tokyo/festival/..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
+                  disabled={isExtracting}
+                />
+
+                <Button
+                  onClick={handleExtract}
+                  disabled={isExtracting || !urlInput.trim()}
+                  className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-base font-bold"
+                >
+                  {isExtracting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      축제 정보 추출 중...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-5 h-5 mr-2" />
+                      축제 정보 추출 시작
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+
             <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="text-white font-bold flex items-center gap-2">
@@ -1731,7 +1701,7 @@ export default function AdminUrlExtraction() {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="data" className="mt-4 space-y-4">
+          <TabsContent value="rawdataTransform" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
               <h3 className="text-white font-bold mb-2 flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-purple-400" />
