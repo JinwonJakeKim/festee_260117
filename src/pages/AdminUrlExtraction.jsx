@@ -309,8 +309,7 @@ export default function AdminUrlExtraction() {
 
   const processBatchMutation = useMutation({
     mutationFn: async ({ linkIds }) => {
-      const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', { 
-        batchSize: 5,
+      const { data } = await base44.functions.invoke('startJapantravelBatchExtraction', { 
         linkIds
       });
       return data;
