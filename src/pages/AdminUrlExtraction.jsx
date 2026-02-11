@@ -1740,12 +1740,12 @@ export default function AdminUrlExtraction() {
 
 
 
-            {/* 통계 카드 - 3개 (대기중, 완료, 실패) */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* 통계 카드 - 2개 (대기중/실패 통합, 완료) */}
+            <div className="grid grid-cols-2 gap-3">
               <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-400">
-                    {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
+                    {rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "").length}
                   </div>
                   <div className="text-xs text-gray-400">대기중</div>
                 </div>
@@ -1758,40 +1758,29 @@ export default function AdminUrlExtraction() {
                   <div className="text-xs text-gray-400">완료</div>
                 </div>
               </Card>
-              <Card className="bg-red-900/20 border-red-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-400">
-                    {rawDataList.filter(r => r.processing_status === 'failed').length}
-                  </div>
-                  <div className="text-xs text-gray-400">실패</div>
-                </div>
-              </Card>
             </div>
 
 
 
             {/* 상태별 탭 섹션 */}
             <Tabs defaultValue="pending" className="w-full">
-              <TabsList className="w-full bg-gray-900 grid grid-cols-3">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-2">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
-                  대기중 ({rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
+                  대기중 ({rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "").length})
                 </TabsTrigger>
                 <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
                   완료 ({rawDataList.filter(r => r.processing_status === 'processed').length})
-                </TabsTrigger>
-                <TabsTrigger value="failed" className="data-[state=active]:bg-red-500">
-                  실패 ({rawDataList.filter(r => r.processing_status === 'failed').length})
                 </TabsTrigger>
               </TabsList>
 
               {/* 대기중 탭 */}
               <TabsContent value="pending" className="mt-4 space-y-3">
-                {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
+                {rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "").length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <button
                         onClick={() => {
-                          const pendingItems = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "");
+                          const pendingItems = rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "");
                           const pendingIds = new Set(pendingItems.map(r => r.id));
                           const allSelected = pendingItems.every(item => selectedRawIds.has(item.id));
                           if (allSelected) {
@@ -1803,7 +1792,7 @@ export default function AdminUrlExtraction() {
                         className="flex items-center gap-2 text-white hover:text-cyan-400"
                       >
                         {(() => {
-                          const pendingItems = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "");
+                          const pendingItems = rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "");
                           const allSelected = pendingItems.every(item => selectedRawIds.has(item.id));
                           return allSelected ? (
                             <CheckSquare className="w-5 h-5 text-cyan-400" />
@@ -1849,8 +1838,8 @@ export default function AdminUrlExtraction() {
                   </Card>
                 )}
 
-                {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 ? (
-                  rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").map((item) => (
+                {rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "").length > 0 ? (
+                  rawDataList.filter(r => (r.processing_status === 'pending' || r.processing_status === 'failed') && r.name_original && r.name_original !== "").map((item) => (
                     <Card key={item.id} className={`border-2 ${
                       selectedRawIds.has(item.id) 
                         ? 'bg-yellow-900/30 border-yellow-400' 
@@ -2350,10 +2339,10 @@ export default function AdminUrlExtraction() {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-8">실패한 데이터가 없습니다.</p>
+                  <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
                 )}
-              </TabsContent>
-            </Tabs>
+                </TabsContent>
+                </Tabs>
 
             {rawDataList.length === 0 && (
               <Card className="bg-gray-900 border-gray-800 p-12 text-center">
