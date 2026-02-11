@@ -1553,73 +1553,7 @@ export default function AdminUrlExtraction() {
               </Card>
             </div>
 
-            {/* 전체 선택 및 버튼 */}
-            {rawDataList.length > 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={handleSelectAll}
-                    className="flex items-center gap-2 text-white hover:text-cyan-400"
-                  >
-                    {selectedRawIds.size === rawDataList.length ? (
-                      <CheckSquare className="w-5 h-5 text-cyan-400" />
-                    ) : (
-                      <Square className="w-5 h-5" />
-                    )}
-                    <span className="font-medium">전체 선택</span>
-                  </button>
-                  {selectedRawIds.size > 0 && (
-                    <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
-                  )}
-                </div>
 
-                {selectedRawIds.size > 0 && (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleTransform}
-                      disabled={transformMutation.isPending}
-                      className="flex-1 bg-cyan-500 hover:bg-cyan-600"
-                    >
-                      {transformMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          변환 중...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          변환
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={handleRetransform}
-                      disabled={transformMutation.isPending}
-                      className="flex-1 bg-purple-500 hover:bg-purple-600"
-                    >
-                      {transformMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          재변환 중...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          재변환
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={handleDelete}
-                      disabled={deleteRawDataMutation.isPending}
-                      className="bg-red-500 hover:bg-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )}
 
             {/* 상태별 탭 섹션 */}
             <Tabs defaultValue="pending" className="w-full">
