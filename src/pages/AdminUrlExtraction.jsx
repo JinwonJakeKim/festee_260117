@@ -300,18 +300,83 @@ export default function AdminUrlExtraction() {
     }
   });
 
-  const runPendingProcessMutation = useMutation({
-    mutationFn: async (batchSize = 5) => {
-      const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', { batchSize });
-      return data;
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        alert(data.message);
-        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
-      }
+  const handleBatchExtraction = async () => {
+    const pendingLinks = rawDataList.filter(r => !r.name_original || r.name_original === "");
+    if (pendingLinks.length === 0) {
+      alert('처리할 링크가 없습니다');
+      return;
     }
-  });
+
+    setBatchExtractionProgress({
+      isExtracting: true,
+      currentIndex: 0,
+      total: Math.min(pendingLinks.length, 5),
+      currentFestivalName: '',
+      succeeded: 0,
+      failed: 0,
+      isComplete: false
+    });
+
+    let succeeded = 0;
+    let failed = 0;
+    const linksToProcess = pendingLinks.slice(0, 5);
+
+    for (let i = 0; i < linksToProcess.length; i++) {
+      const record = linksToProcess[i];
+      
+      setBatchExtractionProgress(prev => ({
+        ...prev,
+        currentIndex: i + 1,
+        currentFestivalName: record.source_url.split('/').slice(-2, -1)[0] || '처리 중...'
+      }));
+
+      try {
+        await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+          processing_status: 'processing'
+        });
+
+        const { data: extractResult } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', {
+          url: record.source_url
+        });
+
+        if (extractResult?.success) {
+          await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+            processing_status: 'processed',
+            error_message: null
+          });
+          succeeded++;
+        } else {
+          await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+            processing_status: 'failed',
+            error_message: extractResult?.error || 'Unknown error'
+          });
+          failed++;
+        }
+      } catch (error) {
+        await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+          processing_status: 'failed',
+          error_message: error.message || 'Unknown error'
+        });
+        failed++;
+      }
+
+      setBatchExtractionProgress(prev => ({
+        ...prev,
+        succeeded,
+        failed
+      }));
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    setBatchExtractionProgress(prev => ({
+      ...prev,
+      isExtracting: false,
+      isComplete: true
+    }));
+
+    queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+  };
 
   const extractDetailMutation = useMutation({
     mutationFn: async ({ rawDataId, url }) => {
