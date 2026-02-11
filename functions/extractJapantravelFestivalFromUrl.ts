@@ -1036,7 +1036,6 @@ Deno.serve(async (req) => {
         extract_status: 'processed',
         processing_status: 'pending',
         festival_id: null,
-        error_message: null,
         extraction_metadata: {
           date_status: festival.date_status || 'confirmed',
           date_confidence: festival.date_confidence || 0,
