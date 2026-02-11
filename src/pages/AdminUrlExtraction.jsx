@@ -1153,7 +1153,7 @@ export default function AdminUrlExtraction() {
             </Card>
 
             {/* 통계 카드 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <Card className="bg-cyan-900/20 border-cyan-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-cyan-400">
@@ -1173,12 +1173,20 @@ export default function AdminUrlExtraction() {
                   <div className="text-xs text-gray-400">추출 중</div>
                 </div>
               </Card>
+              <Card className="bg-green-900/20 border-green-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">
+                    {linksList.filter(r => r.processing_status === 'processed').length}
+                  </div>
+                  <div className="text-xs text-gray-400">완료</div>
+                </div>
+              </Card>
               <Card className="bg-red-900/20 border-red-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-400">
                     {linksList.filter(r => r.processing_status === 'failed').length}
                   </div>
-                  <div className="text-xs text-gray-400">추출 실패</div>
+                  <div className="text-xs text-gray-400">실패</div>
                 </div>
               </Card>
             </div>
