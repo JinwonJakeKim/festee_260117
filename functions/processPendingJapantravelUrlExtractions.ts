@@ -9,22 +9,36 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { batchSize = 5 } = await req.json();
+    const { batchSize = 5, linkIds } = await req.json();
 
     console.log(`[Japantravel] Starting to process pending links (batch size: ${batchSize})`);
 
-    // pending 상태의 링크 조회
-    const pendingLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
-      processing_status: 'pending'
-    }, '-created_date', batchSize);
+    let pendingLinks;
+    
+    // linkIds가 제공되면 해당 링크들만 처리, 없으면 pending 상태 링크 조회
+    if (linkIds && Array.isArray(linkIds) && linkIds.length > 0) {
+      console.log(`[Japantravel] Processing specific link IDs: ${linkIds.length} links`);
+      pendingLinks = [];
+      for (const id of linkIds.slice(0, batchSize)) {
+        const link = await base44.asServiceRole.entities.JapantravelLinks.get(id);
+        if (link) {
+          pendingLinks.push(link);
+        }
+      }
+    } else {
+      // 기존 방식: pending 상태의 링크 조회
+      pendingLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
+        processing_status: 'pending'
+      }, '-created_date', batchSize);
+    }
 
     if (!pendingLinks || pendingLinks.length === 0) {
       return Response.json({
         success: true,
         message: 'No pending links to process',
         processed: 0,
-        succeeded: 0,
-        failed: 0
+        succeededCount: 0,
+        failedCount: 0
       });
     }
 
@@ -85,10 +99,10 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `Processed ${pendingLinks.length} pending links`,
+      message: `Processed ${pendingLinks.length} links`,
       processed: pendingLinks.length,
-      succeeded,
-      failed
+      succeededCount: succeeded,
+      failedCount: failed
     });
 
   } catch (error) {

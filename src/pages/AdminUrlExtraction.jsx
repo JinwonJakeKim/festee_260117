@@ -28,7 +28,7 @@ export default function AdminUrlExtraction() {
     country: "", 
     description: "",
     container_selector: "div.row.small-event-gutter",
-    link_selector: "div.recommended-event-wrapper a", // Changed default value
+    link_selector: "div.recommended-event-wrapper a",
     use_date_parameters: false,
     date_parameter_template: ""
   });
@@ -52,7 +52,7 @@ export default function AdminUrlExtraction() {
   const [extractionProgress, setExtractionProgress] = useState({
     isExtracting: false,
     currentPage: 0,
-    totalPages: 5, // Max pages to extract from
+    totalPages: 5,
     linksFound: 0,
     elapsedSeconds: 0
   });
@@ -274,11 +274,11 @@ export default function AdminUrlExtraction() {
       }, { signal: abortSignal });
       return data;
     },
-    onMutate: () => { // Added onMutate to set initial extraction progress
+    onMutate: () => {
       setExtractionProgress({
         isExtracting: true,
         currentPage: 0,
-        totalPages: 5, // Reflect maxPages value
+        totalPages: 5,
         linksFound: 0,
         elapsedSeconds: 0
       });
@@ -289,7 +289,7 @@ export default function AdminUrlExtraction() {
       
       if (data.success) {
         alert(`✅ 링크 추출 완료!\n\n${data.message}`);
-        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
         setActiveTab("links");
       } else {
         alert(`❌ 링크 추출 실패\n\n${data.error || data.message}`);
@@ -299,7 +299,7 @@ export default function AdminUrlExtraction() {
       setExtractionProgress({ isExtracting: false, currentPage: 0, totalPages: 5, linksFound: 0, elapsedSeconds: 0 });
       setExtractionAbortController(null);
       
-      if (error.name === 'AbortError') { // Handle abort signal
+      if (error.name === 'AbortError') {
         alert('링크 추출이 사용자에 의해 중단되었습니다.');
       } else {
         alert(`❌ 링크 추출 중 오류 발생\n\n${error.message}`);
@@ -307,9 +307,52 @@ export default function AdminUrlExtraction() {
     }
   });
 
+  const processBatchMutation = useMutation({
+    mutationFn: async ({ linkIds }) => {
+      const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', { 
+        batchSize: 5,
+        linkIds
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      setBatchExtractionProgress(prev => ({
+        ...prev,
+        succeeded: data.succeededCount || 0,
+        failed: data.failedCount || 0,
+        currentIndex: (data.succeededCount || 0) + (data.failedCount || 0),
+        isExtracting: false,
+        isComplete: true
+      }));
+
+      if (data.success) {
+        alert(`✅ 일괄 추출 완료!\n\n성공: ${data.succeededCount}개\n실패: ${data.failedCount}개`);
+      } else {
+        alert(`❌ 일괄 추출 실패\n\n${data.error || data.message}`);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+    },
+    onError: (error) => {
+      setBatchExtractionProgress(prev => ({
+        ...prev,
+        isExtracting: false,
+        isComplete: true
+      }));
+      alert(`❌ 일괄 추출 중 오류 발생\n\n${error.message}`);
+      queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+    }
+  });
+
   const handleBatchExtraction = async () => {
-    const pendingLinks = linksList.filter(r => r.processing_status === 'pending');
-    if (pendingLinks.length === 0) {
+    // 선택된 링크가 있으면 선택된 것만, 없으면 모든 pending 링크 처리
+    const targetLinkIds = selectedLinkIds.size > 0 
+      ? Array.from(selectedLinkIds)
+      : linksList.filter(r => r.processing_status === 'pending').map(r => r.id);
+
+    if (targetLinkIds.length === 0) {
       alert('처리할 링크가 없습니다');
       return;
     }
@@ -318,91 +361,14 @@ export default function AdminUrlExtraction() {
     setBatchExtractionProgress({
       isExtracting: true,
       currentIndex: 0,
-      total: Math.min(pendingLinks.length, 5),
-      currentFestivalName: '',
+      total: Math.min(targetLinkIds.length, 5),
+      currentFestivalName: '백엔드 함수 실행 중...',
       succeeded: 0,
       failed: 0,
       isComplete: false
     });
 
-    let succeeded = 0;
-    let failed = 0;
-    const linksToProcess = pendingLinks.slice(0, 5);
-
-    for (let i = 0; i < linksToProcess.length; i++) {
-      // 중지 확인
-      if (batchExtractionAborted) {
-        setBatchExtractionProgress(prev => ({
-          ...prev,
-          isExtracting: false,
-          isComplete: true
-        }));
-        alert(`추출이 중지되었습니다.\n성공: ${succeeded}개, 실패: ${failed}개`);
-        queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
-        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
-        return;
-      }
-
-      const link = linksToProcess[i];
-      
-      setBatchExtractionProgress(prev => ({
-        ...prev,
-        currentIndex: i + 1,
-        currentFestivalName: link.url.split('/').slice(-2, -1)[0] || '처리 중...'
-      }));
-
-      try {
-        await base44.entities.JapantravelLinks.update(link.id, {
-          processing_status: 'processing'
-        });
-
-        const { data: extractResult } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', {
-          url: link.url
-        });
-
-        if (extractResult?.success && extractResult?.records_saved > 0) {
-          const rawDataRecords = await base44.entities.JapantravelUrlExtractionRawData.filter({
-            source_url: link.url
-          }, '-created_date', 1);
-          
-          await base44.entities.JapantravelLinks.update(link.id, {
-            processing_status: 'processed',
-            raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
-            error_message: null
-          });
-          succeeded++;
-        } else {
-          await base44.entities.JapantravelLinks.update(link.id, {
-            processing_status: 'failed',
-            error_message: extractResult?.error || 'No data extracted'
-          });
-          failed++;
-        }
-      } catch (error) {
-        await base44.entities.JapantravelLinks.update(link.id, {
-          processing_status: 'failed',
-          error_message: error.message || 'Unknown error'
-        });
-        failed++;
-      }
-
-      setBatchExtractionProgress(prev => ({
-        ...prev,
-        succeeded,
-        failed
-      }));
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-
-    setBatchExtractionProgress(prev => ({
-      ...prev,
-      isExtracting: false,
-      isComplete: true
-    }));
-
-    queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
-    queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+    processBatchMutation.mutate({ linkIds: targetLinkIds });
   };
 
   const extractDetailMutation = useMutation({
@@ -462,7 +428,6 @@ export default function AdminUrlExtraction() {
     try {
       await extractMutation.mutateAsync({ url: urlInput, imageSelectors });
       
-      // 저장된 URL이라면 last_used_date 업데이트
       const matchingSource = sourceUrls.find(s => s.url === urlInput);
       if (matchingSource) {
         updateSourceUrlMutation.mutate({ id: matchingSource.id, url: urlInput });
@@ -472,7 +437,6 @@ export default function AdminUrlExtraction() {
     }
   };
 
-  // New function to handle starting link extraction with AbortController
   const handleRunLinkExtraction = ({ sourceUrlId, targetMonth }) => {
     const controller = new AbortController();
     setExtractionAbortController(controller);
@@ -483,7 +447,6 @@ export default function AdminUrlExtraction() {
     });
   };
 
-  // New function to abort link extraction
   const handleAbortExtraction = () => {
     if (extractionAbortController) {
       extractionAbortController.abort();
@@ -533,7 +496,7 @@ export default function AdminUrlExtraction() {
       country: source.country,
       description: source.description || "",
       container_selector: source.container_selector || "div.row.small-event-gutter",
-      link_selector: source.link_selector || "div.recommended-event-wrapper a", // Updated default here too
+      link_selector: source.link_selector || "div.recommended-event-wrapper a",
       use_date_parameters: source.use_date_parameters || false,
       date_parameter_template: source.date_parameter_template || ""
     });
@@ -1132,14 +1095,12 @@ export default function AdminUrlExtraction() {
                                           const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
                                           const paddedLastDay = lastDay.toString().padStart(2, '0');
                                           
-                                          // 템플릿이 있으면 템플릿 사용
                                           if (source.date_parameter_template) {
                                             return source.date_parameter_template
                                               .replaceAll('{YYYY}', year)
                                               .replaceAll('{MM}', month)
                                               .replaceAll('{LAST_DAY}', paddedLastDay);
                                           } else {
-                                            // URL 파라미터 방식으로 날짜 교체
                                             const url = new URL(source.url);
                                             url.searchParams.set('from', `${year}-${month}-01`);
                                             url.searchParams.set('to', `${year}-${month}-${paddedLastDay}`);
@@ -1157,7 +1118,7 @@ export default function AdminUrlExtraction() {
                                       alert('월을 선택해주세요');
                                       return;
                                     }
-                                    handleRunLinkExtraction({ // Use new handler function
+                                    handleRunLinkExtraction({
                                       sourceUrlId: source.id,
                                       targetMonth: selectedMonths[source.id]
                                     });
@@ -1190,7 +1151,7 @@ export default function AdminUrlExtraction() {
                 <ul className="text-gray-300 text-xs space-y-1">
                   <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
                   <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
-                  <li>• 최대 5페이지까지 탐색하여 축제 링크를 수집합니다</li> {/* Updated description */}
+                  <li>• 최대 5페이지까지 탐색하여 축제 링크를 수집합니다</li>
                   <li>• 추출된 링크는 "링크 관리" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
                 </ul>
               </div>
@@ -1216,8 +1177,8 @@ export default function AdminUrlExtraction() {
               </div>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ URL 추출 탭에서 수집한 링크들을 관리합니다</li>
-                <li>✓ "상세 추출" 버튼을 클릭하여 각 링크의 축제 정보를 추출합니다</li>
-                <li>✓ 추출이 완료되면 "데이터 관리" 탭으로 이동합니다</li>
+                <li>✓ 링크를 선택한 후 "축제정보 일괄 추출 시작" 버튼을 클릭하세요</li>
+                <li>✓ 선택하지 않으면 모든 대기중인 링크를 처리합니다 (최대 5개)</li>
               </ul>
             </Card>
 
@@ -1255,9 +1216,12 @@ export default function AdminUrlExtraction() {
             {/* 일괄 추출 버튼 */}
             {linksList.filter(r => r.processing_status === 'pending').length > 0 && (
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
-                <h3 className="text-white font-bold mb-2">일괄 상세 추출</h3>
+                <h3 className="text-white font-bold mb-2">축제정보 일괄 추출</h3>
                 <p className="text-gray-400 text-sm mb-3">
-                  대기 중인 링크에서 축제 정보를 순차적으로 추출합니다 (최대 5개씩 처리)
+                  {selectedLinkIds.size > 0 
+                    ? `선택한 ${selectedLinkIds.size}개의 링크에서 축제 정보를 추출합니다 (최대 5개)`
+                    : '모든 대기 중인 링크에서 축제 정보를 추출합니다 (최대 5개씩 처리)'
+                  }
                 </p>
                 <Button
                   onClick={handleBatchExtraction}
@@ -1335,15 +1299,6 @@ export default function AdminUrlExtraction() {
                       />
                     ))}
                   </div>
-
-                  {/* 중지 버튼 */}
-                  <Button
-                    onClick={() => setBatchExtractionAborted(true)}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold"
-                  >
-                    <XCircle className="w-5 h-5 mr-2" />
-                    추출 중지
-                  </Button>
                 </div>
               </Card>
             )}
@@ -1362,15 +1317,18 @@ export default function AdminUrlExtraction() {
                   }
                 </p>
                 <Button
-                  onClick={() => setBatchExtractionProgress({
-                    isExtracting: false,
-                    currentIndex: 0,
-                    total: 0,
-                    currentFestivalName: '',
-                    succeeded: 0,
-                    failed: 0,
-                    isComplete: false
-                  })}
+                  onClick={() => {
+                    setBatchExtractionProgress({
+                      isExtracting: false,
+                      currentIndex: 0,
+                      total: 0,
+                      currentFestivalName: '',
+                      succeeded: 0,
+                      failed: 0,
+                      isComplete: false
+                    });
+                    setSelectedLinkIds(new Set());
+                  }}
                   className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold"
                 >
                   확인
@@ -1602,7 +1560,8 @@ export default function AdminUrlExtraction() {
                           <Button
                             onClick={() => {
                               if (confirm('이 링크를 삭제하시겠습니까?')) {
-                                handleDeleteSelectedLinks();
+                                base44.entities.JapantravelLinks.delete(item.id);
+                                queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
                               }
                             }}
                             size="sm"
@@ -2105,6 +2064,150 @@ export default function AdminUrlExtraction() {
                     </Card>
                   ))
                 ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
+                )}
+              </TabsContent>
+
+
+              {/* 완료 탭 */}
+              <TabsContent value="processed" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const processedIds = new Set(processedItems.map(r => r.id));
+                          const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedRawIds(new Set([...selectedRawIds].filter(id => !processedIds.has(id))));
+                          } else {
+                            setSelectedRawIds(new Set([...selectedRawIds, ...processedIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedRawIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
+                      )}
+                    </div>
+
+                    {selectedRawIds.size > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleRetransform}
+                          disabled={transformMutation.isPending}
+                          className="flex-1 bg-purple-500 hover:bg-purple-600"
+                        >
+                          {transformMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              재변환 중...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              재변환
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleDelete}
+                          disabled={deleteRawDataMutation.isPending}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 ? (
+                  rawDataList.filter(r => r.processing_status === 'processed').map((item) => (
+                    <Card key={item.id} className={`border-2 ${
+                      selectedRawIds.has(item.id) 
+                        ? 'bg-green-900/30 border-green-400' 
+                        : 'bg-gray-900 border-gray-800'
+                    }`}>
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleSelectItem(item.id)}
+                            className="flex-shrink-0 mt-1"
+                          >
+                            {selectedRawIds.has(item.id) ? (
+                              <CheckSquare className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                              <Square className="w-6 h-6 text-gray-600" />
+                            )}
+                          </button>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
+                              {getStatusBadge(item.processing_status)}
+                              {item.festival_id && (
+                                <Badge variant="outline" className="text-green-400 border-green-400">
+                                  Festival ID: {item.festival_id.substring(0, 8)}
+                                </Badge>
+                              )}
+                            </div>
+                            <a 
+                              href={item.source_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.source_url}
+                            </a>
+                            <p className="text-gray-500 text-xs">
+                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              onClick={() => {
+                                setSelectedRawIds(new Set([item.id]));
+                                handleRetransform();
+                              }}
+                              size="sm"
+                              className="bg-orange-500 hover:bg-orange-600 text-white"
+                              title="재변환"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
+                                  deleteRawDataMutation.mutate([item.id]);
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-700 text-red-400 hover:bg-red-900/20"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
                   <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
                 )}
               </TabsContent>
@@ -2307,8 +2410,8 @@ export default function AdminUrlExtraction() {
                   <p className="text-blue-400 text-xs font-bold mb-1">📋 동작 방식</p>
                   <ul className="text-gray-300 text-xs space-y-1">
                     <li>• 저장된 소스 URL 목록을 순회합니다</li>
-                    <li>• 각 소스 URL의 최대 5페이지를 탐색하여 축제 링크를 추출합니다</li> {/* Updated description */}
-                    <li>• 추출된 링크를 JapantravelUrlExtractionRawData에 'pending' 상태로 저장합니다</li>
+                    <li>• 각 소스 URL의 최대 5페이지를 탐색하여 축제 링크를 추출합니다</li>
+                    <li>• 추출된 링크를 JapantravelLinks에 'pending' 상태로 저장합니다</li>
                     <li>• 기존 링크는 건너뛰고, 실패한 링크는 재시도 대기열에 추가합니다</li>
                   </ul>
                 </div>
@@ -2358,7 +2461,7 @@ export default function AdminUrlExtraction() {
                                     alert('월을 선택해주세요');
                                     return;
                                   }
-                                  handleRunLinkExtraction({ // Use new handler function
+                                  handleRunLinkExtraction({
                                     sourceUrlId: source.id,
                                     targetMonth: selectedMonths[source.id]
                                   });
@@ -2379,7 +2482,7 @@ export default function AdminUrlExtraction() {
                             </div>
                           ) : (
                             <Button
-                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id })} // Use new handler function
+                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id })}
                               disabled={runLinkExtractionMutation.isPending}
                               size="sm"
                               className="bg-cyan-500 hover:bg-cyan-600"
@@ -2406,9 +2509,9 @@ export default function AdminUrlExtraction() {
             <Card className="bg-gray-900 border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-white font-bold">2. 대기열 처리</h3>
+                  <h3 className="text-white font-bold">2. 대기열 처리 자동화</h3>
                   <p className="text-gray-400 text-sm mt-1">
-                    대기 중인 축제 링크에서 상세 정보를 추출
+                    5분마다 자동으로 대기 중인 링크 5개씩 처리
                   </p>
                 </div>
                 {automationsList.find(a => a.name === 'URL 대기열 처리 자동화') && (
@@ -2430,29 +2533,29 @@ export default function AdminUrlExtraction() {
                 <div className="p-3 bg-purple-900/20 border border-purple-400/30 rounded-lg">
                   <p className="text-purple-400 text-xs font-bold mb-1">📋 동작 방식</p>
                   <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 'pending' 상태의 JapantravelUrlExtractionRawData를 조회합니다 (최대 5개)</li>
+                    <li>• 매 5분마다 자동으로 실행됩니다 (1:00, 1:05, 1:10...)</li>
+                    <li>• 'pending' 상태의 JapantravelLinks를 조회합니다 (최대 5개)</li>
                     <li>• 각 링크에서 extractJapantravelFestivalFromUrl 함수를 호출하여 상세 정보를 추출합니다</li>
                     <li>• 성공 시 'processed' 상태로, 실패 시 'failed' 상태로 업데이트합니다</li>
-                    <li>• 서버 부하를 방지하기 위해 각 처리 사이에 2초 대기합니다</li>
                   </ul>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {rawDataList.filter(r => r.processing_status === 'pending').length}
+                  <div className="bg-cyan-900/20 border border-cyan-400/30 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-cyan-400">
+                      {linksList.filter(r => r.processing_status === 'pending').length}
                     </div>
                     <div className="text-xs text-gray-400">대기 중</div>
                   </div>
                   <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-blue-400">
-                      {rawDataList.filter(r => r.processing_status === 'processing').length}
+                      {linksList.filter(r => r.processing_status === 'processing').length}
                     </div>
                     <div className="text-xs text-gray-400">처리 중</div>
                   </div>
                   <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-red-400">
-                      {rawDataList.filter(r => r.processing_status === 'failed').length}
+                      {linksList.filter(r => r.processing_status === 'failed').length}
                     </div>
                     <div className="text-xs text-gray-400">실패</div>
                   </div>
@@ -2460,9 +2563,15 @@ export default function AdminUrlExtraction() {
 
                 <div className="border-t border-gray-800 pt-3">
                   <h4 className="text-gray-300 text-sm font-bold mb-2">수동 실행</h4>
+                  <p className="text-gray-400 text-xs mb-3">
+                    {selectedLinkIds.size > 0 
+                      ? `선택한 ${selectedLinkIds.size}개의 링크를 처리합니다`
+                      : '모든 대기 중인 링크를 처리합니다 (최대 5개)'
+                    }
+                  </p>
                   <Button
                     onClick={handleBatchExtraction}
-                    disabled={batchExtractionProgress.isExtracting || rawDataList.filter(r => r.processing_status === 'pending').length === 0}
+                    disabled={batchExtractionProgress.isExtracting || linksList.filter(r => r.processing_status === 'pending').length === 0}
                     className="w-full bg-purple-500 hover:bg-purple-600"
                   >
                     {batchExtractionProgress.isExtracting ? (
@@ -2471,7 +2580,7 @@ export default function AdminUrlExtraction() {
                         처리 중...
                       </>
                     ) : (
-                      `대기열 처리 (최대 5개)`
+                      `축제정보 일괄 추출 시작`
                     )}
                   </Button>
                 </div>
@@ -2510,7 +2619,7 @@ export default function AdminUrlExtraction() {
                 <li>• 자동화는 현재 비활성화 상태로 설정되어 있습니다</li>
                 <li>• 활성화하기 전에 충분히 테스트하세요</li>
                 <li>• 자동화 주기는 서버 부하와 데이터 업데이트 주기를 고려하여 설정하세요</li>
-                <li>• 링크 추출은 최대 5페이지까지만 진행됩니다</li> {/* Updated description */}
+                <li>• 링크 추출은 최대 5페이지까지만 진행됩니다</li>
               </ul>
             </div>
           </TabsContent>
