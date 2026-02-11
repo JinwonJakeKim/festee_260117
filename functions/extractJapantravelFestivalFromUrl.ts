@@ -32,9 +32,23 @@ Deno.serve(async (req) => {
 
     // japantravel.com은 항상 Japan으로 설정
     let countryFromSource = 'Japan';
-    const urlHost = new URL(url).hostname.toLowerCase();
+    const urlObj = new URL(url);
+    const urlHost = urlObj.hostname.toLowerCase();
+
+    // URL에서 언어 코드 감지 (en.japantravel.com, ko.japantravel.com 등)
+    let detectedLanguageFromUrl = null;
+    const languageMatch = urlHost.match(/^([a-z]{2})\.japantravel\.com$/);
+    if (languageMatch) {
+      detectedLanguageFromUrl = languageMatch[1];
+      console.log(`[Japantravel] Detected language from URL subdomain: ${detectedLanguageFromUrl}`);
+    } else if (urlHost === 'japantravel.com' || urlHost === 'www.japantravel.com') {
+      // 서브도메인이 없으면 기본적으로 영어로 간주
+      detectedLanguageFromUrl = 'en';
+      console.log(`[Japantravel] No language subdomain, defaulting to: en`);
+    }
+
     if (urlHost.includes('japantravel.com')) {
-      console.log(`japantravel.com detected, setting country: Japan`);
+      console.log(`japantravel.com detected, setting country: Japan, language: ${detectedLanguageFromUrl || 'unknown'}`);
     } else {
       console.warn(`⚠️ Non-japantravel.com URL detected: ${urlHost}`);
     }
@@ -841,6 +855,9 @@ Deno.serve(async (req) => {
     const validFestivals = extraction.festivals;
 
     const festivals = validFestivals.map((festival, index) => {
+      // URL에서 감지한 언어를 우선 사용, 없으면 LLM이 추출한 언어 사용
+      const finalLanguage = detectedLanguageFromUrl || festival.original_language || 'en';
+
       const normalizeUrl = (inputUrl, baseUrl) => {
         if (!inputUrl || inputUrl.trim() === '') return '';
         try {
@@ -984,7 +1001,7 @@ Deno.serve(async (req) => {
 
       return {
         source_url: url,
-        original_language: festival.original_language,
+        original_language: finalLanguage,
         name_original: festival.name_original || null,
         summary_original: festival.summary_original || null,
         description_original: festival.description_original || null,
