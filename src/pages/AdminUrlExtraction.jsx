@@ -1761,6 +1761,69 @@ export default function AdminUrlExtraction() {
 
               {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
+                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const processedIds = new Set(processedItems.map(r => r.id));
+                          const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
+                          if (allSelected) {
+                            setSelectedRawIds(new Set([...selectedRawIds].filter(id => !processedIds.has(id))));
+                          } else {
+                            setSelectedRawIds(new Set([...selectedRawIds, ...processedIds]));
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {(() => {
+                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
+                          return allSelected ? (
+                            <CheckSquare className="w-5 h-5 text-cyan-400" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          );
+                        })()}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedRawIds.size > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
+                      )}
+                    </div>
+
+                    {selectedRawIds.size > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleRetransform}
+                          disabled={transformMutation.isPending}
+                          className="flex-1 bg-purple-500 hover:bg-purple-600"
+                        >
+                          {transformMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              재변환 중...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              재변환
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleDelete}
+                          disabled={deleteRawDataMutation.isPending}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
                 {rawDataList.filter(r => r.processing_status === 'processed').length > 0 ? (
                   rawDataList.filter(r => r.processing_status === 'processed').map((item) => (
                     <Card key={item.id} className={`border-2 ${
