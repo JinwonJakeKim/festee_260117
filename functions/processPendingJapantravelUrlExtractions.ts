@@ -43,11 +43,11 @@ Deno.serve(async (req) => {
 
       try {
         // extractJapantravelFestivalFromUrl 함수 호출
-        const extractResult = await base44.asServiceRole.functions.invoke('extractJapantravelFestivalFromUrl', {
+        const { data: extractResult } = await base44.asServiceRole.functions.invoke('extractJapantravelFestivalFromUrl', {
           url: record.source_url
         });
 
-        if (extractResult.success) {
+        if (extractResult?.success) {
           // 성공: processed 상태로 업데이트
           await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(record.id, {
             processing_status: 'processed',
@@ -59,10 +59,10 @@ Deno.serve(async (req) => {
           // 실패: failed 상태로 업데이트
           await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(record.id, {
             processing_status: 'failed',
-            error_message: extractResult.error || 'Unknown error'
+            error_message: extractResult?.error || 'Unknown error'
           });
           failed++;
-          console.log(`[Japantravel] ❌ Failed to process: ${record.source_url} - ${extractResult.error}`);
+          console.log(`[Japantravel] ❌ Failed to process: ${record.source_url} - ${extractResult?.error || 'Unknown error'}`);
         }
       } catch (error) {
         // 예외 발생: failed 상태로 업데이트
