@@ -1715,10 +1715,21 @@ export default function AdminUrlExtraction() {
 
           <TabsContent value="rawdataTransform" className="mt-4 space-y-4">
             <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
-              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                <RefreshCw className="w-5 h-5 text-purple-400" />
-                원본 데이터를 Festival로 변환
-              </h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-white font-bold flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-purple-400" />
+                  원본 데이터를 Festival로 변환
+                </h3>
+                <Button
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] })}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-400 text-purple-400 hover:bg-purple-900/20"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  새로고침
+                </Button>
+              </div>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ 선택한 원본 데이터를 Festival 엔티티로 변환합니다</li>
                 <li>✓ 자동 번역 (한국어, 영어) 및 미디어 추가</li>
