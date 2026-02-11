@@ -1309,16 +1309,16 @@ export default function AdminUrlExtraction() {
               <Card className="bg-cyan-900/20 border-cyan-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-cyan-400">
-                    {rawDataList.filter(r => !r.name_original || r.name_original === "").length}
+                    {linksList.filter(r => r.processing_status === 'pending').length}
                   </div>
-                  <div className="text-xs text-gray-400">링크만 수집됨</div>
+                  <div className="text-xs text-gray-400">대기 중</div>
                 </div>
               </Card>
               <Card className="bg-blue-900/20 border-blue-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
-                    {rawDataList.filter(r => r.processing_status === 'processing').length}
-                    {rawDataList.filter(r => r.processing_status === 'processing').length > 0 && (
+                    {linksList.filter(r => r.processing_status === 'processing').length}
+                    {linksList.filter(r => r.processing_status === 'processing').length > 0 && (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
                   </div>
@@ -1328,7 +1328,7 @@ export default function AdminUrlExtraction() {
               <Card className="bg-red-900/20 border-red-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {rawDataList.filter(r => r.processing_status === 'failed' && !r.name_original).length}
+                    {linksList.filter(r => r.processing_status === 'failed').length}
                   </div>
                   <div className="text-xs text-gray-400">추출 실패</div>
                 </div>
@@ -1336,7 +1336,7 @@ export default function AdminUrlExtraction() {
             </div>
 
             {/* 일괄 추출 버튼 */}
-            {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 && (
+            {linksList.filter(r => r.processing_status === 'pending').length > 0 && (
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
                 <h3 className="text-white font-bold mb-2">일괄 상세 추출</h3>
                 <p className="text-gray-400 text-sm mb-3">
@@ -1363,14 +1363,14 @@ export default function AdminUrlExtraction() {
             )}
 
             {/* 선택 및 삭제 버튼 */}
-            {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 && (
+            {linksList.length > 0 && (
               <Card className="bg-gray-900 border-gray-800 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <button
                     onClick={handleSelectAllLinks}
                     className="flex items-center gap-2 text-white hover:text-cyan-400"
                   >
-                    {selectedLinkIds.size === rawDataList.filter(r => !r.name_original || r.name_original === "").length ? (
+                    {selectedLinkIds.size === linksList.length ? (
                       <CheckSquare className="w-5 h-5 text-cyan-400" />
                     ) : (
                       <Square className="w-5 h-5" />
@@ -1386,7 +1386,7 @@ export default function AdminUrlExtraction() {
                   <div className="flex gap-2">
                     <Button
                       onClick={handleDeleteSelectedLinks}
-                      disabled={deleteRawDataMutation.isPending}
+                      disabled={deletionProgress.isDeleting}
                       className="flex-1 bg-red-500 hover:bg-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -1394,7 +1394,7 @@ export default function AdminUrlExtraction() {
                     </Button>
                     <Button
                       onClick={handleDeleteAllLinks}
-                      disabled={deleteRawDataMutation.isPending}
+                      disabled={deletionProgress.isDeleting}
                       className="flex-1 bg-red-700 hover:bg-red-800"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -1407,8 +1407,8 @@ export default function AdminUrlExtraction() {
 
             {/* 링크 목록 */}
             <div className="space-y-3">
-              {rawDataList.filter(r => !r.name_original || r.name_original === "").length > 0 ? (
-                rawDataList.filter(r => !r.name_original || r.name_original === "").map((item) => (
+              {linksList.length > 0 ? (
+                linksList.map((item) => (
                   <Card key={item.id} className={`border-2 ${
                     selectedLinkIds.has(item.id) 
                       ? 'bg-purple-900/30 border-purple-400' 
@@ -1429,17 +1429,17 @@ export default function AdminUrlExtraction() {
 
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="text-white font-medium">링크 수집됨</h3>
+                            <h3 className="text-white font-medium">수집된 링크</h3>
                             {getStatusBadge(item.processing_status)}
                           </div>
                           <a 
-                            href={item.source_url} 
+                            href={item.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {item.source_url}
+                            {item.url}
                           </a>
                           <p className="text-gray-500 text-xs">
                             {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
@@ -1453,7 +1453,7 @@ export default function AdminUrlExtraction() {
                           <Button
                             onClick={() => {
                               setExtractingLinkId(item.id);
-                              extractDetailMutation.mutate({ rawDataId: item.id, url: item.source_url });
+                              extractDetailMutation.mutate({ linkId: item.id, url: item.url });
                             }}
                             disabled={extractingLinkId === item.id || item.processing_status === 'processing'}
                             size="sm"
