@@ -508,8 +508,37 @@ Deno.serve(async (req) => {
           }
         }
 
-        // === 카테고리 추출 (ul.separated-list > li > span.context-heading > a) ===
+        // === 도시(City) 추출 (ul.separated-list > li > span.context-heading > a) ===
+        let city = null;
         const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
+        if (categoryList) {
+          const links = categoryList.querySelectorAll('li > span.context-heading > a');
+          for (const link of links) {
+            const href = link.getAttribute('href');
+            const text = link.textContent?.trim();
+
+            // 도시 패턴: /tokyo/, /osaka/, /kyoto/ 등 (지역명을 포함한 링크)
+            // 일본 주요 도시 패턴 확인
+            const cityPattern = /^https?:\/\/[^\/]+\/([^\/]+)\/[^\/]+\/?$/;
+            const match = href?.match(cityPattern);
+            
+            if (match && match[1] && text && text.length > 0 && text.length < 30) {
+              // Events, Activities 등의 카테고리가 아닌 실제 도시명인지 확인
+              const nonCityKeywords = ['events', 'activities', 'culture', 'food', 'nature', 'activity', 'history', 'art', 'festival', 'sports', 'nightlife', 'shopping', 'beauty', 'spa'];
+              const isNotCategory = !nonCityKeywords.some(keyword => 
+                text.toLowerCase().includes(keyword) || match[1].toLowerCase().includes(keyword)
+              );
+              
+              if (isNotCategory) {
+                city = text;
+                console.log(`[Japantravel] ✅ Extracted city from context-heading link: ${city} (${href})`);
+                break;
+              }
+            }
+          }
+        }
+
+        // === 카테고리 추출 (ul.separated-list > li > span.context-heading > a) ===
         if (categoryList) {
           const links = categoryList.querySelectorAll('li > span.context-heading > a');
           for (const link of links) {
@@ -548,7 +577,18 @@ Deno.serve(async (req) => {
           }
         }
 
-        return { openingHours, accessInfo, category, priceYen, priceDetails };
+        // Fallback: accessInfo에서 도시 추출 (주소에서 파싱)
+        if (!city && accessInfo) {
+          // 일본 주소 형식에서 도시 추출 (예: "..., Inagi, Tokyo 206-8566, Japan" -> "Tokyo")
+          const cityFromAddressPattern = /,\s*([A-Za-z\s]+)\s+\d{3}-?\d{4}/;
+          const match = accessInfo.match(cityFromAddressPattern);
+          if (match && match[1]) {
+            city = match[1].trim();
+            console.log(`[Japantravel] ✅ Extracted city from address info: ${city}`);
+          }
+        }
+
+        return { openingHours, accessInfo, category, city, priceYen, priceDetails };
       } catch (domError) {
         console.error('[Japantravel] DOM parsing error:', domError);
         return { openingHours: null, accessInfo: null, category: null, priceYen: null, priceDetails: null };
@@ -560,6 +600,7 @@ Deno.serve(async (req) => {
       openingHours: extractedInfo.openingHours || 'not found',
       accessInfo: extractedInfo.accessInfo || 'not found',
       category: extractedInfo.category || 'not found',
+      city: extractedInfo.city || 'not found',
       priceYen: extractedInfo.priceYen || 'not found',
       priceDetails: extractedInfo.priceDetails || 'not found'
     });
@@ -577,13 +618,14 @@ Deno.serve(async (req) => {
           다음 japantravel.com 웹페이지에서 축제/이벤트 정보를 매우 상세하게 추출해주세요.
 
           **🔥 DOM에서 직접 추출한 정보 (반드시 사용!):**
+          ${extractedInfo.city ? `- 도시: "${extractedInfo.city}"` : '- 도시: (없음)'}
           ${extractedInfo.openingHours ? `- 운영시간: "${extractedInfo.openingHours}"` : '- 운영시간: (없음)'}
           ${extractedInfo.accessInfo ? `- 주소 정보: "${extractedInfo.accessInfo}"` : '- 주소 정보: (없음)'}
           ${extractedInfo.category ? `- 카테고리: "${extractedInfo.category}"` : '- 카테고리: (없음)'}
           ${extractedInfo.priceYen ? `- 입장료 (엔화): ¥${extractedInfo.priceYen}` : '- 입장료: (없음)'}
 
-          ⚠️ **중요**: 위에 명시된 운영시간, 주소 정보, 카테고리, 입장료는 DOM에서 정확히 추출한 것입니다. 
-          이 값들을 **절대 수정하지 말고 그대로** opening_hours_original, address_info_original, category, price 필드에 사용하세요!
+          ⚠️ **중요**: 위에 명시된 도시, 운영시간, 주소 정보, 카테고리, 입장료는 DOM에서 정확히 추출한 것입니다. 
+          이 값들을 **절대 수정하지 말고 그대로** city, opening_hours_original, address_info_original, category, price 필드에 사용하세요!
 
           🚨 **입장료 처리 규칙:**
           - DOM에서 추출된 priceYen 값이 있으면, 이를 **한화로 환산**하여 price 필드에 저장하세요
@@ -604,30 +646,35 @@ Deno.serve(async (req) => {
           
           **🎯 추출 규칙 (매우 중요!):**
           
-          1. **카테고리 (Category):**
+          1. **도시 (City):**
+             - 위에 "DOM에서 직접 추출한 정보"에 도시가 있다면, 그 값을 **반드시 그대로** city 필드에 사용하세요.
+             - 만약 DOM 추출 값이 없다면, 주소 정보를 분석하여 도시명을 추출하세요.
+             - **절대로 빈 값이나 null을 반환하지 마세요. 도시를 찾을 수 없으면 'Unknown'을 사용하세요.**
+
+          2. **카테고리 (Category):**
              - 위에 "DOM에서 직접 추출한 정보"에 카테고리가 있다면, 그 값을 **반드시 그대로** category 필드에 사용하세요.
              - 만약 DOM 추출 값이 없다면, 페이지 내용에서 축제 유형을 찾아 적절한 카테고리를 지정하세요.
 
-          2. **운영시간 (Opening Hours):**
+          3. **운영시간 (Opening Hours):**
              - 위에 "DOM에서 직접 추출한 정보"에 운영시간이 있다면, 그 값을 **반드시 그대로** opening_hours_original 필드에 사용하세요.
              - 수정하거나 재작성하지 마세요. 원본 형식 그대로 (예: "21:30 - 00:10")
 
-          3. **주소 정보 (Address Info):**
+          4. **주소 정보 (Address Info):**
              - 위에 "DOM에서 직접 추출한 정보"에 주소 정보가 있다면, 그 값을 **반드시 그대로** address_info_original 필드에 사용하세요.
              - 수정하거나 재작성하지 마세요. 정확한 주소 형식 그대로
 
-          4. **입장료 (Price):**
+          5. **입장료 (Price):**
              - DOM에서 추출된 priceYen 값이 있다면, 이를 한화로 환산하여 price 필드에 저장하세요 (1엔 = 9.5원)
              - 예: ¥1,800 → 17,100 (원)
              - DOM에서 추출된 가격이 없으면 price는 0으로 설정하세요
              - 절대로 임의의 금액을 생성하지 마세요!
              - price_details 필드에는 DOM에서 추출된 원문 가격 정보를 그대로 저장하세요
 
-          5. **원본 언어 감지:**
+          6. **원본 언어 감지:**
              - 웹페이지의 주요 텍스트가 어떤 언어로 작성되었는지 감지하세요.
              - original_language 필드에 언어 코드 저장 (ja=일본어, ko=한국어, en=영어, zh=중국어 등).
           
-          6. **텍스트 필드 (_original 접미사):**
+          7. **텍스트 필드 (_original 접미사):**
              - name_original, summary_original, description_original, highlights_original, restrictions_original, recommendations_original
              - **웹페이지의 원본 언어 텍스트를 그대로** 추출해야 합니다.
              - **절대 번역하거나 요약하지 마세요!**
@@ -942,7 +989,7 @@ Deno.serve(async (req) => {
         summary_original: festival.summary_original || null,
         description_original: festival.description_original || null,
         country: countryFromSource,
-        city: festival.city || null,
+        city: extractedInfo.city || festival.city || 'Unknown',
         category: extractedInfo.category || festival.category || null,
         start_date: festival.start_date,
         end_date: festival.end_date,
