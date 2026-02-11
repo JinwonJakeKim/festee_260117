@@ -2129,11 +2129,11 @@ export default function AdminUrlExtraction() {
                 <div className="border-t border-gray-800 pt-3">
                   <h4 className="text-gray-300 text-sm font-bold mb-2">수동 실행</h4>
                   <Button
-                    onClick={() => runPendingProcessMutation.mutate(5)}
-                    disabled={runPendingProcessMutation.isPending || rawDataList.filter(r => r.processing_status === 'pending').length === 0}
+                    onClick={handleBatchExtraction}
+                    disabled={batchExtractionProgress.isExtracting || rawDataList.filter(r => r.processing_status === 'pending').length === 0}
                     className="w-full bg-purple-500 hover:bg-purple-600"
                   >
-                    {runPendingProcessMutation.isPending ? (
+                    {batchExtractionProgress.isExtracting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         처리 중...
