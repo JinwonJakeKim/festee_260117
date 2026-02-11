@@ -81,6 +81,12 @@ export default function AdminUrlExtraction() {
     initialData: [],
   });
 
+  const { data: linksList } = useQuery({
+    queryKey: ['japantravelLinks'],
+    queryFn: () => base44.entities.JapantravelLinks.list('-created_date'),
+    initialData: [],
+  });
+
   const { data: sourceUrls } = useQuery({
     queryKey: ['festivalSourceUrls'],
     queryFn: () => base44.entities.FestivalSourceUrl.list('-created_date'),
@@ -301,7 +307,7 @@ export default function AdminUrlExtraction() {
   });
 
   const handleBatchExtraction = async () => {
-    const pendingLinks = rawDataList.filter(r => !r.name_original || r.name_original === "");
+    const pendingLinks = linksList.filter(r => r.processing_status === 'pending');
     if (pendingLinks.length === 0) {
       alert('처리할 링크가 없습니다');
       return;
@@ -322,38 +328,43 @@ export default function AdminUrlExtraction() {
     const linksToProcess = pendingLinks.slice(0, 5);
 
     for (let i = 0; i < linksToProcess.length; i++) {
-      const record = linksToProcess[i];
+      const link = linksToProcess[i];
       
       setBatchExtractionProgress(prev => ({
         ...prev,
         currentIndex: i + 1,
-        currentFestivalName: record.source_url.split('/').slice(-2, -1)[0] || '처리 중...'
+        currentFestivalName: link.url.split('/').slice(-2, -1)[0] || '처리 중...'
       }));
 
       try {
-        await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+        await base44.entities.JapantravelLinks.update(link.id, {
           processing_status: 'processing'
         });
 
         const { data: extractResult } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', {
-          url: record.source_url
+          url: link.url
         });
 
-        if (extractResult?.success) {
-          await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+        if (extractResult?.success && extractResult?.records_saved > 0) {
+          const rawDataRecords = await base44.entities.JapantravelUrlExtractionRawData.filter({
+            source_url: link.url
+          }, '-created_date', 1);
+          
+          await base44.entities.JapantravelLinks.update(link.id, {
             processing_status: 'processed',
+            raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
             error_message: null
           });
           succeeded++;
         } else {
-          await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+          await base44.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
-            error_message: extractResult?.error || 'Unknown error'
+            error_message: extractResult?.error || 'No data extracted'
           });
           failed++;
         }
       } catch (error) {
-        await base44.entities.JapantravelUrlExtractionRawData.update(record.id, {
+        await base44.entities.JapantravelLinks.update(link.id, {
           processing_status: 'failed',
           error_message: error.message || 'Unknown error'
         });
@@ -375,31 +386,55 @@ export default function AdminUrlExtraction() {
       isComplete: true
     }));
 
+    queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
     queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
   };
 
   const extractDetailMutation = useMutation({
-    mutationFn: async ({ rawDataId, url }) => {
+    mutationFn: async ({ linkId, url }) => {
+      await base44.entities.JapantravelLinks.update(linkId, {
+        processing_status: 'processing'
+      });
+
       const { data } = await base44.functions.invoke('extractJapantravelFestivalFromUrl', { 
-        url, 
-        rawDataId,
+        url,
         imageSelectors 
       });
-      return data;
+      return { data, linkId };
     },
-    onSuccess: (data) => {
-      if (data.success) {
+    onSuccess: async ({ data, linkId }) => {
+      if (data.success && data.records_saved > 0) {
+        const rawDataRecords = await base44.entities.JapantravelUrlExtractionRawData.filter({
+          source_url: data.url || linksList.find(l => l.id === linkId)?.url
+        }, '-created_date', 1);
+
+        await base44.entities.JapantravelLinks.update(linkId, {
+          processing_status: 'processed',
+          raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
+          error_message: null
+        });
         alert(data.message);
         setExtractingLinkId(null);
+        queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
         queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
       } else {
-        alert(`상세 추출 실패: ${data.error}`);
+        await base44.entities.JapantravelLinks.update(linkId, {
+          processing_status: 'failed',
+          error_message: data.error || 'No data extracted'
+        });
+        alert(`상세 추출 실패: ${data.error || 'No data extracted'}`);
         setExtractingLinkId(null);
+        queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
       }
     },
-    onError: (error) => {
+    onError: async (error, { linkId }) => {
+      await base44.entities.JapantravelLinks.update(linkId, {
+        processing_status: 'failed',
+        error_message: error.message || 'Unknown error'
+      });
       alert('상세 추출 중 오류가 발생했습니다: ' + error.message);
       setExtractingLinkId(null);
+      queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
     }
   });
 
@@ -568,11 +603,10 @@ export default function AdminUrlExtraction() {
   };
 
   const handleSelectAllLinks = () => {
-    const linkOnlyRecords = rawDataList.filter(r => !r.name_original || r.name_original === "");
-    if (selectedLinkIds.size === linkOnlyRecords.length) {
+    if (selectedLinkIds.size === linksList.length) {
       setSelectedLinkIds(new Set());
     } else {
-      setSelectedLinkIds(new Set(linkOnlyRecords.map(r => r.id)));
+      setSelectedLinkIds(new Set(linksList.map(r => r.id)));
     }
   };
 
@@ -600,12 +634,12 @@ export default function AdminUrlExtraction() {
 
     try {
       for (let i = 0; i < idsToDelete.length; i++) {
-        await base44.entities.JapantravelUrlExtractionRawData.delete(idsToDelete[i]);
+        await base44.entities.JapantravelLinks.delete(idsToDelete[i]);
         setDeletionProgress({ isDeleting: true, current: i + 1, total: idsToDelete.length });
       }
       
       setSelectedLinkIds(new Set());
-      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+      queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
       alert('선택한 링크가 모두 삭제되었습니다');
     } catch (error) {
       alert('삭제 중 오류가 발생했습니다: ' + error.message);
@@ -615,26 +649,25 @@ export default function AdminUrlExtraction() {
   };
 
   const handleDeleteAllLinks = async () => {
-    const linkOnlyRecords = rawDataList.filter(r => !r.name_original || r.name_original === "");
-    if (linkOnlyRecords.length === 0) {
+    if (linksList.length === 0) {
       alert('삭제할 링크가 없습니다');
       return;
     }
-    if (!confirm(`모든 링크 ${linkOnlyRecords.length}개를 삭제하시겠습니까?`)) {
+    if (!confirm(`모든 링크 ${linksList.length}개를 삭제하시겠습니까?`)) {
       return;
     }
 
-    const idsToDelete = linkOnlyRecords.map(r => r.id);
+    const idsToDelete = linksList.map(r => r.id);
     setDeletionProgress({ isDeleting: true, current: 0, total: idsToDelete.length });
 
     try {
       for (let i = 0; i < idsToDelete.length; i++) {
-        await base44.entities.JapantravelUrlExtractionRawData.delete(idsToDelete[i]);
+        await base44.entities.JapantravelLinks.delete(idsToDelete[i]);
         setDeletionProgress({ isDeleting: true, current: i + 1, total: idsToDelete.length });
       }
       
       setSelectedLinkIds(new Set());
-      queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+      queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
       alert('모든 링크가 삭제되었습니다');
     } catch (error) {
       alert('삭제 중 오류가 발생했습니다: ' + error.message);
