@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `${successfullyUpdated}개 링크가 대기열에 추가되었습니다. 5분마다 자동으로 처리됩니다.`,
+      message: `${successfullyUpdated}개의 링크가 자동 처리를 위해 대기열에 추가되었습니다. 5분마다 자동화에 의해 순차적으로 처리됩니다.`,
       processed: successfullyUpdated,
       remaining: linkIds.length - successfullyUpdated
     });
