@@ -1229,6 +1229,31 @@ export default function AdminUrlExtraction() {
                       </span>
                     </div>
                   </div>
+                  
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', {
+                          batchSize: 3
+                        });
+                        
+                        if (data.success) {
+                          alert(`✅ 자동화 수동 실행 완료!\n\n처리됨: ${data.processed}개\n성공: ${data.succeededCount}개\n실패: ${data.failedCount}개`);
+                          queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+                          queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+                        } else {
+                          alert('처리할 링크가 없습니다.');
+                        }
+                      } catch (error) {
+                        alert(`오류 발생: ${error.message}`);
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 font-bold"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    자동화 즉시 실행 (3개 처리)
+                  </Button>
+
                   <p className="text-gray-400 text-xs">
                     💡 자동화가 5분마다 최대 3개씩 처리합니다. 브라우저를 닫아도 계속 실행됩니다.
                   </p>
