@@ -317,8 +317,8 @@ export default function AdminUrlExtraction() {
     onSuccess: (data) => {
       setBatchExtractionProgress(prev => ({
         ...prev,
-        succeeded: data.processed || 0,
-        failed: 0,
+        succeeded: data.succeeded || 0,
+        failed: data.failed || 0,
         currentIndex: data.processed || 0,
         total: (data.processed || 0) + (data.remaining || 0),
         isExtracting: false,
@@ -326,15 +326,11 @@ export default function AdminUrlExtraction() {
       }));
 
       if (data.success) {
-        if (data.remaining > 0) {
-          alert(`✅ 첫 ${data.processed}개 링크 처리 완료!\n\n남은 ${data.remaining}개 링크는 5분마다 자동으로 처리됩니다.\n다음 실행: ${new Date(data.next_run).toLocaleString('ko-KR')}\n\n자동화가 완료될 때까지 기다려주세요.`);
-        } else {
-          alert(`✅ 모든 ${data.processed}개 링크 처리 완료!`);
-        }
+        alert(data.message);
       } else {
         alert(`❌ 일괄 추출 실패\n\n${data.error || data.message}`);
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
       queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
     },
