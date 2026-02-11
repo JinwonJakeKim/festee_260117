@@ -738,6 +738,106 @@ export default function AdminUrlExtraction() {
         </div>
       )}
 
+      {/* 일괄 추출 진행 상황 팝업 */}
+      {(batchExtractionProgress.isExtracting || batchExtractionProgress.isComplete) && (
+        <div className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center">
+          <Card className="bg-gray-900 border-purple-500/50 p-8 w-[500px] max-w-[90vw]">
+            <h3 className="text-white font-bold mb-6 text-center text-xl">
+              {batchExtractionProgress.isComplete ? '추출 완료' : '축제 정보 추출 중...'}
+            </h3>
+            
+            <div className="space-y-6">
+              {/* 진행 상황 바 */}
+              {!batchExtractionProgress.isComplete && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-300">
+                    <span>진행 상황</span>
+                    <span>{batchExtractionProgress.currentIndex} / {batchExtractionProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 h-full transition-all duration-500 animate-pulse"
+                      style={{ width: `${(batchExtractionProgress.currentIndex / batchExtractionProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 현재 처리 중인 축제 */}
+              {!batchExtractionProgress.isComplete && batchExtractionProgress.currentFestivalName && (
+                <div className="bg-purple-900/30 border border-purple-400/30 rounded-lg p-4">
+                  <p className="text-purple-400 text-sm font-bold mb-2">🎯 현재 처리 중</p>
+                  <p className="text-white text-sm break-all">{batchExtractionProgress.currentFestivalName}</p>
+                </div>
+              )}
+
+              {/* 통계 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-900/30 border border-green-400/30 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-green-400 mb-1">
+                    {batchExtractionProgress.succeeded}
+                  </div>
+                  <div className="text-xs text-gray-400">성공</div>
+                </div>
+                <div className="bg-red-900/30 border border-red-400/30 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-red-400 mb-1">
+                    {batchExtractionProgress.failed}
+                  </div>
+                  <div className="text-xs text-gray-400">실패</div>
+                </div>
+              </div>
+
+              {/* 완료 메시지 */}
+              {batchExtractionProgress.isComplete && (
+                <div className={`${
+                  batchExtractionProgress.failed === 0 ? 'bg-green-900/20 border-green-400/30' : 'bg-yellow-900/20 border-yellow-400/30'
+                } border rounded-lg p-4`}>
+                  <p className={`${
+                    batchExtractionProgress.failed === 0 ? 'text-green-400' : 'text-yellow-400'
+                  } text-center font-bold`}>
+                    {batchExtractionProgress.failed === 0 
+                      ? `✅ ${batchExtractionProgress.total}개의 축제 정보를 모두 추출했습니다!`
+                      : `⚠️ ${batchExtractionProgress.succeeded}개 성공, ${batchExtractionProgress.failed}개 실패`
+                    }
+                  </p>
+                </div>
+              )}
+
+              {/* 로딩 애니메이션 */}
+              {!batchExtractionProgress.isComplete && (
+                <div className="flex justify-center gap-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="w-3 h-3 rounded-full bg-cyan-400 animate-bounce"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* 닫기 버튼 */}
+              {batchExtractionProgress.isComplete && (
+                <Button
+                  onClick={() => setBatchExtractionProgress({
+                    isExtracting: false,
+                    currentIndex: 0,
+                    total: 0,
+                    currentFestivalName: '',
+                    succeeded: 0,
+                    failed: 0,
+                    isComplete: false
+                  })}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold h-12"
+                >
+                  확인
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* 삭제 진행 상황 팝업 */}
       {deletionProgress.isDeleting && (
         <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
