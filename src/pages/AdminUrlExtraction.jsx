@@ -1272,7 +1272,7 @@ export default function AdminUrlExtraction() {
                   ) : (
                     <>
                       <RefreshCw className="w-5 h-5 mr-2" />
-                      대기열 일괄 추출 시작
+                      축제정보 일괄 추출 시작
                     </>
                   )}
                 </Button>
