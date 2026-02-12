@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { batchSize = 3, linkIds } = await req.json();
+    const { batchSize = 1, linkIds } = await req.json();
 
     console.log(`[Japantravel] Starting to process pending links (batch size: ${batchSize})`);
 
