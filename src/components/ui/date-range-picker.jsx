@@ -121,7 +121,7 @@ export function DateRangePicker({ selected, onSelect, onApply, onReset, hidePast
       </div>
 
       {/* 날짜 그리드 - 고정 높이 */}
-      <div className="grid grid-cols-7 gap-1 mb-4" style={{ minHeight: '240px' }}>
+      <div className="grid grid-cols-7 gap-1 mb-3" style={{ minHeight: '240px' }}>
         {days.map((day, index) => {
           if (!day) {
             return <div key={`empty-${index}`} className="w-10 h-10" />;
@@ -155,7 +155,7 @@ export function DateRangePicker({ selected, onSelect, onApply, onReset, hidePast
 
       {/* 지난 축제 보기 토글 */}
       {onHidePastFestivalsChange && (
-        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-800">
+        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-800">
           <span className="text-white text-sm">지난 축제 보기</span>
           <Switch
             checked={!hidePastFestivals}
