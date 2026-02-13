@@ -392,21 +392,20 @@ export default function FestivalMore() {
           ))}
         </div>
 
+        {/* 지난 축제 보기 토글 */}
+        <div className="flex items-center justify-end gap-3 mb-4">
+          <span className="text-white text-sm">지난 축제 보기</span>
+          <Switch
+            checked={!hidePastFestivals}
+            onCheckedChange={(checked) => setHidePastFestivals(!checked)}
+            className="data-[state=checked]:bg-cyan-500"
+          />
+        </div>
+
         {/* Active Filters */}
         {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to) || !hidePastFestivals) && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-gray-400 text-sm font-medium">활성 필터</span>
-              <div className="flex items-center gap-3">
-                <span className="text-white text-sm">지난 축제 보기</span>
-                <Switch
-                  checked={!hidePastFestivals}
-                  onCheckedChange={(checked) => setHidePastFestivals(!checked)}
-                  className="data-[state=checked]:bg-cyan-500"
-                />
-              </div>
-            </div>
-            <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
+            <span className="text-gray-400 text-xs">활성 필터:</span>
             {categoryFilter !== "all" && (
               <Badge
                 variant="outline"
@@ -468,7 +467,6 @@ export default function FestivalMore() {
             >
               모두 지우기
             </Button>
-            </div>
           </div>
         )}
 
