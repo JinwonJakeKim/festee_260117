@@ -819,7 +819,7 @@ export default function Home() {
                   )}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-transparent border-0" side="bottom" align="start" avoidCollisions={false} sideOffset={5}>
+              <PopoverContent className="w-auto p-0 bg-transparent border-0" side="bottom" align="center" avoidCollisions={false} sideOffset={5}>
                 <DateRangePicker
                   selected={tempDateRange}
                   onSelect={setTempDateRange}
