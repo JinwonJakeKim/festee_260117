@@ -162,7 +162,7 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showBetaBanner, setShowBetaBanner] = useState(true);
-  const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') === 'true');
+  const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
   const { getLocalizedContent } = useFestivalLocalizedContent();
 
   // URL 업데이트 함수
@@ -848,12 +848,12 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 지난 축제 숨김 토글 */}
+          {/* 지난 축제 보기 토글 */}
           <div className="flex items-center justify-end gap-3 mb-4 py-2">
-            <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
+            <span className="text-white text-sm font-medium">지난 축제 보기</span>
             <Switch
-              checked={hidePastFestivals}
-              onCheckedChange={setHidePastFestivals}
+              checked={!hidePastFestivals}
+              onCheckedChange={(checked) => setHidePastFestivals(!checked)}
               className="data-[state=checked]:bg-cyan-500"
             />
           </div>
@@ -888,13 +888,13 @@ export default function Home() {
                   {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')} ✕
                 </Badge>
               )}
-              {hidePastFestivals && (
+              {!hidePastFestivals && (
                 <Badge 
                   variant="outline" 
                   className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                  onClick={() => setHidePastFestivals(false)}
+                  onClick={() => setHidePastFestivals(true)}
                 >
-                  지난 축제 숨김 ✕
+                  지난 축제 포함 ✕
                 </Badge>
               )}
               {selectedTags.map(tag => (
@@ -914,7 +914,7 @@ export default function Home() {
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
                   setSelectedTags([]);
-                  setHidePastFestivals(false);
+                  setHidePastFestivals(true);
                 }}
                 variant="ghost"
                 size="sm"
@@ -1002,7 +1002,7 @@ export default function Home() {
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
                   setSelectedTags([]);
-                  setHidePastFestivals(false);
+                  setHidePastFestivals(true);
                 }}
                 variant="outline"
                 className="bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
