@@ -851,19 +851,8 @@ export default function Home() {
           </div>
 
           {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-400 text-sm font-medium">활성 필터</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-white text-sm">지난 축제 보기</span>
-                  <Switch
-                    checked={!hidePastFestivals}
-                    onCheckedChange={(checked) => setHidePastFestivals(!checked)}
-                    className="data-[state=checked]:bg-cyan-500"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="mb-4 flex items-center gap-2 flex-wrap">
+              <span className="text-gray-400 text-xs">활성 필터:</span>
               {categoryFilter !== "all" && (
                 <Badge 
                   variant="outline" 
@@ -926,8 +915,7 @@ export default function Home() {
                 모두 지우기
               </Button>
               </div>
-            </div>
-          )}
+              )}
 
           {/* Festival List */}
           <div className="space-y-3">
