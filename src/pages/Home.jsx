@@ -792,12 +792,12 @@ export default function Home() {
                 <div className="flex items-center gap-1.5">
                   <Tag className="w-4 h-4 text-purple-400" />
                   <SelectValue>
-                    {categoryFilter === "all" ? "분류" : categoryFilter}
+                    {categoryFilter === "all" ? "카테고리" : categoryFilter}
                   </SelectValue>
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 분류</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
                     {category}
