@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
-export function DateRangePicker({ selected, onSelect, onApply, onReset }) {
+export function DateRangePicker({ selected, onSelect, onApply, onReset, hidePastFestivals, onHidePastFestivalsChange }) {
   const [currentMonth, setCurrentMonth] = useState(
     selected?.from ? new Date(selected.from) : new Date()
   );
@@ -151,6 +152,18 @@ export function DateRangePicker({ selected, onSelect, onApply, onReset }) {
           );
         })}
       </div>
+
+      {/* 지난 축제 보기 토글 */}
+      {onHidePastFestivalsChange && (
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-800">
+          <span className="text-white text-sm">지난 축제 보기</span>
+          <Switch
+            checked={!hidePastFestivals}
+            onCheckedChange={(checked) => onHidePastFestivalsChange(!checked)}
+            className="data-[state=checked]:bg-cyan-500"
+          />
+        </div>
+      )}
 
       {/* 버튼 */}
       <div className="flex gap-2">
