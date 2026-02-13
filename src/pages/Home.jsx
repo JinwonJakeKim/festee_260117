@@ -923,6 +923,7 @@ export default function Home() {
               >
                 모두 지우기
               </Button>
+              </div>
             </div>
           )}
 
