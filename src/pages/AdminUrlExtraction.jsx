@@ -69,6 +69,7 @@ export default function AdminUrlExtraction() {
     isComplete: false
   });
   const [batchExtractionAborted, setBatchExtractionAborted] = useState(false);
+  const [isProcessingAutomation, setIsProcessingAutomation] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['currentUser'],
@@ -1232,6 +1233,7 @@ export default function AdminUrlExtraction() {
                   
                   <Button
                     onClick={async () => {
+                      setIsProcessingAutomation(true);
                       try {
                         const { data } = await base44.functions.invoke('processPendingJapantravelUrlExtractions', {
                           batchSize: 3
@@ -1246,12 +1248,24 @@ export default function AdminUrlExtraction() {
                         }
                       } catch (error) {
                         alert(`오류 발생: ${error.message}`);
+                      } finally {
+                        setIsProcessingAutomation(false);
                       }
                     }}
+                    disabled={isProcessingAutomation}
                     className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 font-bold"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    자동화 즉시 실행 (3개 처리)
+                    {isProcessingAutomation ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        처리 중...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        자동화 즉시 실행 (3개 처리)
+                      </>
+                    )}
                   </Button>
 
                   <p className="text-gray-400 text-xs">
