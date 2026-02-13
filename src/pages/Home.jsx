@@ -825,6 +825,8 @@ export default function Home() {
                   onSelect={setTempDateRange}
                   onApply={handleDateFilterApply}
                   onReset={handleDateFilterReset}
+                  hidePastFestivals={hidePastFestivals}
+                  onHidePastFestivalsChange={setHidePastFestivals}
                 />
               </PopoverContent>
             </Popover>

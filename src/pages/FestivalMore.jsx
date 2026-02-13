@@ -368,6 +368,8 @@ export default function FestivalMore() {
                 onSelect={setTempDateRange}
                 onApply={handleDateFilterApply}
                 onReset={handleDateFilterReset}
+                hidePastFestivals={hidePastFestivals}
+                onHidePastFestivalsChange={setHidePastFestivals}
               />
             </PopoverContent>
           </Popover>
@@ -390,16 +392,6 @@ export default function FestivalMore() {
               {filter}
             </Button>
           ))}
-        </div>
-
-        {/* 지난 축제 보기 토글 */}
-        <div className="flex items-center justify-end gap-3 mb-4">
-          <span className="text-white text-sm">지난 축제 보기</span>
-          <Switch
-            checked={!hidePastFestivals}
-            onCheckedChange={(checked) => setHidePastFestivals(!checked)}
-            className="data-[state=checked]:bg-cyan-500"
-          />
         </div>
 
         {/* Active Filters */}
