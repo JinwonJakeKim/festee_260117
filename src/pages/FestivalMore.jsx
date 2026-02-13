@@ -3,11 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, ArrowLeft, Calendar as CalendarIcon, Globe, Tag } from "lucide-react";
+import { Heart, ArrowLeft, Calendar as CalendarIcon, Globe, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
@@ -349,30 +350,57 @@ export default function FestivalMore() {
             </SelectContent>
           </Select>
 
-          <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <button className="px-4 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap flex items-center gap-2 text-sm hover:bg-gray-800 transition-colors">
-                <CalendarIcon className="w-4 h-4 text-pink-500" />
-                {dateRange.from && dateRange.to ? (
-                  <span className="text-cyan-400">
-                    {format(dateRange.from, 'M/d', { locale: ko })} - {format(dateRange.to, 'M/d', { locale: ko })}
-                  </span>
-                ) : (
-                  <span>날짜</span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-transparent border-0">
-              <DateRangePicker
-                selected={tempDateRange}
-                onSelect={setTempDateRange}
-                onApply={handleDateFilterApply}
-                onReset={handleDateFilterReset}
-                hidePastFestivals={hidePastFestivals}
-                onHidePastFestivalsChange={setHidePastFestivals}
-              />
-            </PopoverContent>
-          </Popover>
+          <button 
+            onClick={() => setIsDatePickerOpen(true)}
+            className="px-4 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap flex items-center gap-2 text-sm hover:bg-gray-800 transition-colors"
+          >
+            <CalendarIcon className="w-4 h-4 text-pink-500" />
+            {dateRange.from && dateRange.to ? (
+              <span className="text-cyan-400">
+                {format(dateRange.from, 'M/d', { locale: ko })} - {format(dateRange.to, 'M/d', { locale: ko })}
+              </span>
+            ) : (
+              <span>날짜</span>
+            )}
+          </button>
+
+          {/* Date Picker Modal */}
+          <AnimatePresence>
+            {isDatePickerOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm"
+                />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="relative pointer-events-auto"
+                  >
+                    <button
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center z-10 border border-gray-700"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                    <DateRangePicker
+                      selected={tempDateRange}
+                      onSelect={setTempDateRange}
+                      onApply={handleDateFilterApply}
+                      onReset={handleDateFilterReset}
+                      hidePastFestivals={hidePastFestivals}
+                      onHidePastFestivalsChange={setHidePastFestivals}
+                    />
+                  </motion.div>
+                </div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Quick Filters */}
