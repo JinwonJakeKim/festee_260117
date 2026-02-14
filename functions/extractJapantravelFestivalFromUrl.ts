@@ -2,6 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import moment from 'npm:moment';
 
 Deno.serve(async (req) => {
+  let url = ''; // 최상위 스코프에 선언하여 catch 블록에서도 접근 가능
+  
   try {
     const base44 = createClientFromRequest(req);
     
@@ -10,7 +12,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const { url, rawDataId, imageSelectors } = await req.json();
+    const requestData = await req.json();
+    url = requestData.url;
+    const { rawDataId, imageSelectors } = requestData;
     
     // 다양한 실제 브라우저 User-Agent 배열
     const userAgents = [
@@ -704,11 +708,18 @@ Deno.serve(async (req) => {
     
     // 최상위 오류 발생 시에도 RawData 레코드 생성/업데이트
     try {
-      const { url: urlFromReq } = await req.json();
+      if (!url) {
+        return Response.json({ 
+          success: false,
+          error: error.message || '알 수 없는 오류가 발생했습니다',
+          message: '다시 시도해주세요.'
+        }, { status: 500 });
+      }
+      
       const base44 = createClientFromRequest(req);
       const currentTime = new Date().toISOString();
       const failedRecord = {
-        source_url: urlFromReq,
+        source_url: url,
         original_language: 'en',
         name_original: 'Unknown',
         country: 'Japan',
@@ -723,7 +734,7 @@ Deno.serve(async (req) => {
       };
       
       const existingRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
-        source_url: urlFromReq
+        source_url: url
       });
       
       if (existingRecords && existingRecords.length > 0) {
