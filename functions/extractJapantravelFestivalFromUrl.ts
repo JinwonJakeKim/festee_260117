@@ -494,6 +494,7 @@ Deno.serve(async (req) => {
     }
 
     // ===== 최종 RawData 객체 생성 (원본 데이터만, 번역 없음) =====
+    const currentTime = new Date().toISOString();
     const rawDataRecord = {
       source_url: url,
       original_language: detectedLanguageFromUrl || 'en',
@@ -520,17 +521,14 @@ Deno.serve(async (req) => {
       organizer: null,
       contact: contactPhone || contactEmail ? { phone: contactPhone, email: contactEmail } : null,
       social_media: socialMedia,
-      highlights_original: [],
-      restrictions_original: [],
-      recommendations_original: [],
       schedule: [],
       lineup: [],
-      nearby_attractions: [],
       tags: [],
-      expected_visitors: null,
       extract_status: 'processed',
       processing_status: 'pending',
-      festival_id: null
+      festival_id: null,
+      create_time: currentTime,
+      update_time: currentTime
     };
 
     // ===== JapantravelUrlExtractionRawData에 저장 =====
