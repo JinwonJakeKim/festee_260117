@@ -2,23 +2,24 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "AUTO-DETECT-V1";
+  const VERSION = "AUTO-DETECT-V2";
   const startTime = Date.now();
   const MAX_PESSIMISTIC_PAGES = 50; // 무한 루프 방지용 최대값
   const MAX_LINKS_PER_PAGE = 8;
   const TIME_LIMIT = 30000;
   
-  console.log(`[${VERSION}] START - Auto-detect last page (max ${MAX_PESSIMISTIC_PAGES} pages)`);
+  console.log(`[${VERSION}] START - Auto-detect or manual pages`);
   
   try {
     const base44 = createClientFromRequest(req);
+    
     const user = await base44.auth.me();
     
     if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
-    const { sourceUrlId, targetMonth } = await req.json();
+    const { sourceUrlId, targetMonth, maxPages } = await req.json();
     
     if (!sourceUrlId) {
       return Response.json({ success: false, error: 'sourceUrlId required' }, { status: 400 });
@@ -38,14 +39,20 @@ Deno.serve(async (req) => {
         .replace(/{MM}/g, month)
         .replace(/{LAST_DAY}/g, lastDay.toString());
     }
+    
+    // maxPages 처리: "auto" 또는 null이면 자동 감지, 숫자면 그 페이지까지만
+    const useAutoDetect = !maxPages || maxPages === "auto";
+    const maxPagesToProcess = useAutoDetect ? MAX_PESSIMISTIC_PAGES : parseInt(maxPages);
+    
     console.log(`[${VERSION}] URL: ${baseUrl}`);
+    console.log(`[${VERSION}] Mode: ${useAutoDetect ? 'Auto-detect' : `Manual (${maxPagesToProcess} pages)`}`);
 
     const allLinks = [];
     let prevPageLinks = null;
     let actualPagesProcessed = 0;
     
-    for (let page = 1; page <= MAX_PESSIMISTIC_PAGES; page++) {
-      console.log(`[${VERSION}] Page ${page}/?`);
+    for (let page = 1; page <= maxPagesToProcess; page++) {
+      console.log(`[${VERSION}] Page ${page}/${useAutoDetect ? '?' : maxPagesToProcess}`);
       
       if (Date.now() - startTime > TIME_LIMIT) {
         console.log(`[${VERSION}] Timeout`);
@@ -95,8 +102,8 @@ Deno.serve(async (req) => {
         }
       }
       
-      // 이전 페이지와 현재 페이지의 링크가 동일한지 확인
-      if (page > 1 && prevPageLinks && currentPageLinks.length > 0) {
+      // 자동 감지 모드: 이전 페이지와 현재 페이지의 링크가 동일한지 확인
+      if (useAutoDetect && page > 1 && prevPageLinks && currentPageLinks.length > 0) {
         const currentHash = JSON.stringify(currentPageLinks.sort());
         const prevHash = JSON.stringify(prevPageLinks.sort());
         
@@ -160,10 +167,11 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       version: VERSION,
+      mode: useAutoDetect ? 'auto-detect' : 'manual',
       actual_pages_processed: actualPagesProcessed,
       total_links: allLinks.length,
       new_records: toCreate.length,
-      message: `${actualPagesProcessed}개 페이지 자동 감지하여 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`
+      message: `${useAutoDetect ? '자동 감지' : `${maxPagesToProcess}페이지 지정`}: ${actualPagesProcessed}개 페이지에서 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`
     });
 
   } catch (error) {

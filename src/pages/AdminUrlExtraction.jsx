@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +54,7 @@ export default function AdminUrlExtraction() {
   const [extractionProgress, setExtractionProgress] = useState({
     isExtracting: false,
     currentPage: 0,
-    totalPages: 5,
+    totalPages: 'auto',
     linksFound: 0,
     elapsedSeconds: 0
   });
@@ -277,17 +278,18 @@ export default function AdminUrlExtraction() {
       }, { signal: abortSignal });
       return data;
     },
-    onMutate: () => {
-      setExtractionProgress({
+    onMutate: ({ maxPages }) => {
+      setExtractionProgress(prev => ({
+        ...prev,
         isExtracting: true,
         currentPage: 0,
-        totalPages: 5,
+        totalPages: maxPages === 'auto' ? 'auto' : maxPages,
         linksFound: 0,
         elapsedSeconds: 0
-      });
+      }));
     },
     onSuccess: (data) => {
-      setExtractionProgress({ isExtracting: false, currentPage: 0, totalPages: 5, linksFound: 0, elapsedSeconds: 0 });
+      setExtractionProgress({ isExtracting: false, currentPage: 0, totalPages: 'auto', linksFound: 0, elapsedSeconds: 0 });
       setExtractionAbortController(null);
       
       if (data.success) {
@@ -299,7 +301,7 @@ export default function AdminUrlExtraction() {
       }
     },
     onError: (error) => {
-      setExtractionProgress({ isExtracting: false, currentPage: 0, totalPages: 5, linksFound: 0, elapsedSeconds: 0 });
+      setExtractionProgress({ isExtracting: false, currentPage: 0, totalPages: 'auto', linksFound: 0, elapsedSeconds: 0 });
       setExtractionAbortController(null);
       
       if (error.name === 'AbortError') {
@@ -693,12 +695,21 @@ export default function AdminUrlExtraction() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm text-gray-300">
                   <span>예상 진행률</span>
-                  <span>{Math.min(Math.round((extractionProgress.elapsedSeconds / (extractionProgress.totalPages * 2)) * 100), 99)}%</span>
+                  <span>
+                    {extractionProgress.totalPages === 'auto' 
+                      ? '자동 감지 중...' 
+                      : `${Math.min(Math.round((extractionProgress.elapsedSeconds / (extractionProgress.totalPages * 2)) * 100), 99)}%`
+                    }
+                  </span>
                 </div>
                 <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
                   <div 
                     className="bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 h-full transition-all duration-1000 animate-pulse"
-                    style={{ width: `${Math.min((extractionProgress.elapsedSeconds / (extractionProgress.totalPages * 2)) * 100, 99)}%` }}
+                    style={{ 
+                      width: extractionProgress.totalPages === 'auto' 
+                        ? '99%' 
+                        : `${Math.min((extractionProgress.elapsedSeconds / (extractionProgress.totalPages * 2)) * 100, 99)}%` 
+                    }}
                   />
                 </div>
               </div>
@@ -707,9 +718,11 @@ export default function AdminUrlExtraction() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-purple-900/30 border border-purple-400/30 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-purple-400 mb-1">
-                    {extractionProgress.totalPages}
+                    {extractionProgress.totalPages === 'auto' ? '자동' : extractionProgress.totalPages}
                   </div>
-                  <div className="text-xs text-gray-400">최대 페이지</div>
+                  <div className="text-xs text-gray-400">
+                    {extractionProgress.totalPages === 'auto' ? '마지막 페이지 감지' : '최대 페이지'}
+                  </div>
                 </div>
                 <div className="bg-cyan-900/30 border border-cyan-400/30 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-cyan-400 mb-1">
@@ -722,7 +735,10 @@ export default function AdminUrlExtraction() {
               {/* 예상 시간 */}
               <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-4">
                 <p className="text-blue-400 text-sm text-center">
-                  ⏱️ 예상 소요 시간: 약 {extractionProgress.totalPages * 2}초
+                  ⏱️ {extractionProgress.totalPages === 'auto' 
+                    ? '마지막 페이지를 자동으로 감지합니다' 
+                    : `예상 소요 시간: 약 ${extractionProgress.totalPages * 2}초`
+                  }
                 </p>
                 <p className="text-gray-400 text-xs text-center mt-2">
                   페이지당 약 2초가 소요됩니다
@@ -818,7 +834,7 @@ export default function AdminUrlExtraction() {
                   <div>
                     <h3 className="text-white font-bold text-lg">멀티 URL 추출</h3>
                     <p className="text-gray-400 text-sm mt-0.5">
-                      월별로 여러 축제 링크를 한 번에 추출 (최대 5페이지)
+                      월별로 여러 축제 링크를 한 번에 추출 (자동 또는 수동 페이지 지정)
                     </p>
                   </div>
                 </div>
@@ -1028,7 +1044,7 @@ export default function AdminUrlExtraction() {
                                 <div className="flex items-center gap-3">
                                   <label className="text-gray-400 text-sm font-medium flex-shrink-0">최대 페이지:</label>
                                   <select
-                                    value={selectedMaxPages[source.id] || '5'}
+                                    value={selectedMaxPages[source.id] || 'auto'}
                                     onChange={(e) => {
                                       setSelectedMaxPages({
                                         ...selectedMaxPages,
@@ -1037,7 +1053,8 @@ export default function AdminUrlExtraction() {
                                     }}
                                     className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
                                   >
-                                    {[1, 2, 3, 5, 10, 15, 20].map((num) => (
+                                    <option value="auto">자동 (마지막 페이지 감지)</option>
+                                    {[1, 2, 3, 5, 10, 15, 20, 25, 30].map((num) => (
                                       <option key={num} value={num}>
                                         {num}페이지
                                       </option>
@@ -1082,7 +1099,7 @@ export default function AdminUrlExtraction() {
                                     handleRunLinkExtraction({
                                       sourceUrlId: source.id,
                                       targetMonth: selectedMonths[source.id],
-                                      maxPages: parseInt(selectedMaxPages[source.id] || '5')
+                                      maxPages: selectedMaxPages[source.id] || 'auto'
                                     });
                                   }}
                                   disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
@@ -1113,7 +1130,8 @@ export default function AdminUrlExtraction() {
                 <ul className="text-gray-300 text-xs space-y-1">
                   <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
                   <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
-                  <li>• 최대 페이지 수를 선택하여 탐색 범위를 조절할 수 있습니다 (기본값: 5페이지)</li>
+                  <li>• <strong className="text-cyan-400">"자동"</strong>을 선택하면 마지막 페이지를 자동으로 감지하여 모든 링크를 추출합니다</li>
+                  <li>• 특정 페이지 수를 선택하면 그 페이지까지만 추출하고 중단합니다</li>
                   <li>• 추출된 링크는 "축제정보추출" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
                 </ul>
               </div>
@@ -2338,7 +2356,7 @@ export default function AdminUrlExtraction() {
                                 })}
                               </select>
                               <select
-                                value={selectedMaxPages[source.id] || '5'}
+                                value={selectedMaxPages[source.id] || 'auto'}
                                 onChange={(e) => {
                                   setSelectedMaxPages({
                                     ...selectedMaxPages,
@@ -2347,7 +2365,8 @@ export default function AdminUrlExtraction() {
                                 }}
                                 className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs w-20"
                               >
-                                {[1, 2, 3, 5, 10, 15, 20].map((num) => (
+                                <option value="auto">자동</option>
+                                {[1, 2, 3, 5, 10, 15, 20, 25, 30].map((num) => (
                                   <option key={num} value={num}>
                                     {num}p
                                   </option>
@@ -2362,7 +2381,7 @@ export default function AdminUrlExtraction() {
                                   handleRunLinkExtraction({
                                     sourceUrlId: source.id,
                                     targetMonth: selectedMonths[source.id],
-                                    maxPages: parseInt(selectedMaxPages[source.id] || '5')
+                                    maxPages: selectedMaxPages[source.id] || 'auto'
                                   });
                                 }}
                                 disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
@@ -2381,7 +2400,7 @@ export default function AdminUrlExtraction() {
                             </div>
                           ) : (
                             <Button
-                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id, maxPages: 5 })}
+                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id, maxPages: 'auto' })}
                               disabled={runLinkExtractionMutation.isPending}
                               size="sm"
                               className="bg-cyan-500 hover:bg-cyan-600"
