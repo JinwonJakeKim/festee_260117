@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     for (const rawDataId of rawDataIds) {
       try {
         // 원본 데이터 가져오기
-        const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({ id: rawDataId });
+        const rawDataRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({ id: rawDataId });
         const rawData = rawDataRecords[0];
         
         if (!rawData) {
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
         console.log(`[Japantravel Transform] Processing: ${rawData.name_original}`);
 
         // 상태 업데이트 - processing
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
           processing_status: 'processing'
         });
 
@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
         }
 
         // 상태 업데이트 - processed
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
           processing_status: 'processed',
           festival_id: festivalId,
           error_message: null
@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
       } catch (itemError) {
         console.error(`[Japantravel Transform] Error processing ${rawDataId}:`, itemError);
         
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(rawDataId, {
+        await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
           processing_status: 'failed',
           error_message: itemError.message
         });

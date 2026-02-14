@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
 
         if (extractResult?.success && extractResult?.raw_records_saved > 0) {
           // 성공: processed 상태로 업데이트하고 raw_data_id 저장
-          const rawDataRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+          const rawDataRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
             source_url: link.url
           }, '-created_date', 1);
-          
+
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'processed',
             raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,

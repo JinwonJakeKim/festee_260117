@@ -531,9 +531,9 @@ Deno.serve(async (req) => {
       update_time: currentTime
     };
 
-    // ===== JapantravelUrlExtractionRawData에 저장 =====
+    // ===== JapantravelRawData에 저장 =====
     try {
-      const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+      const existingRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
         source_url: url
       });
       
@@ -543,13 +543,13 @@ Deno.serve(async (req) => {
         const updateData = { ...rawDataRecord };
         delete updateData.create_time; // 기존 create_time 유지
         updateData.update_time = new Date().toISOString();
-        rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+        rawRecord = await base44.asServiceRole.entities.JapantravelRawData.update(
           existingRecord.id, 
           updateData
         );
         console.log(`[Japantravel] ✅ Updated existing record: ${rawRecord.id}`);
       } else {
-        rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(rawDataRecord);
+        rawRecord = await base44.asServiceRole.entities.JapantravelRawData.create(rawDataRecord);
         console.log(`[Japantravel] ✅ Created new record: ${rawRecord.id}`);
       }
 
@@ -587,7 +587,7 @@ Deno.serve(async (req) => {
           update_time: currentTime
         };
         
-        const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+        const existingRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
           source_url: url
         });
         
@@ -595,12 +595,12 @@ Deno.serve(async (req) => {
           const updateData = { ...failedRecord };
           delete updateData.create_time;
           updateData.update_time = new Date().toISOString();
-          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+          await base44.asServiceRole.entities.JapantravelRawData.update(
             existingRecords[0].id, 
             updateData
           );
         } else {
-          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
+          await base44.asServiceRole.entities.JapantravelRawData.create(failedRecord);
         }
       } catch (finalError) {
         console.error('[Japantravel] Failed to save error record:', finalError);
@@ -634,7 +634,7 @@ Deno.serve(async (req) => {
         update_time: currentTime
       };
       
-      const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+      const existingRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
         source_url: url
       });
       
@@ -642,12 +642,12 @@ Deno.serve(async (req) => {
         const updateData = { ...failedRecord };
         delete updateData.create_time;
         updateData.update_time = new Date().toISOString();
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+        await base44.asServiceRole.entities.JapantravelRawData.update(
           existingRecords[0].id, 
           updateData
         );
       } else {
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
+        await base44.asServiceRole.entities.JapantravelRawData.create(failedRecord);
       }
       } catch (finalError) {
       console.error('[Japantravel] Failed to save error record:', finalError);
