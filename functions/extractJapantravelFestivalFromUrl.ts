@@ -165,49 +165,59 @@ Deno.serve(async (req) => {
     let endDate = null;
     let dateStatus = 'tentative'; // 기본값
 
-    const calendarIconDiv = doc.querySelector('div#info .event.col-xs-12:has(i.fa-calendar-alt)');
-    if (calendarIconDiv) {
-      const dateParagraph = calendarIconDiv.querySelector('p');
-      if (dateParagraph) {
-        const dateString = dateParagraph.textContent?.trim() || '';
-        console.log(`[Japantravel] Raw date string from DOM: "${dateString}"`);
+    // div#info 안의 모든 .event 요소를 순회하며 날짜 찾기
+    const infoDiv = doc.querySelector('div#info');
+    if (infoDiv) {
+      const eventDivs = infoDiv.querySelectorAll('div.event.col-xs-12');
+      for (const eventDiv of eventDivs) {
+        // 이 div에 calendar 아이콘이 있는지 확인
+        const calendarIcon = eventDiv.querySelector('i.fa-calendar-alt');
+        if (calendarIcon) {
+          const dateParagraph = eventDiv.querySelector('p');
+          if (dateParagraph) {
+            const dateString = dateParagraph.textContent?.trim() || '';
+            console.log(`[Japantravel] Raw date string from DOM: "${dateString}"`);
 
-        // "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 파싱
-        const dateRangeRegex = /(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:(?:\s*-\s*)(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?)?\s+(\d{4})/;
-        const match = dateString.match(dateRangeRegex);
+            // "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 파싱
+            const dateRangeRegex = /(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:(?:\s*-\s*)(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?)?\s+(\d{4})/;
+            const match = dateString.match(dateRangeRegex);
 
-        if (match) {
-          const startMonthText = match[1];
-          const startDay = parseInt(match[2]);
-          const endMonthText = match[3] || startMonthText; // If end month is not specified, use start month
-          const endDay = parseInt(match[4]);
-          const year = parseInt(match[5]);
+            if (match) {
+              const startMonthText = match[1];
+              const startDay = parseInt(match[2]);
+              const endMonthText = match[3] || startMonthText; // If end month is not specified, use start month
+              const endDay = match[4] ? parseInt(match[4]) : startDay; // If end day is not specified, use start day
+              const year = parseInt(match[5]);
 
-          if (startMonthText && startDay && year) {
-            const startMoment = moment(`${startMonthText} ${startDay} ${year}`, "MMMM D YYYY");
-            if (startMoment.isValid()) {
-              startDate = startMoment.format("YYYY-MM-DD");
+              if (startMonthText && startDay && year) {
+                const startMoment = moment(`${startMonthText} ${startDay} ${year}`, "MMMM D YYYY");
+                if (startMoment.isValid()) {
+                  startDate = startMoment.format("YYYY-MM-DD");
+                }
+              }
+
+              if (endMonthText && endDay && year) {
+                const endMoment = moment(`${endMonthText} ${endDay} ${year}`, "MMMM D YYYY");
+                if (endMoment.isValid()) {
+                  endDate = endMoment.format("YYYY-MM-DD");
+                }
+              }
+
+              // 시작일과 종료일이 모두 추출되면 confirmed로 설정
+              if (startDate && endDate) {
+                dateStatus = 'confirmed';
+              }
             }
-          }
 
-          if (endMonthText && endDay && year) {
-            const endMoment = moment(`${endMonthText} ${endDay} ${year}`, "MMMM D YYYY");
-            if (endMoment.isValid()) {
-              endDate = endMoment.format("YYYY-MM-DD");
+            // 원본 문자열에서 'tentative' 또는 'estimated' 키워드 추가 확인
+            if (dateString.toLowerCase().includes('tentative')) {
+              dateStatus = 'tentative';
+            } else if (dateString.toLowerCase().includes('estimated')) {
+              dateStatus = 'estimated';
             }
+            
+            break; // 날짜를 찾았으면 더 이상 검색하지 않음
           }
-
-          // 시작일과 종료일이 모두 추출되면 confirmed로 설정
-          if (startDate && endDate) {
-            dateStatus = 'confirmed';
-          }
-        }
-
-        // 원본 문자열에서 'tentative' 또는 'estimated' 키워드 추가 확인
-        if (dateString.toLowerCase().includes('tentative')) {
-          dateStatus = 'tentative';
-        } else if (dateString.toLowerCase().includes('estimated')) {
-          dateStatus = 'estimated';
         }
       }
     }
@@ -557,7 +567,6 @@ Deno.serve(async (req) => {
     // ===== 연락처 정보 추출 =====
     let contactPhone = '';
     let contactEmail = '';
-    const infoDiv = doc.querySelector('div#info');
     if (infoDiv) {
       const phonePattern = /\+?\d{1,4}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/;
       const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
@@ -695,9 +704,11 @@ Deno.serve(async (req) => {
     
     // 최상위 오류 발생 시에도 RawData 레코드 생성/업데이트
     try {
+      const { url: urlFromReq } = await req.json();
+      const base44 = createClientFromRequest(req);
       const currentTime = new Date().toISOString();
       const failedRecord = {
-        source_url: url,
+        source_url: urlFromReq,
         original_language: 'en',
         name_original: 'Unknown',
         country: 'Japan',
@@ -712,7 +723,7 @@ Deno.serve(async (req) => {
       };
       
       const existingRecords = await base44.asServiceRole.entities.JapantravelRawData.filter({
-        source_url: url
+        source_url: urlFromReq
       });
       
       if (existingRecords && existingRecords.length > 0) {
@@ -726,9 +737,9 @@ Deno.serve(async (req) => {
       } else {
         await base44.asServiceRole.entities.JapantravelRawData.create(failedRecord);
       }
-      } catch (finalError) {
+    } catch (finalError) {
       console.error('[Japantravel] Failed to save error record:', finalError);
-      }
+    }
     
     return Response.json({ 
       success: false,
