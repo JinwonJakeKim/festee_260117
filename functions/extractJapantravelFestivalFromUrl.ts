@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
       let priceDetails = null;
 
       const infoDiv = doc.querySelector('div#info');
+      const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
       
       // 가격 정보 추출
       if (infoDiv) {
