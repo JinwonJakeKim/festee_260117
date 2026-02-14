@@ -350,6 +350,25 @@ export default function AdminUrlExtraction() {
     }
   });
 
+  const autoTransformMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await base44.functions.invoke('autoTransformPendingRawData');
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        alert(data.message);
+        queryClient.invalidateQueries({ queryKey: ['japantravelUrlExtractionRawData'] });
+        queryClient.invalidateQueries({ queryKey: ['automations'] });
+      } else {
+        alert(`❌ 자동 변환 실패\n\n${data.error || data.message}`);
+      }
+    },
+    onError: (error) => {
+      alert(`❌ 자동 변환 중 오류 발생\n\n${error.message}`);
+    }
+  });
+
   const handleBatchExtraction = async () => {
     // 선택된 링크가 있으면 선택된 것만, 없으면 모든 pending/failed 링크 처리
     const targetLinkIds = selectedLinkIds.size > 0 
@@ -596,6 +615,30 @@ export default function AdminUrlExtraction() {
     if (confirm(`선택한 ${selectedRawIds.size}개의 데이터를 삭제하시겠습니까?`)) {
       deleteRawDataMutation.mutate(Array.from(selectedRawIds));
     }
+  };
+
+  const handleAutoTransform = async () => {
+    const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
+    
+    if (pendingCount === 0) {
+      alert('변환할 대기중인 데이터가 없습니다');
+      return;
+    }
+
+    // Japantravel_RawData_Transform_Auto 자동화 활성화 및 종료 날짜 설정
+    const transformAutoAutomation = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
+    if (transformAutoAutomation && !transformAutoAutomation.is_active) {
+      try {
+        const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
+          automationId: transformAutoAutomation.id
+        });
+        console.log('Transform automation enabled:', data);
+      } catch (error) {
+        console.error('Failed to enable transform automation:', error);
+      }
+    }
+
+    autoTransformMutation.mutate();
   };
 
   const handleSelectAllLinks = () => {
@@ -1800,6 +1843,42 @@ export default function AdminUrlExtraction() {
                 <li>✓ 재변환 시 기존 데이터를 업데이트합니다</li>
               </ul>
             </Card>
+
+            {/* 자동 일괄 변환 버튼 */}
+            {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
+              <Card className="bg-purple-900/20 border-purple-400/30 p-4">
+                <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
+                <p className="text-gray-400 text-sm mb-3">
+                  대기중인 RawData를 3개씩 자동 변환합니다 (5분 간격)
+                </p>
+                <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
+                  <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 첫 3개 즉시 변환 시작</li>
+                    <li>• 남은 RawData는 5분마다 3개씩 자동 변환</li>
+                    <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
+                    <li>• 페이지를 새로고침하여 진행 상황 확인</li>
+                  </ul>
+                </div>
+                <Button
+                  onClick={handleAutoTransform}
+                  disabled={autoTransformMutation.isPending}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
+                >
+                  {autoTransformMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      자동화 시작 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5 mr-2" />
+                      자동 일괄 변환 시작
+                    </>
+                  )}
+                </Button>
+              </Card>
+            )}
 
 
 
