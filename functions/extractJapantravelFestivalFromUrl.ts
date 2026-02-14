@@ -182,15 +182,15 @@ Deno.serve(async (req) => {
             const dateString = dateParagraph.textContent?.trim() || '';
             console.log(`[Japantravel] Raw date string from DOM: "${dateString}"`);
 
-            // "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 파싱
+            // 패턴 1: "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 (구체적인 날짜)
             const dateRangeRegex = /(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:(?:\s*-\s*)(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?)?\s+(\d{4})/;
-            const match = dateString.match(dateRangeRegex);
+            let match = dateString.match(dateRangeRegex);
 
             if (match) {
               const startMonthText = match[1];
               const startDay = parseInt(match[2]);
-              const endMonthText = match[3] || startMonthText; // If end month is not specified, use start month
-              const endDay = match[4] ? parseInt(match[4]) : startDay; // If end day is not specified, use start day
+              const endMonthText = match[3] || startMonthText;
+              const endDay = match[4] ? parseInt(match[4]) : startDay;
               const year = parseInt(match[5]);
 
               if (startMonthText && startDay && year) {
@@ -207,9 +207,62 @@ Deno.serve(async (req) => {
                 }
               }
 
-              // 시작일과 종료일이 모두 추출되면 confirmed로 설정
               if (startDate && endDate) {
                 dateStatus = 'confirmed';
+              }
+            }
+            // 패턴 2: "Early - Late April 2026" (월 전체 기간 추정)
+            else {
+              const earlyLatePattern = /(?:early|late|beginning|end)\s*-\s*(?:early|late|beginning|end)\s+(\w+)\s+(\d{4})/i;
+              match = dateString.match(earlyLatePattern);
+
+              if (match) {
+                const monthText = match[1];
+                const year = parseInt(match[2]);
+                const monthMoment = moment(`${monthText} 1 ${year}`, "MMMM D YYYY");
+
+                if (monthMoment.isValid()) {
+                  startDate = monthMoment.startOf('month').format("YYYY-MM-DD");
+                  endDate = monthMoment.endOf('month').format("YYYY-MM-DD");
+                  dateStatus = 'estimated';
+                  console.log(`[Japantravel] Parsed as early-late pattern: ${startDate} to ${endDate}`);
+                }
+              }
+              // 패턴 3: "Mid-April 2026" 또는 "Mid April 2026" (월 중순 추정)
+              else {
+                const midPattern = /mid[\s-]?(\w+)\s+(\d{4})/i;
+                match = dateString.match(midPattern);
+
+                if (match) {
+                  const monthText = match[1];
+                  const year = parseInt(match[2]);
+                  const monthMoment = moment(`${monthText} 15 ${year}`, "MMMM D YYYY");
+
+                  if (monthMoment.isValid()) {
+                    startDate = monthMoment.clone().subtract(5, 'days').format("YYYY-MM-DD");
+                    endDate = monthMoment.clone().add(5, 'days').format("YYYY-MM-DD");
+                    dateStatus = 'estimated';
+                    console.log(`[Japantravel] Parsed as mid pattern: ${startDate} to ${endDate}`);
+                  }
+                }
+                // 패턴 4: "April 2026" (월만 지정, 월 전체 기간)
+                else {
+                  const monthOnlyPattern = /^(\w+)\s+(\d{4})$/i;
+                  match = dateString.match(monthOnlyPattern);
+
+                  if (match) {
+                    const monthText = match[1];
+                    const year = parseInt(match[2]);
+                    const monthMoment = moment(`${monthText} 1 ${year}`, "MMMM D YYYY");
+
+                    if (monthMoment.isValid()) {
+                      startDate = monthMoment.startOf('month').format("YYYY-MM-DD");
+                      endDate = monthMoment.endOf('month').format("YYYY-MM-DD");
+                      dateStatus = 'estimated';
+                      console.log(`[Japantravel] Parsed as month-only pattern: ${startDate} to ${endDate}`);
+                    }
+                  }
+                }
               }
             }
 
@@ -219,7 +272,7 @@ Deno.serve(async (req) => {
             } else if (dateString.toLowerCase().includes('estimated')) {
               dateStatus = 'estimated';
             }
-            
+
             break; // 날짜를 찾았으면 더 이상 검색하지 않음
           }
         }
