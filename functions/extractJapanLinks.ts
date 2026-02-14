@@ -2,13 +2,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "CLEAN-2026-V2";
+  const VERSION = "AUTO-DETECT-V1";
   const startTime = Date.now();
-  const MAX_PAGES = 2;
+  const MAX_PESSIMISTIC_PAGES = 50; // 무한 루프 방지용 최대값
   const MAX_LINKS_PER_PAGE = 8;
   const TIME_LIMIT = 30000;
   
-  console.log(`[${VERSION}] START - Max ${MAX_PAGES} pages, ${MAX_LINKS_PER_PAGE} links/page`);
+  console.log(`[${VERSION}] START - Auto-detect last page (max ${MAX_PESSIMISTIC_PAGES} pages)`);
   
   try {
     const base44 = createClientFromRequest(req);
@@ -41,9 +41,11 @@ Deno.serve(async (req) => {
     console.log(`[${VERSION}] URL: ${baseUrl}`);
 
     const allLinks = [];
+    let prevPageLinks = null;
+    let actualPagesProcessed = 0;
     
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      console.log(`[${VERSION}] Page ${page}/${MAX_PAGES}`);
+    for (let page = 1; page <= MAX_PESSIMISTIC_PAGES; page++) {
+      console.log(`[${VERSION}] Page ${page}/?`);
       
       if (Date.now() - startTime > TIME_LIMIT) {
         console.log(`[${VERSION}] Timeout`);
@@ -80,10 +82,8 @@ Deno.serve(async (req) => {
 
       const linkElements = container.querySelectorAll(sourceUrl.link_selector || 'div.recommended-event-wrapper a');
       
-      let pageLinks = 0;
+      const currentPageLinks = [];
       for (const linkElement of linkElements) {
-        if (pageLinks >= MAX_LINKS_PER_PAGE) break;
-        
         const href = linkElement.getAttribute('href');
         if (!href) continue;
 
@@ -91,20 +91,45 @@ Deno.serve(async (req) => {
         
         if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/.test(url)) {
           url = url.replace(/\/$/, '');
-          if (!allLinks.includes(url)) {
-            allLinks.push(url);
-            pageLinks++;
-          }
+          currentPageLinks.push(url);
         }
       }
       
-      console.log(`[${VERSION}] ${pageLinks} links from page ${page}`);
-      if (pageLinks === 0) break;
+      // 이전 페이지와 현재 페이지의 링크가 동일한지 확인
+      if (page > 1 && prevPageLinks && currentPageLinks.length > 0) {
+        const currentHash = JSON.stringify(currentPageLinks.sort());
+        const prevHash = JSON.stringify(prevPageLinks.sort());
+        
+        if (currentHash === prevHash) {
+          console.log(`[${VERSION}] Page ${page} is identical to page ${page - 1}. Last page detected!`);
+          break;
+        }
+      }
+      
+      // 링크가 하나도 없으면 중단
+      if (currentPageLinks.length === 0) {
+        console.log(`[${VERSION}] No links found on page ${page}. Stopping.`);
+        break;
+      }
+      
+      // 중복 제거하면서 전체 링크에 추가
+      let pageLinksAdded = 0;
+      for (const url of currentPageLinks) {
+        if (!allLinks.includes(url) && pageLinksAdded < MAX_LINKS_PER_PAGE) {
+          allLinks.push(url);
+          pageLinksAdded++;
+        }
+      }
+      
+      console.log(`[${VERSION}] ${pageLinksAdded} new links from page ${page} (total: ${currentPageLinks.length} links on page)`);
+      
+      prevPageLinks = currentPageLinks;
+      actualPagesProcessed++;
       
       await new Promise(r => setTimeout(r, 500));
     }
 
-    console.log(`[${VERSION}] Total: ${allLinks.length} links`);
+    console.log(`[${VERSION}] Processed ${actualPagesProcessed} pages, Total: ${allLinks.length} unique links`);
 
     const existing = await base44.asServiceRole.entities.JapantravelLinks.filter({
       url: { $in: allLinks }
@@ -135,9 +160,10 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       version: VERSION,
+      actual_pages_processed: actualPagesProcessed,
       total_links: allLinks.length,
       new_records: toCreate.length,
-      message: `${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`
+      message: `${actualPagesProcessed}개 페이지 자동 감지하여 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`
     });
 
   } catch (error) {
