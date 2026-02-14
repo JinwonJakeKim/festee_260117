@@ -294,7 +294,6 @@ Deno.serve(async (req) => {
             }
           }
         }
-      }
 
       // 카테고리 추출
       if (categoryList) {
