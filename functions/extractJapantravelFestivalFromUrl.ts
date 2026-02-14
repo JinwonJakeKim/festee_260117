@@ -251,26 +251,47 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 도시 추출
-      const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
-      if (categoryList) {
-        const links = categoryList.querySelectorAll('li > span.context-heading > a');
-        for (const link of links) {
-          const href = link.getAttribute('href');
-          const text = link.textContent?.trim();
-
-          const cityPattern = /^https?:\/\/[^\/]+\/([^\/]+)\/[^\/]+\/?$/;
-          const match = href?.match(cityPattern);
+      // 도시 추출 - 방법 1: 주소 정보에서 "City" 패턴 추출
+      if (infoDiv) {
+        const eventDivs = infoDiv.querySelectorAll('div.event');
+        for (const eventDiv of eventDivs) {
+          const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
           
-          if (match && match[1] && text && text.length > 0 && text.length < 30) {
-            const nonCityKeywords = ['events', 'activities', 'culture', 'food', 'nature', 'activity', 'history', 'art', 'festival', 'sports', 'nightlife', 'shopping', 'beauty', 'spa'];
-            const isNotCategory = !nonCityKeywords.some(keyword => 
-              text.toLowerCase().includes(keyword) || match[1].toLowerCase().includes(keyword)
-            );
+          // "Koto City", "Tokyo City" 같은 패턴 매칭
+          const cityNamePattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+City/;
+          const match = eventDivText.match(cityNamePattern);
+          
+          if (match && match[1]) {
+            city = match[1];
+            console.log(`[Japantravel] ✅ Extracted city from address: ${city}`);
+            break;
+          }
+        }
+      }
+      
+      // 도시 추출 - 방법 2: URL 패턴에서 추출 (백업)
+      if (!city) {
+        const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
+        if (categoryList) {
+          const links = categoryList.querySelectorAll('li > span.context-heading > a');
+          for (const link of links) {
+            const href = link.getAttribute('href');
+            const text = link.textContent?.trim();
+
+            const cityPattern = /^https?:\/\/[^\/]+\/([^\/]+)\/[^\/]+\/?$/;
+            const match = href?.match(cityPattern);
             
-            if (isNotCategory) {
-              city = text;
-              break;
+            if (match && match[1] && text && text.length > 0 && text.length < 30) {
+              const nonCityKeywords = ['events', 'activities', 'culture', 'food', 'nature', 'activity', 'history', 'art', 'festival', 'sports', 'nightlife', 'shopping', 'beauty', 'spa'];
+              const isNotCategory = !nonCityKeywords.some(keyword => 
+                text.toLowerCase().includes(keyword) || match[1].toLowerCase().includes(keyword)
+              );
+              
+              if (isNotCategory) {
+                city = text;
+                console.log(`[Japantravel] ✅ Extracted city from URL pattern: ${city}`);
+                break;
+              }
             }
           }
         }
