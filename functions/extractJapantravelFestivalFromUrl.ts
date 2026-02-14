@@ -542,9 +542,12 @@ Deno.serve(async (req) => {
       let rawRecord;
       if (existingRecords && existingRecords.length > 0) {
         const existingRecord = existingRecords[0];
+        const updateData = { ...rawDataRecord };
+        delete updateData.create_time; // 기존 create_time 유지
+        updateData.update_time = new Date().toISOString();
         rawRecord = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
           existingRecord.id, 
-          rawDataRecord
+          updateData
         );
         console.log(`[Japantravel] ✅ Updated existing record: ${rawRecord.id}`);
       } else {
@@ -570,6 +573,7 @@ Deno.serve(async (req) => {
       
       // 실패 시에도 RawData 레코드 생성/업데이트
       try {
+        const currentTime = new Date().toISOString();
         const failedRecord = {
           source_url: url,
           original_language: detectedLanguageFromUrl || 'en',
@@ -580,7 +584,9 @@ Deno.serve(async (req) => {
           end_date: endDate,
           extract_status: 'failed',
           processing_status: 'pending',
-          error_message: saveError.message
+          error_message: saveError.message,
+          create_time: currentTime,
+          update_time: currentTime
         };
         
         const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
@@ -588,9 +594,12 @@ Deno.serve(async (req) => {
         });
         
         if (existingRecords && existingRecords.length > 0) {
+          const updateData = { ...failedRecord };
+          delete updateData.create_time;
+          updateData.update_time = new Date().toISOString();
           await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
             existingRecords[0].id, 
-            failedRecord
+            updateData
           );
         } else {
           await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
@@ -611,6 +620,7 @@ Deno.serve(async (req) => {
     
     // 최상위 오류 발생 시에도 RawData 레코드 생성/업데이트
     try {
+      const currentTime = new Date().toISOString();
       const failedRecord = {
         source_url: url,
         original_language: 'en',
@@ -621,7 +631,9 @@ Deno.serve(async (req) => {
         end_date: '2026-01-01',
         extract_status: 'failed',
         processing_status: 'pending',
-        error_message: error.message || '알 수 없는 오류가 발생했습니다'
+        error_message: error.message || '알 수 없는 오류가 발생했습니다',
+        create_time: currentTime,
+        update_time: currentTime
       };
       
       const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
@@ -629,16 +641,19 @@ Deno.serve(async (req) => {
       });
       
       if (existingRecords && existingRecords.length > 0) {
+        const updateData = { ...failedRecord };
+        delete updateData.create_time;
+        updateData.update_time = new Date().toISOString();
         await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
           existingRecords[0].id, 
-          failedRecord
+          updateData
         );
       } else {
         await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
       }
-    } catch (finalError) {
+      } catch (finalError) {
       console.error('[Japantravel] Failed to save error record:', finalError);
-    }
+      }
     
     return Response.json({ 
       success: false,
