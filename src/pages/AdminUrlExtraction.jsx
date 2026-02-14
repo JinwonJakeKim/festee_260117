@@ -46,6 +46,7 @@ export default function AdminUrlExtraction() {
   });
   const [isBatchExtracting, setIsBatchExtracting] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState({});
+  const [selectedMaxPages, setSelectedMaxPages] = useState({});
   const [deletionProgress, setDeletionProgress] = useState({ isDeleting: false, current: 0, total: 0 });
   
   // Link extraction progress state variables
@@ -268,10 +269,11 @@ export default function AdminUrlExtraction() {
   });
 
   const runLinkExtractionMutation = useMutation({
-    mutationFn: async ({ sourceUrlId, targetMonth, abortSignal }) => {
+    mutationFn: async ({ sourceUrlId, targetMonth, maxPages, abortSignal }) => {
       const { data } = await base44.functions.invoke('extractJapanLinks', { 
         sourceUrlId,
-        targetMonth
+        targetMonth,
+        maxPages
       }, { signal: abortSignal });
       return data;
     },
@@ -438,12 +440,13 @@ export default function AdminUrlExtraction() {
     }
   };
 
-  const handleRunLinkExtraction = ({ sourceUrlId, targetMonth }) => {
+  const handleRunLinkExtraction = ({ sourceUrlId, targetMonth, maxPages }) => {
     const controller = new AbortController();
     setExtractionAbortController(controller);
     runLinkExtractionMutation.mutate({ 
       sourceUrlId, 
       targetMonth,
+      maxPages,
       abortSignal: controller.signal
     });
   };
@@ -1022,6 +1025,26 @@ export default function AdminUrlExtraction() {
                                   </select>
                                 </div>
 
+                                <div className="flex items-center gap-3">
+                                  <label className="text-gray-400 text-sm font-medium flex-shrink-0">최대 페이지:</label>
+                                  <select
+                                    value={selectedMaxPages[source.id] || '5'}
+                                    onChange={(e) => {
+                                      setSelectedMaxPages({
+                                        ...selectedMaxPages,
+                                        [source.id]: e.target.value
+                                      });
+                                    }}
+                                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                                  >
+                                    {[1, 2, 3, 5, 10, 15, 20].map((num) => (
+                                      <option key={num} value={num}>
+                                        {num}페이지
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
                                 {/* 완성된 URL 미리보기 */}
                                 {selectedMonths[source.id] && (
                                   <div className="space-y-2">
@@ -1058,7 +1081,8 @@ export default function AdminUrlExtraction() {
                                     }
                                     handleRunLinkExtraction({
                                       sourceUrlId: source.id,
-                                      targetMonth: selectedMonths[source.id]
+                                      targetMonth: selectedMonths[source.id],
+                                      maxPages: parseInt(selectedMaxPages[source.id] || '5')
                                     });
                                   }}
                                   disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
@@ -1089,8 +1113,8 @@ export default function AdminUrlExtraction() {
                 <ul className="text-gray-300 text-xs space-y-1">
                   <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
                   <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
-                  <li>• 최대 5페이지까지 탐색하여 축제 링크를 수집합니다</li>
-                  <li>• 추출된 링크는 "링크 관리" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
+                  <li>• 최대 페이지 수를 선택하여 탐색 범위를 조절할 수 있습니다 (기본값: 5페이지)</li>
+                  <li>• 추출된 링크는 "축제정보추출" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
                 </ul>
               </div>
             </Card>
@@ -2313,6 +2337,22 @@ export default function AdminUrlExtraction() {
                                   );
                                 })}
                               </select>
+                              <select
+                                value={selectedMaxPages[source.id] || '5'}
+                                onChange={(e) => {
+                                  setSelectedMaxPages({
+                                    ...selectedMaxPages,
+                                    [source.id]: e.target.value
+                                  });
+                                }}
+                                className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs w-20"
+                              >
+                                {[1, 2, 3, 5, 10, 15, 20].map((num) => (
+                                  <option key={num} value={num}>
+                                    {num}p
+                                  </option>
+                                ))}
+                              </select>
                               <Button
                                 onClick={() => {
                                   if (!selectedMonths[source.id]) {
@@ -2321,7 +2361,8 @@ export default function AdminUrlExtraction() {
                                   }
                                   handleRunLinkExtraction({
                                     sourceUrlId: source.id,
-                                    targetMonth: selectedMonths[source.id]
+                                    targetMonth: selectedMonths[source.id],
+                                    maxPages: parseInt(selectedMaxPages[source.id] || '5')
                                   });
                                 }}
                                 disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
@@ -2340,7 +2381,7 @@ export default function AdminUrlExtraction() {
                             </div>
                           ) : (
                             <Button
-                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id })}
+                              onClick={() => handleRunLinkExtraction({ sourceUrlId: source.id, maxPages: 5 })}
                               disabled={runLinkExtractionMutation.isPending}
                               size="sm"
                               className="bg-cyan-500 hover:bg-cyan-600"
