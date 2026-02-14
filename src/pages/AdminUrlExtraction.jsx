@@ -627,7 +627,7 @@ export default function AdminUrlExtraction() {
 
     // Japantravel_RawData_Transform_Auto 자동화 활성화 및 종료 날짜 설정
     const transformAutoAutomation = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
-    if (transformAutoAutomation && !transformAutoAutomation.is_active) {
+    if (transformAutoAutomation) {
       try {
         const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
           automationId: transformAutoAutomation.id
