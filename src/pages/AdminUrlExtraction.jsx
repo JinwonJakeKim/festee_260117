@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -360,6 +359,19 @@ export default function AdminUrlExtraction() {
     if (targetLinkIds.length === 0) {
       alert('처리할 링크가 없습니다');
       return;
+    }
+
+    // Japantravel_Extract_Auto 자동화 활성화 및 종료 날짜 설정
+    const extractAutoAutomation = automationsList.find(a => a.name === 'Japantravel_Extract_Auto');
+    if (extractAutoAutomation) {
+      try {
+        const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
+          automationId: extractAutoAutomation.id
+        });
+        console.log('Automation enabled:', data);
+      } catch (error) {
+        console.error('Failed to enable automation:', error);
+      }
     }
 
     setBatchExtractionAborted(false);
