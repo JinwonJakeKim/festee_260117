@@ -242,10 +242,21 @@ Deno.serve(async (req) => {
         const eventDivs = infoDiv.querySelectorAll('div.event');
         for (const eventDiv of eventDivs) {
           const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+          
+          // 패턴 1: "Address:", "Location:", "Venue:" 키워드로 시작
           const addressPattern = /(?:address|location|venue)\s*:\s*(.+)/i;
-          const match = eventDivText.match(addressPattern);
+          let match = eventDivText.match(addressPattern);
           
           if (match && match[1]) {
+            accessInfo = match[1].trim();
+            break;
+          }
+          
+          // 패턴 2: 일본 주소 형식 (숫자로 시작하고 Prefecture 또는 우편번호 포함)
+          const japanAddressPattern = /(\d+[\s\-][\w\-,\s]+(?:Prefecture|都|府|県|市|区|町|村)[\w\-,\s]*(?:\d{3}[\-\s]?\d{4})?)/i;
+          match = eventDivText.match(japanAddressPattern);
+          
+          if (match && match[1] && match[1].length > 20) {
             accessInfo = match[1].trim();
             break;
           }
