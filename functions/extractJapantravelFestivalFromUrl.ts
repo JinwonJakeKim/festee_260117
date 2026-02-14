@@ -252,8 +252,35 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 도시 추출 - 방법 1: 주소 정보에서 "City" 패턴 추출
-      if (infoDiv) {
+      // 도시 추출 - 방법 1: breadcrumb 링크에서 직접 추출
+      if (categoryList) {
+        const links = categoryList.querySelectorAll('li > span.context-heading > a');
+        for (const link of links) {
+          const href = link.getAttribute('href');
+          const text = link.textContent?.trim();
+
+          // URL 패턴: /도시명 (예: /toyama, /tokyo)
+          const cityUrlPattern = /^https?:\/\/[^\/]+\/([^\/]+)\/?$/;
+          const match = href?.match(cityUrlPattern);
+          
+          if (match && match[1] && text && text.length > 0 && text.length < 30) {
+            // 제외할 키워드 (카테고리/일반 페이지)
+            const excludeKeywords = ['events', 'activities', 'culture', 'food', 'nature', 'activity', 'history', 'art', 'festival', 'sports', 'nightlife', 'shopping', 'beauty', 'spa'];
+            const isNotCategory = !excludeKeywords.some(keyword => 
+              text.toLowerCase().includes(keyword) || match[1].toLowerCase().includes(keyword)
+            );
+            
+            if (isNotCategory) {
+              city = text;
+              console.log(`[Japantravel] ✅ Extracted city from breadcrumb: ${city}`);
+              break;
+            }
+          }
+        }
+      }
+      
+      // 도시 추출 - 방법 2: 주소 정보에서 "City" 패턴 추출 (백업)
+      if (!city && infoDiv) {
         const eventDivs = infoDiv.querySelectorAll('div.event');
         for (const eventDiv of eventDivs) {
           const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
@@ -264,13 +291,13 @@ Deno.serve(async (req) => {
           
           if (match && match[1]) {
             city = match[1];
-            console.log(`[Japantravel] ✅ Extracted city from address: ${city}`);
+            console.log(`[Japantravel] ✅ Extracted city from address (City pattern): ${city}`);
             break;
           }
         }
       }
       
-      // 도시 추출 - 방법 2: URL 패턴에서 추출 (백업)
+      // 도시 추출 - 방법 3: URL 패턴에서 추출 (최후 백업)
       if (!city && categoryList) {
           const links = categoryList.querySelectorAll('li > span.context-heading > a');
           for (const link of links) {
