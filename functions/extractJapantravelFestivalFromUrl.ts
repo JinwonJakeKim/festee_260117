@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import moment from 'npm:moment';
 
 Deno.serve(async (req) => {
   try {
@@ -159,36 +160,58 @@ Deno.serve(async (req) => {
     }
     console.log(`[Japantravel] Description length: ${description.length}`);
 
-    // ===== 날짜 정보 추출 =====
-    const extractDateInfo = (htmlContent) => {
-      const dateInfo = [];
-      const cleanHtml = htmlContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                                       .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-      
-      // When: 키워드 근처 텍스트
-      const whenPattern = /When[:\s]+([^<>\n]{5,100})/gi;
-      let match;
-      while ((match = whenPattern.exec(cleanHtml)) !== null) {
-        dateInfo.push(match[1].trim().replace(/\s+/g, ' '));
-      }
-      
-      // Date: 키워드
-      const datePattern = /Date[:\s]+([^<>\n]{5,100})/gi;
-      while ((match = datePattern.exec(cleanHtml)) !== null) {
-        dateInfo.push(match[1].trim().replace(/\s+/g, ' '));
-      }
-      
-      return dateInfo.length > 0 ? dateInfo : ['Date information not found'];
-    };
+    // ===== 날짜 정보 추출 및 파싱 =====
+    let startDate = null;
+    let endDate = null;
+    let dateStatus = 'tentative'; // 기본값
 
-    const extractedDateInfo = extractDateInfo(html);
-    const dateString = extractedDateInfo[0] || '';
-    console.log(`[Japantravel] Extracted date info: ${dateString}`);
+    const calendarIconDiv = doc.querySelector('div#info .event.col-xs-12:has(i.fa-calendar-alt)');
+    if (calendarIconDiv) {
+      const dateParagraph = calendarIconDiv.querySelector('p');
+      if (dateParagraph) {
+        const dateString = dateParagraph.textContent?.trim() || '';
+        console.log(`[Japantravel] Raw date string from DOM: "${dateString}"`);
 
-    // 간단한 날짜 파싱 (예: "Jan 15 - 20, 2026")
-    let startDate = '2026-01-01';
-    let endDate = '2026-01-01';
-    let dateStatus = 'tentative';
+        // "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 파싱
+        const dateRangeRegex = /(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:(?:\s*-\s*)(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?)?\s+(\d{4})/;
+        const match = dateString.match(dateRangeRegex);
+
+        if (match) {
+          const startMonthText = match[1];
+          const startDay = parseInt(match[2]);
+          const endMonthText = match[3] || startMonthText; // If end month is not specified, use start month
+          const endDay = parseInt(match[4]);
+          const year = parseInt(match[5]);
+
+          if (startMonthText && startDay && year) {
+            const startMoment = moment(`${startMonthText} ${startDay} ${year}`, "MMMM D YYYY");
+            if (startMoment.isValid()) {
+              startDate = startMoment.format("YYYY-MM-DD");
+            }
+          }
+
+          if (endMonthText && endDay && year) {
+            const endMoment = moment(`${endMonthText} ${endDay} ${year}`, "MMMM D YYYY");
+            if (endMoment.isValid()) {
+              endDate = endMoment.format("YYYY-MM-DD");
+            }
+          }
+
+          // 시작일과 종료일이 모두 추출되면 confirmed로 설정
+          if (startDate && endDate) {
+            dateStatus = 'confirmed';
+          }
+        }
+
+        // 원본 문자열에서 'tentative' 또는 'estimated' 키워드 추가 확인
+        if (dateString.toLowerCase().includes('tentative')) {
+          dateStatus = 'tentative';
+        } else if (dateString.toLowerCase().includes('estimated')) {
+          dateStatus = 'estimated';
+        }
+      }
+    }
+    console.log(`[Japantravel] Parsed dates: Start=${startDate}, End=${endDate}, Status=${dateStatus}`);
 
     // ===== 도시, 카테고리, 주소, 운영시간, 가격 추출 (기존 extractStructuredInfo 활용) =====
     const extractStructuredInfo = async (htmlContent, doc) => {
