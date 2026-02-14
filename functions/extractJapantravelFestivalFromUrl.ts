@@ -526,6 +526,43 @@ Deno.serve(async (req) => {
 
     } catch (saveError) {
       console.error('[Japantravel] Failed to save raw data:', saveError);
+      
+      // 실패 시에도 RawData 레코드 생성/업데이트
+      try {
+        const failedRecord = {
+          source_url: url,
+          original_language: detectedLanguageFromUrl || 'en',
+          name_original: festivalName || 'Unknown',
+          country: countryFromSource,
+          city: extractedInfo?.city || 'Unknown',
+          start_date: startDate,
+          end_date: endDate,
+          extract_status: 'failed',
+          processing_status: 'pending',
+          error_message: saveError.message,
+          extraction_metadata: {
+            extracted_at: new Date().toISOString(),
+            extraction_method: 'DOM_PARSING_ONLY',
+            error: saveError.message
+          }
+        };
+        
+        const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+          source_url: url
+        });
+        
+        if (existingRecords && existingRecords.length > 0) {
+          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+            existingRecords[0].id, 
+            failedRecord
+          );
+        } else {
+          await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
+        }
+      } catch (finalError) {
+        console.error('[Japantravel] Failed to save error record:', finalError);
+      }
+      
       return Response.json({
         success: false,
         error: '데이터 저장 중 오류가 발생했습니다',
@@ -535,6 +572,43 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[Japantravel] Extraction error:', error);
+    
+    // 최상위 오류 발생 시에도 RawData 레코드 생성/업데이트
+    try {
+      const failedRecord = {
+        source_url: url,
+        original_language: 'en',
+        name_original: 'Unknown',
+        country: 'Japan',
+        city: 'Unknown',
+        start_date: '2026-01-01',
+        end_date: '2026-01-01',
+        extract_status: 'failed',
+        processing_status: 'pending',
+        error_message: error.message || '알 수 없는 오류가 발생했습니다',
+        extraction_metadata: {
+          extracted_at: new Date().toISOString(),
+          extraction_method: 'DOM_PARSING_ONLY',
+          error: error.message || '알 수 없는 오류'
+        }
+      };
+      
+      const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
+        source_url: url
+      });
+      
+      if (existingRecords && existingRecords.length > 0) {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.update(
+          existingRecords[0].id, 
+          failedRecord
+        );
+      } else {
+        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.create(failedRecord);
+      }
+    } catch (finalError) {
+      console.error('[Japantravel] Failed to save error record:', finalError);
+    }
+    
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류가 발생했습니다',
