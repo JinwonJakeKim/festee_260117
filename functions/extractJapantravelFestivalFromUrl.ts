@@ -271,9 +271,7 @@ Deno.serve(async (req) => {
       }
       
       // 도시 추출 - 방법 2: URL 패턴에서 추출 (백업)
-      if (!city) {
-        const categoryList = doc.querySelector('ul.separated-list.context-heading-list');
-        if (categoryList) {
+      if (!city && categoryList) {
           const links = categoryList.querySelectorAll('li > span.context-heading > a');
           for (const link of links) {
             const href = link.getAttribute('href');
