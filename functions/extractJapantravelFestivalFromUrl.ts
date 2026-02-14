@@ -531,11 +531,7 @@ Deno.serve(async (req) => {
       extract_status: 'processed',
       processing_status: 'pending',
       festival_id: null,
-      extraction_metadata: {
-        extracted_at: new Date().toISOString(),
-        extracted_date_info: extractedDateInfo,
-        extraction_method: 'DOM_PARSING_ONLY'
-      }
+      extraction_metadata: new Date().toISOString()
     };
 
     // ===== JapantravelUrlExtractionRawData에 저장 =====
@@ -586,11 +582,7 @@ Deno.serve(async (req) => {
           extract_status: 'failed',
           processing_status: 'pending',
           error_message: saveError.message,
-          extraction_metadata: {
-            extracted_at: new Date().toISOString(),
-            extraction_method: 'DOM_PARSING_ONLY',
-            error: saveError.message
-          }
+          extraction_metadata: new Date().toISOString()
         };
         
         const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
@@ -632,11 +624,7 @@ Deno.serve(async (req) => {
         extract_status: 'failed',
         processing_status: 'pending',
         error_message: error.message || '알 수 없는 오류가 발생했습니다',
-        extraction_metadata: {
-          extracted_at: new Date().toISOString(),
-          extraction_method: 'DOM_PARSING_ONLY',
-          error: error.message || '알 수 없는 오류'
-        }
+        extraction_metadata: new Date().toISOString()
       };
       
       const existingRecords = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
