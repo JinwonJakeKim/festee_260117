@@ -237,28 +237,71 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 주소 정보 추출
+      // 주소 정보 추출 - 가장 구체적인 패턴부터 우선 순위로 시도
       if (infoDiv) {
         const eventDivs = infoDiv.querySelectorAll('div.event');
+
+        // 우선순위 1: "Address:", "Location:", "Venue:" 등 명확한 키워드
         for (const eventDiv of eventDivs) {
           const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
-          
-          // 패턴 1: "Address:", "Location:", "Venue:" 키워드로 시작
-          const addressPattern = /(?:address|location|venue)\s*:\s*(.+)/i;
-          let match = eventDivText.match(addressPattern);
-          
-          if (match && match[1]) {
+          const keywordPattern = /(?:address|location|venue|場所|住所)\s*[:：]\s*(.+)/i;
+          const match = eventDivText.match(keywordPattern);
+
+          if (match && match[1] && match[1].length > 10) {
             accessInfo = match[1].trim();
+            console.log(`[Japantravel] ✅ Extracted address (keyword pattern): ${accessInfo}`);
             break;
           }
-          
-          // 패턴 2: 일본 주소 형식 (숫자로 시작하고 Prefecture 또는 우편번호 포함)
-          const japanAddressPattern = /(\d+[\s\-][\w\-,\s]+(?:Prefecture|都|府|県|市|区|町|村)[\w\-,\s]*(?:\d{3}[\-\s]?\d{4})?)/i;
-          match = eventDivText.match(japanAddressPattern);
-          
-          if (match && match[1] && match[1].length > 20) {
-            accessInfo = match[1].trim();
-            break;
+        }
+
+        // 우선순위 2: 우편번호와 주소 구성요소를 모두 포함하는 완전한 일본 주소
+        if (!accessInfo) {
+          for (const eventDiv of eventDivs) {
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            const fullAddressPattern = /(\d{3}[\-\s]?\d{4}[,\s]+[\w\-,\s]+(?:都|府|県)[,\s]+[\w\-,\s]+(?:市|区|町|村)[\w\-,\s]*)/i;
+            const match = eventDivText.match(fullAddressPattern);
+
+            if (match && match[1] && match[1].length > 20) {
+              accessInfo = match[1].trim();
+              console.log(`[Japantravel] ✅ Extracted address (full address with postal): ${accessInfo}`);
+              break;
+            }
+          }
+        }
+
+        // 우선순위 3: Prefecture/都/府/県으로 끝나는 주소 패턴
+        if (!accessInfo) {
+          for (const eventDiv of eventDivs) {
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            const prefecturePattern = /(\d+[\s\-][\w\-,\s]+(?:Prefecture|都|府|県))/i;
+            const match = eventDivText.match(prefecturePattern);
+
+            if (match && match[1] && match[1].length > 15) {
+              accessInfo = match[1].trim();
+              console.log(`[Japantravel] ✅ Extracted address (prefecture pattern): ${accessInfo}`);
+              break;
+            }
+          }
+        }
+
+        // 우선순위 4: 숫자로 시작하고 쉼표로 구분되는 긴 문자열 (전화번호/웹사이트 등 제외)
+        if (!accessInfo) {
+          for (const eventDiv of eventDivs) {
+            const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+
+            // 제외할 키워드 패턴
+            const excludeKeywords = /(?:tel|phone|website|email|www\.|http|@|opening|hours|price|¥)/i;
+
+            if (!excludeKeywords.test(eventDivText)) {
+              const longStringPattern = /(\d+[\s\-,][\w\-,\s]{25,})/i;
+              const match = eventDivText.match(longStringPattern);
+
+              if (match && match[1]) {
+                accessInfo = match[1].trim();
+                console.log(`[Japantravel] ✅ Extracted address (long string pattern): ${accessInfo}`);
+                break;
+              }
+            }
           }
         }
       }
