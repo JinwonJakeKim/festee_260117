@@ -202,6 +202,41 @@ Deno.serve(async (req) => {
           };
         }
 
+        // Geocoding 시도
+        let latitude = festivalData.latitude;
+        let longitude = festivalData.longitude;
+        let geocodingStatus = 'pending';
+        let geocodingErrorMessage = null;
+
+        if (!latitude || !longitude) {
+          try {
+            console.log(`[Japantravel Transform] Attempting geocoding for: ${festivalData.city}, ${festivalData.address}`);
+            const geocodeResult = await base44.functions.invoke('geocodeAddress', {
+              address: festivalData.address,
+              city: festivalData.city,
+              country: festivalData.country
+            });
+
+            if (geocodeResult.data.success) {
+              latitude = geocodeResult.data.latitude;
+              longitude = geocodeResult.data.longitude;
+              geocodingStatus = 'success';
+              console.log(`[Japantravel Transform] ✅ Geocoding success: (${latitude}, ${longitude})`);
+            } else {
+              geocodingStatus = 'failed';
+              geocodingErrorMessage = geocodeResult.data.error || 'Geocoding failed';
+              console.log(`[Japantravel Transform] ❌ Geocoding failed: ${geocodingErrorMessage}`);
+            }
+          } catch (geocodeError) {
+            geocodingStatus = 'failed';
+            geocodingErrorMessage = geocodeError.message;
+            console.error(`[Japantravel Transform] Geocoding error:`, geocodeError);
+          }
+        } else {
+          geocodingStatus = 'success';
+          console.log(`[Japantravel Transform] Using existing coordinates: (${latitude}, ${longitude})`);
+        }
+
         const festivalPayload = {
           name_original: festivalData.name_original,
           summary_original: festivalData.summary_original,
@@ -255,8 +290,10 @@ Deno.serve(async (req) => {
           start_date: festivalData.start_date,
           end_date: festivalData.end_date,
           date_status: festivalData.date_status,
-          latitude: festivalData.latitude,
-          longitude: festivalData.longitude,
+          latitude: latitude,
+          longitude: longitude,
+          geocoding_status: geocodingStatus,
+          geocoding_error_message: geocodingErrorMessage,
           thumbnail_url: thumbnailUrl,
           video_url: videoUrl,
           video_channel_name: videoChannelName,
