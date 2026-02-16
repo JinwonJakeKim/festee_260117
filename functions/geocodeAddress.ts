@@ -26,6 +26,36 @@ Deno.serve(async (req) => {
       });
     }
 
+    // API 사용량 체크 (월 10,000회 제한)
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    try {
+      const logs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+        api_name: 'google_geocoding_api'
+      });
+      
+      // 이번 달 사용량 합산
+      const monthlyUsage = logs
+        .filter(log => log.date.startsWith(currentMonth))
+        .reduce((sum, log) => sum + (log.count || 0), 0);
+      
+      const monthlyLimit = 10000;
+      
+      if (monthlyUsage >= monthlyLimit) {
+        console.log(`[Geocoding] ❌ Monthly limit reached: ${monthlyUsage}/${monthlyLimit}`);
+        return Response.json({
+          success: false,
+          error: 'GEOCODING_API_LIMIT_REACHED',
+          message: `Geocoding API 월 ${monthlyLimit}회 무료 한도를 초과했습니다. (${monthlyUsage}회 사용)`
+        }, { status: 429 });
+      }
+      
+      console.log(`[Geocoding] ✓ Monthly usage: ${monthlyUsage + 1}/${monthlyLimit}`);
+    } catch (logError) {
+      console.error('[Geocoding] Failed to check API usage:', logError.message);
+    }
+
     // 주소 문자열 조합
     const addressComponents = [];
     if (address) addressComponents.push(address);
@@ -46,6 +76,31 @@ Deno.serve(async (req) => {
       const formattedAddress = data.results[0].formatted_address;
 
       console.log(`[Geocoding] ✅ Success: ${formattedAddress} -> (${location.lat}, ${location.lng})`);
+
+      // 사용량 기록 (성공 시에만)
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const existingLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+          api_name: 'google_geocoding_api',
+          date: today
+        });
+        
+        if (existingLogs.length === 0) {
+          await base44.asServiceRole.entities.ApiUsageLog.create({
+            api_name: 'google_geocoding_api',
+            date: today,
+            count: 1,
+            limit: 10000,
+            console_url: 'https://console.cloud.google.com/google/maps-apis/quotas'
+          });
+        } else {
+          await base44.asServiceRole.entities.ApiUsageLog.update(existingLogs[0].id, {
+            count: existingLogs[0].count + 1
+          });
+        }
+      } catch (logError) {
+        console.error('[Geocoding] Failed to update usage log:', logError.message);
+      }
 
       return Response.json({
         success: true,
