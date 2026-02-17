@@ -80,6 +80,17 @@ export default function AdminDashboard() {
     initialData: [],
   });
 
+  const { data: geocodingMonthlyLogs } = useQuery({
+    queryKey: ['geocodingMonthlyLogs'],
+    queryFn: async () => {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const allLogs = await base44.entities.ApiUsageLog.filter({ api_name: 'google_geocoding_api' });
+      return allLogs.filter(log => log.date && log.date.startsWith(currentMonth));
+    },
+    initialData: [],
+  });
+
   const updateFestivalStarMutation = useMutation({
     mutationFn: async ({ festivalId, starRating }) => {
       await base44.entities.Festival.update(festivalId, { star_rating: starRating });
