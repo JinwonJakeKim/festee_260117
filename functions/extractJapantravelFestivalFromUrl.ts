@@ -597,37 +597,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ===== 웹사이트 URL 추출 =====
-    // 우선순위 1: div.website 안의 fa-globe 아이콘 하위 링크
-    let websiteUrl = '';
-    const websiteDiv = doc.querySelector('div.website');
-    if (websiteDiv) {
-      const websiteAnchor = websiteDiv.querySelector('a[href]');
-      if (websiteAnchor) {
-        websiteUrl = normalizeUrl(websiteAnchor.getAttribute('href') || '', url);
-        console.log(`[Japantravel] ✅ Extracted website from div.website: ${websiteUrl}`);
-      }
-    }
-    // 우선순위 2: fa-globe 아이콘을 포함하는 부모 컨테이너에서 링크 추출
-    if (!websiteUrl) {
-      const globeIcon = doc.querySelector('i.fa-globe');
-      if (globeIcon) {
-        const parentDiv = globeIcon.parentElement?.parentElement;
-        const anchor = parentDiv?.querySelector('a[href]');
-        if (anchor) {
-          websiteUrl = normalizeUrl(anchor.getAttribute('href') || '', url);
-          console.log(`[Japantravel] ✅ Extracted website from fa-globe parent: ${websiteUrl}`);
-        }
-      }
-    }
-    // 우선순위 3: japantravel.com이 아닌 외부 링크 (기존 로직)
-    if (!websiteUrl) {
-      const websiteLink = doc.querySelector('a[href*="http"]:not([href*="japantravel.com"]):not([href*="facebook"]):not([href*="instagram"]):not([href*="twitter"]):not([href*="youtube"])');
-      if (websiteLink) {
-        websiteUrl = normalizeUrl(websiteLink.getAttribute('href') || '', url);
-        console.log(`[Japantravel] ✅ Extracted website from generic link: ${websiteUrl}`);
-      }
-    }
+    // ===== 웹사이트 URL: 원본 축제 URL 사용 =====
+    const websiteUrl = url;
 
     // ===== 소셜 미디어 링크 추출 =====
     const socialMedia = {
