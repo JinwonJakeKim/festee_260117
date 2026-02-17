@@ -1137,6 +1137,7 @@ export default function AdminDashboard() {
                 <li>• Google Custom Search와 YouTube Data API는 하루 100회 무료 제한이 있습니다</li>
                 <li>• 제한을 초과하면 다음날 00:00(UTC)에 자동 리셋됩니다</li>
                 <li>• 변환/재변환 작업 시 자동으로 API 사용량이 추적됩니다</li>
+                <li>• Geocoding API는 월 10,000회 무료 제한이 있으며, 월 초에 자동 리셋됩니다</li>
                 <li>• TourAPI와 Eventbrite는 충분한 무료 한도를 제공합니다</li>
               </ul>
             </Card>
