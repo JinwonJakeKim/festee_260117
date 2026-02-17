@@ -1040,6 +1040,64 @@ export default function AdminDashboard() {
                 </Badge>
               </Card>
 
+              {/* Google Geocoding API */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">📍</span>
+                      </div>
+                      Google Geocoding API
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      축제 주소 → 위도/경도 변환에 사용
+                    </p>
+                    <div className="space-y-2">
+                      {(() => {
+                        const monthlyUsage = geocodingMonthlyLogs.reduce((sum, log) => sum + (log.count || 0), 0);
+                        const monthlyLimit = 10000;
+                        const percentage = Math.min((monthlyUsage / monthlyLimit) * 100, 100);
+                        const barColor = percentage >= 90 ? 'bg-red-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-gradient-to-r from-cyan-500 to-blue-500';
+                        return (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-400 text-sm">이번 달 사용량</span>
+                              <span className={`font-bold ${percentage >= 90 ? 'text-red-400' : percentage >= 70 ? 'text-yellow-400' : 'text-white'}`}>
+                                {monthlyUsage.toLocaleString()} / 10,000 호출
+                              </span>
+                            </div>
+                            <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${barColor}`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <p className="text-gray-500 text-xs">
+                              월 무료 한도: 10,000 호출 · 잔여 {(monthlyLimit - monthlyUsage).toLocaleString()}회
+                            </p>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
+                    ✓ 연동됨
+                  </Badge>
+                  <a
+                    href="https://console.cloud.google.com/google/maps-apis/quotas"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    관리 콘솔
+                  </a>
+                </div>
+              </Card>
+
               {/* Base44 InvokeLLM (참고) */}
               <Card className="bg-gray-900 border-gray-800 p-4">
                 <div className="flex items-start justify-between mb-3">
