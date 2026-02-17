@@ -651,7 +651,7 @@ Deno.serve(async (req) => {
       thumbnail_url: thumbnailUrl,
       video_url: videoUrl,
       image_gallery_urls: imageGalleryUrls,
-      website: websiteUrl || url,
+      website: websiteUrl,
       price_yen: extractedInfo.priceYen || null,
       price_details: extractedInfo.priceDetails || null,
       opening_hours: extractedInfo.openingHours || null,
