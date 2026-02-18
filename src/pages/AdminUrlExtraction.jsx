@@ -617,26 +617,12 @@ export default function AdminUrlExtraction() {
     }
   };
 
-  // Japantravel_RawData_Transform_Auto 자동화 ID (고정)
-  const RAWDATA_TRANSFORM_AUTOMATION_ID = '699038fa8d0cf8ae0977327e';
-
   const handleAutoTransform = async () => {
     const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
     
     if (pendingCount === 0) {
       alert('변환할 대기중인 데이터가 없습니다');
       return;
-    }
-
-    // 자동화 활성화 (항상 실행 - automationsList 조회 불필요)
-    try {
-      const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
-        automationId: RAWDATA_TRANSFORM_AUTOMATION_ID
-      });
-      console.log('Transform automation enabled:', data);
-      queryClient.invalidateQueries({ queryKey: ['automations'] });
-    } catch (error) {
-      console.error('Failed to enable transform automation:', error);
     }
 
     autoTransformMutation.mutate();
