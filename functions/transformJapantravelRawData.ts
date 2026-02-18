@@ -170,6 +170,68 @@ Deno.serve(async (req) => {
           };
         }
 
+        // ② 번역 완료 후 YouTube 영상 검색 (name_jp 활용 가능)
+        let videoUrl = festivalData.video_url;
+        let videoChannelName = '';
+        let youtubeShortUrls = [];
+        
+        const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
+        const festivalNameForSearch = festivalData.name_original;
+        
+        try {
+          console.log(`[Japantravel Transform] Calling fetchYoutubeVideos (English)...`);
+          const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+            festivalName: festivalNameForSearch,
+            searchHighlightVideo: shouldSearchHighlight,
+            searchShorts: true
+          });
+          
+          if (youtubeResult.data.success) {
+            if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
+              videoUrl = youtubeResult.data.highlightVideoUrl;
+              videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
+              console.log(`[Japantravel Transform] ✓ Got highlight video: ${videoUrl}`);
+            }
+            youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+            console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} Shorts (English search)`);
+          }
+        } catch (youtubeError) {
+          console.error('[Japantravel Transform] fetchYoutubeVideos (English) failed:', youtubeError.message);
+        }
+
+        // ③ 쇼츠가 없을 경우, 국가에 맞는 현지 언어로 재검색
+        if (youtubeShortUrls.length === 0) {
+          // 국가별 언어 필드 매핑
+          const countryLanguageMap = {
+            'japan': 'name_jp',
+            'china': 'name_zh',
+            'korea': 'name_ko',
+          };
+          const countryKey = (festivalData.country || '').toLowerCase();
+          const localNameField = countryLanguageMap[countryKey];
+          const localName = localNameField ? translatedData[localNameField] : null;
+
+          if (localName && localName !== festivalData.name_original) {
+            try {
+              console.log(`[Japantravel Transform] No shorts found. Retrying with local name (${localNameField}): "${localName}"`);
+              const localYoutubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+                festivalName: localName,
+                searchHighlightVideo: false, // 하이라이트는 이미 영어로 검색했으므로 생략
+                searchShorts: true
+              });
+
+              if (localYoutubeResult.data.success) {
+                youtubeShortUrls = localYoutubeResult.data.shortsUrls || [];
+                console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} Shorts (local language search)`);
+              }
+            } catch (localYoutubeError) {
+              console.error('[Japantravel Transform] fetchYoutubeVideos (local) failed:', localYoutubeError.message);
+            }
+          } else {
+            console.log(`[Japantravel Transform] No local name available for fallback search (country: ${festivalData.country})`);
+          }
+        }
+
         // Geocoding 시도
         let latitude = festivalData.latitude;
         let longitude = festivalData.longitude;
