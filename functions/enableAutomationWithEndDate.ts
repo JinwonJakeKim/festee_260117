@@ -28,16 +28,29 @@ Deno.serve(async (req) => {
     
     console.log(`[${VERSION}] Setting automation ${automationId} to end on ${endsOnDate}`);
 
-    // 자동화 활성화 및 종료 날짜 설정
-    const { data } = await base44.asServiceRole.functions.invoke('updateScheduledTask', {
-      taskId: automationId,
-      updates: {
+    // 자동화 활성화 및 종료 날짜 설정 - API 직접 호출
+    const appId = Deno.env.get('BASE44_APP_ID');
+    const apiUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}`;
+
+    const response = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-id': appId,
+        'Authorization': req.headers.get('Authorization')
+      },
+      body: JSON.stringify({
         is_active: true,
         ends_type: 'on',
         ends_on_date: endsOnDate,
         ends_after_count: null
-      }
+      })
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to update automation: ${response.status}`);
+    }
 
     return Response.json({
       success: true,
