@@ -365,25 +365,25 @@ Deno.serve(async (req) => {
           // 동일한 축제명이 있으면 업데이트
           const existingFestival = existingFestivalsByName[0];
           festivalId = existingFestival.id;
-          await base44.asServiceRole.entities.Festival.update(festivalId, festivalPayload);
+          await base44.asServiceRole.entities.Festival.update(festivalId, { ...festivalPayload, update_time: now });
           console.log(`[Japantravel Transform] ✓ Updated existing Festival by name: ${festivalId} (${festivalData.name_original})`);
         } else if (retransform && festivalId) {
           // 재변환 시 festival_id로 찾아서 업데이트
           const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: festivalId });
           const existingFestival = existingFestivals[0];
-          
+
           if (existingFestival) {
-            await base44.asServiceRole.entities.Festival.update(festivalId, festivalPayload);
+            await base44.asServiceRole.entities.Festival.update(festivalId, { ...festivalPayload, update_time: now });
             console.log(`[Japantravel Transform] ✓ Updated existing Festival by ID: ${festivalId}`);
           } else {
             // 기존 Festival이 없으면 새로 생성
-            const newFestival = await base44.asServiceRole.entities.Festival.create(festivalPayload);
+            const newFestival = await base44.asServiceRole.entities.Festival.create({ ...festivalPayload, create_time: now, update_time: now });
             festivalId = newFestival.id;
             console.log(`[Japantravel Transform] ✓ Created new Festival (original not found): ${festivalId}`);
           }
         } else {
           // 첫 변환이고 동일 축제명도 없으면 새로 생성
-          const newFestival = await base44.asServiceRole.entities.Festival.create(festivalPayload);
+          const newFestival = await base44.asServiceRole.entities.Festival.create({ ...festivalPayload, create_time: now, update_time: now });
           festivalId = newFestival.id;
           console.log(`[Japantravel Transform] ✓ Created new Festival: ${festivalId}`);
         }
