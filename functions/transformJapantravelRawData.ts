@@ -272,6 +272,8 @@ Deno.serve(async (req) => {
           console.log(`[Japantravel Transform] Using existing coordinates: (${latitude}, ${longitude})`);
         }
 
+        const now = new Date().toISOString();
+
         const festivalPayload = {
           name_original: festivalData.name_original,
           summary_original: festivalData.summary_original,
