@@ -211,9 +211,9 @@ Deno.serve(async (req) => {
                 dateStatus = 'confirmed';
               }
             }
-            // 패턴 2: "Early - Late April 2026" (월 전체 기간 추정)
+            // 패턴 2: "Early - Late April 2026" 또는 "Mid - Late April 2026" (월 전체 기간 추정)
             else {
-              const earlyLatePattern = /(?:early|late|beginning|end)\s*-\s*(?:early|late|beginning|end)\s+(\w+)\s+(\d{4})/i;
+              const earlyLatePattern = /(?:early|mid|late|beginning|end)\s*-\s*(?:early|mid|late|beginning|end)\s+(\w+)\s+(\d{4})/i;
               match = dateString.match(earlyLatePattern);
 
               if (match) {
