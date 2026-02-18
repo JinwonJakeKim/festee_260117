@@ -278,9 +278,7 @@ Deno.serve(async (req) => {
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const shortsQuery = festivalNameForSearch.toLowerCase().includes('shorts') 
-          ? festivalNameForSearch 
-          : festivalNameForSearch + ' shorts';
+        const shortsQuery = festivalNameForSearch;
         const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(shortsQuery)}&type=video&videoDuration=short&maxResults=20&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
