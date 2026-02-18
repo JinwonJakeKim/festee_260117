@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const VERSION = "ENABLE-AUTOMATION-V3";
+  const VERSION = "ENABLE-AUTOMATION-V4";
   console.log(`[${VERSION}] Starting...`);
 
   try {
@@ -25,19 +25,14 @@ Deno.serve(async (req) => {
     tomorrow.setHours(23, 59, 0, 0);
     const endsOnDate = tomorrow.toISOString();
 
+    console.log(`[${VERSION}] Target: ${automationId}, ends_on: ${endsOnDate}`);
+
+    // 1) 현재 자동화 상태 조회
     const appId = Deno.env.get('BASE44_APP_ID');
     const authHeader = req.headers.get('Authorization');
 
-    console.log(`[${VERSION}] Target automation: ${automationId}, ends_on: ${endsOnDate}`);
-
-    // 1) 현재 자동화 상태 조회
-    const getUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}`;
-    const getRes = await fetch(getUrl, {
-      method: 'GET',
-      headers: {
-        'x-app-id': appId,
-        'Authorization': authHeader
-      }
+    const getRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
+      headers: { 'x-app-id': appId, 'Authorization': authHeader }
     });
 
     let currentIsActive = false;
@@ -45,37 +40,18 @@ Deno.serve(async (req) => {
       const currentData = await getRes.json();
       currentIsActive = currentData.is_active || false;
       console.log(`[${VERSION}] Current is_active: ${currentIsActive}`);
-    } else {
-      console.warn(`[${VERSION}] Could not fetch current state: ${getRes.status}`);
     }
 
-    // 2) 비활성 상태이면 toggle로 활성화
+    // 2) 비활성 상태이면 SDK로 토글하여 활성화
     if (!currentIsActive) {
-      const toggleUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}/toggle`;
-      const toggleRes = await fetch(toggleUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-app-id': appId,
-          'Authorization': authHeader
-        }
-      });
-
-      if (toggleRes.ok) {
-        const toggleData = await toggleRes.json();
-        console.log(`[${VERSION}] Toggled. Now is_active: ${toggleData.is_active}`);
-      } else {
-        const errText = await toggleRes.text();
-        console.error(`[${VERSION}] Toggle failed: ${toggleRes.status} - ${errText}`);
-        throw new Error(`Toggle failed: ${toggleRes.status}`);
-      }
+      await base44.asServiceRole.scheduledTasks.toggle(automationId);
+      console.log(`[${VERSION}] Toggled via SDK.`);
     } else {
-      console.log(`[${VERSION}] Already active, skipping toggle.`);
+      console.log(`[${VERSION}] Already active.`);
     }
 
-    // 3) ends_type, ends_on_date 업데이트
-    const updateUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}`;
-    const updateRes = await fetch(updateUrl, {
+    // 3) ends_type, ends_on_date 업데이트 (updateScheduledTask 함수 호출)
+    const updateRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -92,10 +68,10 @@ Deno.serve(async (req) => {
     if (!updateRes.ok) {
       const errText = await updateRes.text();
       console.error(`[${VERSION}] Update failed: ${updateRes.status} - ${errText}`);
-      throw new Error(`Update failed: ${updateRes.status}`);
+      throw new Error(`Update ends_on_date failed: ${updateRes.status}`);
     }
 
-    console.log(`[${VERSION}] ✅ Done. Automation active, ends on ${endsOnDate}`);
+    console.log(`[${VERSION}] ✅ Done. Active, ends on ${endsOnDate}`);
 
     return Response.json({
       success: true,
