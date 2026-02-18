@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     }
 
     const imgSelectors = imageSelectors || {
-      thumbnail_selector: "div.coverphoto figure.coverImgWrapper img",
+      thumbnail_selector: "div.coverphoto.hidden-xs img.img-responsive",
       thumbnail_attribute: "src",
       content_image_selector: "div.article__content figure.shortcode-photo img",
       content_image_attribute: "data-src"
