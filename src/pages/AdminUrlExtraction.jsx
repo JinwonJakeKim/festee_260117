@@ -617,6 +617,9 @@ export default function AdminUrlExtraction() {
     }
   };
 
+  // Japantravel_RawData_Transform_Auto 자동화 ID (고정)
+  const RAWDATA_TRANSFORM_AUTOMATION_ID = '699038fa8d0cf8ae0977327e';
+
   const handleAutoTransform = async () => {
     const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
     
@@ -625,18 +628,15 @@ export default function AdminUrlExtraction() {
       return;
     }
 
-    // Japantravel_RawData_Transform_Auto 자동화가 비활성화된 경우에만 활성화 및 종료 날짜 설정
-    const transformAutoAutomation = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
-    if (transformAutoAutomation && !transformAutoAutomation.is_active) {
-      try {
-        const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
-          automationId: transformAutoAutomation.id
-        });
-        console.log('Transform automation enabled:', data);
-        queryClient.invalidateQueries({ queryKey: ['automations'] });
-      } catch (error) {
-        console.error('Failed to enable transform automation:', error);
-      }
+    // 자동화 활성화 (항상 실행 - automationsList 조회 불필요)
+    try {
+      const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
+        automationId: RAWDATA_TRANSFORM_AUTOMATION_ID
+      });
+      console.log('Transform automation enabled:', data);
+      queryClient.invalidateQueries({ queryKey: ['automations'] });
+    } catch (error) {
+      console.error('Failed to enable transform automation:', error);
     }
 
     autoTransformMutation.mutate();
