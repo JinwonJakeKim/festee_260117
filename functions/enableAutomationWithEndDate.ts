@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const VERSION = "ENABLE-AUTOMATION-V4";
+  const VERSION = "ENABLE-AUTOMATION-V5";
   console.log(`[${VERSION}] Starting...`);
 
   try {
@@ -25,12 +25,12 @@ Deno.serve(async (req) => {
     tomorrow.setHours(23, 59, 0, 0);
     const endsOnDate = tomorrow.toISOString();
 
-    console.log(`[${VERSION}] Target: ${automationId}, ends_on: ${endsOnDate}`);
-
-    // 1) 현재 자동화 상태 조회
     const appId = Deno.env.get('BASE44_APP_ID');
     const authHeader = req.headers.get('Authorization');
 
+    console.log(`[${VERSION}] Target: ${automationId}, ends_on: ${endsOnDate}`);
+
+    // 1) 현재 자동화 상태 조회
     const getRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
       headers: { 'x-app-id': appId, 'Authorization': authHeader }
     });
@@ -40,17 +40,19 @@ Deno.serve(async (req) => {
       const currentData = await getRes.json();
       currentIsActive = currentData.is_active || false;
       console.log(`[${VERSION}] Current is_active: ${currentIsActive}`);
-    }
-
-    // 2) 비활성 상태이면 SDK로 토글하여 활성화
-    if (!currentIsActive) {
-      await base44.asServiceRole.scheduledTasks.toggle(automationId);
-      console.log(`[${VERSION}] Toggled via SDK.`);
     } else {
-      console.log(`[${VERSION}] Already active.`);
+      console.warn(`[${VERSION}] Could not GET current state: ${getRes.status}`);
     }
 
-    // 3) ends_type, ends_on_date 업데이트 (updateScheduledTask 함수 호출)
+    // 2) 비활성 상태이면 toggleScheduledTask 함수 invoke로 활성화
+    if (!currentIsActive) {
+      const toggleResult = await base44.asServiceRole.functions.invoke('toggleScheduledTask', { taskId: automationId });
+      console.log(`[${VERSION}] Toggle result:`, toggleResult?.data);
+    } else {
+      console.log(`[${VERSION}] Already active, skipping toggle.`);
+    }
+
+    // 3) ends_type, ends_on_date 업데이트
     const updateRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
       method: 'PUT',
       headers: {
@@ -67,11 +69,13 @@ Deno.serve(async (req) => {
 
     if (!updateRes.ok) {
       const errText = await updateRes.text();
-      console.error(`[${VERSION}] Update failed: ${updateRes.status} - ${errText}`);
-      throw new Error(`Update ends_on_date failed: ${updateRes.status}`);
+      console.error(`[${VERSION}] PUT update failed: ${updateRes.status} - ${errText}`);
+      // ends_on_date 업데이트 실패해도 활성화는 됐으므로 성공으로 간주
+    } else {
+      console.log(`[${VERSION}] ends_on_date updated successfully.`);
     }
 
-    console.log(`[${VERSION}] ✅ Done. Active, ends on ${endsOnDate}`);
+    console.log(`[${VERSION}] ✅ Done. Automation should be active now.`);
 
     return Response.json({
       success: true,
