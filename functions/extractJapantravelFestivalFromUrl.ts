@@ -562,6 +562,27 @@ Deno.serve(async (req) => {
     };
 
     // ===== 썸네일 URL 설정 =====
+    // fallback 1: div.coverImgWrapper img (모바일 영역에도 있음)
+    if (!extractedImages.thumbnail) {
+      const coverImgEl = doc.querySelector('div.coverImgWrapper img');
+      if (coverImgEl) {
+        extractedImages.thumbnail = coverImgEl.getAttribute('src') || coverImgEl.getAttribute('data-src');
+        if (extractedImages.thumbnail) {
+          console.log(`[Japantravel] ✅ Thumbnail from coverImgWrapper: ${extractedImages.thumbnail}`);
+        }
+      }
+    }
+    // fallback 2: og:image 메타태그
+    if (!extractedImages.thumbnail) {
+      const ogImage = doc.querySelector('meta[property="og:image"]');
+      if (ogImage) {
+        extractedImages.thumbnail = ogImage.getAttribute('content');
+        if (extractedImages.thumbnail) {
+          console.log(`[Japantravel] ✅ Thumbnail from og:image: ${extractedImages.thumbnail}`);
+        }
+      }
+    }
+
     let thumbnailUrl = extractedImages.thumbnail 
       ? normalizeUrl(extractedImages.thumbnail, url)
       : '';
