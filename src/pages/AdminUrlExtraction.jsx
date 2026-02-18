@@ -625,14 +625,15 @@ export default function AdminUrlExtraction() {
       return;
     }
 
-    // Japantravel_RawData_Transform_Auto 자동화 활성화 및 종료 날짜 설정
+    // Japantravel_RawData_Transform_Auto 자동화가 비활성화된 경우에만 활성화 및 종료 날짜 설정
     const transformAutoAutomation = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
-    if (transformAutoAutomation) {
+    if (transformAutoAutomation && !transformAutoAutomation.is_active) {
       try {
         const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
           automationId: transformAutoAutomation.id
         });
         console.log('Transform automation enabled:', data);
+        queryClient.invalidateQueries({ queryKey: ['automations'] });
       } catch (error) {
         console.error('Failed to enable transform automation:', error);
       }
