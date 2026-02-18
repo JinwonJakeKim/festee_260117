@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const VERSION = "ENABLE-AUTOMATION-V2";
-  console.log(`[${VERSION}] Enabling automation with end date...`);
+  const VERSION = "ENABLE-AUTOMATION-V3";
+  console.log(`[${VERSION}] Starting...`);
 
   try {
     const base44 = createClientFromRequest(req);
@@ -18,57 +18,69 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'automationId required' }, { status: 400 });
     }
 
-    // 다음 날 23:59 계산 (KST 기준)
+    // 다음 날 23:59 계산
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(23, 59, 0, 0);
     const endsOnDate = tomorrow.toISOString();
 
-    console.log(`[${VERSION}] Setting automation ${automationId} to active=true, ends_on=${endsOnDate}`);
-
-    // toggleScheduledTask (activate) → 현재 비활성이면 활성화
-    // updateScheduledTask 로 ends_type, ends_on_date 설정
     const appId = Deno.env.get('BASE44_APP_ID');
+    const authHeader = req.headers.get('Authorization');
 
-    // 1) 자동화 토글 (비활성 → 활성)
-    const toggleUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}/toggle`;
-    const toggleRes = await fetch(toggleUrl, {
-      method: 'POST',
+    console.log(`[${VERSION}] Target automation: ${automationId}, ends_on: ${endsOnDate}`);
+
+    // 1) 현재 자동화 상태 조회
+    const getUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}`;
+    const getRes = await fetch(getUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'x-app-id': appId,
-        'Authorization': req.headers.get('Authorization')
+        'Authorization': authHeader
       }
     });
 
-    let toggleData = null;
-    if (toggleRes.ok) {
-      toggleData = await toggleRes.json();
-      // 만약 toggle 결과 비활성화됐으면 다시 토글
-      if (toggleData && toggleData.is_active === false) {
-        await fetch(toggleUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-app-id': appId,
-            'Authorization': req.headers.get('Authorization')
-          }
-        });
-      }
-      console.log(`[${VERSION}] Toggle result: is_active=${toggleData?.is_active}`);
+    let currentIsActive = false;
+    if (getRes.ok) {
+      const currentData = await getRes.json();
+      currentIsActive = currentData.is_active || false;
+      console.log(`[${VERSION}] Current is_active: ${currentIsActive}`);
     } else {
-      console.warn(`[${VERSION}] Toggle failed: ${toggleRes.status}`);
+      console.warn(`[${VERSION}] Could not fetch current state: ${getRes.status}`);
     }
 
-    // 2) ends_type, ends_on_date 업데이트
+    // 2) 비활성 상태이면 toggle로 활성화
+    if (!currentIsActive) {
+      const toggleUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}/toggle`;
+      const toggleRes = await fetch(toggleUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-id': appId,
+          'Authorization': authHeader
+        }
+      });
+
+      if (toggleRes.ok) {
+        const toggleData = await toggleRes.json();
+        console.log(`[${VERSION}] Toggled. Now is_active: ${toggleData.is_active}`);
+      } else {
+        const errText = await toggleRes.text();
+        console.error(`[${VERSION}] Toggle failed: ${toggleRes.status} - ${errText}`);
+        throw new Error(`Toggle failed: ${toggleRes.status}`);
+      }
+    } else {
+      console.log(`[${VERSION}] Already active, skipping toggle.`);
+    }
+
+    // 3) ends_type, ends_on_date 업데이트
     const updateUrl = `https://api.base44.com/api/scheduled-tasks/${automationId}`;
     const updateRes = await fetch(updateUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-app-id': appId,
-        'Authorization': req.headers.get('Authorization')
+        'Authorization': authHeader
       },
       body: JSON.stringify({
         ends_type: 'on',
@@ -80,14 +92,14 @@ Deno.serve(async (req) => {
     if (!updateRes.ok) {
       const errText = await updateRes.text();
       console.error(`[${VERSION}] Update failed: ${updateRes.status} - ${errText}`);
-      throw new Error(`Failed to update automation ends_on_date: ${updateRes.status}`);
+      throw new Error(`Update failed: ${updateRes.status}`);
     }
 
-    console.log(`[${VERSION}] ✅ Automation enabled, ends on ${endsOnDate}`);
+    console.log(`[${VERSION}] ✅ Done. Automation active, ends on ${endsOnDate}`);
 
     return Response.json({
       success: true,
-      message: `자동화가 활성화되었습니다. 종료 예정: ${tomorrow.toLocaleDateString('ko-KR')} 23:59`,
+      message: `자동화 활성화 완료. 종료 예정: ${tomorrow.toLocaleDateString('ko-KR')} 23:59`,
       ends_on_date: endsOnDate
     });
 
