@@ -45,45 +45,13 @@ Deno.serve(async (req) => {
         });
 
         const festivalData = rawData;
-        const festivalNameForSearch = festivalData.name_original;
 
         // Google 이미지 검색 제외 (이미지 저작권 및 정확성 우려)
         let thumbnailUrl = festivalData.thumbnail_url;
         let mediaUrls = festivalData.image_gallery_urls || [];
         console.log(`[Japantravel Transform] Using only source images (Google image search disabled)`);
 
-        // YouTube 영상 검색 (중앙화된 함수 사용)
-        let videoUrl = festivalData.video_url;
-        let videoChannelName = '';
-        let youtubeShortUrls = [];
-        
-        const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
-        
-        if (shouldSearchHighlight || true) { // 쇼츠는 항상 검색
-          try {
-            console.log(`[Japantravel Transform] Calling fetchYoutubeVideos function...`);
-            const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
-              festivalName: festivalNameForSearch,
-              searchHighlightVideo: shouldSearchHighlight,
-              searchShorts: true
-            });
-            
-            if (youtubeResult.data.success) {
-              if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
-                videoUrl = youtubeResult.data.highlightVideoUrl;
-                videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
-                console.log(`[Japantravel Transform] ✓ Got highlight video from fetchYoutubeVideos: ${videoUrl}`);
-                console.log(`[Japantravel Transform] ✓ Channel: ${videoChannelName}`);
-              }
-              
-              youtubeShortUrls = youtubeResult.data.shortsUrls || [];
-              console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} YouTube Shorts from fetchYoutubeVideos`);
-            }
-          } catch (youtubeError) {
-            console.error('[Japantravel Transform] fetchYoutubeVideos failed:', youtubeError.message);
-          }
-        }
-
+        // ① LLM 번역 먼저 수행 (name_jp 확보 후 YouTube 검색에 활용)
         // LLM으로 번역 수행
         console.log(`[Japantravel Transform] Performing LLM translation for: ${festivalData.name_original}`);
 
