@@ -59,45 +59,50 @@ Deno.serve(async (req) => {
         try {
           translatedData = await base44.integrations.Core.InvokeLLM({
             prompt: `
-          다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 **반드시** 한국어, 영어, 일본어, 중국어 4개 언어로 모두 번역해주세요.
+          다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 **반드시** 한국어, 영어, 일본어, 중국어 4개 언어로 모두 번역하고, 설명(description)을 바탕으로 하이라이트 포인트도 생성해주세요.
 
           **원본 데이터:**
           - 원본 언어: ${festivalData.original_language || 'unknown'}
           - 축제명: ${festivalData.name_original || ''}
           - 요약: ${festivalData.summary_original || ''}
           - 설명: ${festivalData.description_original || ''}
-          - 하이라이트: ${JSON.stringify(festivalData.highlights_original || [])}
           - 금지사항: ${JSON.stringify(festivalData.restrictions_original || [])}
           - 추천사항: ${JSON.stringify(festivalData.recommendations_original || [])}
           - 카테고리: ${festivalData.category || ''}
           - 태그: ${JSON.stringify(festivalData.tags || [])}
 
           **번역 규칙 (⚠️ 매우 중요!):**
-          
+
           🔥 **모든 필드를 4개 언어로 번역 필수:**
           - _ko (한국어) - 반드시 번역
           - _en (영어) - 반드시 번역
           - _jp (일본어) - 반드시 번역
           - _zh (중국어) - 반드시 번역
-          
+
           **언어별 번역 스타일:**
           - 한국어 (_ko): 존댓말 사용, "~입니다" 체, 정중하고 친근하게
           - 영어 (_en): 명확하고 간결하게, 자연스러운 표현
           - 일본어 (_jp): 정중한 표현(です・ます調), 일본 현지식 표현
           - 중국어 (_zh): 간체자 사용, 중국어 관용 표현
-          
+
           **고유명사 처리:**
           - 축제명, 장소명, 인명 등 고유명사는 원문 유지
           - 필요시 괄호 안에 현지 표기 추가 가능
-          
+
           **구조 유지:**
           - 원본과 동일한 문장 수, 문단 수 유지
           - 줄바꿈(\\n\\n)도 동일하게 유지
-          
+
+          **🌟 하이라이트 생성 규칙 (핵심!):**
+          - description(설명)과 summary(요약)를 바탕으로 이 축제의 핵심 매력 포인트를 3~5개 추출/생성해주세요
+          - 각 하이라이트는 짧고 임팩트 있는 문장 (15~40자 이내)
+          - 방문객이 이 축제에 꼭 가야 하는 이유를 중심으로 작성
+          - 4개 언어로 각각 생성 (highlights_ko, highlights_en, highlights_jp, highlights_zh)
+
           **배열 필드 번역:**
-          - highlights, restrictions, recommendations, tags는 각 항목을 개별 번역
+          - restrictions, recommendations, tags는 각 항목을 개별 번역
           - 항목 수는 원본과 동일
-          
+
 
           ⚠️ **경고: 번역 누락 금지!**
           - 모든 필드에 대해 4개 언어 번역을 반드시 제공하세요
