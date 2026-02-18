@@ -351,7 +351,8 @@ Deno.serve(async (req) => {
           star_rating: 0,
           likes_count: 0,
           catches_count: 0,
-        };
+          update_time: now,
+          };
 
         // 동일한 축제명으로 기존 Festival 찾기
         const existingFestivalsByName = await base44.asServiceRole.entities.Festival.filter({ 
