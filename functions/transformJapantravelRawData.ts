@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
                 tags_jp: { type: "array", items: { type: "string" } },
                 tags_zh: { type: "array", items: { type: "string" } }
               },
-              required: ["name_ko", "name_en", "name_jp", "name_zh", "description_ko", "description_en", "description_jp", "description_zh"]
+              required: ["name_ko", "name_en", "name_jp", "name_zh", "description_ko", "description_en", "description_jp", "description_zh", "highlights_ko", "highlights_en", "highlights_jp", "highlights_zh"]
             }
           });
           console.log(`[Japantravel Transform] LLM Translation successful.`);
