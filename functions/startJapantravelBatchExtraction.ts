@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
       try {
         await base44.asServiceRole.entities.JapantravelLinks.update(linkId, {
           processing_status: 'pending',
-          error_message: null
+          error_message: null,
+          update_time: new Date().toISOString()
         });
         successfullyUpdated++;
       } catch (updateError) {
