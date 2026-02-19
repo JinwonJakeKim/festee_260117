@@ -1,4 +1,3 @@
-
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 // Japantravel 카테고리 → Festival 카테고리 매핑
@@ -346,7 +345,23 @@ Deno.serve(async (req) => {
           recommendations: translatedData.recommendations_ko || festivalData.recommendations_original || [],
           highlights: translatedData.highlights_ko || festivalData.highlights_original || [],
           tags: translatedData.tags_ko || festivalData.tags || [],
-          category: translatedData.category_ko || festivalData.category,
+          category: (() => {
+            // 1) 직접 매핑 시도 (LLM 불필요)
+            const direct = mapCategoryDirect(festivalData.category);
+            if (direct) {
+              console.log(`[Japantravel Transform] Category direct mapped: "${festivalData.category}" → "${direct}"`);
+              return direct;
+            }
+            // 2) LLM이 반환한 category_ko 검증
+            const llmCategory = translatedData.category_ko;
+            if (llmCategory && VALID_CATEGORIES.includes(llmCategory)) {
+              console.log(`[Japantravel Transform] Category LLM mapped: "${festivalData.category}" → "${llmCategory}"`);
+              return llmCategory;
+            }
+            // 3) 매핑 실패 → 기타
+            console.log(`[Japantravel Transform] Category fallback to "기타" for: "${festivalData.category}"`);
+            return '기타';
+          })(),
           
           country: festivalData.country,
           city: festivalData.city,
