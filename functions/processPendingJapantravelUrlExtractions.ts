@@ -26,6 +26,23 @@ Deno.serve(async (req) => {
         }
       }
     } else {
+      // 30분 이상 processing 상태로 멈춰있는 링크를 먼저 failed로 리셋
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      const stuckLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
+        processing_status: 'processing'
+      }, '-updated_date', 20);
+      
+      for (const stuckLink of stuckLinks) {
+        if (stuckLink.updated_date && new Date(stuckLink.updated_date) < new Date(thirtyMinutesAgo)) {
+          console.log(`[Japantravel] Resetting stuck processing link: ${stuckLink.url}`);
+          await base44.asServiceRole.entities.JapantravelLinks.update(stuckLink.id, {
+            processing_status: 'failed',
+            error_message: 'Stuck in processing state - auto reset',
+            update_time: new Date().toISOString()
+          });
+        }
+      }
+
       // pending 또는 failed 상태의 링크 조회
       pendingLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
         processing_status: { $in: ['pending', 'failed'] }
