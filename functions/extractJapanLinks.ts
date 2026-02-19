@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
     });
     const existingUrls = new Set(existing.map(r => r.url));
 
+    const now = new Date().toISOString();
     const toCreate = allLinks
       .filter(link => !existingUrls.has(link))
       .map(link => ({
@@ -150,6 +151,8 @@ Deno.serve(async (req) => {
         country: sourceUrl.country,
         source_url_id: sourceUrlId,
         processing_status: 'pending',
+        create_time: now,
+        update_time: now,
       }));
 
     if (toCreate.length > 0) {
