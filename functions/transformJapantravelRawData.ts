@@ -40,6 +40,13 @@ Deno.serve(async (req) => {
 
     console.log(`[Japantravel Transform] Starting transformation of ${rawDataIds.length} records, retransform=${retransform}`);
 
+    // 블랙리스트 단어 목록 로드 (한 번만)
+    const blacklistedTermRecords = await base44.asServiceRole.entities.BlacklistedTerm.list();
+    const blacklistedTerms = blacklistedTermRecords
+      .filter(r => r.is_active !== false)
+      .map(r => r.term.toLowerCase());
+    console.log(`[Japantravel Transform] Loaded ${blacklistedTerms.length} blacklisted terms`);
+
     const results = [];
     
     for (const rawDataId of rawDataIds) {
@@ -58,6 +65,24 @@ Deno.serve(async (req) => {
         }
 
         console.log(`[Japantravel Transform] Processing: ${rawData.name_original}`);
+
+        // 블랙리스트 체크
+        const nameToCheck = (rawData.name_original || '').toLowerCase();
+        const matchedTerm = blacklistedTerms.find(term => nameToCheck.includes(term));
+        if (matchedTerm) {
+          console.log(`[Japantravel Transform] ⛔ Blacklisted term "${matchedTerm}" found in: ${rawData.name_original}`);
+          await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
+            processing_status: 'failed',
+            error_message: `블랙리스트 단어 포함: "${matchedTerm}"`
+          });
+          results.push({
+            rawDataId,
+            success: false,
+            skipped: true,
+            error: `블랙리스트 단어 포함: "${matchedTerm}"`
+          });
+          continue;
+        }
 
         // 상태 업데이트 - processing
         await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
