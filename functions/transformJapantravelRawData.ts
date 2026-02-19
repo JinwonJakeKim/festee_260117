@@ -88,7 +88,6 @@ Deno.serve(async (req) => {
           - 설명: ${festivalData.description_original || ''}
           - 금지사항: ${JSON.stringify(festivalData.restrictions_original || [])}
           - 추천사항: ${JSON.stringify(festivalData.recommendations_original || [])}
-          - 카테고리: ${festivalData.category || ''}
           - 태그: ${JSON.stringify(festivalData.tags || [])}
 
           **번역 규칙 (⚠️ 매우 중요!):**
