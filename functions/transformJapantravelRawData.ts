@@ -173,17 +173,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     youtubeShortUrls = youtubeResult.data.shortsUrls || [];
   }
 
-  // 쇼츠 없으면 현지 언어로 재검색
-  if (youtubeShortUrls.length === 0) {
-    const countryLanguageMap = { 'japan': 'name_jp', 'china': 'name_zh', 'korea': 'name_ko' };
-    const localName = translatedData[countryLanguageMap[(festivalData.country || '').toLowerCase()]];
-    if (localName && localName !== festivalData.name_original) {
-      const localYt = await base44.functions.invoke('fetchYoutubeVideos', {
-        festivalName: localName, searchHighlightVideo: false, searchShorts: true
-      }).catch(() => ({ data: { success: false } }));
-      if (localYt.data?.success) youtubeShortUrls = localYt.data.shortsUrls || [];
-    }
-  }
+  // 쇼츠 재검색 비활성화 (CPU 시간 초과 방지)
 
   // Geocoding 결과 처리
   if (geocodeResult.data?.success) {
