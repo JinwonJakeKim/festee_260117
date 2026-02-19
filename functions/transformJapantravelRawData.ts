@@ -71,13 +71,38 @@ Deno.serve(async (req) => {
         let mediaUrls = festivalData.image_gallery_urls || [];
         console.log(`[Japantravel Transform] Using only source images (Google image search disabled)`);
 
-        // ① LLM 번역 먼저 수행 (name_jp 확보 후 YouTube 검색에 활용)
-        // LLM으로 번역 수행
-        console.log(`[Japantravel Transform] Performing LLM translation for: ${festivalData.name_original}`);
+        // LLM 번역 + Geocoding + YouTube를 병렬로 수행
+        console.log(`[Japantravel Transform] Starting parallel: LLM translation + geocoding + youtube for: ${festivalData.name_original}`);
 
         let translatedData;
-        try {
-          translatedData = await base44.integrations.Core.InvokeLLM({
+        let latitude = festivalData.latitude;
+        let longitude = festivalData.longitude;
+        let geocodingStatus = latitude && longitude ? 'success' : 'pending';
+        let geocodingErrorMessage = null;
+        let videoUrl = festivalData.video_url;
+        let videoChannelName = '';
+        let youtubeShortUrls = [];
+
+        const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
+
+        // Geocoding promise
+        const geocodePromise = (latitude && longitude)
+          ? Promise.resolve({ data: { success: true, latitude, longitude } })
+          : base44.functions.invoke('geocodeAddress', {
+              address: festivalData.address,
+              city: festivalData.city,
+              country: festivalData.country
+            }).catch(e => { console.error('[Transform] Geocode error:', e.message); return { data: { success: false, error: e.message } }; });
+
+        // YouTube promise
+        const youtubePromise = base44.functions.invoke('fetchYoutubeVideos', {
+          festivalName: festivalData.name_original,
+          searchHighlightVideo: shouldSearchHighlight,
+          searchShorts: true
+        }).catch(e => { console.error('[Transform] YouTube error:', e.message); return { data: { success: false } }; });
+
+        // LLM translation promise
+        const llmPromise = base44.integrations.Core.InvokeLLM({
             prompt: `
           다음은 japantravel.com 웹페이지에서 추출된 축제 정보의 원본 데이터입니다. 이 데이터를 **반드시** 한국어, 영어, 일본어, 중국어 4개 언어로 모두 번역하고, 설명(description)을 바탕으로 하이라이트 포인트도 생성해주세요.
 
