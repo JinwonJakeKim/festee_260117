@@ -1,5 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Japantravel 카테고리 → Festival 카테고리 매핑
+// 명확한 매핑은 직접 처리, 모호한 경우는 null 반환 (LLM 위임)
+const DIRECT_CATEGORY_MAP = {
+  'culture': '문화',
+  'food': '음식',
+  'music': '음악',
+  'art': '예술',
+  'arts': '예술',
+  'sports': '스포츠',
+  'sport': '스포츠',
+};
+
+const VALID_CATEGORIES = ['음악', '문화', '예술', '음식', '스포츠', '지역축제', '기타'];
+
+function mapCategoryDirect(rawCategory) {
+  if (!rawCategory) return null;
+  const key = rawCategory.toLowerCase().trim();
+  return DIRECT_CATEGORY_MAP[key] || null; // null이면 LLM 위임
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
