@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
       try {
         // processing 상태로 업데이트
         await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
-          processing_status: 'processing'
+          processing_status: 'processing',
+          update_time: new Date().toISOString()
         });
 
         // extractJapantravelFestivalFromUrl 함수 호출
@@ -70,7 +71,8 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'processed',
             raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
-            error_message: null
+            error_message: null,
+            update_time: new Date().toISOString()
           });
           succeeded++;
           console.log(`[Japantravel] ✅ Successfully processed: ${link.url}`);
@@ -78,7 +80,8 @@ Deno.serve(async (req) => {
           // 실패: failed 상태로 업데이트
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
-            error_message: extractResult?.error || 'No data extracted'
+            error_message: extractResult?.error || 'No data extracted',
+            update_time: new Date().toISOString()
           });
           failed++;
           console.log(`[Japantravel] ❌ Failed to process: ${link.url} - ${extractResult?.error || 'No data extracted'}`);
@@ -88,7 +91,8 @@ Deno.serve(async (req) => {
         try {
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
-            error_message: error.message || 'Unknown error'
+            error_message: error.message || 'Unknown error',
+            update_time: new Date().toISOString()
           });
         } catch (updateError) {
           console.error(`[Japantravel] ⚠️ Failed to update error status for ${link.url}:`, updateError);
