@@ -156,6 +156,7 @@ Deno.serve(async (req) => {
                 restrictions_en: { type: "array", items: { type: "string" } },
                 recommendations_ko: { type: "array", items: { type: "string" } },
                 recommendations_en: { type: "array", items: { type: "string" } },
+                category_ko: { type: "string" },
                 category_en: { type: "string" },
                 category_jp: { type: "string" },
                 category_zh: { type: "string" },
