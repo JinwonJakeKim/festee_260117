@@ -191,135 +191,59 @@ Deno.serve(async (req) => {
               },
               required: ["name_ko", "name_en", "name_jp", "name_zh", "description_ko", "description_en", "description_jp", "description_zh", "highlights_ko", "highlights_en", "highlights_jp", "highlights_zh"]
             }
+          }).catch(e => {
+            console.error('[Japantravel Transform] LLM Translation failed:', e);
+            return {
+              name_ko: festivalData.name_original, name_en: festivalData.name_original,
+              name_jp: festivalData.name_original, name_zh: festivalData.name_original,
+              summary_ko: festivalData.summary_original, summary_en: festivalData.summary_original,
+              summary_jp: festivalData.summary_original, summary_zh: festivalData.summary_original,
+              description_ko: festivalData.description_original, description_en: festivalData.description_original,
+              description_jp: festivalData.description_original, description_zh: festivalData.description_original,
+              highlights_ko: [], highlights_en: [], highlights_jp: [], highlights_zh: [],
+              restrictions_ko: festivalData.restrictions_original, restrictions_en: festivalData.restrictions_original,
+              recommendations_ko: festivalData.recommendations_original, recommendations_en: festivalData.recommendations_original,
+              category_en: festivalData.category, category_jp: festivalData.category, category_zh: festivalData.category,
+              tags_en: festivalData.tags, tags_jp: festivalData.tags, tags_zh: festivalData.tags,
+            };
           });
-          console.log(`[Japantravel Transform] LLM Translation successful.`);
-        } catch (llmError) {
-          console.error('[Japantravel Transform] LLM Translation failed:', llmError);
-          translatedData = { 
-            name_ko: festivalData.name_original,
-            name_en: festivalData.name_original,
-            name_jp: festivalData.name_original,
-            name_zh: festivalData.name_original,
-            summary_ko: festivalData.summary_original,
-            summary_en: festivalData.summary_original,
-            summary_jp: festivalData.summary_original,
-            summary_zh: festivalData.summary_original,
-            description_ko: festivalData.description_original,
-            description_en: festivalData.description_original,
-            description_jp: festivalData.description_original,
-            description_zh: festivalData.description_original,
-            highlights_ko: [],
-            highlights_en: [],
-            highlights_jp: [],
-            highlights_zh: [],
-            restrictions_ko: festivalData.restrictions_original,
-            restrictions_en: festivalData.restrictions_original,
-            recommendations_ko: festivalData.recommendations_original,
-            recommendations_en: festivalData.recommendations_original,
-            category_en: festivalData.category,
-            category_jp: festivalData.category,
-            category_zh: festivalData.category,
-            tags_en: festivalData.tags,
-            tags_jp: festivalData.tags,
-            tags_zh: festivalData.tags,
-          };
-        }
 
-        // ② 번역 완료 후 YouTube 영상 검색 (name_jp 활용 가능)
-        let videoUrl = festivalData.video_url;
-        let videoChannelName = '';
-        let youtubeShortUrls = [];
-        
-        const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
-        const festivalNameForSearch = festivalData.name_original;
-        
-        try {
-          console.log(`[Japantravel Transform] Calling fetchYoutubeVideos (English)...`);
-          const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
-            festivalName: festivalNameForSearch,
-            searchHighlightVideo: shouldSearchHighlight,
-            searchShorts: true
-          });
-          
-          if (youtubeResult.data.success) {
-            if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
-              videoUrl = youtubeResult.data.highlightVideoUrl;
-              videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
-              console.log(`[Japantravel Transform] ✓ Got highlight video: ${videoUrl}`);
-            }
-            youtubeShortUrls = youtubeResult.data.shortsUrls || [];
-            console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} Shorts (English search)`);
+        // 병렬 실행
+        const [llmResult, youtubeResult, geocodeResult] = await Promise.all([llmPromise, youtubePromise, geocodePromise]);
+        translatedData = llmResult;
+        console.log(`[Japantravel Transform] Parallel calls done.`);
+
+        // YouTube 결과 처리
+        if (youtubeResult.data?.success) {
+          if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
+            videoUrl = youtubeResult.data.highlightVideoUrl;
+            videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
           }
-        } catch (youtubeError) {
-          console.error('[Japantravel Transform] fetchYoutubeVideos (English) failed:', youtubeError.message);
+          youtubeShortUrls = youtubeResult.data.shortsUrls || [];
         }
 
-        // ③ 쇼츠가 없을 경우, 국가에 맞는 현지 언어로 재검색
+        // 쇼츠 없으면 현지 언어로 재검색
         if (youtubeShortUrls.length === 0) {
-          // 국가별 언어 필드 매핑
-          const countryLanguageMap = {
-            'japan': 'name_jp',
-            'china': 'name_zh',
-            'korea': 'name_ko',
-          };
-          const countryKey = (festivalData.country || '').toLowerCase();
-          const localNameField = countryLanguageMap[countryKey];
-          const localName = localNameField ? translatedData[localNameField] : null;
-
+          const countryLanguageMap = { 'japan': 'name_jp', 'china': 'name_zh', 'korea': 'name_ko' };
+          const localName = translatedData[countryLanguageMap[(festivalData.country || '').toLowerCase()]];
           if (localName && localName !== festivalData.name_original) {
-            try {
-              console.log(`[Japantravel Transform] No shorts found. Retrying with local name (${localNameField}): "${localName}"`);
-              const localYoutubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
-                festivalName: localName,
-                searchHighlightVideo: false, // 하이라이트는 이미 영어로 검색했으므로 생략
-                searchShorts: true
-              });
-
-              if (localYoutubeResult.data.success) {
-                youtubeShortUrls = localYoutubeResult.data.shortsUrls || [];
-                console.log(`[Japantravel Transform] ✓ Got ${youtubeShortUrls.length} Shorts (local language search)`);
-              }
-            } catch (localYoutubeError) {
-              console.error('[Japantravel Transform] fetchYoutubeVideos (local) failed:', localYoutubeError.message);
-            }
-          } else {
-            console.log(`[Japantravel Transform] No local name available for fallback search (country: ${festivalData.country})`);
+            const localYt = await base44.functions.invoke('fetchYoutubeVideos', {
+              festivalName: localName, searchHighlightVideo: false, searchShorts: true
+            }).catch(() => ({ data: { success: false } }));
+            if (localYt.data?.success) youtubeShortUrls = localYt.data.shortsUrls || [];
           }
         }
 
-        // Geocoding 시도
-        let latitude = festivalData.latitude;
-        let longitude = festivalData.longitude;
-        let geocodingStatus = 'pending';
-        let geocodingErrorMessage = null;
-
-        if (!latitude || !longitude) {
-          try {
-            console.log(`[Japantravel Transform] Attempting geocoding for: ${festivalData.city}, ${festivalData.address}`);
-            const geocodeResult = await base44.functions.invoke('geocodeAddress', {
-              address: festivalData.address,
-              city: festivalData.city,
-              country: festivalData.country
-            });
-
-            if (geocodeResult.data.success) {
-              latitude = geocodeResult.data.latitude;
-              longitude = geocodeResult.data.longitude;
-              geocodingStatus = 'success';
-              console.log(`[Japantravel Transform] ✅ Geocoding success: (${latitude}, ${longitude})`);
-            } else {
-              geocodingStatus = 'failed';
-              geocodingErrorMessage = geocodeResult.data.error || 'Geocoding failed';
-              console.log(`[Japantravel Transform] ❌ Geocoding failed: ${geocodingErrorMessage}`);
-            }
-          } catch (geocodeError) {
-            geocodingStatus = 'failed';
-            geocodingErrorMessage = geocodeError.message;
-            console.error(`[Japantravel Transform] Geocoding error:`, geocodeError);
-          }
-        } else {
+        // Geocoding 결과 처리
+        if (geocodeResult.data?.success) {
+          latitude = geocodeResult.data.latitude;
+          longitude = geocodeResult.data.longitude;
           geocodingStatus = 'success';
-          console.log(`[Japantravel Transform] Using existing coordinates: (${latitude}, ${longitude})`);
+          console.log(`[Japantravel Transform] ✅ Geocoding success: (${latitude}, ${longitude})`);
+        } else if (!latitude || !longitude) {
+          geocodingStatus = 'failed';
+          geocodingErrorMessage = geocodeResult.data?.error || 'Geocoding failed';
+          console.log(`[Japantravel Transform] ❌ Geocoding failed: ${geocodingErrorMessage}`);
         }
 
         const now = new Date().toISOString();
