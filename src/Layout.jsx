@@ -611,7 +611,7 @@ export default function Layout({ children, currentPageName }) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-50 safe-area-inset-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998] safe-area-inset-bottom" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
         <div className="max-w-screen-xl mx-auto">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item) => {
