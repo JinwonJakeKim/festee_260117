@@ -1,3 +1,4 @@
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 // Japantravel 카테고리 → Festival 카테고리 매핑
