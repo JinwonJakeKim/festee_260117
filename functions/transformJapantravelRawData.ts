@@ -226,9 +226,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     opening_hours: festivalData.opening_hours,
     access_info: festivalData.address,
     parking_info: festivalData.parking,
-    restrictions: translatedData.restrictions_ko || festivalData.restrictions_original || [],
-    recommendations: translatedData.recommendations_ko || festivalData.recommendations_original || [],
-    highlights: translatedData.highlights_ko || festivalData.highlights_original || [],
+    highlights: translatedData.highlights_ko || [],
     tags: festivalData.tags || [],
     category: (() => {
       const direct = mapCategoryDirect(festivalData.category);
