@@ -112,6 +112,10 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 카테고리(category_ko): 원본 카테고리와 내용을 보고 아래 중 하나 선택:
 음악, 문화, 예술, 음식, 스포츠, 지역축제, 기타
 
+태그(tags_ko): 원본 태그가 없더라도 축제 이름/요약/설명을 분석하여 관련 태그를 3~8개 한국어로 생성하세요.
+예) 불꽃놀이, 야외공연, 전통문화, 음악축제, 가족여행, 야시장, 벚꽃, 여름축제 등
+tags_en, tags_jp, tags_zh는 tags_ko를 각 언어로 번역하세요.
+
 country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는 해당 언어 표기법을 따르세요.
 `,
     response_json_schema: {
