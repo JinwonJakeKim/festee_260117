@@ -238,6 +238,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     tags_en: translatedData.tags_en || [],
     tags_jp: translatedData.tags_jp || [],
     tags_zh: translatedData.tags_zh || [],
+    tags_ko: translatedData.tags_ko || [],
 
     name: translatedData.name_ko || festivalData.name_original,
     summary: translatedData.summary_ko || festivalData.summary_original,
