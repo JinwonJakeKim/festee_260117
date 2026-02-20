@@ -195,9 +195,6 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     name_original: festivalData.name_original,
     summary_original: festivalData.summary_original,
     description_original: festivalData.description_original,
-    highlights_original: festivalData.highlights_original,
-    restrictions_original: festivalData.restrictions_original,
-    recommendations_original: festivalData.recommendations_original,
     original_language: festivalData.original_language,
 
     name_ko: translatedData.name_ko,
