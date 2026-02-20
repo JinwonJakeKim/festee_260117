@@ -849,7 +849,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           </div>
           
           <a
-            href={`https://www.google.com/maps/place/${encodeURIComponent(`${festival.city} ${festival.country}`)}`}
+            href={`https://www.google.com/maps/place/${encodeURIComponent(festival.access_info || `${festival.city} ${festival.country}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
