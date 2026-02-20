@@ -246,7 +246,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     access_info: festivalData.address,
     parking_info: festivalData.parking,
     highlights: translatedData.highlights_ko || [],
-    tags: festivalData.tags || [],
+    tags: (translatedData.tags_ko && translatedData.tags_ko.length > 0) ? translatedData.tags_ko : (festivalData.tags || []),
     category: (() => {
       const direct = mapCategoryDirect(festivalData.category);
       if (direct) return direct;
