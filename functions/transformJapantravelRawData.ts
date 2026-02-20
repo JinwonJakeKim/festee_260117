@@ -334,36 +334,33 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'rawDataIds array is required' }, { status: 400 });
     }
 
-    console.log(`[Transform] Starting ${rawDataIds.length} records in parallel, retransform=${retransform}`);
+    // 배치 크기 1개로 고정 - CPU 시간 제한 초과 방지
+    const rawDataId = rawDataIds[0];
+    console.log(`[Transform] Starting 1 record (fixed batch size=1), retransform=${retransform}`);
 
-    // 블랙리스트 로드 (한 번만)
+    // 블랙리스트 로드
     const blacklistedTermRecords = await base44.asServiceRole.entities.BlacklistedTerm.list();
     const blacklistedTerms = blacklistedTermRecords
       .filter(r => r.is_active !== false)
       .map(r => r.term.toLowerCase());
     console.log(`[Transform] Loaded ${blacklistedTerms.length} blacklisted terms`);
 
-    // 모든 레코드를 병렬로 처리
-    const results = await Promise.all(
-      rawDataIds.map(rawDataId =>
-        processSingleRecord(base44, rawDataId, retransform, blacklistedTerms).catch(async (itemError) => {
-          console.error(`[Transform] Error processing ${rawDataId}:`, itemError.message);
-          await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
-            processing_status: 'failed',
-            error_message: itemError.message
-          }).catch(() => {});
-          return { rawDataId, success: false, error: itemError.message };
-        })
-      )
-    );
-
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
+    let result;
+    try {
+      result = await processSingleRecord(base44, rawDataId, retransform, blacklistedTerms);
+    } catch (itemError) {
+      console.error(`[Transform] Error processing ${rawDataId}:`, itemError.message);
+      await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
+        processing_status: 'failed',
+        error_message: itemError.message
+      }).catch(() => {});
+      result = { rawDataId, success: false, error: itemError.message };
+    }
 
     return Response.json({
       success: true,
-      message: `변환 완료: 성공 ${successCount}개, 실패 ${failCount}개`,
-      results
+      message: result.success ? `변환 완료: 성공 1개` : `변환 완료: 실패 1개`,
+      results: [result]
     });
 
   } catch (error) {
