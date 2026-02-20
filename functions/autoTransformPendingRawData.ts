@@ -13,11 +13,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
-    // pending 상태의 RawData 3개 조회 (name_original이 있는 것만)
+    // pending 상태의 RawData 1개만 조회 (CPU 시간 제한 초과 방지)
     const pendingRawData = await base44.asServiceRole.entities.JapantravelRawData.filter({
       processing_status: 'pending',
       name_original: { $exists: true, $ne: "" }
-    }, '-created_date', 3);
+    }, '-created_date', 1);
 
     console.log(`[${VERSION}] Found ${pendingRawData.length} pending items to transform`);
 
@@ -30,10 +30,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const rawDataIds = pendingRawData.map(r => r.id);
+    const rawDataIds = [pendingRawData[0].id];
 
     // transformJapantravelRawData 함수 호출
-    console.log(`[${VERSION}] Calling transformJapantravelRawData for ${rawDataIds.length} items`);
+    console.log(`[${VERSION}] Calling transformJapantravelRawData for 1 item (batch size fixed to 1)`);
     
     const { data: transformResult } = await base44.asServiceRole.functions.invoke(
       'transformJapantravelRawData',
