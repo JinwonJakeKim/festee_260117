@@ -141,6 +141,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         category_en: { type: "string" },
         category_jp: { type: "string" },
         category_zh: { type: "string" },
+        tags_ko: { type: "array", items: { type: "string" } },
         tags_en: { type: "array", items: { type: "string" } },
         tags_jp: { type: "array", items: { type: "string" } },
         tags_zh: { type: "array", items: { type: "string" } },
