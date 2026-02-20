@@ -968,28 +968,22 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             {/* 주소 정보 */}
             {localizedAccessInfo && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">주소</h3>
-                <div className="flex items-start gap-2">
-                  <p className="text-gray-300 whitespace-pre-line flex-1">{localizedAccessInfo}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-xl font-bold text-cyan-400">주소</h3>
                   <a
                     href={`https://www.google.com/maps/place/${encodeURIComponent(localizedAccessInfo)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 mt-0.5"
                     title="Google Maps에서 보기"
                   >
-                    <img
-                      src="https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                      alt="Google Maps"
-                      className="hidden"
-                    />
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow hover:shadow-md transition-shadow">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow hover:shadow-md transition-shadow">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#4285F4"/>
                       </svg>
                     </div>
                   </a>
                 </div>
+                <p className="text-gray-300 whitespace-pre-line">{localizedAccessInfo}</p>
               </div>
             )}
 
