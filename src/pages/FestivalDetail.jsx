@@ -848,13 +848,15 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             )}
           </div>
           
-          <button 
-            onClick={() => setShowMapModal(true)}
-            className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors cursor-pointer"
+          <a
+            href={`https://www.google.com/maps/place/${encodeURIComponent(`${festival.city} ${festival.country}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
           >
             <MapPin className="w-4 h-4 text-pink-500" />
             <span className="text-sm underline">{festival.city} {festival.country}</span>
-          </button>
+          </a>
         </div>
 
         <div className="text-white text-xl font-bold mb-3">
