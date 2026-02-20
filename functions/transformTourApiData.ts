@@ -1293,6 +1293,9 @@ ${context}
         const highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
         const tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
         const categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
+        const countryTranslations = await translateMultiLanguage('대한민국', 'ko', 'country');
+        const cityKo = extractCity(detailData.addr1 || rawData.addr1);
+        const cityTranslations = await translateMultiLanguage(cityKo, 'ko', 'city');
         
         console.log(`[Transform] ✓ Multi-language translation completed`);
         
