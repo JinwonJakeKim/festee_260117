@@ -97,6 +97,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 설명: ${truncatedDescription || ''}
 카테고리: ${festivalData.category || ''}
 태그: ${JSON.stringify(festivalData.tags || [])}
+국가: ${festivalData.country || ''}
+도시: ${festivalData.city || ''}
 
 번역 규칙:
 - _ko: 한국어 (존댓말, ~입니다체)
@@ -109,6 +111,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
 카테고리(category_ko): 원본 카테고리와 내용을 보고 아래 중 하나 선택:
 음악, 문화, 예술, 음식, 스포츠, 지역축제, 기타
+
+country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는 해당 언어 표기법을 따르세요.
 `,
     response_json_schema: {
       type: "object",
@@ -135,7 +139,15 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
         category_zh: { type: "string" },
         tags_en: { type: "array", items: { type: "string" } },
         tags_jp: { type: "array", items: { type: "string" } },
-        tags_zh: { type: "array", items: { type: "string" } }
+        tags_zh: { type: "array", items: { type: "string" } },
+        country_ko: { type: "string" },
+        country_en: { type: "string" },
+        country_jp: { type: "string" },
+        country_zh: { type: "string" },
+        city_ko: { type: "string" },
+        city_en: { type: "string" },
+        city_jp: { type: "string" },
+        city_zh: { type: "string" }
       },
       required: ["name_ko", "name_en", "name_jp", "name_zh", "description_ko", "description_en", "description_jp", "description_zh", "highlights_ko", "highlights_en", "highlights_jp", "highlights_zh"]
     }
@@ -151,6 +163,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
       highlights_ko: [], highlights_en: [], highlights_jp: [], highlights_zh: [],
       category_en: festivalData.category, category_jp: festivalData.category, category_zh: festivalData.category,
       tags_en: festivalData.tags || [], tags_jp: festivalData.tags || [], tags_zh: festivalData.tags || [],
+      country_ko: festivalData.country, country_en: festivalData.country, country_jp: festivalData.country, country_zh: festivalData.country,
+      city_ko: festivalData.city, city_en: festivalData.city, city_jp: festivalData.city, city_zh: festivalData.city,
     };
   });
 
