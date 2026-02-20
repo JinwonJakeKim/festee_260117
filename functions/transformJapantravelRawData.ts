@@ -149,8 +149,6 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
       description_ko: festivalData.description_original, description_en: festivalData.description_original,
       description_jp: festivalData.description_original, description_zh: festivalData.description_original,
       highlights_ko: [], highlights_en: [], highlights_jp: [], highlights_zh: [],
-      restrictions_ko: [], restrictions_en: [],
-      recommendations_ko: [], recommendations_en: [],
       category_en: festivalData.category, category_jp: festivalData.category, category_zh: festivalData.category,
       tags_en: festivalData.tags || [], tags_jp: festivalData.tags || [], tags_zh: festivalData.tags || [],
     };
