@@ -32,6 +32,18 @@ const safeFormatDate = (dateString, formatString) => {
   }
 };
 
+// 구글맵스 링크 생성 함수
+const getGoogleMapsUrl = (addr, city, country) => {
+  if (!addr) return `https://www.google.com/maps/place/${encodeURIComponent(`${city} ${country}`)}`;
+  const isKorean = /[ㄱ-ㅎ가-힣]/.test(addr);
+  if (isKorean) {
+    // 숫자(-숫자 포함) 뒤 공백+한글 내용 삭제 (예: 236-11 까지 유지, 그 뒤 한글 삭제)
+    const trimmed = addr.replace(/(\d+(?:-\d+)?)\s+[^\d\s].*/, '$1').trim();
+    return `https://www.google.com/maps/place/${trimmed.replace(/\s+/g, '+')}`;
+  }
+  return `https://www.google.com/maps/place/${encodeURIComponent(addr)}`;
+};
+
 // 짧은 ID 생성 함수
 const generateShortId = (fullId) => {
   if (!fullId) return '';
