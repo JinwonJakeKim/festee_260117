@@ -983,7 +983,16 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-xl font-bold text-cyan-400">주소</h3>
                   <a
-                    href={`https://www.google.com/maps/place/${encodeURIComponent(localizedAccessInfo)}`}
+                    href={(() => {
+                      const addr = localizedAccessInfo;
+                      if (!addr) return `https://www.google.com/maps/place/${encodeURIComponent(`${festival.city} ${festival.country}`)}`;
+                      const isKorean = /[ㄱ-ㅎ가-힣]/.test(addr);
+                      if (isKorean) {
+                        const trimmed = addr.replace(/(\d+).*/, '$1').trim();
+                        return `https://www.google.com/maps/place/${trimmed.replace(/\s+/g, '+')}`;
+                      }
+                      return `https://www.google.com/maps/place/${encodeURIComponent(addr)}`;
+                    })()}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Google Maps에서 보기"
