@@ -619,29 +619,42 @@ Deno.serve(async (req) => {
     }
 
     // ===== 웹사이트 URL 추출 =====
-    // 우선순위 1: div.website 안의 fa-globe 아이콘 하위 링크
+    // 우선순위 1: div.website 또는 div[class*="website"] 안의 링크 (인스타그램 등 소셜도 포함)
     let websiteUrl = '';
-    const websiteDiv = doc.querySelector('div.website');
+    const websiteDiv = doc.querySelector('div.website, div[class*="website"]');
     if (websiteDiv) {
       const websiteAnchor = websiteDiv.querySelector('a[href]');
       if (websiteAnchor) {
-        websiteUrl = normalizeUrl(websiteAnchor.getAttribute('href') || '', url);
-        console.log(`[Japantravel] ✅ Extracted website from div.website: ${websiteUrl}`);
+        const href = websiteAnchor.getAttribute('href') || '';
+        // japantravel 자체 도메인이 아닌 경우만 사용
+        if (href && !href.includes('japantravel.com')) {
+          websiteUrl = normalizeUrl(href, url);
+          console.log(`[Japantravel] ✅ Extracted website from div.website: ${websiteUrl}`);
+        }
       }
     }
     // 우선순위 2: fa-globe 아이콘을 포함하는 부모 컨테이너에서 링크 추출
     if (!websiteUrl) {
-      const globeIcon = doc.querySelector('i.fa-globe');
+      const globeIcon = doc.querySelector('i.fa-globe, i.fa-2x.fa-globe');
       if (globeIcon) {
-        const parentDiv = globeIcon.parentElement?.parentElement;
-        const anchor = parentDiv?.querySelector('a[href]');
-        if (anchor) {
-          websiteUrl = normalizeUrl(anchor.getAttribute('href') || '', url);
-          console.log(`[Japantravel] ✅ Extracted website from fa-globe parent: ${websiteUrl}`);
+        // fa-globe의 상위 li 또는 div에서 링크 탐색
+        let searchEl = globeIcon.parentElement;
+        for (let i = 0; i < 4; i++) {
+          if (!searchEl) break;
+          const anchor = searchEl.querySelector('a[href]');
+          if (anchor) {
+            const href = anchor.getAttribute('href') || '';
+            if (href && !href.includes('japantravel.com')) {
+              websiteUrl = normalizeUrl(href, url);
+              console.log(`[Japantravel] ✅ Extracted website from fa-globe parent: ${websiteUrl}`);
+              break;
+            }
+          }
+          searchEl = searchEl.parentElement;
         }
       }
     }
-    // 우선순위 3: japantravel.com이 아닌 외부 링크 (기존 로직)
+    // 우선순위 3: japantravel.com이 아닌 외부 링크 (소셜 제외)
     if (!websiteUrl) {
       const websiteLink = doc.querySelector('a[href*="http"]:not([href*="japantravel.com"]):not([href*="facebook"]):not([href*="instagram"]):not([href*="twitter"]):not([href*="youtube"])');
       if (websiteLink) {
