@@ -331,7 +331,28 @@ Deno.serve(async (req) => {
       if (infoDiv) {
         const eventDivs = infoDiv.querySelectorAll('div.event');
 
+        // 우선순위 0: div.address 클래스 또는 fa-map-marker-alt 아이콘이 있는 div (Japantravel 전용 패턴)
+        for (const eventDiv of eventDivs) {
+          const hasAddressClass = eventDiv.classList && (eventDiv.classList.contains('address') || eventDiv.className.includes('address'));
+          const hasMapMarker = eventDiv.querySelector('i.fa-map-marker-alt, i.fa-map-marker');
+          
+          if (hasAddressClass || hasMapMarker) {
+            // p 태그의 텍스트 우선
+            const pEl = eventDiv.querySelector('p');
+            const rawText = pEl ? pEl.textContent?.trim() : (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
+            // Map/Directions 링크 텍스트 제거
+            const cleanText = rawText ? rawText.replace(/\s*(Map|Directions|지도|地図)\s*/gi, '').replace(/\(?\s*\)?\s*$/, '').trim() : '';
+            
+            if (cleanText && cleanText.length > 3) {
+              accessInfo = cleanText;
+              console.log(`[Japantravel] ✅ Extracted address (map-marker/address class pattern): ${accessInfo}`);
+              break;
+            }
+          }
+        }
+
         // 우선순위 1: "Address:", "Location:", "Venue:" 등 명확한 키워드
+        if (!accessInfo) {
         for (const eventDiv of eventDivs) {
           const eventDivText = (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
           const keywordPattern = /(?:address|location|venue|場所|住所)\s*[:：]\s*(.+)/i;
@@ -342,6 +363,7 @@ Deno.serve(async (req) => {
             console.log(`[Japantravel] ✅ Extracted address (keyword pattern): ${accessInfo}`);
             break;
           }
+        }
         }
 
         // 우선순위 2: 우편번호와 주소 구성요소를 모두 포함하는 완전한 일본 주소
