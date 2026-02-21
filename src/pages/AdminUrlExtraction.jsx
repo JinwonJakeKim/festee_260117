@@ -1869,7 +1869,7 @@ export default function AdminUrlExtraction() {
                   placeholder="축제명, 주소, 도시로 검색..."
                   value={rawDataSearchQuery}
                   onChange={(e) => setRawDataSearchQuery(e.target.value)}
-                  className="pl-9 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+                  className="pl-10 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
                 />
               </div>
               <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
