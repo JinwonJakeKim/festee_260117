@@ -199,14 +199,23 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   }
 
   // Geocoding 결과 처리
+  let formattedAddress = null;
   if (geocodeResult.data?.success) {
     latitude = geocodeResult.data.latitude;
     longitude = geocodeResult.data.longitude;
     geocodingStatus = 'success';
+    formattedAddress = geocodeResult.data.formatted_address || null;
   } else if (!latitude || !longitude) {
     geocodingStatus = 'failed';
     geocodingErrorMessage = geocodeResult.data?.error || 'Geocoding failed';
   }
+
+  // 비표준 주소 판별: 숫자/번지/우편번호 패턴이 없으면 비표준으로 판단
+  const rawAddress = festivalData.address || '';
+  const isNonStandardAddress = rawAddress.length > 0 && !/\d/.test(rawAddress);
+  const accessInfo = (isNonStandardAddress && formattedAddress)
+    ? formattedAddress
+    : rawAddress;
 
   const now = new Date().toISOString();
 
