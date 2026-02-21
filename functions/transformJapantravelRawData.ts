@@ -213,12 +213,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     geocodingErrorMessage = geocodeResult.data?.error || 'Geocoding failed';
   }
 
-  // 비표준 주소 판별: 숫자/번지/우편번호 패턴이 없으면 비표준으로 판단
+  // 주소 처리: formattedAddress(Google 표준주소)가 있으면 우선 사용
+  // 없으면 rawAddress 사용 (비표준이어도 그대로)
   const rawAddress = festivalData.address || '';
-  const isNonStandardAddress = rawAddress.length > 0 && !/\d/.test(rawAddress);
-  const accessInfo = (isNonStandardAddress && formattedAddress)
-    ? formattedAddress
-    : rawAddress;
+  const accessInfo = formattedAddress || rawAddress;
 
   const now = new Date().toISOString();
 
