@@ -340,8 +340,14 @@ Deno.serve(async (req) => {
             // p 태그의 텍스트 우선
             const pEl = eventDiv.querySelector('p');
             const rawText = pEl ? pEl.textContent?.trim() : (eventDiv.textContent || '').replace(/\s+/g, ' ').trim();
-            // Map/Directions 링크 텍스트 제거
-            const cleanText = rawText ? rawText.replace(/\s*(Map|Directions|지도|地図)\s*/gi, '').replace(/\(?\s*\)?\s*$/, '').trim() : '';
+            // Map/Directions 링크 텍스트 제거, 빈 괄호 제거
+            const cleanText = rawText
+              ? rawText
+                  .replace(/\s*(Map|Directions|지도|地図)\s*/gi, '')
+                  .replace(/\(\s*\)/g, '')
+                  .replace(/\s+/g, ' ')
+                  .trim()
+              : '';
             
             if (cleanText && cleanText.length > 3) {
               accessInfo = cleanText;
