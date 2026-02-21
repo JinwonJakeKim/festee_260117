@@ -70,14 +70,17 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   const truncatedDescription = truncateText(festivalData.description_original, 1500);
   const truncatedSummary = truncateText(festivalData.summary_original, 500);
 
-  // Geocoding promise
-  const geocodePromise = (latitude && longitude)
-    ? Promise.resolve({ data: { success: true, latitude, longitude } })
-    : base44.functions.invoke('geocodeAddress', {
+  // Geocoding promise: 항상 실행하여 formatted_address(표준주소)를 얻음
+  // 단, 주소가 없으면 city+country로만 geocoding
+  const hasAddress = festivalData.address && festivalData.address.trim().length > 0;
+  const hasCityOrAddress = hasAddress || (festivalData.city && festivalData.city.trim().length > 0);
+  const geocodePromise = hasCityOrAddress
+    ? base44.functions.invoke('geocodeAddress', {
         address: festivalData.address,
         city: festivalData.city,
         country: festivalData.country
-      }).catch(e => { console.error('[Transform] Geocode error:', e.message); return { data: { success: false, error: e.message } }; });
+      }).catch(e => { console.error('[Transform] Geocode error:', e.message); return { data: { success: false, error: e.message } }; })
+    : Promise.resolve({ data: { success: false, error: 'No address or city' } });
 
   // YouTube promise
   const youtubePromise = base44.functions.invoke('fetchYoutubeVideos', {
