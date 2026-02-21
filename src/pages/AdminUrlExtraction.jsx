@@ -2074,12 +2074,12 @@ export default function AdminUrlExtraction() {
 
               {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
-                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
+                {filteredRawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <button
                         onClick={() => {
-                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const processedItems = filteredRawDataList.filter(r => r.processing_status === 'processed');
                           const processedIds = new Set(processedItems.map(r => r.id));
                           const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
                           if (allSelected) {
@@ -2091,118 +2091,60 @@ export default function AdminUrlExtraction() {
                         className="flex items-center gap-2 text-white hover:text-cyan-400"
                       >
                         {(() => {
-                          const processedItems = rawDataList.filter(r => r.processing_status === 'processed');
+                          const processedItems = filteredRawDataList.filter(r => r.processing_status === 'processed');
                           const allSelected = processedItems.every(item => selectedRawIds.has(item.id));
-                          return allSelected ? (
-                            <CheckSquare className="w-5 h-5 text-cyan-400" />
-                          ) : (
-                            <Square className="w-5 h-5" />
-                          );
+                          return allSelected ? <CheckSquare className="w-5 h-5 text-cyan-400" /> : <Square className="w-5 h-5" />;
                         })()}
                         <span className="font-medium">전체 선택</span>
                       </button>
-                      {selectedRawIds.size > 0 && (
-                        <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
-                      )}
+                      {selectedRawIds.size > 0 && <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>}
                     </div>
-
                     {selectedRawIds.size > 0 && (
                       <div className="flex gap-2">
-                        <Button
-                          onClick={handleRetransform}
-                          disabled={transformMutation.isPending}
-                          className="flex-1 bg-purple-500 hover:bg-purple-600"
-                        >
-                          {transformMutation.isPending ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              재변환 중...
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw className="w-4 h-4 mr-2" />
-                              재변환
-                            </>
-                          )}
+                        <Button onClick={handleRetransform} disabled={transformMutation.isPending} className="flex-1 bg-purple-500 hover:bg-purple-600">
+                          {transformMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />재변환 중...</> : <><RefreshCw className="w-4 h-4 mr-2" />재변환</>}
                         </Button>
-                        <Button
-                          onClick={handleDelete}
-                          disabled={deleteRawDataMutation.isPending}
-                          className="bg-red-500 hover:bg-red-600"
-                        >
+                        <Button onClick={handleDelete} disabled={deleteRawDataMutation.isPending} className="bg-red-500 hover:bg-red-600">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     )}
                   </Card>
                 )}
-
-                {rawDataList.filter(r => r.processing_status === 'processed').length > 0 ? (
-                  rawDataList.filter(r => r.processing_status === 'processed').map((item) => (
-                    <Card key={item.id} className={`border-2 ${
-                      selectedRawIds.has(item.id) 
-                        ? 'bg-green-900/30 border-green-400' 
-                        : 'bg-gray-900 border-gray-800'
-                    }`}>
+                {filteredRawDataList.filter(r => r.processing_status === 'processed').length > 0 ? (
+                  filteredRawDataList.filter(r => r.processing_status === 'processed').map((item) => (
+                    <Card key={item.id} className={`border-2 ${selectedRawIds.has(item.id) ? 'bg-green-900/30 border-green-400' : 'bg-gray-900 border-gray-800'}`}>
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleSelectItem(item.id)}
-                            className="flex-shrink-0 mt-1"
-                          >
-                            {selectedRawIds.has(item.id) ? (
-                              <CheckSquare className="w-6 h-6 text-cyan-400" />
-                            ) : (
-                              <Square className="w-6 h-6 text-gray-600" />
-                            )}
+                          <button onClick={() => handleSelectItem(item.id)} className="flex-shrink-0 mt-1">
+                            {selectedRawIds.has(item.id) ? <CheckSquare className="w-6 h-6 text-cyan-400" /> : <Square className="w-6 h-6 text-gray-600" />}
                           </button>
-
-                          <div className="flex-1">
+                          {item.thumbnail_url && (
+                            <img src={item.thumbnail_url} alt={item.name_original} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
+                          )}
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
                               {getStatusBadge(item.processing_status)}
-                              {item.festival_id && (
-                                <Badge variant="outline" className="text-green-400 border-green-400">
-                                  Festival ID: {item.festival_id.substring(0, 8)}
-                                </Badge>
-                              )}
+                              {item.festival_id && <Badge variant="outline" className="text-green-400 border-green-400 text-xs">✓ Festival ID: {item.festival_id}</Badge>}
                             </div>
-                            <a 
-                              href={item.source_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {item.source_url}
-                            </a>
-                            <p className="text-gray-500 text-xs">
-                              {item.city}, {item.country} · {new Date(item.updated_date).toLocaleDateString('ko-KR')}
-                            </p>
+                            <div className="space-y-1 text-sm text-gray-400">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-green-400 flex-shrink-0" />
+                                <span>{item.start_date || '날짜 미정'} ~ {item.end_date || '날짜 미정'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-pink-400 flex-shrink-0" />
+                                <span>{item.address || item.city || '주소 없음'}{item.city && item.address ? `, ${item.city}` : ''}</span>
+                              </div>
+                              <p className="text-xs text-gray-500">수집: {new Date(item.updated_date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
                           </div>
-
                           <div className="flex flex-col gap-2">
-                            <Button
-                              onClick={() => {
-                                setSelectedRawIds(new Set([item.id]));
-                                handleRetransform();
-                              }}
-                              size="sm"
-                              className="bg-orange-500 hover:bg-orange-600 text-white"
-                              title="재변환"
-                            >
+                            <Button onClick={() => { setSelectedRawIds(new Set([item.id])); handleRetransform(); }} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" title="재변환">
                               <RefreshCw className="w-4 h-4" />
                             </Button>
-                            <Button
-                              onClick={() => {
-                                if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
-                                  deleteRawDataMutation.mutate([item.id]);
-                                }
-                              }}
-                              size="sm"
-                              variant="outline"
-                              className="border-gray-700 text-red-400 hover:bg-red-900/20"
-                            >
+                            <Button onClick={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate([item.id]); }} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -2211,7 +2153,7 @@ export default function AdminUrlExtraction() {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
+                  <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
                 )}
               </TabsContent>
 
