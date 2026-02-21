@@ -1863,14 +1863,12 @@ export default function AdminUrlExtraction() {
             {/* 검색 및 월 필터 */}
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none z-10" />
                 <input
                   type="text"
                   placeholder="축제명, 주소, 도시로 검색..."
                   value={rawDataSearchQuery}
                   onChange={(e) => setRawDataSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '2.25rem', paddingRight: '0.75rem' }}
-                  className="w-full h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                  className="w-full h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600 px-3"
                 />
               </div>
               <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
