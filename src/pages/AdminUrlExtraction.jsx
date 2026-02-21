@@ -51,6 +51,7 @@ export default function AdminUrlExtraction() {
   const [selectedMaxPages, setSelectedMaxPages] = useState({});
   const [rawDataSearchQuery, setRawDataSearchQuery] = useState("");
   const [rawDataFilterMonth, setRawDataFilterMonth] = useState("all");
+  const [linkSearchQuery, setLinkSearchQuery] = useState("");
   const [deletionProgress, setDeletionProgress] = useState({ isDeleting: false, current: 0, total: 0 });
   
   // Link extraction progress state variables
