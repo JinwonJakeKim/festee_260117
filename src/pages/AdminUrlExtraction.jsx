@@ -1817,8 +1817,10 @@ export default function AdminUrlExtraction() {
                   </Card>
                 )}
 
-                {linksList.filter(r => r.processing_status === 'failed').length > 0 ? (
-                  linksList.filter(r => r.processing_status === 'failed').map((item) => (
+                {linksList.filter(r => r.processing_status === 'failed' && (!linkSearchQuery.trim() || r.url?.toLowerCase().includes(linkSearchQuery.toLowerCase()))).length > 0 ? (
+                  linksList.filter(r => r.processing_status === 'failed' && (!linkSearchQuery.trim() || r.url?.toLowerCase().includes(linkSearchQuery.toLowerCase()))).map((item) => {
+                    const rawData = rawDataList.find(r => r.id === item.raw_data_id);
+                    return (
                     <Card key={item.id} className={`border-2 ${
                       selectedLinkIds.has(item.id) 
                         ? 'bg-red-900/30 border-red-400' 
@@ -1837,21 +1839,43 @@ export default function AdminUrlExtraction() {
                             )}
                           </button>
 
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3 className="text-white font-medium">수집된 링크</h3>
+                          {rawData?.thumbnail_url && (
+                            <img src={rawData.thumbnail_url} alt={rawData.name_original} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              {rawData?.name_original && (
+                                <h3 className="text-white font-bold">{rawData.name_original}</h3>
+                              )}
                               {getStatusBadge(item.processing_status)}
                             </div>
                             <a 
                               href={item.url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-cyan-400 hover:text-cyan-300 text-sm mb-1 block truncate underline"
+                              className="text-cyan-400 hover:text-cyan-300 text-xs mb-1 block truncate underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {item.url}
                             </a>
-                            <p className="text-gray-500 text-xs">
+                            {rawData && (
+                              <div className="space-y-0.5 mt-1">
+                                {rawData.start_date && (
+                                  <p className="text-gray-400 text-xs flex items-center gap-1">
+                                    <Calendar className="w-3 h-3 text-green-400" />
+                                    {rawData.start_date} ~ {rawData.end_date}
+                                  </p>
+                                )}
+                                {(rawData.address || rawData.city) && (
+                                  <p className="text-gray-400 text-xs flex items-center gap-1">
+                                    <MapPin className="w-3 h-3 text-pink-400" />
+                                    {rawData.address || rawData.city}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            <p className="text-gray-500 text-xs mt-1">
                               {item.country} · {new Date(item.created_date).toLocaleDateString('ko-KR')}
                             </p>
                             {item.error_message && (
