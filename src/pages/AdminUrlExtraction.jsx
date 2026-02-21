@@ -1860,6 +1860,38 @@ export default function AdminUrlExtraction() {
               </ul>
             </Card>
 
+            {/* 검색 및 월 필터 */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Input
+                  type="text"
+                  placeholder="축제명, 주소, 도시로 검색..."
+                  value={rawDataSearchQuery}
+                  onChange={(e) => setRawDataSearchQuery(e.target.value)}
+                  className="pl-9 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+                />
+              </div>
+              <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
+                <SelectTrigger className="w-28 bg-gray-900 border-gray-800 text-white">
+                  <SelectValue placeholder="전체 월" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-800">
+                  <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 월</SelectItem>
+                  {months.map(m => (
+                    <SelectItem key={m.value} value={m.value} className="text-white hover:bg-gray-800 focus:bg-gray-800">{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelRawData'] })}
+                variant="outline"
+                className="border-purple-500/50 text-purple-400 hover:bg-purple-900/20"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+
             {/* 자동 일괄 변환 버튼 */}
             {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
