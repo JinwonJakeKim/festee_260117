@@ -1869,8 +1869,8 @@ export default function AdminUrlExtraction() {
                   placeholder="축제명, 주소, 도시로 검색..."
                   value={rawDataSearchQuery}
                   onChange={(e) => setRawDataSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '2.25rem' }}
-                  className="w-full h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600 px-3"
+                  style={{ paddingLeft: '2.25rem', paddingRight: '0.75rem' }}
+                  className="w-full h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600"
                 />
               </div>
               <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
