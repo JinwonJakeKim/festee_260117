@@ -706,6 +706,31 @@ export default function AdminUrlExtraction() {
     }
   };
 
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `${i + 1}월`
+  }));
+
+  // RawData 필터링 (축제정보추출, rawdata변환 탭용)
+  const filteredRawDataList = rawDataList.filter(item => {
+    if (rawDataSearchQuery.trim()) {
+      const q = rawDataSearchQuery.toLowerCase();
+      const matches = (
+        item.name_original?.toLowerCase().includes(q) ||
+        item.address?.toLowerCase().includes(q) ||
+        item.city?.toLowerCase().includes(q)
+      );
+      if (!matches) return false;
+    }
+    if (rawDataFilterMonth !== "all") {
+      const sd = item.start_date;
+      if (!sd) return false;
+      const month = new Date(sd).getMonth() + 1;
+      if (month.toString() !== rawDataFilterMonth) return false;
+    }
+    return true;
+  });
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending':
