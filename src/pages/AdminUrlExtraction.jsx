@@ -49,6 +49,8 @@ export default function AdminUrlExtraction() {
   const [isBatchExtracting, setIsBatchExtracting] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState({});
   const [selectedMaxPages, setSelectedMaxPages] = useState({});
+  const [rawDataSearchQuery, setRawDataSearchQuery] = useState("");
+  const [rawDataFilterMonth, setRawDataFilterMonth] = useState("all");
   const [deletionProgress, setDeletionProgress] = useState({ isDeleting: false, current: 0, total: 0 });
   
   // Link extraction progress state variables
