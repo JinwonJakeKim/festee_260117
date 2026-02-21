@@ -2159,12 +2159,12 @@ export default function AdminUrlExtraction() {
 
                 {/* 실패 탭 */}
                 <TabsContent value="failed" className="mt-4 space-y-3">
-                {rawDataList.filter(r => r.processing_status === 'failed').length > 0 && (
+                {filteredRawDataList.filter(r => r.processing_status === 'failed').length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <button
                         onClick={() => {
-                          const failedItems = rawDataList.filter(r => r.processing_status === 'failed');
+                          const failedItems = filteredRawDataList.filter(r => r.processing_status === 'failed');
                           const failedIds = new Set(failedItems.map(r => r.id));
                           const allSelected = failedItems.every(item => selectedRawIds.has(item.id));
                           if (allSelected) {
@@ -2176,13 +2176,9 @@ export default function AdminUrlExtraction() {
                         className="flex items-center gap-2 text-white hover:text-cyan-400"
                       >
                         {(() => {
-                          const failedItems = rawDataList.filter(r => r.processing_status === 'failed');
+                          const failedItems = filteredRawDataList.filter(r => r.processing_status === 'failed');
                           const allSelected = failedItems.every(item => selectedRawIds.has(item.id));
-                          return allSelected ? (
-                            <CheckSquare className="w-5 h-5 text-cyan-400" />
-                          ) : (
-                            <Square className="w-5 h-5" />
-                          );
+                          return allSelected ? <CheckSquare className="w-5 h-5 text-cyan-400" /> : <Square className="w-5 h-5" />;
                         })()}
                         <span className="font-medium">전체 선택</span>
                       </button>
