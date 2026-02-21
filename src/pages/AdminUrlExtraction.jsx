@@ -1893,7 +1893,7 @@ export default function AdminUrlExtraction() {
             </div>
 
             {/* 자동 일괄 변환 버튼 */}
-            {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
+            {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
                 <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
                 <p className="text-gray-400 text-sm mb-3">
