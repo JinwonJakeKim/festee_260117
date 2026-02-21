@@ -1964,13 +1964,13 @@ export default function AdminUrlExtraction() {
             <Tabs defaultValue="pending" className="w-full">
               <TabsList className="w-full bg-gray-900 grid grid-cols-3">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
-                  대기중 ({rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
+                  대기중 ({filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
                 </TabsTrigger>
                 <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
-                  완료 ({rawDataList.filter(r => r.processing_status === 'processed').length})
+                  완료 ({filteredRawDataList.filter(r => r.processing_status === 'processed').length})
                 </TabsTrigger>
                 <TabsTrigger value="failed" className="data-[state=active]:bg-red-500">
-                  실패 ({rawDataList.filter(r => r.processing_status === 'failed').length})
+                  실패 ({filteredRawDataList.filter(r => r.processing_status === 'failed').length})
                 </TabsTrigger>
               </TabsList>
 
