@@ -1267,6 +1267,24 @@ export default function AdminUrlExtraction() {
               </ul>
             </Card>
 
+            {/* 링크 검색 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="URL로 검색..."
+                value={linkSearchQuery}
+                onChange={(e) => setLinkSearchQuery(e.target.value)}
+                className="flex-1 h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600 px-3"
+              />
+              <Button
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] })}
+                variant="outline"
+                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-900/20"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+
             {/* 통계 카드 */}
             <div className="grid grid-cols-4 gap-3">
               <Card className="bg-cyan-900/20 border-cyan-400/30 p-3">
