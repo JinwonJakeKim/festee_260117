@@ -1475,7 +1475,7 @@ export default function AdminUrlExtraction() {
 
               {/* 대기중 탭 */}
               <TabsContent value="pending" className="mt-4 space-y-3">
-                {linksList.filter(r => r.processing_status === 'pending').length > 0 && (
+                {linksList.filter(r => r.processing_status === 'pending' && (!linkSearchQuery.trim() || r.url?.toLowerCase().includes(linkSearchQuery.toLowerCase()))).length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <button
