@@ -1935,7 +1935,7 @@ export default function AdminUrlExtraction() {
               <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-400">
-                    {rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
+                    {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
                   </div>
                   <div className="text-xs text-gray-400">대기중</div>
                 </div>
@@ -1943,7 +1943,7 @@ export default function AdminUrlExtraction() {
               <Card className="bg-green-900/20 border-green-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-400">
-                    {rawDataList.filter(r => r.processing_status === 'processed').length}
+                    {filteredRawDataList.filter(r => r.processing_status === 'processed').length}
                   </div>
                   <div className="text-xs text-gray-400">완료</div>
                 </div>
@@ -1951,7 +1951,7 @@ export default function AdminUrlExtraction() {
               <Card className="bg-red-900/20 border-red-400/30 p-3">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {rawDataList.filter(r => r.processing_status === 'failed').length}
+                    {filteredRawDataList.filter(r => r.processing_status === 'failed').length}
                   </div>
                   <div className="text-xs text-gray-400">실패</div>
                 </div>
