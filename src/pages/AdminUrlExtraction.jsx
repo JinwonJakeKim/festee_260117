@@ -1744,7 +1744,7 @@ export default function AdminUrlExtraction() {
                         </div>
                       </div>
                     </Card>
-                  ))
+                  )})
                 ) : (
                   <p className="text-gray-500 text-sm text-center py-8">완료된 링크가 없습니다.</p>
                 )}
