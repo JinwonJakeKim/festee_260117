@@ -76,7 +76,19 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     searchShorts: true
   }).catch(e => { console.error('[Transform] YouTube error:', e.message); return { data: { success: false } }; });
 
-  // LLM translation promise (description 길이 제한 적용)
+  // Google Translate 1순위 번역 (월 한도 초과 시 LLM 폴백)
+  const googleTranslatePromise = base44.functions.invoke('googleTranslate', {
+    texts: {
+      name: festivalData.name_original || '',
+      summary: truncatedSummary || '',
+      description: truncatedDescription || '',
+      city: festivalData.city || '',
+      country: festivalData.country || '',
+    },
+    targetLanguages: ['ko', 'en', 'ja', 'zh-CN']
+  }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
+
+  // LLM translation promise (description 길이 제한 적용) - 폴백용
   const llmPromise = base44.integrations.Core.InvokeLLM({
     prompt: `
 다음 축제 정보를 한국어, 영어, 일본어, 중국어 4개 언어로 번역하고 하이라이트를 생성하세요.

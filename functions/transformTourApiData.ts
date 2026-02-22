@@ -592,115 +592,63 @@ Deno.serve(async (req) => {
       return 'ko'; // 기본값
     };
     
+    // Google Translate API 사용 (1순위), 한도 초과 시 LLM 폴백 (2순위)
+    const translateWithGoogleOrLLM = async (texts, targetLanguages, fieldNames) => {
+      // texts: { fieldName: string | string[] }
+      // returns: { fieldName: { ko, en, jp, zh } }
+      try {
+        const result = await base44.functions.invoke('googleTranslate', { texts, targetLanguages });
+        if (result.data?.success) {
+          console.log(`[Transform] ✓ Google Translate used for: ${fieldNames.join(', ')}`);
+          return result.data.results;
+        }
+        if (result.data?.error === 'GOOGLE_TRANSLATE_MONTHLY_LIMIT_REACHED') {
+          console.warn(`[Transform] ⚠️ Google Translate monthly limit reached, falling back to LLM`);
+          throw new Error('LIMIT_REACHED');
+        }
+        throw new Error(result.data?.error || 'Google Translate failed');
+      } catch (e) {
+        if (e.message !== 'LIMIT_REACHED') {
+          console.warn(`[Transform] ⚠️ Google Translate error: ${e.message}, falling back to LLM`);
+        }
+        // LLM 폴백
+        const results = {};
+        for (const [fieldName, textValue] of Object.entries(texts)) {
+          if (Array.isArray(textValue)) {
+            if (!textValue.length) { results[fieldName] = { ko: [], en: [], jp: [], zh: [] }; continue; }
+            const itemsText = textValue.join('\n- ');
+            const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+              prompt: `다음 항목들을 한국어, 영어, 일본어(jp), 중국어로 번역해주세요:\n- ${itemsText}`,
+              add_context_from_internet: false,
+              response_json_schema: { type: "object", properties: { ko: { type: "array", items: { type: "string" } }, en: { type: "array", items: { type: "string" } }, jp: { type: "array", items: { type: "string" } }, zh: { type: "array", items: { type: "string" } } }, required: ["ko", "en", "jp", "zh"] }
+            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue, zh: textValue }));
+            results[fieldName] = llmResult;
+          } else {
+            if (!textValue || textValue.length < 3) { results[fieldName] = { ko: textValue || '', en: textValue || '', jp: textValue || '', zh: textValue || '' }; continue; }
+            const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+              prompt: `다음 텍스트를 한국어, 영어, 일본어(jp), 중국어로 번역해주세요:\n${textValue}`,
+              add_context_from_internet: false,
+              response_json_schema: { type: "object", properties: { ko: { type: "string" }, en: { type: "string" }, jp: { type: "string" }, zh: { type: "string" } }, required: ["ko", "en", "jp", "zh"] }
+            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue, zh: textValue }));
+            results[fieldName] = llmResult;
+          }
+        }
+        return results;
+      }
+    };
+
     // 다국어 번역 함수
     const translateMultiLanguage = async (text, sourceLanguage, fieldName) => {
-      if (!text || text.length < 3) {
-        return {
-          ko: text || '',
-          en: text || '',
-          jp: text || '',
-          zh: text || ''
-        };
-      }
-      
-      try {
-        console.log(`[Transform] 🌐 Translating ${fieldName} from ${sourceLanguage} to multiple languages...`);
-        
-        const languageMap = { 'ko': '한국어', 'en': '영어', 'jp': '일본어', 'zh': '중국어' };
-        const prompt = `다음 텍스트를 한국어, 영어, 일본어, 중국어로 번역해주세요. 각 언어마다 자연스러운 표현으로 번역하세요.
-
-원본 텍스트 (${languageMap[sourceLanguage]}):
-${text}
-
-응답 형식은 반드시 JSON이어야 하며, 각 언어별 번역만 포함하세요.`;
-
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: prompt,
-          add_context_from_internet: false,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              ko: { type: "string", description: "한국어 번역" },
-              en: { type: "string", description: "영어 번역" },
-              jp: { type: "string", description: "일본어 번역" },
-              zh: { type: "string", description: "중국어 번역" }
-            },
-            required: ["ko", "en", "jp", "zh"]
-          }
-        });
-        
-        console.log(`[Transform] ✓ Translation completed for ${fieldName}`);
-        
-        return {
-          ko: result.ko || text,
-          en: result.en || text,
-          jp: result.jp || text,
-          zh: result.zh || text
-        };
-        
-      } catch (error) {
-        console.error(`[Transform] Translation error for ${fieldName}:`, error.message);
-        return {
-          ko: sourceLanguage === 'ko' ? text : '',
-          en: sourceLanguage === 'en' ? text : '',
-          jp: sourceLanguage === 'jp' ? text : '',
-          zh: sourceLanguage === 'zh' ? text : ''
-        };
-      }
+      if (!text || text.length < 3) return { ko: text || '', en: text || '', jp: text || '', zh: text || '' };
+      const r = await translateWithGoogleOrLLM({ [fieldName]: text }, ['ko', 'en', 'ja', 'zh-CN'], [fieldName]);
+      return r[fieldName] || { ko: text, en: text, jp: text, zh: text };
     };
     
     // 배열 다국어 번역 함수 (highlights, tags용)
     const translateArrayMultiLanguage = async (items, sourceLanguage, fieldName) => {
-      if (!items || items.length === 0) {
-        return { ko: [], en: [], jp: [], zh: [] };
-      }
-      
-      try {
-        console.log(`[Transform] 🌐 Translating ${fieldName} array (${items.length} items) from ${sourceLanguage}...`);
-        
-        const languageMap = { 'ko': '한국어', 'en': '영어', 'jp': '일본어', 'zh': '중국어' };
-        const itemsText = items.join('\n- ');
-        
-        const prompt = `다음 항목들을 한국어, 영어, 일본어, 중국어로 번역해주세요. 각 항목마다 자연스러운 표현으로 번역하세요.
-
-원본 항목들 (${languageMap[sourceLanguage]}):
-- ${itemsText}
-
-응답 형식은 반드시 JSON이어야 하며, 각 언어별로 배열 형태로 번역을 제공하세요.`;
-
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: prompt,
-          add_context_from_internet: false,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              ko: { type: "array", items: { type: "string" }, description: "한국어 번역" },
-              en: { type: "array", items: { type: "string" }, description: "영어 번역" },
-              jp: { type: "array", items: { type: "string" }, description: "일본어 번역" },
-              zh: { type: "array", items: { type: "string" }, description: "중국어 번역" }
-            },
-            required: ["ko", "en", "jp", "zh"]
-          }
-        });
-        
-        console.log(`[Transform] ✓ Array translation completed for ${fieldName}`);
-        
-        return {
-          ko: result.ko || items,
-          en: result.en || items,
-          jp: result.jp || items,
-          zh: result.zh || items
-        };
-        
-      } catch (error) {
-        console.error(`[Transform] Array translation error for ${fieldName}:`, error.message);
-        return {
-          ko: sourceLanguage === 'ko' ? items : [],
-          en: sourceLanguage === 'en' ? items : [],
-          jp: sourceLanguage === 'jp' ? items : [],
-          zh: sourceLanguage === 'zh' ? items : []
-        };
-      }
+      if (!items || items.length === 0) return { ko: [], en: [], jp: [], zh: [] };
+      const r = await translateWithGoogleOrLLM({ [fieldName]: items }, ['ko', 'en', 'ja', 'zh-CN'], [fieldName]);
+      return r[fieldName] || { ko: items, en: items, jp: items, zh: items };
     };
     
     // AI 기반 요약, 하이라이트, 태그 생성
