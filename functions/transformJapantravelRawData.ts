@@ -255,7 +255,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     latitude,
     longitude,
     geocoding_status: geocodingStatus,
-    geocoding_error_message: geocodingErrorMessage,
     thumbnail_url: thumbnailUrl,
     video_url: videoUrl,
     video_channel_name: videoChannelName,
