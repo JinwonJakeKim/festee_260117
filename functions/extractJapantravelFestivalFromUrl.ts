@@ -796,14 +796,22 @@ Deno.serve(async (req) => {
       try {
         const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
         if (apiKey) {
-          const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${extractedLatitude},${extractedLongitude}&key=${apiKey}`;
+          const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${extractedLatitude},${extractedLongitude}&language=en&key=${apiKey}`;
           const geocodeRes = await fetch(geocodeUrl);
           const geocodeData = await geocodeRes.json();
           if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
-            // street_address 또는 route 타입 결과를 우선 사용 (장소명 없는 순수 도로 주소)
-            const preferredResult = geocodeData.results.find(r =>
-              r.types && (r.types.includes('street_address') || r.types.includes('route') || r.types.includes('premise'))
-            ) || geocodeData.results[0];
+            // street_address 타입 우선, 없으면 premise, route, 마지막으로 첫 번째 결과
+            // 단, 장소명(establishment/point_of_interest) 포함된 결과는 제외
+            const isCleanAddress = (r) => {
+              const types = r.types || [];
+              return !types.includes('establishment') && !types.includes('point_of_interest') && !types.includes('transit_station');
+            };
+            const preferredResult = 
+              geocodeData.results.find(r => r.types?.includes('street_address') && isCleanAddress(r)) ||
+              geocodeData.results.find(r => r.types?.includes('premise') && isCleanAddress(r)) ||
+              geocodeData.results.find(r => r.types?.includes('route') && isCleanAddress(r)) ||
+              geocodeData.results.find(r => isCleanAddress(r)) ||
+              geocodeData.results[0];
             finalAccessInfo = preferredResult.formatted_address;
             console.log(`[Japantravel] ✅ Reverse geocoded standard address (type: ${preferredResult.types?.[0]}): ${finalAccessInfo}`);
           } else {
