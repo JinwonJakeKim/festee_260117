@@ -188,22 +188,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     }
   }
 
-  // Geocoding 결과 처리
-  let formattedAddress = null;
-  if (geocodeResult.data?.success) {
-    latitude = geocodeResult.data.latitude;
-    longitude = geocodeResult.data.longitude;
-    geocodingStatus = 'success';
-    formattedAddress = geocodeResult.data.formatted_address || null;
-  } else if (!latitude || !longitude) {
-    geocodingStatus = 'failed';
-    geocodingErrorMessage = geocodeResult.data?.error || 'Geocoding failed';
-  }
-
-  // 주소 처리: formattedAddress(Google 표준주소)가 있으면 우선 사용
-  // 없으면 rawAddress 사용 (비표준이어도 그대로)
-  const rawAddress = festivalData.address || '';
-  const accessInfo = formattedAddress || rawAddress;
+  // 주소 처리: rawAddress 그대로 사용
+  const accessInfo = festivalData.address || '';
 
   const now = new Date().toISOString();
 
