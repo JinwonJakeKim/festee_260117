@@ -893,56 +893,6 @@ export default function AdminDashboard() {
             </Card>
 
             <div className="space-y-3">
-              {/* Google Custom Search API */}
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">G</span>
-                      </div>
-                      Google Custom Search API
-                    </h3>
-                    <p className="text-gray-400 text-sm mb-2">
-                      축제 이미지 검색에 사용
-                    </p>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-sm">오늘 사용량</span>
-                        <span className="text-white font-bold">
-                          {apiUsageLogs.find(log => log.api_name === 'google_custom_search')?.count || 0} / 100 쿼리
-                        </span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-green-500"
-                          style={{ 
-                            width: `${((apiUsageLogs.find(log => log.api_name === 'google_custom_search')?.count || 0) / 100) * 100}%` 
-                          }}
-                        />
-                      </div>
-                      <p className="text-gray-500 text-xs">
-                        일일 무료 한도: 100 쿼리
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-500/20 text-green-400 border-green-400/50">
-                    ✓ 연동됨
-                  </Badge>
-                  <a 
-                    href="https://console.cloud.google.com/apis/dashboard?project=festee-shorts"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-                  >
-                    <LinkIcon className="w-3 h-3" />
-                    관리 콘솔
-                  </a>
-                </div>
-              </Card>
-
               {/* YouTube Data API */}
               <Card className="bg-gray-900 border-gray-800 p-4">
                 <div className="flex items-start justify-between mb-3">
