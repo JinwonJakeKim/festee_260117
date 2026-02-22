@@ -771,10 +771,28 @@ Deno.serve(async (req) => {
       if (emailMatch) contactEmail = emailMatch[0];
     }
 
-    // ===== 주소 없고 위도/경도 있으면 역지오코딩으로 주소 채우기 =====
+    // ===== 주소가 없거나 비표준(역/공원/건물명만 있는 경우)이면 reverse geocoding으로 표준주소 채우기 =====
     let finalAccessInfo = extractedInfo.accessInfo || null;
-    if (!finalAccessInfo && extractedLatitude && extractedLongitude) {
-      console.log(`[Japantravel] No address found, trying reverse geocoding with lat=${extractedLatitude}, lng=${extractedLongitude}`);
+
+    // 표준 주소 여부 판별: 번지수, 도로명, 행정구역(Prefecture/City/Ward 등) 포함 여부로 판단
+    const isStandardAddress = (addr) => {
+      if (!addr) return false;
+      // 일본 표준 주소 패턴: 도도부현(Prefecture), 시구정촌(City/Ward/Town/Village) 포함 여부
+      const standardPatterns = [
+        /prefecture/i,
+        /\d+(-\d+)+/,           // 번지 (예: 1-2-3)
+        /(?:chome|丁目|番地|号)/i,
+        /(?:ku|shi|cho|machi|mura)\b/i,
+        /[都道府県市区町村]/,
+        /\d+\s+\w+,\s*\w+/,     // 영문 번지+도로명 (예: 1-1 Asuwa, Fukui)
+      ];
+      return standardPatterns.some(p => p.test(addr));
+    };
+
+    const needsReverseGeocode = extractedLatitude && extractedLongitude && !isStandardAddress(finalAccessInfo);
+
+    if (needsReverseGeocode) {
+      console.log(`[Japantravel] Address "${finalAccessInfo}" is ${!finalAccessInfo ? 'missing' : 'non-standard'}, trying reverse geocoding with lat=${extractedLatitude}, lng=${extractedLongitude}`);
       try {
         const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
         if (apiKey) {
@@ -783,7 +801,7 @@ Deno.serve(async (req) => {
           const geocodeData = await geocodeRes.json();
           if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
             finalAccessInfo = geocodeData.results[0].formatted_address;
-            console.log(`[Japantravel] ✅ Reverse geocoded address: ${finalAccessInfo}`);
+            console.log(`[Japantravel] ✅ Reverse geocoded standard address: ${finalAccessInfo}`);
           } else {
             console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
           }
