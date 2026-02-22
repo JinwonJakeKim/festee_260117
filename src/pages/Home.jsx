@@ -973,7 +973,7 @@ export default function Home() {
                         {localizedName}
                       </h3>
                       <div className="text-gray-400 text-xs">
-                        {festival.city}, {festival.country}{festival.category ? ` / ${festival.category}` : ''}
+                        {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}{festival.category ? ` / ${festival.category}` : ''}
                       </div>
                       <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
                         <span>
@@ -1167,7 +1167,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {festival.city}, {festival.country}
+                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
                             </p>
                           </div>
                         </div>
@@ -1210,7 +1210,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {festival.city}, {festival.country}
+                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
                             </p>
                           </div>
                         </div>
@@ -1253,7 +1253,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {festival.city}, {festival.country}
+                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
                             </p>
                           </div>
                         </div>

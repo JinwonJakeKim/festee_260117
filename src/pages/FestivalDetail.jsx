@@ -638,6 +638,8 @@ FESTEE에서 더 자세히 확인하세요 👉`;
 
   // 다국어 콘텐츠 가져오기
   const localizedName = getLocalizedContent(festival, 'name');
+  const localizedCity = getLocalizedContent(festival, 'city');
+  const localizedCountry = getLocalizedContent(festival, 'country');
   const localizedSummary = getLocalizedContent(festival, 'summary');
   const localizedDescription = getLocalizedContent(festival, 'description');
   const localizedHighlights = getLocalizedContent(festival, 'highlights');
