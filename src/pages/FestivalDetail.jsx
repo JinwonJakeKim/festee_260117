@@ -865,9 +865,9 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
-          >
+            >
             <MapPin className="w-4 h-4 text-pink-500" />
-            <span className="text-sm underline">{festival.city} {festival.country}</span>
+            <span className="text-sm underline">{localizedCity} {localizedCountry}</span>
           </a>
         </div>
 
@@ -1230,7 +1230,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                       <Popup className="custom-popup">
                         <div className="bg-gray-900 p-3 rounded">
                           <h3 className="text-white font-bold mb-1">{localizedName}</h3>
-                          <p className="text-gray-300 text-sm">{festival.city}, {festival.country}</p>
+                                        <p className="text-gray-300 text-sm">{localizedCity}, {localizedCountry}</p>
                         </div>
                       </Popup>
                     </Marker>
@@ -1255,7 +1255,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                   style={{ zIndex: 1000 }}
                 >
                   <h3 className="text-white font-bold">{localizedName}</h3>
-                  <p className="text-gray-300 text-sm">{festival.city}, {festival.country}</p>
+                    <p className="text-gray-300 text-sm">{localizedCity}, {localizedCountry}</p>
                 </div>
               </motion.div>
             </div>
