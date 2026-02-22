@@ -65,8 +65,12 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
   };
 
   const handleMoreClick = () => {
-    const searchQuery = encodeURIComponent(festivalName);
-    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+    // original_language 기준으로 해당 name 필드 선택, 년도(4자리 숫자) 제거
+    const langFieldMap = { ko: 'name_ko', en: 'name_en', ja: 'name_jp', jp: 'name_jp', zh: 'name_zh', 'zh-CN': 'name_zh' };
+    const langField = langFieldMap[festival?.original_language] || null;
+    const rawName = (langField && festival?.[langField]) ? festival[langField] : festivalName;
+    const cleanedName = rawName.replace(/\s*\d{4}\s*/g, ' ').trim();
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(cleanedName)}`, '_blank');
   };
 
   const handleThumbnailError = (e, videoId, idx) => {
