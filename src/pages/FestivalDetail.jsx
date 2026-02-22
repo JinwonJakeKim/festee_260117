@@ -1088,10 +1088,11 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             {/* Shorts 섹션 */}
             {festival.youtube_shorts_urls && festival.youtube_shorts_urls.length > 0 && (
               <ShortsSection
-                youtubeShortUrls={festival.youtube_shorts_urls}
-                getYoutubeVideoId={getYoutubeVideoId}
-                festivalName={localizedName}
-              />
+                    youtubeShortUrls={festival.youtube_shorts_urls}
+                    getYoutubeVideoId={getYoutubeVideoId}
+                    festivalName={localizedName}
+                    festival={festival}
+                  />
             )}
           {/* 라인업 */}
           {festival.lineup && festival.lineup.length > 0 && (
