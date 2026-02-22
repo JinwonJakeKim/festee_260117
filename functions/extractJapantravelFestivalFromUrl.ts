@@ -816,7 +816,7 @@ Deno.serve(async (req) => {
       price_yen: extractedInfo.priceYen || null,
       price_details: extractedInfo.priceDetails || null,
       opening_hours: extractedInfo.openingHours || null,
-      address: extractedInfo.accessInfo || null,
+      address: finalAccessInfo,
       parking: null,
       organizer: null,
       contact: contactPhone || contactEmail ? { phone: contactPhone, email: contactEmail } : null,
