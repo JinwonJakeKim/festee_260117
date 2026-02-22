@@ -58,8 +58,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
   let latitude = festivalData.latitude;
   let longitude = festivalData.longitude;
-  let geocodingStatus = latitude && longitude ? 'success' : 'pending';
-  let geocodingErrorMessage = null;
+  let geocodingStatus = latitude && longitude ? 'success' : 'failed';
   let videoUrl = festivalData.video_url;
   let videoChannelName = '';
   let youtubeShortUrls = [];
