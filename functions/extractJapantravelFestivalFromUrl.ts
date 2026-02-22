@@ -813,7 +813,12 @@ Deno.serve(async (req) => {
               return c ? c.long_name : null;
             };
 
-            // 일본 주소는 sublocality_level_1~4 (chome/번지) + locality (city) 구조
+            // 일본 주소 address_components 구조:
+            // sublocality_level_4: 번지 (예: "1")
+            // sublocality_level_3: chōme (예: "1-chōme-1")
+            // sublocality_level_2: 동 이름 (예: "Chūō")
+            // sublocality_level_1: 구 이름
+            // locality: 시 이름 (예: "Fukui")
             const sublocality4 = getComp(['sublocality_level_4']);
             const sublocality3 = getComp(['sublocality_level_3']);
             const sublocality2 = getComp(['sublocality_level_2']);
@@ -822,12 +827,11 @@ Deno.serve(async (req) => {
             const postalCode = getComp(['postal_code']);
             const country = getComp(['country']);
 
-            // sublocality_level_4가 가장 상세한 번지 정보 (예: 1-chōme-1)
-            // sublocality_level_2가 동 이름 (예: Chūō)
             const parts = [];
-            if (sublocality4) parts.push(sublocality4);
-            else if (sublocality3) parts.push(sublocality3);
-            if (sublocality2) parts.push(sublocality2);
+            // 가장 상세한 번지 정보부터 순서대로 추가
+            if (sublocality3) parts.push(sublocality3); // chōme 포함 번지
+            else if (sublocality4) parts.push(sublocality4);
+            if (sublocality2) parts.push(sublocality2); // 동 이름
             else if (sublocality1) parts.push(sublocality1);
             if (city) parts.push(city);
             if (postalCode) parts.push(postalCode);
