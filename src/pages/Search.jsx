@@ -224,7 +224,6 @@ export default function Search() {
           safeStringIncludes(festival.city, searchQuery) ||
           safeStringIncludes(festival.city_ko, searchQuery) ||
           safeStringIncludes(festival.country, searchQuery) ||
-          safeStringIncludes(festival.description, searchQuery) ||
           (festival.tags && festival.tags.some(tag => safeStringIncludes(tag, searchQuery)));
 
         if (!matchesQuery) return false;
