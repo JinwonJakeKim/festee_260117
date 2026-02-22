@@ -806,22 +806,29 @@ Deno.serve(async (req) => {
               return !types.includes('establishment') && !types.includes('point_of_interest') && !types.includes('transit_station');
             }) || geocodeData.results[0];
 
-            let addr = cleanResult.formatted_address;
+            // formatted_address 대신 address_components에서 직접 영문 주소 조합
+            const components = cleanResult.address_components || [];
+            const getComp = (types) => {
+              const c = components.find(c => types.some(t => c.types?.includes(t)));
+              return c ? c.long_name : null;
+            };
 
-            // formatted_address 앞에 장소명이 붙어 있을 경우 제거
-            // 패턴: "[장소명], [번지 또는 숫자로 시작하는 표준주소]"
-            // 첫 번째 세그먼트가 숫자/번지 형식이 아니면 제거
-            const commaIdx = addr.indexOf(',');
-            if (commaIdx !== -1) {
-              const firstSegment = addr.substring(0, commaIdx).trim();
-              const rest = addr.substring(commaIdx + 1).trim();
-              // 첫 번째 세그먼트가 숫자로 시작하지 않으면 장소명으로 판단하고 제거
-              if (!/^\d/.test(firstSegment)) {
-                addr = rest;
-              }
-            }
+            const streetNumber = getComp(['street_number']);
+            const route = getComp(['route']);
+            const sublocality = getComp(['sublocality_level_2', 'sublocality_level_1', 'sublocality']);
+            const city = getComp(['locality']);
+            const postalCode = getComp(['postal_code']);
+            const country = getComp(['country']);
 
-            finalAccessInfo = addr;
+            const parts = [];
+            if (streetNumber && route) parts.push(`${streetNumber} ${route}`);
+            else if (route) parts.push(route);
+            if (sublocality) parts.push(sublocality);
+            if (city) parts.push(city);
+            if (postalCode) parts.push(postalCode);
+            if (country) parts.push(country);
+
+            finalAccessInfo = parts.length > 0 ? parts.join(', ') : cleanResult.formatted_address;
             console.log(`[Japantravel] ✅ Reverse geocoded standard address: ${finalAccessInfo}`);
           } else {
             console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
