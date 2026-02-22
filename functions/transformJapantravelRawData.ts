@@ -175,8 +175,40 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
   });
 
-  // LLM + YouTube 병렬 실행
-  const [translatedData, youtubeResult] = await Promise.all([llmPromise, youtubePromise]);
+  // Google Translate + LLM + YouTube 병렬 실행
+  const [googleTranslateResult, llmTranslatedData, youtubeResult] = await Promise.all([googleTranslatePromise, llmPromise, youtubePromise]);
+
+  // Google Translate 결과를 우선 사용, 실패 시 LLM 폴백
+  let translatedData = llmTranslatedData;
+  if (googleTranslateResult?.data?.success) {
+    const gt = googleTranslateResult.data.results;
+    console.log(`[Transform] ✅ Using Google Translate results`);
+    translatedData = {
+      ...llmTranslatedData,
+      name_ko: gt.name?.ko || llmTranslatedData.name_ko,
+      name_en: gt.name?.en || llmTranslatedData.name_en,
+      name_jp: gt.name?.jp || llmTranslatedData.name_jp,
+      name_zh: gt.name?.zh || llmTranslatedData.name_zh,
+      summary_ko: gt.summary?.ko || llmTranslatedData.summary_ko,
+      summary_en: gt.summary?.en || llmTranslatedData.summary_en,
+      summary_jp: gt.summary?.jp || llmTranslatedData.summary_jp,
+      summary_zh: gt.summary?.zh || llmTranslatedData.summary_zh,
+      description_ko: gt.description?.ko || llmTranslatedData.description_ko,
+      description_en: gt.description?.en || llmTranslatedData.description_en,
+      description_jp: gt.description?.jp || llmTranslatedData.description_jp,
+      description_zh: gt.description?.zh || llmTranslatedData.description_zh,
+      city_ko: gt.city?.ko || llmTranslatedData.city_ko,
+      city_en: gt.city?.en || llmTranslatedData.city_en,
+      city_jp: gt.city?.jp || llmTranslatedData.city_jp,
+      city_zh: gt.city?.zh || llmTranslatedData.city_zh,
+      country_ko: gt.country?.ko || llmTranslatedData.country_ko,
+      country_en: gt.country?.en || llmTranslatedData.country_en,
+      country_jp: gt.country?.jp || llmTranslatedData.country_jp,
+      country_zh: gt.country?.zh || llmTranslatedData.country_zh,
+    };
+  } else {
+    console.warn(`[Transform] ⚠️ Google Translate failed/limit, using LLM results`);
+  }
   console.log(`[Transform] Parallel done for: ${festivalData.name_original}`);
 
   // YouTube 결과 처리
