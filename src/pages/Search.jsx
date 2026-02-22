@@ -222,8 +222,8 @@ export default function Search() {
           safeStringIncludes(festival.name_jp, searchQuery) ||
           safeStringIncludes(festival.name_zh, searchQuery) ||
           safeStringIncludes(festival.city, searchQuery) ||
+          safeStringIncludes(festival.city_ko, searchQuery) ||
           safeStringIncludes(festival.country, searchQuery) ||
-          safeStringIncludes(festival.summary, searchQuery) ||
           safeStringIncludes(festival.description, searchQuery) ||
           (festival.tags && festival.tags.some(tag => safeStringIncludes(tag, searchQuery)));
 
