@@ -63,18 +63,47 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   let videoChannelName = '';
   let youtubeShortUrls = [];
 
-  const shouldSearchHighlight = !videoUrl || videoUrl.trim() === '';
-
   // description 길이 제한 (LLM 응답 속도 향상)
   const truncatedDescription = truncateText(festivalData.description_original, 1500);
   const truncatedSummary = truncateText(festivalData.summary_original, 500);
 
-  // YouTube promise
-  const youtubePromise = base44.functions.invoke('fetchYoutubeVideos', {
-    festivalName: festivalData.name_original,
-    searchHighlightVideo: shouldSearchHighlight,
-    searchShorts: true
-  }).catch(e => { console.error('[Transform] YouTube error:', e.message); return { data: { success: false } }; });
+  // 기존 Festival 엔티티에서 유튜브 데이터 미리 확인 (API 한도 절약)
+  let existingVideoUrl = null;
+  let existingShorts = [];
+  if (rawData.festival_id) {
+    const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+    if (existingFestivals[0]) {
+      existingVideoUrl = existingFestivals[0].video_url || null;
+      existingShorts = existingFestivals[0].youtube_shorts_urls || [];
+      if (existingVideoUrl) videoChannelName = existingFestivals[0].video_channel_name || '';
+    }
+  }
+
+  const hasHighlight = !!(existingVideoUrl && existingVideoUrl.trim());
+  const hasShorts = existingShorts.length > 0;
+  const shouldSearchHighlight = !hasHighlight && (!videoUrl || videoUrl.trim() === '');
+  const shouldSearchShorts = !hasShorts;
+
+  // 기존 영상이 있으면 그대로 사용
+  if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
+    videoUrl = existingVideoUrl;
+  }
+  if (hasShorts) {
+    youtubeShortUrls = existingShorts;
+  }
+
+  // YouTube promise - 하이라이트도 숏츠도 필요없으면 스킵
+  const youtubePromise = (shouldSearchHighlight || shouldSearchShorts)
+    ? base44.functions.invoke('fetchYoutubeVideos', {
+        festivalName: festivalData.name_original,
+        searchHighlightVideo: shouldSearchHighlight,
+        searchShorts: shouldSearchShorts
+      }).catch(e => { console.error('[Transform] YouTube error:', e.message); return { data: { success: false } }; })
+    : Promise.resolve({ data: { success: false, skipped: true } });
+
+  if (!shouldSearchHighlight && !shouldSearchShorts) {
+    console.log(`[Transform] ⏭️ YouTube API skipped (existing video & shorts found)`);
+  }
 
   // Google Translate 1순위 번역 (월 한도 초과 시 LLM 폴백)
   const googleTranslatePromise = base44.functions.invoke('googleTranslate', {
