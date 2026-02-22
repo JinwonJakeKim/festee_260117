@@ -361,27 +361,13 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     update_time: now,
   };
 
-  // 동일한 축제명으로 기존 Festival 찾기
-  const existingFestivalsByName = await base44.asServiceRole.entities.Festival.filter({
-    name_original: festivalData.name_original
-  });
-
+  // 기존 Festival 업데이트 또는 신규 생성 (이미 위에서 조회한 existingFestivalRecord 재사용)
   let festivalId = rawData.festival_id;
 
-  if (existingFestivalsByName && existingFestivalsByName.length > 0) {
-    festivalId = existingFestivalsByName[0].id;
+  if (existingFestivalRecord) {
+    festivalId = existingFestivalRecord.id;
     await base44.asServiceRole.entities.Festival.update(festivalId, { ...festivalPayload, update_time: now });
-    console.log(`[Transform] ✓ Updated Festival by name: ${festivalId}`);
-  } else if (retransform && festivalId) {
-    const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: festivalId });
-    if (existingFestivals[0]) {
-      await base44.asServiceRole.entities.Festival.update(festivalId, { ...festivalPayload, update_time: now });
-      console.log(`[Transform] ✓ Updated Festival by ID: ${festivalId}`);
-    } else {
-      const newFestival = await base44.asServiceRole.entities.Festival.create({ ...festivalPayload, create_time: now, update_time: now });
-      festivalId = newFestival.id;
-      console.log(`[Transform] ✓ Created Festival (original not found): ${festivalId}`);
-    }
+    console.log(`[Transform] ✓ Updated Festival: ${festivalId}`);
   } else {
     const newFestival = await base44.asServiceRole.entities.Festival.create({ ...festivalPayload, create_time: now, update_time: now });
     festivalId = newFestival.id;
