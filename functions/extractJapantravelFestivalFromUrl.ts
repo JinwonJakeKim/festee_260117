@@ -800,8 +800,12 @@ Deno.serve(async (req) => {
           const geocodeRes = await fetch(geocodeUrl);
           const geocodeData = await geocodeRes.json();
           if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
-            finalAccessInfo = geocodeData.results[0].formatted_address;
-            console.log(`[Japantravel] ✅ Reverse geocoded standard address: ${finalAccessInfo}`);
+            // street_address 또는 route 타입 결과를 우선 사용 (장소명 없는 순수 도로 주소)
+            const preferredResult = geocodeData.results.find(r =>
+              r.types && (r.types.includes('street_address') || r.types.includes('route') || r.types.includes('premise'))
+            ) || geocodeData.results[0];
+            finalAccessInfo = preferredResult.formatted_address;
+            console.log(`[Japantravel] ✅ Reverse geocoded standard address (type: ${preferredResult.types?.[0]}): ${finalAccessInfo}`);
           } else {
             console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
           }
