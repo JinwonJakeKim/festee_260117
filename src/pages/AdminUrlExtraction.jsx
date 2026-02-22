@@ -1508,14 +1508,26 @@ export default function AdminUrlExtraction() {
                     </div>
 
                     {selectedLinkIds.size > 0 && (
-                      <Button
-                        onClick={handleDeleteSelectedLinks}
-                        disabled={deletionProgress.isDeleting}
-                        className="w-full bg-red-500 hover:bg-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        선택 삭제 ({selectedLinkIds.size}개)
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleBatchExtraction}
+                          disabled={batchExtractionProgress.isExtracting}
+                          className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+                        >
+                          {batchExtractionProgress.isExtracting ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />추출 중...</>
+                          ) : (
+                            <><ExternalLink className="w-4 h-4 mr-2" />추출 ({selectedLinkIds.size}개)</>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleDeleteSelectedLinks}
+                          disabled={deletionProgress.isDeleting}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </Card>
                 )}
