@@ -67,16 +67,26 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   const truncatedDescription = truncateText(festivalData.description_original, 1500);
   const truncatedSummary = truncateText(festivalData.summary_original, 500);
 
-  // 기존 Festival 엔티티에서 유튜브 데이터 미리 확인 (API 한도 절약)
+  // 기존 Festival 엔티티 조회 (유튜브 데이터 보존 + 유저 인터랙션 보존)
   let existingVideoUrl = null;
   let existingShorts = [];
+  let existingFestivalRecord = null;
+
+  // festival_id로 먼저 찾기
   if (rawData.festival_id) {
-    const existingFestivals = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
-    if (existingFestivals[0]) {
-      existingVideoUrl = existingFestivals[0].video_url || null;
-      existingShorts = existingFestivals[0].youtube_shorts_urls || [];
-      if (existingVideoUrl) videoChannelName = existingFestivals[0].video_channel_name || '';
-    }
+    const byId = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+    if (byId[0]) existingFestivalRecord = byId[0];
+  }
+  // 없으면 name_original로 찾기
+  if (!existingFestivalRecord) {
+    const byName = await base44.asServiceRole.entities.Festival.filter({ name_original: festivalData.name_original });
+    if (byName[0]) existingFestivalRecord = byName[0];
+  }
+
+  if (existingFestivalRecord) {
+    existingVideoUrl = existingFestivalRecord.video_url || null;
+    existingShorts = existingFestivalRecord.youtube_shorts_urls || [];
+    if (existingVideoUrl) videoChannelName = existingFestivalRecord.video_channel_name || '';
   }
 
   const hasHighlight = !!(existingVideoUrl && existingVideoUrl.trim());
