@@ -813,22 +813,27 @@ Deno.serve(async (req) => {
               return c ? c.long_name : null;
             };
 
-            const streetNumber = getComp(['street_number']);
-            const route = getComp(['route']);
-            const sublocality = getComp(['sublocality_level_2', 'sublocality_level_1', 'sublocality']);
+            // 일본 주소는 sublocality_level_1~4 (chome/번지) + locality (city) 구조
+            const sublocality4 = getComp(['sublocality_level_4']);
+            const sublocality3 = getComp(['sublocality_level_3']);
+            const sublocality2 = getComp(['sublocality_level_2']);
+            const sublocality1 = getComp(['sublocality_level_1']);
             const city = getComp(['locality']);
             const postalCode = getComp(['postal_code']);
             const country = getComp(['country']);
 
+            // sublocality_level_4가 가장 상세한 번지 정보 (예: 1-chōme-1)
+            // sublocality_level_2가 동 이름 (예: Chūō)
             const parts = [];
-            if (streetNumber && route) parts.push(`${streetNumber} ${route}`);
-            else if (route) parts.push(route);
-            if (sublocality) parts.push(sublocality);
+            if (sublocality4) parts.push(sublocality4);
+            else if (sublocality3) parts.push(sublocality3);
+            if (sublocality2) parts.push(sublocality2);
+            else if (sublocality1) parts.push(sublocality1);
             if (city) parts.push(city);
             if (postalCode) parts.push(postalCode);
             if (country) parts.push(country);
 
-            finalAccessInfo = parts.length > 0 ? parts.join(', ') : cleanResult.formatted_address;
+            finalAccessInfo = parts.length >= 3 ? parts.join(', ') : cleanResult.formatted_address;
             console.log(`[Japantravel] ✅ Reverse geocoded standard address: ${finalAccessInfo}`);
           } else {
             console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
