@@ -344,9 +344,9 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     contact: festivalData.contact,
     social_media: festivalData.social_media,
     lineup: festivalData.lineup || [],
-    star_rating: 0,
-    likes_count: 0,
-    catches_count: 0,
+    star_rating: existingFestivals[0]?.star_rating || 0,
+    likes_count: existingFestivals[0]?.likes_count || 0,
+    catches_count: existingFestivals[0]?.catches_count || 0,
     update_time: now,
   };
 
