@@ -246,11 +246,13 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       videoUrl = youtubeResult.data.highlightVideoUrl;
       videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
     }
-    youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+    if (shouldSearchShorts) {
+      youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+    }
   }
 
-  // 쇼츠 없으면 현지 언어로 재검색
-  if (youtubeShortUrls.length === 0) {
+  // 쇼츠 없으면 현지 언어로 재검색 (기존에도 없었던 경우만)
+  if (youtubeShortUrls.length === 0 && !hasShorts) {
     const countryLanguageMap = { 'japan': 'name_jp', 'china': 'name_zh', 'korea': 'name_ko' };
     const localName = translatedData[countryLanguageMap[(festivalData.country || '').toLowerCase()]];
     if (localName && localName !== festivalData.name_original) {
