@@ -163,8 +163,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
   });
 
-  // LLM + YouTube + Geocoding 병렬 실행
-  const [translatedData, youtubeResult, geocodeResult] = await Promise.all([llmPromise, youtubePromise, geocodePromise]);
+  // LLM + YouTube 병렬 실행
+  const [translatedData, youtubeResult] = await Promise.all([llmPromise, youtubePromise]);
   console.log(`[Transform] Parallel done for: ${festivalData.name_original}`);
 
   // YouTube 결과 처리
