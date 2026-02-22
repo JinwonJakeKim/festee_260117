@@ -796,24 +796,38 @@ Deno.serve(async (req) => {
       try {
         const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
         if (apiKey) {
-          const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${extractedLatitude},${extractedLongitude}&language=en&key=${apiKey}`;
+          const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${extractedLatitude},${extractedLongitude}&language=en&region=US&key=${apiKey}`;
           const geocodeRes = await fetch(geocodeUrl);
           const geocodeData = await geocodeRes.json();
           if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
-            // street_address 타입 우선, 없으면 premise, route, 마지막으로 첫 번째 결과
-            // 단, 장소명(establishment/point_of_interest) 포함된 결과는 제외
-            const isCleanAddress = (r) => {
-              const types = r.types || [];
-              return !types.includes('establishment') && !types.includes('point_of_interest') && !types.includes('transit_station');
+            // address_components에서 직접 영문 주소 조합 (formatted_address는 현지 포맷일 수 있으므로)
+            // 가장 상세한 결과(첫 번째)의 components에서 영문 주소 구성
+            const result = geocodeData.results[0];
+            const components = result.address_components || [];
+            
+            const getComponent = (types) => {
+              const comp = components.find(c => types.some(t => c.types?.includes(t)));
+              return comp ? comp.long_name : null;
             };
-            const preferredResult = 
-              geocodeData.results.find(r => r.types?.includes('street_address') && isCleanAddress(r)) ||
-              geocodeData.results.find(r => r.types?.includes('premise') && isCleanAddress(r)) ||
-              geocodeData.results.find(r => r.types?.includes('route') && isCleanAddress(r)) ||
-              geocodeData.results.find(r => isCleanAddress(r)) ||
-              geocodeData.results[0];
-            finalAccessInfo = preferredResult.formatted_address;
-            console.log(`[Japantravel] ✅ Reverse geocoded standard address (type: ${preferredResult.types?.[0]}): ${finalAccessInfo}`);
+            
+            const streetNumber = getComponent(['street_number']);
+            const route = getComponent(['route']);
+            const sublocality = getComponent(['sublocality_level_1', 'sublocality']);
+            const city = getComponent(['locality']);
+            const postalCode = getComponent(['postal_code']);
+            const country = getComponent(['country']);
+            
+            // 영문 순서로 조합: 번지+도로명, 구/동, 도시, 우편번호, 국가
+            const parts = [];
+            if (streetNumber && route) parts.push(`${streetNumber} ${route}`);
+            else if (route) parts.push(route);
+            if (sublocality) parts.push(sublocality);
+            if (city) parts.push(city);
+            if (postalCode) parts.push(postalCode);
+            if (country) parts.push(country);
+            
+            finalAccessInfo = parts.length > 0 ? parts.join(', ') : result.formatted_address;
+            console.log(`[Japantravel] ✅ Reverse geocoded standard address (components): ${finalAccessInfo}`);
           } else {
             console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
           }
