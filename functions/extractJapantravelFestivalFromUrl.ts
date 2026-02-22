@@ -646,6 +646,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ===== 위도/경도 추출 (Google Maps 링크에서) =====
+    let extractedLatitude = null;
+    let extractedLongitude = null;
+    
+    // HTML에서 google.com/maps?daddr=LAT,LNG 패턴 찾기
+    const mapsLatLngPattern = /google\.com\/maps[^"']*[?&]daddr=([-\d.]+),([-\d.]+)/i;
+    const mapsMatch = html.match(mapsLatLngPattern);
+    if (mapsMatch) {
+      extractedLatitude = parseFloat(mapsMatch[1]);
+      extractedLongitude = parseFloat(mapsMatch[2]);
+      console.log(`[Japantravel] ✅ Extracted lat/lng from maps link: ${extractedLatitude}, ${extractedLongitude}`);
+    }
+    
+    // 백업: DOM에서 a[href*="maps"] 링크 탐색
+    if (extractedLatitude === null) {
+      const mapsLinks = doc.querySelectorAll('a[href*="google.com/maps"], a[href*="maps.google"]');
+      for (const link of mapsLinks) {
+        const href = link.getAttribute('href') || '';
+        const domMatch = href.match(/[?&]daddr=([-\d.]+),([-\d.]+)/i);
+        if (domMatch) {
+          extractedLatitude = parseFloat(domMatch[1]);
+          extractedLongitude = parseFloat(domMatch[2]);
+          console.log(`[Japantravel] ✅ Extracted lat/lng from DOM maps link: ${extractedLatitude}, ${extractedLongitude}`);
+          break;
+        }
+      }
+    }
+
     // ===== 웹사이트 URL 추출 =====
     // 우선순위 1: div.website 또는 div[class*="website"] 안의 링크 (인스타그램 등 소셜도 포함)
     let websiteUrl = '';
