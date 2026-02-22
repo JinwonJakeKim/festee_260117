@@ -771,6 +771,28 @@ Deno.serve(async (req) => {
       if (emailMatch) contactEmail = emailMatch[0];
     }
 
+    // ===== 주소 없고 위도/경도 있으면 역지오코딩으로 주소 채우기 =====
+    let finalAccessInfo = extractedInfo.accessInfo || null;
+    if (!finalAccessInfo && extractedLatitude && extractedLongitude) {
+      console.log(`[Japantravel] No address found, trying reverse geocoding with lat=${extractedLatitude}, lng=${extractedLongitude}`);
+      try {
+        const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
+        if (apiKey) {
+          const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${extractedLatitude},${extractedLongitude}&key=${apiKey}`;
+          const geocodeRes = await fetch(geocodeUrl);
+          const geocodeData = await geocodeRes.json();
+          if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
+            finalAccessInfo = geocodeData.results[0].formatted_address;
+            console.log(`[Japantravel] ✅ Reverse geocoded address: ${finalAccessInfo}`);
+          } else {
+            console.log(`[Japantravel] Reverse geocoding failed: ${geocodeData.status}`);
+          }
+        }
+      } catch (geoErr) {
+        console.error('[Japantravel] Reverse geocoding error:', geoErr.message);
+      }
+    }
+
     // ===== 최종 RawData 객체 생성 (원본 데이터만, 번역 없음) =====
     const currentTime = new Date().toISOString();
     const rawDataRecord = {
