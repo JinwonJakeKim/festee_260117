@@ -56,7 +56,7 @@ const festivalIcon = new L.Icon({
 });
 
 // Shorts Section Component
-function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName }) {
+function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, festival }) {
   const [playingIndex, setPlayingIndex] = React.useState(null);
   const [thumbnailErrors, setThumbnailErrors] = React.useState({});
 
