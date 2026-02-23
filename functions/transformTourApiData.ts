@@ -615,21 +615,21 @@ Deno.serve(async (req) => {
         const results = {};
         for (const [fieldName, textValue] of Object.entries(texts)) {
           if (Array.isArray(textValue)) {
-            if (!textValue.length) { results[fieldName] = { ko: [], en: [], jp: [], zh: [] }; continue; }
+            if (!textValue.length) { results[fieldName] = { ko: [], en: [], jp: [] }; continue; }
             const itemsText = textValue.join('\n- ');
             const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-              prompt: `다음 항목들을 한국어, 영어, 일본어(jp), 중국어로 번역해주세요:\n- ${itemsText}`,
+              prompt: `다음 항목들을 한국어, 영어, 일본어(jp)로 번역해주세요:\n- ${itemsText}`,
               add_context_from_internet: false,
-              response_json_schema: { type: "object", properties: { ko: { type: "array", items: { type: "string" } }, en: { type: "array", items: { type: "string" } }, jp: { type: "array", items: { type: "string" } }, zh: { type: "array", items: { type: "string" } } }, required: ["ko", "en", "jp", "zh"] }
-            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue, zh: textValue }));
+              response_json_schema: { type: "object", properties: { ko: { type: "array", items: { type: "string" } }, en: { type: "array", items: { type: "string" } }, jp: { type: "array", items: { type: "string" } } }, required: ["ko", "en", "jp"] }
+            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue }));
             results[fieldName] = llmResult;
           } else {
-            if (!textValue || textValue.length < 3) { results[fieldName] = { ko: textValue || '', en: textValue || '', jp: textValue || '', zh: textValue || '' }; continue; }
+            if (!textValue || textValue.length < 3) { results[fieldName] = { ko: textValue || '', en: textValue || '', jp: textValue || '' }; continue; }
             const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-              prompt: `다음 텍스트를 한국어, 영어, 일본어(jp), 중국어로 번역해주세요:\n${textValue}`,
+              prompt: `다음 텍스트를 한국어, 영어, 일본어(jp)로 번역해주세요:\n${textValue}`,
               add_context_from_internet: false,
-              response_json_schema: { type: "object", properties: { ko: { type: "string" }, en: { type: "string" }, jp: { type: "string" }, zh: { type: "string" } }, required: ["ko", "en", "jp", "zh"] }
-            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue, zh: textValue }));
+              response_json_schema: { type: "object", properties: { ko: { type: "string" }, en: { type: "string" }, jp: { type: "string" } }, required: ["ko", "en", "jp"] }
+            }).catch(() => ({ ko: textValue, en: textValue, jp: textValue }));
             results[fieldName] = llmResult;
           }
         }
@@ -1265,6 +1265,10 @@ ${context}
           categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
           countryTranslations = await translateMultiLanguage('대한민국', 'ko', 'country');
           cityTranslations = await translateMultiLanguage(cityKo, 'ko', 'city');
+          // 중국어 번역 비활성화
+          nameTranslations.zh = ''; summaryTranslations.zh = ''; descriptionTranslations.zh = '';
+          highlightsTranslations.zh = []; tagsTranslations.zh = []; categoryTranslations.zh = '';
+          countryTranslations.zh = ''; cityTranslations.zh = '';
         }
         
         console.log(`[Transform] ✓ Multi-language translation completed`);
