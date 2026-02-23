@@ -247,6 +247,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
   });
 
+
   // Google Translate + LLM + YouTube 병렬 실행
   const [googleTranslateResult, llmTranslatedData, youtubeResult] = await Promise.all([googleTranslatePromise, llmPromise, youtubePromise]);
 
