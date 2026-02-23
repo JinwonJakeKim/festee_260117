@@ -1227,23 +1227,45 @@ ${context}
         // ===== 다국어 번역 =====
         const sourceLanguage = detectLanguage(rawData.title);
         console.log(`[Transform] 📝 Detected source language: ${sourceLanguage}`);
-        
-        // 다국어 필드 번역
-        const nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
-        const summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
-        
-        // Description은 길이가 길어서 요약본만 번역 (처음 1000자)
-        const descriptionForTranslation = fullDescription.length > 1000 
-          ? fullDescription.substring(0, 1000) + '...' 
-          : fullDescription;
-        const descriptionTranslations = await translateMultiLanguage(descriptionForTranslation, sourceLanguage, 'description');
-        
-        const highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
-        const tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
-        const categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
-        const countryTranslations = await translateMultiLanguage('대한민국', 'ko', 'country');
+
         const cityKo = extractCity(detailData.addr1 || rawData.addr1);
-        const cityTranslations = await translateMultiLanguage(cityKo, 'ko', 'city');
+
+        // 이미 번역된 Festival이 있으면 번역 API 호출 스킵
+        const alreadyTranslated = !!(
+          isUpdate && existingFestival &&
+          existingFestival.name_en &&
+          existingFestival.description_en
+        );
+
+        let nameTranslations, summaryTranslations, descriptionTranslations, highlightsTranslations, tagsTranslations, categoryTranslations, countryTranslations, cityTranslations;
+
+        if (alreadyTranslated && !retransform) {
+          console.log(`[Transform] ⏭️ Translation skipped - already translated (retransform=false)`);
+          nameTranslations = { ko: existingFestival.name_ko || rawData.title, en: existingFestival.name_en, jp: existingFestival.name_jp || '', zh: existingFestival.name_zh || '' };
+          summaryTranslations = { ko: existingFestival.summary_ko || '', en: existingFestival.summary_en || '', jp: existingFestival.summary_jp || '', zh: existingFestival.summary_zh || '' };
+          descriptionTranslations = { ko: existingFestival.description_ko || '', en: existingFestival.description_en || '', jp: existingFestival.description_jp || '', zh: existingFestival.description_zh || '' };
+          highlightsTranslations = { ko: existingFestival.highlights_ko || [], en: existingFestival.highlights_en || [], jp: existingFestival.highlights_jp || [], zh: existingFestival.highlights_zh || [] };
+          tagsTranslations = { ko: existingFestival.tags_ko || [], en: existingFestival.tags_en || [], jp: existingFestival.tags_jp || [], zh: existingFestival.tags_zh || [] };
+          categoryTranslations = { ko: existingFestival.category || festivalCategory, en: existingFestival.category_en || '', jp: existingFestival.category_jp || '', zh: existingFestival.category_zh || '' };
+          countryTranslations = { ko: '대한민국', en: existingFestival.country_en || 'South Korea', jp: existingFestival.country_jp || '', zh: existingFestival.country_zh || '' };
+          cityTranslations = { ko: cityKo, en: existingFestival.city_en || cityKo, jp: existingFestival.city_jp || cityKo, zh: existingFestival.city_zh || cityKo };
+        } else {
+          // 다국어 필드 번역
+          nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
+          summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
+          
+          // Description은 길이가 길어서 요약본만 번역 (처음 1000자)
+          const descriptionForTranslation = fullDescription.length > 1000 
+            ? fullDescription.substring(0, 1000) + '...' 
+            : fullDescription;
+          descriptionTranslations = await translateMultiLanguage(descriptionForTranslation, sourceLanguage, 'description');
+          
+          highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
+          tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
+          categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
+          countryTranslations = await translateMultiLanguage('대한민국', 'ko', 'country');
+          cityTranslations = await translateMultiLanguage(cityKo, 'ko', 'city');
+        }
         
         console.log(`[Transform] ✓ Multi-language translation completed`);
         
