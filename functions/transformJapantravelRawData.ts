@@ -138,7 +138,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
           city: festivalData.city || '',
           country: festivalData.country || '',
         },
-        targetLanguages: ['ko', 'en', 'ja']
+        targetLanguages: ['ko', 'en', 'ja', 'zh-CN']
       }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
 
   // LLM translation promise (description 길이 제한 적용) - 폴백용
@@ -163,7 +163,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
       })
     : base44.integrations.Core.InvokeLLM({
     prompt: `
-다음 축제 정보를 한국어, 영어, 일본어 3개 언어로 번역하고 하이라이트를 생성하세요.
+다음 축제 정보를 한국어, 영어, 일본어, 중국어 4개 언어로 번역하고 하이라이트를 생성하세요.
 
 원본 언어: ${festivalData.original_language || 'unknown'}
 축제명: ${festivalData.name_original || ''}
@@ -178,18 +178,19 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 - _ko: 한국어 (존댓말, ~입니다체)
 - _en: 영어 (간결하고 자연스럽게)
 - _jp: 일본어 (です・ます調)
+- _zh: 중국어 (간체자)
 - 고유명사(축제명, 장소명)는 원문 유지
 
-하이라이트: description/summary 기반으로 핵심 매력 3~5개 (각 15~40자), 3개 언어 각각 생성
+하이라이트: description/summary 기반으로 핵심 매력 3~5개 (각 15~40자), 4개 언어 각각 생성
 
 카테고리(category_ko): 원본 카테고리와 내용을 보고 아래 중 하나 선택:
 음악, 문화, 예술, 음식, 스포츠, 지역축제, 기타
 
 태그(tags_ko): 원본 태그가 없더라도 축제 이름/요약/설명을 분석하여 관련 태그를 3~8개 한국어로 생성하세요.
 예) 불꽃놀이, 야외공연, 전통문화, 음악축제, 가족여행, 야시장, 벚꽃, 여름축제 등
-tags_en, tags_jp는 tags_ko를 각 언어로 번역하세요.
+tags_en, tags_jp, tags_zh는 tags_ko를 각 언어로 번역하세요.
 
-country와 city를 3개 언어로 번역해주세요. 고유명사(도시명)는 해당 언어 표기법을 따르세요.
+country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는 해당 언어 표기법을 따르세요.
 `,
     response_json_schema: {
       type: "object",
@@ -197,29 +198,37 @@ country와 city를 3개 언어로 번역해주세요. 고유명사(도시명)는
         name_ko: { type: "string" },
         name_en: { type: "string" },
         name_jp: { type: "string" },
+        name_zh: { type: "string" },
         summary_ko: { type: "string" },
         summary_en: { type: "string" },
         summary_jp: { type: "string" },
+        summary_zh: { type: "string" },
         description_ko: { type: "string" },
         description_en: { type: "string" },
         description_jp: { type: "string" },
+        description_zh: { type: "string" },
         highlights_ko: { type: "array", items: { type: "string" } },
         highlights_en: { type: "array", items: { type: "string" } },
         highlights_jp: { type: "array", items: { type: "string" } },
+        highlights_zh: { type: "array", items: { type: "string" } },
         category_ko: { type: "string" },
         category_en: { type: "string" },
         category_jp: { type: "string" },
+        category_zh: { type: "string" },
         tags_ko: { type: "array", items: { type: "string" } },
         tags_en: { type: "array", items: { type: "string" } },
         tags_jp: { type: "array", items: { type: "string" } },
+        tags_zh: { type: "array", items: { type: "string" } },
         country_ko: { type: "string" },
         country_en: { type: "string" },
         country_jp: { type: "string" },
+        country_zh: { type: "string" },
         city_ko: { type: "string" },
         city_en: { type: "string" },
-        city_jp: { type: "string" }
+        city_jp: { type: "string" },
+        city_zh: { type: "string" }
       },
-      required: ["name_ko", "name_en", "name_jp", "description_ko", "description_en", "description_jp", "highlights_ko", "highlights_en", "highlights_jp"]
+      required: ["name_ko", "name_en", "name_jp", "name_zh", "description_ko", "description_en", "description_jp", "description_zh", "highlights_ko", "highlights_en", "highlights_jp", "highlights_zh"]
     }
   }).catch(e => {
     console.error('[Transform] LLM failed:', e.message);
