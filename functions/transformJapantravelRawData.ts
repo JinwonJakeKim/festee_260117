@@ -102,6 +102,18 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     youtubeShortUrls = existingShorts;
   }
 
+  // 이미 번역된 Festival이 있으면 번역 스킵
+  const alreadyTranslated = !!(
+    existingFestivalRecord &&
+    existingFestivalRecord.name_ko &&
+    existingFestivalRecord.name_en &&
+    existingFestivalRecord.description_ko
+  );
+
+  if (alreadyTranslated && !retransform) {
+    console.log(`[Transform] ⏭️ Translation skipped - already translated (retransform=false)`);
+  }
+
   // YouTube promise - 하이라이트도 숏츠도 필요없으면 스킵
   const youtubePromise = (shouldSearchHighlight || shouldSearchShorts)
     ? base44.functions.invoke('fetchYoutubeVideos', {
@@ -115,20 +127,41 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     console.log(`[Transform] ⏭️ YouTube API skipped (existing video & shorts found)`);
   }
 
-  // Google Translate 1순위 번역 (월 한도 초과 시 LLM 폴백)
-  const googleTranslatePromise = base44.functions.invoke('googleTranslate', {
-    texts: {
-      name: festivalData.name_original || '',
-      summary: truncatedSummary || '',
-      description: truncatedDescription || '',
-      city: festivalData.city || '',
-      country: festivalData.country || '',
-    },
-    targetLanguages: ['ko', 'en', 'ja', 'zh-CN']
-  }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
+  // 번역이 이미 완료된 경우 Google Translate, LLM 모두 스킵
+  const googleTranslatePromise = (alreadyTranslated && !retransform)
+    ? Promise.resolve({ data: { success: false, skipped: true } })
+    : base44.functions.invoke('googleTranslate', {
+        texts: {
+          name: festivalData.name_original || '',
+          summary: truncatedSummary || '',
+          description: truncatedDescription || '',
+          city: festivalData.city || '',
+          country: festivalData.country || '',
+        },
+        targetLanguages: ['ko', 'en', 'ja', 'zh-CN']
+      }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
 
   // LLM translation promise (description 길이 제한 적용) - 폴백용
-  const llmPromise = base44.integrations.Core.InvokeLLM({
+  const llmPromise = (alreadyTranslated && !retransform)
+    ? Promise.resolve({
+        name_ko: existingFestivalRecord.name_ko, name_en: existingFestivalRecord.name_en,
+        name_jp: existingFestivalRecord.name_jp, name_zh: existingFestivalRecord.name_zh,
+        summary_ko: existingFestivalRecord.summary_ko, summary_en: existingFestivalRecord.summary_en,
+        summary_jp: existingFestivalRecord.summary_jp, summary_zh: existingFestivalRecord.summary_zh,
+        description_ko: existingFestivalRecord.description_ko, description_en: existingFestivalRecord.description_en,
+        description_jp: existingFestivalRecord.description_jp, description_zh: existingFestivalRecord.description_zh,
+        highlights_ko: existingFestivalRecord.highlights_ko || [], highlights_en: existingFestivalRecord.highlights_en || [],
+        highlights_jp: existingFestivalRecord.highlights_jp || [], highlights_zh: existingFestivalRecord.highlights_zh || [],
+        category_ko: existingFestivalRecord.category, category_en: existingFestivalRecord.category_en,
+        category_jp: existingFestivalRecord.category_jp, category_zh: existingFestivalRecord.category_zh,
+        tags_ko: existingFestivalRecord.tags_ko || [], tags_en: existingFestivalRecord.tags_en || [],
+        tags_jp: existingFestivalRecord.tags_jp || [], tags_zh: existingFestivalRecord.tags_zh || [],
+        country_ko: existingFestivalRecord.country_ko, country_en: existingFestivalRecord.country_en,
+        country_jp: existingFestivalRecord.country_jp, country_zh: existingFestivalRecord.country_zh,
+        city_ko: existingFestivalRecord.city_ko, city_en: existingFestivalRecord.city_en,
+        city_jp: existingFestivalRecord.city_jp, city_zh: existingFestivalRecord.city_zh,
+      })
+    : base44.integrations.Core.InvokeLLM({
     prompt: `
 다음 축제 정보를 한국어, 영어, 일본어, 중국어 4개 언어로 번역하고 하이라이트를 생성하세요.
 
