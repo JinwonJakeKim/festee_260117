@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       try {
         console.log(`[FetchYoutubeVideos] 🎬 Searching for highlight video...`);
         
-        const usage = await checkAndIncrementApiUsage('youtube_data_api', 100);
+        const usage = await checkAndIncrementApiUsage('youtube_data_api', 90);
         if (!usage.allowed) {
           throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
