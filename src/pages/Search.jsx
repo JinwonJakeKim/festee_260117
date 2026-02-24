@@ -467,10 +467,10 @@ export default function Search() {
   };
 
   const handleLocationSelect = (location) => {
-    const newCountry = location.type === 'country' ? location.name : location.country;
-    const newCity = location.type === 'city' ? location.name : "";
+    // URL에는 원본 key(영어)를 저장하고, 필터링에도 원본 key 사용
+    const newCountry = location.type === 'country' ? location.key : location.countryKey;
+    const newCity = location.type === 'city' ? location.key : "";
 
-    // selectedCountry/City를 직접 업데이트하는 대신, URL을 업데이트
     updateUrlParams({
       country: newCountry,
       city: newCity,
