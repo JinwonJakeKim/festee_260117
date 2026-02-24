@@ -302,43 +302,74 @@ export default function Search() {
     });
   }, [festivals, searchQuery, selectedCountry, selectedCity, selectedCategories, likesRange, dateRange, selectedTags, priceRange, starRange, hidePastFestivals]);
 
-  // 국가별, 도시별 축제 수 계산 - 검색 결과를 기반으로 계산
+  // 사용자 언어에 맞는 현지화 이름 가져오기
+  const getLocalizedCountry = (festival) => {
+    const lang = user?.language || 'ko';
+    if (lang === 'en') return festival.country_en || festival.country || '';
+    if (lang === 'jp') return festival.country_jp || festival.country || '';
+    if (lang === 'zh') return festival.country_zh || festival.country || '';
+    return festival.country_ko || festival.country || '';
+  };
+
+  const getLocalizedCity = (festival) => {
+    const lang = user?.language || 'ko';
+    if (lang === 'en') return festival.city_en || festival.city || '';
+    if (lang === 'jp') return festival.city_jp || festival.city || '';
+    if (lang === 'zh') return festival.city_zh || festival.city || '';
+    return festival.city_ko || festival.city || '';
+  };
+
+  // 국가별, 도시별 축제 수 계산 - 전체 festivals 기반으로 계산 (현지화된 이름 사용)
   const locationStats = useMemo(() => {
     const stats = {};
+    const lang = user?.language || 'ko';
 
-    // filteredFestivals (검색 결과)를 기반으로 통계 계산
-    filteredFestivals.forEach(festival => {
-      const country = festival.country || '기타';
-      const city = festival.city || '미정';
+    // 전체 festivals 기반으로 통계 계산
+    festivals.forEach(festival => {
+      const countryKey = festival.country || '기타'; // 필터링용 원본 키
+      const countryDisplay = (() => {
+        if (lang === 'en') return festival.country_en || festival.country || '기타';
+        if (lang === 'jp') return festival.country_jp || festival.country || '기타';
+        if (lang === 'zh') return festival.country_zh || festival.country || '기타';
+        return festival.country_ko || festival.country || '기타';
+      })();
+      const cityKey = festival.city || '미정'; // 필터링용 원본 키
+      const cityDisplay = (() => {
+        if (lang === 'en') return festival.city_en || festival.city || '미정';
+        if (lang === 'jp') return festival.city_jp || festival.city || '미정';
+        if (lang === 'zh') return festival.city_zh || festival.city || '미정';
+        return festival.city_ko || festival.city || '미정';
+      })();
 
-      if (!stats[country]) {
-        stats[country] = {
+      if (!stats[countryKey]) {
+        stats[countryKey] = {
           count: 0,
+          display: countryDisplay,
           cities: {}
         };
       }
+      stats[countryKey].count++;
 
-      stats[country].count++;
-
-      if (!stats[country].cities[city]) {
-        stats[country].cities[city] = 0;
+      if (!stats[countryKey].cities[cityKey]) {
+        stats[countryKey].cities[cityKey] = { count: 0, display: cityDisplay };
       }
-      stats[country].cities[city]++;
+      stats[countryKey].cities[cityKey].count++;
     });
 
     const sortedCountries = Object.keys(stats).sort((a, b) => stats[b].count - stats[a].count);
     const sortedStats = {};
-    sortedCountries.forEach(country => {
-      sortedStats[country] = {
-        count: stats[country].count,
+    sortedCountries.forEach(countryKey => {
+      sortedStats[countryKey] = {
+        count: stats[countryKey].count,
+        display: stats[countryKey].display,
         cities: Object.fromEntries(
-          Object.entries(stats[country].cities).sort(([,a], [,b]) => b - a)
+          Object.entries(stats[countryKey].cities).sort(([,a], [,b]) => b.count - a.count)
         )
       };
     });
 
     return sortedStats;
-  }, [filteredFestivals]);
+  }, [festivals, user?.language]);
 
   // 위치 검색 필터링
   const filteredLocations = useMemo(() => {
