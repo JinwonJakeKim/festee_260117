@@ -967,8 +967,8 @@ export default function Search() {
                     className="w-full"
                   >
                     <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      (location.type === 'country' && selectedCountry === location.name && !selectedCity) ||
-                      (location.type === 'city' && selectedCity === location.name)
+                      (location.type === 'country' && selectedCountry === location.key && !selectedCity) ||
+                      (location.type === 'city' && selectedCity === location.key)
                         ? 'bg-cyan-900/30 border border-cyan-400/50'
                         : 'bg-gray-900 hover:bg-gray-800'
                     }`}>
