@@ -1022,7 +1022,7 @@ export default function Search() {
             </div>
 
             {/* Clear Button */}
-            <div className="px-4 py-4 border-t border-gray-800">
+            <div className="px-4 py-4 border-t border-gray-800 flex gap-2">
               <Button
                 onClick={() => {
                   updateUrlParams({ country: "", city: "" });
@@ -1030,10 +1030,16 @@ export default function Search() {
                   setLocationSearchQuery("");
                 }}
                 variant="outline"
-                className={`w-full border-gray-800 ${selectedCountry || selectedCity ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-gray-900 text-gray-500 cursor-default'}`}
+                className="flex-1 bg-gray-800 text-white border-gray-700"
                 disabled={!selectedCountry && !selectedCity}
               >
-                위치 선택 해제
+                초기화
+              </Button>
+              <Button
+                onClick={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
+                className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+              >
+                적용
               </Button>
             </div>
           </div>
