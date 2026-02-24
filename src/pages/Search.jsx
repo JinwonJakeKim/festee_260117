@@ -229,12 +229,14 @@ export default function Search() {
 
         if (!matchesQuery) return false;
 
-        // 국가 필터
-        const matchesCountry = !selectedCountry || festival.country === selectedCountry;
+        // 국가 필터 (다중 선택 OR 조건)
+        const selectedCountries = selectedCountry ? selectedCountry.split(',') : [];
+        const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(festival.country);
         if (!matchesCountry) return false;
 
-        // 도시 필터
-        const matchesCity = !selectedCity || festival.city === selectedCity;
+        // 도시 필터 (다중 선택 OR 조건)
+        const selectedCities = selectedCity ? selectedCity.split(',') : [];
+        const matchesCity = selectedCities.length === 0 || selectedCities.includes(festival.city);
         if (!matchesCity) return false;
 
         // 카테고리 필터
