@@ -24,11 +24,11 @@ Deno.serve(async (req) => {
     const batchSize = body.batchSize || 10;
     const offset = body.offset || 0;
 
-    // 모든 Festival 가져오기
+    // 모든 Festival 가져오기 (최대 500개씩, offset 지원)
     const allFestivals = await base44.asServiceRole.entities.Festival.list('-created_date', 500);
 
-    // name 필드가 영어인 것만 필터
-    const englishNameFestivals = allFestivals.filter(f => isEnglishName(f.name));
+    // name_ko 필드가 영어인 것만 필터 (name과 name_ko 모두 체크)
+    const englishNameFestivals = allFestivals.filter(f => isEnglishName(f.name_ko) || isEnglishName(f.name));
 
     console.log(`[RetranslateName] Total festivals: ${allFestivals.length}, English name: ${englishNameFestivals.length}`);
 
