@@ -20,10 +20,19 @@ export default function LocationBottomModal({
   searchQuery,
 }) {
   const [searchQuery2, setSearchQuery2] = useState("");
-  const [localCountry, setLocalCountry] = useState(selectedCountry || "");
-  const [localCity, setLocalCity] = useState(selectedCity || "");
-  const [expandedCountries, setExpandedCountries] = useState({});
 
+  // 다중 선택: selectedCities = ["Japan__Tokyo", "Korea__Seoul", ...]
+  // selectedCountries = ["Japan", ...] (도시 없이 국가 전체 선택)
+  const [selectedCities, setSelectedCities] = useState(() => {
+    if (selectedCity && selectedCountry) return [`${selectedCountry}__${selectedCity}`];
+    return [];
+  });
+  const [selectedCountries, setSelectedCountries] = useState(() => {
+    if (selectedCountry && !selectedCity) return [selectedCountry];
+    return [];
+  });
+
+  const [expandedCountries, setExpandedCountries] = useState({});
   const CITY_DISPLAY_LIMIT = 8;
 
   const toggleCountryExpand = (countryKey) => {
@@ -34,7 +43,6 @@ export default function LocationBottomModal({
   const filteredCountries = useMemo(() => {
     const query = searchQuery2.toLowerCase().trim();
     if (!query) return Object.entries(locationStats);
-
     return Object.entries(locationStats).filter(([countryKey, data]) => {
       const countryMatch = safeStringIncludes(data.display, query) || safeStringIncludes(countryKey, query);
       const cityMatch = Object.entries(data.cities).some(([cityKey, cityData]) =>
@@ -45,25 +53,23 @@ export default function LocationBottomModal({
   }, [locationStats, searchQuery2]);
 
   const handleCountryToggle = (countryKey) => {
-    if (localCountry === countryKey) {
-      setLocalCountry("");
-      setLocalCity("");
-    } else {
-      setLocalCountry(countryKey);
-      setLocalCity("");
-    }
+    setSelectedCountries(prev =>
+      prev.includes(countryKey) ? prev.filter(c => c !== countryKey) : [...prev, countryKey]
+    );
+    // 국가 전체 선택 시 해당 국가의 도시 개별 선택 해제
+    setSelectedCities(prev => prev.filter(key => !key.startsWith(`${countryKey}__`)));
   };
 
   const handleCityToggle = (countryKey, cityKey) => {
-    if (localCity === cityKey && localCountry === countryKey) {
-      setLocalCity("");
-    } else {
-      setLocalCountry(countryKey);
-      setLocalCity(cityKey);
-    }
+    const key = `${countryKey}__${cityKey}`;
+    setSelectedCities(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+    // 도시 선택 시 해당 국가 전체 선택 해제
+    setSelectedCountries(prev => prev.filter(c => c !== countryKey));
   };
 
-  // 도시별 축제 수 계산 (검색 결과 기반)
+  // 도시별 축제 수 계산
   const cityFestivalCounts = useMemo(() => {
     const source = searchQuery ? filteredFestivals : festivals;
     const counts = {};
@@ -74,17 +80,28 @@ export default function LocationBottomModal({
     return counts;
   }, [filteredFestivals, festivals, searchQuery]);
 
-  // 현재 선택에 맞는 결과 수 계산
+  // 결과 수 계산
   const resultCount = useMemo(() => {
     const source = searchQuery ? filteredFestivals : festivals;
-    if (!localCountry) return source.length;
+    if (selectedCountries.length === 0 && selectedCities.length === 0) return source.length;
     return source.filter(f => {
-      const matchCountry = f.country === localCountry;
-      if (!matchCountry) return false;
-      if (localCity) return f.city === localCity;
-      return true;
+      if (selectedCountries.includes(f.country)) return true;
+      if (selectedCities.includes(`${f.country}__${f.city}`)) return true;
+      return false;
     }).length;
-  }, [localCountry, localCity, filteredFestivals, festivals, searchQuery]);
+  }, [selectedCountries, selectedCities, filteredFestivals, festivals, searchQuery]);
+
+  const handleApply = () => {
+    // 단일 선택 인터페이스와의 호환성 유지:
+    // 다중 선택 결과를 onApply에 전달하기 위해 확장된 형태 사용
+    onApply(selectedCountries, selectedCities);
+  };
+
+  const handleReset = () => {
+    setSelectedCountries([]);
+    setSelectedCities([]);
+    onReset();
+  };
 
   if (!show) return null;
 
@@ -94,7 +111,7 @@ export default function LocationBottomModal({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Bottom Sheet */}
-      <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[80vh] mb-16" style={{marginBottom: 'calc(64px + env(safe-area-inset-bottom))'}}>
+      <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[80vh]" style={{marginBottom: 'calc(64px + env(safe-area-inset-bottom))'}}>
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-gray-700" />
@@ -122,13 +139,38 @@ export default function LocationBottomModal({
               autoFocus
             />
           </div>
+          {/* 선택된 항목 표시 */}
+          {(selectedCountries.length > 0 || selectedCities.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {selectedCountries.map(cKey => (
+                <span key={cKey} className="flex items-center gap-1 bg-cyan-500/20 border border-cyan-400 text-cyan-400 text-xs rounded-full px-2.5 py-1">
+                  {locationStats[cKey]?.display || cKey}
+                  <button onClick={() => setSelectedCountries(prev => prev.filter(c => c !== cKey))}>
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {selectedCities.map(key => {
+                const [cKey, cityKey] = key.split('__');
+                const cityDisplay = locationStats[cKey]?.cities[cityKey]?.display || cityKey;
+                return (
+                  <span key={key} className="flex items-center gap-1 bg-cyan-500/20 border border-cyan-400 text-cyan-400 text-xs rounded-full px-2.5 py-1">
+                    {cityDisplay}
+                    <button onClick={() => setSelectedCities(prev => prev.filter(k => k !== key))}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
           {filteredCountries.length > 0 ? (
             filteredCountries.map(([countryKey, data]) => {
-              const isCountrySelected = localCountry === countryKey;
+              const isCountrySelected = selectedCountries.includes(countryKey);
               const cityEntries = Object.entries(data.cities);
               const isExpanded = expandedCountries[countryKey];
               const displayedCities = isExpanded ? cityEntries : cityEntries.slice(0, CITY_DISPLAY_LIMIT);
@@ -140,14 +182,16 @@ export default function LocationBottomModal({
                     <span className="text-white font-bold text-sm">{data.display}</span>
                     <button
                       onClick={() => handleCountryToggle(countryKey)}
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        isCountrySelected && !localCity
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        isCountrySelected
                           ? 'bg-cyan-500 border-cyan-500'
                           : 'border-gray-600'
                       }`}
                     >
-                      {isCountrySelected && !localCity && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
+                      {isCountrySelected && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
                       )}
                     </button>
                   </div>
@@ -155,7 +199,7 @@ export default function LocationBottomModal({
                   {/* City chips */}
                   <div className="flex flex-wrap gap-2 mb-1">
                     {displayedCities.map(([cityKey, cityData]) => {
-                      const isCitySelected = localCity === cityKey && localCountry === countryKey;
+                      const isCitySelected = selectedCities.includes(`${countryKey}__${cityKey}`);
                       return (
                         <button
                           key={cityKey}
@@ -195,17 +239,13 @@ export default function LocationBottomModal({
         {/* Footer Buttons */}
         <div className="px-4 py-4 border-t border-gray-800 flex items-center justify-between gap-3">
           <button
-            onClick={() => {
-              setLocalCountry("");
-              setLocalCity("");
-              onReset();
-            }}
+            onClick={handleReset}
             className="text-gray-400 text-sm underline"
           >
             초기화
           </button>
           <Button
-            onClick={() => onApply(localCountry, localCity)}
+            onClick={handleApply}
             className="bg-cyan-500 hover:bg-cyan-600 text-white px-6"
           >
             {resultCount}개 결과 보기
