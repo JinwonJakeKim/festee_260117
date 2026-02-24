@@ -182,9 +182,34 @@ Deno.serve(async (req) => {
             const dateString = dateParagraph.textContent?.trim() || '';
             console.log(`[Japantravel] Raw date string from DOM: "${dateString}"`);
 
+            // 약어 월 매핑 (Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec)
+            const expandMonth = (m) => {
+              if (!m) return m;
+              const abbr = { jan:'January', feb:'February', mar:'March', apr:'April', may:'May', jun:'June', jul:'July', aug:'August', sep:'September', oct:'October', nov:'November', dec:'December' };
+              return abbr[m.toLowerCase().substring(0,3)] || m;
+            };
+
+            // 패턴 0: "Mid Apr - Early May 2026" 형식 (early/mid/late + 약어/전체 월)
+            const earlyLateAbbr = /(?:early|mid|late|beginning|end)\s+(\w+)\s*[-–]\s*(?:early|mid|late|beginning|end)\s+(\w+)\s+(\d{4})/i;
+            let match = dateString.match(earlyLateAbbr);
+            if (match) {
+              const startMonthFull = expandMonth(match[1]);
+              const endMonthFull = expandMonth(match[2]);
+              const year = parseInt(match[3]);
+              const startMom = moment(`${startMonthFull} 1 ${year}`, "MMMM D YYYY");
+              const endMom = moment(`${endMonthFull} 1 ${year}`, "MMMM D YYYY");
+              if (startMom.isValid() && endMom.isValid()) {
+                startDate = startMom.startOf('month').format("YYYY-MM-DD");
+                endDate = endMom.endOf('month').format("YYYY-MM-DD");
+                dateStatus = 'estimated';
+                console.log(`[Japantravel] Parsed as early/mid/late abbr month range: ${startDate} to ${endDate}`);
+              }
+            }
+
             // 패턴 1: "April 8th - April 30th 2026" 또는 "April 8th - 30th 2026" 형식 (구체적인 날짜)
             const dateRangeRegex = /(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:(?:\s*-\s*)(?:(\w+)\s+)?(\d{1,2})(?:st|nd|rd|th)?)?\s+(\d{4})/;
-            let match = dateString.match(dateRangeRegex);
+            if (!startDate) match = dateString.match(dateRangeRegex);
+            else match = null;
 
             if (match) {
               const startMonthText = match[1];
