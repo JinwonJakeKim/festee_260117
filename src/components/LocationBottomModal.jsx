@@ -106,7 +106,7 @@ export default function LocationBottomModal({
               type="text"
               value={searchQuery2}
               onChange={(e) => setSearchQuery2(e.target.value)}
-              placeholder="도시, 지역, 또는 국가를 검색해보세요."
+              placeholder="국가, 도시를 검색하세요"
               className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 h-full text-sm"
               autoFocus
             />
