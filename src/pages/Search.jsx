@@ -319,13 +319,15 @@ export default function Search() {
     return festival.city_ko || festival.city || '';
   };
 
-  // 국가별, 도시별 축제 수 계산 - 전체 festivals 기반으로 계산 (현지화된 이름 사용)
+  // 국가별, 도시별 축제 수 계산 - 검색어가 있으면 filteredFestivals 기반, 없으면 전체 festivals 기반
   const locationStats = useMemo(() => {
     const stats = {};
     const lang = user?.language || 'ko';
 
-    // 전체 festivals 기반으로 통계 계산
-    festivals.forEach(festival => {
+    // 검색어가 있으면 검색 결과 기반, 없으면 전체 기반
+    const sourceFestivals = searchQuery ? filteredFestivals : festivals;
+
+    sourceFestivals.forEach(festival => {
       const countryKey = festival.country || '기타'; // 필터링용 원본 키
       const countryDisplay = (() => {
         if (lang === 'en') return festival.country_en || festival.country || '기타';
