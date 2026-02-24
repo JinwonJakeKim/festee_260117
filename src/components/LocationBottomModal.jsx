@@ -191,7 +191,7 @@ export default function LocationBottomModal({
             }}
             className="text-gray-400 text-sm underline"
           >
-            재설정
+            초기화
           </button>
           <Button
             onClick={() => onApply(localCountry, localCity)}
