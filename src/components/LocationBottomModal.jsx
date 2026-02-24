@@ -83,7 +83,7 @@ export default function LocationBottomModal({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Bottom Sheet */}
-      <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[80vh]">
+      <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[80vh] mb-16" style={{marginBottom: 'calc(64px + env(safe-area-inset-bottom))'}}>
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-gray-700" />
