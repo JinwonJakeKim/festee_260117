@@ -336,9 +336,10 @@ export default function Search() {
       const cityKey = festival.city || '미정'; // 필터링용 원본 키
       const cityDisplay = (() => {
         if (lang === 'en') return festival.city_en || festival.city || '미정';
-        if (lang === 'jp') return festival.city_jp || festival.city || '미정';
-        if (lang === 'zh') return festival.city_zh || festival.city || '미정';
-        return festival.city_ko || festival.city || '미정';
+        if (lang === 'jp') return festival.city_jp || festival.city_en || festival.city || '미정';
+        if (lang === 'zh') return festival.city_zh || festival.city_en || festival.city || '미정';
+        // ko: city_ko 우선, 없으면 city_en, 그것도 없으면 원본 city
+        return festival.city_ko || festival.city_en || festival.city || '미정';
       })();
 
       if (!stats[countryKey]) {
