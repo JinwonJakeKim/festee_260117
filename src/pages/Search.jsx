@@ -377,48 +377,56 @@ export default function Search() {
     const results = [];
 
     if (!query) {
-      Object.entries(locationStats).forEach(([country, data]) => {
+      Object.entries(locationStats).forEach(([countryKey, data]) => {
         results.push({
           type: 'country',
-          name: country,
+          key: countryKey,         // 필터링용 원본 값
+          name: data.display,      // 표시용 현지화 이름
           count: data.count
         });
-        Object.entries(data.cities).forEach(([city, count]) => {
+        Object.entries(data.cities).forEach(([cityKey, cityData]) => {
           results.push({
             type: 'city',
-            name: city,
-            country: country,
-            count: count
+            key: cityKey,
+            name: cityData.display,
+            countryKey: countryKey,
+            country: data.display,
+            count: cityData.count
           });
         });
       });
     } else {
-      Object.entries(locationStats).forEach(([country, data]) => {
-        const countryMatch = safeStringIncludes(country, query);
+      Object.entries(locationStats).forEach(([countryKey, data]) => {
+        const countryMatch = safeStringIncludes(data.display, query) || safeStringIncludes(countryKey, query);
 
         if (countryMatch) {
           results.push({
             type: 'country',
-            name: country,
+            key: countryKey,
+            name: data.display,
             count: data.count
           });
 
-          Object.entries(data.cities).forEach(([city, count]) => {
+          Object.entries(data.cities).forEach(([cityKey, cityData]) => {
             results.push({
               type: 'city',
-              name: city,
-              country: country,
-              count: count
+              key: cityKey,
+              name: cityData.display,
+              countryKey: countryKey,
+              country: data.display,
+              count: cityData.count
             });
           });
         } else {
-          Object.entries(data.cities).forEach(([city, count]) => {
-            if (safeStringIncludes(city, query)) {
+          Object.entries(data.cities).forEach(([cityKey, cityData]) => {
+            if (safeStringIncludes(cityData.display, query) || safeStringIncludes(cityKey, query)) {
               results.push({
                 type: 'city',
-                name: city,
-                country: country,
-                count: count
+                key: cityKey,
+                name: cityData.display,
+                countryKey: countryKey,
+                country: data.display,
+                count: cityData.count
               });
             }
           });
