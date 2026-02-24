@@ -949,7 +949,7 @@ export default function Search() {
             onClick={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
           />
           {/* Bottom Sheet */}
-          <div className="relative bg-gray-950 rounded-t-3xl flex flex-col max-h-[80vh]">
+          <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[70vh]">
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-gray-700" />
