@@ -1,9 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// 영어인지 판별: ASCII 문자 비율이 70% 이상이면 영어로 판단
+// 영어인지 판별: ASCII 알파벳 비율이 70% 이상이면 영어로 판단
 function isEnglishName(name) {
   if (!name) return false;
-  const ascii = name.split('').filter(c => c.charCodeAt(0) < 128 && /[a-zA-Z]/.test(c)).length;
+  // 한글, 일본어, 중국어 글자가 하나라도 있으면 영어 아님
+  if (/[가-힣ぁ-んァ-ン一-龯]/.test(name)) return false;
+  const ascii = name.split('').filter(c => /[a-zA-Z]/.test(c)).length;
   const letters = name.split('').filter(c => /[a-zA-ZÀ-ÿ가-힣ぁ-んァ-ン一-龯]/.test(c)).length;
   if (letters === 0) return false;
   return (ascii / letters) > 0.7;
