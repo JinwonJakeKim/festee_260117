@@ -63,6 +63,17 @@ export default function LocationBottomModal({
     }
   };
 
+  // 도시별 축제 수 계산 (검색 결과 기반)
+  const cityFestivalCounts = useMemo(() => {
+    const source = searchQuery ? filteredFestivals : festivals;
+    const counts = {};
+    source.forEach(f => {
+      const key = `${f.country}__${f.city}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [filteredFestivals, festivals, searchQuery]);
+
   // 현재 선택에 맞는 결과 수 계산
   const resultCount = useMemo(() => {
     const source = searchQuery ? filteredFestivals : festivals;
