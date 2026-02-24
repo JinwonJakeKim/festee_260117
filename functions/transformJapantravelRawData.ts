@@ -114,13 +114,36 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     console.log(`[Transform] ⏭️ Translation skipped - already translated (retransform=false)`);
   }
 
+  // YouTube API 일일 한도(90회) 초과 여부 사전 체크
+  if (shouldSearchHighlight || shouldSearchShorts) {
+    const today = new Date().toISOString().split('T')[0];
+    const ytLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+      api_name: 'youtube_data_api',
+      date: today
+    }).catch(() => []);
+    const ytCount = ytLogs[0]?.count || 0;
+    if (ytCount >= 90) {
+      console.warn(`[Transform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/90) - 처리 중단`);
+      await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
+        processing_status: 'failed',
+        error_message: `YouTube API 일일 한도 초과 (${ytCount}/90). 날짜가 바뀌어 초기화되면 다시 시도하세요.`
+      });
+      return { rawDataId, success: false, error: `YouTube API 일일 한도 초과 (${ytCount}/90)` };
+    }
+  }
+
   // YouTube promise - 하이라이트도 숏츠도 필요없으면 스킵
   const youtubePromise = (shouldSearchHighlight || shouldSearchShorts)
     ? base44.functions.invoke('fetchYoutubeVideos', {
         festivalName: festivalData.name_original,
         searchHighlightVideo: shouldSearchHighlight,
         searchShorts: shouldSearchShorts
-      }).catch(e => { console.error('[Transform] YouTube error:', e.message); return { data: { success: false } }; })
+      }).catch(e => {
+        console.error('[Transform] YouTube error:', e.message);
+        // API 한도 초과 에러는 상위로 전파
+        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
+        return { data: { success: false } };
+      })
     : Promise.resolve({ data: { success: false, skipped: true } });
 
   if (!shouldSearchHighlight && !shouldSearchShorts) {
