@@ -202,7 +202,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 - _en: 영어 (간결하고 자연스럽게)
 - _jp: 일본어 (です・ます調)
 - _zh: 중국어 (간체자)
-- 고유명사(축제명, 장소명)는 원문 유지
+- 축제명/장소명이 영어 표기인 경우, _ko는 반드시 한국어 발음으로 음역(음차)하세요. 예: "Kurayami Matsuri" → "쿠라야미 마쓰리", "Karuizawa Half Marathon" → "가루이자와 하프 마라톤"
+- 단, 순수 영어 고유명사(브랜드명 등)는 영어 표기 유지
 
 하이라이트: description/summary 기반으로 핵심 매력 3~5개 (각 15~40자), 4개 언어 각각 생성
 
