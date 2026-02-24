@@ -942,108 +942,26 @@ export default function Search() {
 
       {/* Location Bottom Modal */}
       {showLocationModal && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
-          />
-          {/* Bottom Sheet */}
-          <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[70vh]">
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-gray-700" />
-            </div>
-
-            {/* Header */}
-            <div className="px-4 pb-3 pt-2 border-b border-gray-800">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold text-white">위치 선택</h2>
-                <button
-                  onClick={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
-                  className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-              <div className="flex items-center bg-gray-900 rounded-xl border border-gray-700 h-11">
-                <input
-                  type="text"
-                  value={locationSearchQuery}
-                  onChange={(e) => setLocationSearchQuery(e.target.value)}
-                  placeholder="국가 또는 도시 검색"
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl text-sm"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {filteredLocations.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredLocations.map((location, idx) => (
-                    <button
-                      key={`${location.type}-${location.name}-${idx}`}
-                      onClick={() => handleLocationSelect(location)}
-                      className="w-full"
-                    >
-                      <div className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
-                        (location.type === 'country' && selectedCountry === location.key && !selectedCity) ||
-                        (location.type === 'city' && selectedCity === location.key)
-                          ? 'bg-cyan-900/30 border border-cyan-400/50'
-                          : 'bg-gray-900 hover:bg-gray-800'
-                      }`}>
-                        <div className="flex items-center gap-3">
-                          <MapPin className={`w-4 h-4 ${location.type === 'country' ? 'text-cyan-400' : 'text-gray-500'}`} />
-                          <div className="text-left">
-                            <p className={`font-bold ${location.type === 'country' ? 'text-white text-sm' : 'text-gray-300 text-sm'}`}>
-                              {location.name}
-                            </p>
-                            {location.type === 'city' && (
-                              <p className="text-gray-500 text-xs">{location.country}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-cyan-400 font-bold">{location.count}</p>
-                          <p className="text-gray-500 text-xs">축제</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">검색 결과가 없습니다</p>
-                </div>
-              )}
-            </div>
-
-            {/* Clear Button */}
-            <div className="px-4 py-4 border-t border-gray-800 flex gap-2">
-              <Button
-                onClick={() => {
-                  updateUrlParams({ country: "", city: "" });
-                  setShowLocationModal(false);
-                  setLocationSearchQuery("");
-                }}
-                variant="outline"
-                className="flex-1 bg-gray-800 text-white border-gray-700"
-                disabled={!selectedCountry && !selectedCity}
-              >
-                초기화
-              </Button>
-              <Button
-                onClick={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
-                className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
-              >
-                적용
-              </Button>
-            </div>
-          </div>
-        </div>
+        <LocationBottomModal
+          show={showLocationModal}
+          onClose={() => { setShowLocationModal(false); setLocationSearchQuery(""); }}
+          locationStats={locationStats}
+          selectedCountry={selectedCountry}
+          selectedCity={selectedCity}
+          onApply={(country, city) => {
+            updateUrlParams({ country, city });
+            setShowLocationModal(false);
+            setLocationSearchQuery("");
+          }}
+          onReset={() => {
+            updateUrlParams({ country: "", city: "" });
+            setShowLocationModal(false);
+            setLocationSearchQuery("");
+          }}
+          filteredFestivals={filteredFestivals}
+          festivals={festivals}
+          searchQuery={searchQuery}
+        />
       )}
 
       {/* Filter Bottom Modal */}
