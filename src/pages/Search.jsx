@@ -499,9 +499,13 @@ export default function Search() {
 
   const getLocationDisplayText = () => {
     if (selectedCity && selectedCountry) {
-      return `${selectedCity}, ${selectedCountry}`;
+      // URL에는 원본 key가 저장되어 있으므로, 현지화된 표시명으로 변환
+      const countryDisplay = locationStats[selectedCountry]?.display || selectedCountry;
+      const cityDisplay = locationStats[selectedCountry]?.cities[selectedCity]?.display || selectedCity;
+      return `${cityDisplay}, ${countryDisplay}`;
     } else if (selectedCountry) {
-      return selectedCountry;
+      const countryDisplay = locationStats[selectedCountry]?.display || selectedCountry;
+      return countryDisplay;
     }
     return "위치";
   };
