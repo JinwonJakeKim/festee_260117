@@ -354,6 +354,10 @@ export default function Search() {
       if (!stats[countryKey].cities[cityKey]) {
         stats[countryKey].cities[cityKey] = { count: 0, display: cityDisplay };
       }
+      // city_ko가 있는 축제를 만나면 display를 한국어로 업데이트 (이전에 영어로 집계된 경우 덮어쓰기)
+      if (festival.city_ko && stats[countryKey].cities[cityKey].display !== festival.city_ko) {
+        stats[countryKey].cities[cityKey].display = cityDisplay;
+      }
       stats[countryKey].cities[cityKey].count++;
     });
 
