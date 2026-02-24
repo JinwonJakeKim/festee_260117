@@ -384,7 +384,7 @@ export default function Search() {
     });
 
     return sortedStats;
-  }, [festivals, user?.language]);
+  }, [festivals, filteredFestivals, searchQuery, user?.language]);
 
   // 위치 검색 필터링
   const filteredLocations = useMemo(() => {
