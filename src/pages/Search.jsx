@@ -1023,24 +1023,20 @@ export default function Search() {
           </div>
 
           {/* Clear Button */}
-          {(selectedCountry || selectedCity) ? ( // Check selectedCountry/City (derived from URL)
-            <div className="bg-black border-t border-gray-800 px-4 py-4">
-              <Button
-                onClick={() => {
-                  updateUrlParams({
-                    country: "",
-                    city: "",
-                  });
-                  setShowLocationModal(false);
-                  setLocationSearchQuery("");
-                }}
-                variant="outline"
-                className="w-full bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
-              >
-                위치 선택 해제
-              </Button>
-            </div>
-          ) : null}
+          <div className="bg-black border-t border-gray-800 px-4 py-4">
+            <Button
+              onClick={() => {
+                updateUrlParams({ country: "", city: "" });
+                setShowLocationModal(false);
+                setLocationSearchQuery("");
+              }}
+              variant="outline"
+              className={`w-full border-gray-800 ${selectedCountry || selectedCity ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-gray-900 text-gray-500 cursor-default'}`}
+              disabled={!selectedCountry && !selectedCity}
+            >
+              위치 선택 해제
+            </Button>
+          </div>
         </div>
       )}
     </div>
