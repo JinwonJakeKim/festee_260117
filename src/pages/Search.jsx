@@ -949,7 +949,10 @@ export default function Search() {
           locationStats={locationStats}
           selectedCountry={selectedCountry}
           selectedCity={selectedCity}
-          onApply={(country, city) => {
+          onApply={(countries, cities) => {
+            // countries = string[], cities = "country__city"[] 형태
+            const country = countries.length > 0 ? countries.join(',') : (cities.length > 0 ? cities.map(k => k.split('__')[0]).join(',') : '');
+            const city = cities.length > 0 ? cities.map(k => k.split('__')[1]).join(',') : '';
             updateUrlParams({ country, city });
             setShowLocationModal(false);
             setLocationSearchQuery("");
