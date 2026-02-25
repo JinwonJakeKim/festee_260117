@@ -21,7 +21,7 @@ export default function AdminFestivalForm() {
   const [formData, setFormData] = useState({
     name: "",
     summary: "",
-    description: "",
+    description_original: "",
     country: "",
     city: "",
     category: "음악",

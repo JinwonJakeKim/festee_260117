@@ -1331,7 +1331,6 @@ ${context}
           name_zh: nameTranslations.zh,
           original_language: sourceLanguage,
           
-          description: descriptionTranslations.ko,
           description_ko: descriptionTranslations.ko,
           description_en: descriptionTranslations.en,
           description_jp: descriptionTranslations.jp,
