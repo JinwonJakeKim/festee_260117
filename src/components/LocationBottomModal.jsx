@@ -147,31 +147,7 @@ export default function LocationBottomModal({
               autoFocus
             />
           </div>
-          {/* 선택된 항목 표시 */}
-          {(selectedCountries.length > 0 || selectedCities.length > 0) && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {selectedCountries.map(cKey => (
-                <span key={cKey} className="flex items-center gap-1 bg-cyan-500/20 border border-cyan-400 text-cyan-400 text-xs rounded-full px-2.5 py-1">
-                  {locationStats[cKey]?.display || cKey}
-                  <button onClick={() => setSelectedCountries(prev => prev.filter(c => c !== cKey))}>
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-              {selectedCities.map(key => {
-                const [cKey, cityKey] = key.split('__');
-                const cityDisplay = locationStats[cKey]?.cities[cityKey]?.display || cityKey;
-                return (
-                  <span key={key} className="flex items-center gap-1 bg-cyan-500/20 border border-cyan-400 text-cyan-400 text-xs rounded-full px-2.5 py-1">
-                    {cityDisplay}
-                    <button onClick={() => setSelectedCities(prev => prev.filter(k => k !== key))}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          )}
+
         </div>
 
         {/* Content */}
