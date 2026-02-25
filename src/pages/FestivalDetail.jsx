@@ -482,7 +482,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       items.push({
         type: isYoutube ? 'youtube' : 'video',
         url: festival.video_url,
-        caption: `${festival.name}`
+        caption: festival.name_ko || festival.name_original || festival.name || ''
       });
       addedUrls.add(festival.video_url);
       console.log('[FestivalDetail] ✅ Added video_url:', festival.video_url);
