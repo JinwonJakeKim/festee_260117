@@ -108,7 +108,7 @@ export default function LocationBottomModal({
   const handleReset = () => {
     setSelectedCountries([]);
     setSelectedCities([]);
-    onReset();
+    // 모달을 닫지 않고 선택만 초기화
   };
 
   if (!show) return null;
