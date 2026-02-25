@@ -216,7 +216,7 @@ export default function LocationBottomModal({
                               : 'bg-transparent border-gray-700 text-gray-300 hover:border-gray-500'
                           }`}
                         >
-                          {cityData.display}{cityFestivalCounts[`${countryKey}__${cityKey}`] ? `(${cityFestivalCounts[`${countryKey}__${cityKey}`]})` : ''}
+                          {cityData.display}{searchQuery ? `(${cityFestivalCounts[`${countryKey}__${cityKey}`] || 0})` : cityFestivalCounts[`${countryKey}__${cityKey}`] ? `(${cityFestivalCounts[`${countryKey}__${cityKey}`]})` : ''}
                         </button>
                       );
                     })}
