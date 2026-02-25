@@ -67,7 +67,7 @@ export default function AdminFestivalForm() {
       setFormData({
         name: festival.name || "",
         summary: festival.summary || "",
-        description: festival.description || "",
+        description_original: festival.description_original || "",
         country: festival.country || "",
         city: festival.city || "",
         category: festival.category || "음악",
@@ -273,13 +273,13 @@ export default function AdminFestivalForm() {
             </div>
 
             <div>
-              <label className="text-gray-400 text-sm mb-2 block">상세 설명</label>
+              <label className="text-gray-400 text-sm mb-2 block">상세 설명 (원본)</label>
               <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.description_original}
+                onChange={(e) => setFormData({ ...formData, description_original: e.target.value })}
                 className="bg-gray-800 border-gray-700 text-white"
                 placeholder="축제에 대한 상세한 설명을 입력하세요"
-                rows={8} // Changed rows to 8
+                rows={8}
               />
               <p className="text-gray-500 text-xs mt-1">
                 💡 단락 구분을 위해 빈 줄을 추가하세요
