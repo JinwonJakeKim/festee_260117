@@ -496,7 +496,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           items.push({
             type: 'image',
             url: imageUrl,
-            caption: imgObj?.imgname || `${festival.name} - 갤러리 이미지 ${index + 1}`
+            caption: imgObj?.imgname || `${festival.name_ko || festival.name_original || festival.name} - 갤러리 이미지 ${index + 1}`
           });
           addedUrls.add(imageUrl);
           console.log(`[FestivalDetail] ✅ image_gallery_urls[${index}] → mediaItems[${items.length - 1}]:`, imageUrl);
