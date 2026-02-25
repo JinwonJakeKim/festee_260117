@@ -161,7 +161,8 @@ export default function AdminDashboard() {
       // 각 축제 삭제
       for (let i = 0; i < festivalIds.length; i++) {
         const id = festivalIds[i];
-        const festivalName = festivals.find(f => f.id === id)?.name || id;
+        const f = festivals.find(f => f.id === id);
+        const festivalName = (f?.name_original || f?.name_ko || f?.name) || id;
         
         try {
           console.log(`[Admin] Deleting festival ${i + 1}/${count}: ${festivalName}...`);
