@@ -763,14 +763,14 @@ ${context}
             }
           }
           
-          // 2. festival_id로 못찾았으면 name으로 검색
+          // 2. festival_id로 못찾았으면 name_original로 검색
           if (!existingFestival) {
-            console.log(`[Transform] 🔍 Searching by name: "${rawData.title}"...`);
-            const festivalByName = await base44.asServiceRole.entities.Festival.filter({ name: rawData.title });
+            console.log(`[Transform] 🔍 Searching by name_original: "${rawData.title}"...`);
+            const festivalByName = await base44.asServiceRole.entities.Festival.filter({ name_original: rawData.title });
             if (festivalByName && festivalByName.length > 0) {
               existingFestival = festivalByName[0];
               isUpdate = true;
-              console.log(`[Transform] ✓ Found existing Festival by name: ${existingFestival.id}`);
+              console.log(`[Transform] ✓ Found existing Festival by name_original: ${existingFestival.id}`);
             }
           }
           
@@ -1323,8 +1323,8 @@ ${context}
         const festivalData = {
           // 원본 데이터 ID 저장 (중복 방지용)
           tour_api_raw_data_id: rawDataId,
-          // 기본 정보
-          name: nameTranslations.ko,
+          // 기본 정보 (name 필드 제거, name_original 사용)
+          name_original: rawData.title,
           name_ko: nameTranslations.ko,
           name_en: nameTranslations.en,
           name_jp: nameTranslations.jp,
