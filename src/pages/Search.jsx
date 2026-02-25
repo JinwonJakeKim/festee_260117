@@ -583,10 +583,10 @@ export default function Search() {
               variant="outline"
               size="sm"
               onClick={() => setShowLocationModal(true)}
-              className={`rounded-full ${selectedCountry || selectedCity ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
+              className={`rounded-full ${selectedCountry || selectedCity ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400' : 'bg-gray-900 border-gray-800 text-white'}`}
             >
               <MapPin className="w-4 h-4 mr-1" />
-              {getLocationDisplayText()} <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
+              위치 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
             </Button>
 
             <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
