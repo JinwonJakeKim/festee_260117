@@ -23,10 +23,12 @@ Deno.serve(async (req) => {
         if (!festivals || festivals.length === 0) break;
 
         for (const festival of festivals) {
-            if (festival.description && !festival.description_original) {
-                await base44.asServiceRole.entities.Festival.update(festival.id, {
-                    description_original: festival.description
-                });
+            const updateData = {};
+            if (festival.summary && !festival.summary_original) {
+                updateData.summary_original = festival.summary;
+            }
+            if (Object.keys(updateData).length > 0) {
+                await base44.asServiceRole.entities.Festival.update(festival.id, updateData);
                 totalUpdated++;
             } else {
                 totalSkipped++;
