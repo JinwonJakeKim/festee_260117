@@ -73,32 +73,19 @@ export const useFestivalLocalizedContent = () => {
     // 문자열 필드 처리
     if (preferredLang === 'ko') {
       localizedField = festival[`${field}_ko`];
-      // 빈 문자열이거나 없으면 다음으로 폴백
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_original`];
-      }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_en`];
-      }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_original`];
-      }
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_en`];
     } else if (preferredLang === 'en') {
       localizedField = festival[`${field}_en`];
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_original`];
-      }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_ko`];
-      }
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
     } else {
       localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_en`];
-      }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[`${field}_ko`];
-      }
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_en`];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
     }
 
     return localizedField || fallback;
