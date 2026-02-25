@@ -121,11 +121,11 @@ export default function MyLikes() {
                   <div className="p-4 flex items-center gap-3">
                     <img
                       src={festival.thumbnail_url}
-                      alt={festival.name}
+                      alt={festival.name_ko || festival.name_original || festival.name}
                       className="w-20 h-20 rounded-lg object-cover"
                     />
                     <div className="flex-1">
-                      <h3 className="text-white font-bold mb-1">{festival.name}</h3>
+                      <h3 className="text-white font-bold mb-1">{festival.name_ko || festival.name_original || festival.name}</h3>
                       <p className="text-gray-400 text-sm mb-1">
                         {festival.city}, {festival.country}
                       </p>
