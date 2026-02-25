@@ -19,7 +19,7 @@ const removeDuplicateFestivals = (festivals) => {
   const nameMap = new Map();
   
   festivals.forEach(festival => {
-    const name = festival.name;
+    const name = festival.name_original || festival.name_ko || festival.name;
     if (!nameMap.has(name)) {
       nameMap.set(name, festival);
     } else {
