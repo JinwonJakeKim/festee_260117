@@ -472,7 +472,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
     const items = [];
     const addedUrls = new Set();
 
-    console.log('[FestivalDetail] 🎬 Building mediaItems for festival:', festival?.name);
+    console.log('[FestivalDetail] 🎬 Building mediaItems for festival:', festival?.name_ko || festival?.name_original || festival?.name);
     console.log('[FestivalDetail] 📹 video_url:', festival?.video_url);
     console.log('[FestivalDetail] 🎞️ media_urls:', festival?.media_urls);
 
