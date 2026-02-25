@@ -74,8 +74,9 @@ export default function AdminDashboard() {
   const { data: apiUsageLogs } = useQuery({
     queryKey: ['apiUsageLogs'],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      return base44.entities.ApiUsageLog.filter({ date: today });
+      // PT(태평양 표준시) 기준 오늘 날짜
+      const todayPT = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      return base44.entities.ApiUsageLog.filter({ date: todayPT });
     },
     initialData: [],
   });
