@@ -1263,8 +1263,27 @@ ${context}
           highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
           tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
           categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
-          countryTranslations = await translateMultiLanguage('대한민국', 'ko', 'country');
-          cityTranslations = await translateMultiLanguage(cityKo, 'ko', 'city');
+          // country/city는 Google Translate 대신 LLM 직접 사용 (고유명사 정확성)
+          const locationLlm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+            prompt: `다음 국가명과 도시명을 영어, 일본어, 중국어로 번역해주세요. 고유명사는 해당 언어의 표기법을 따르세요.\n국가: 대한민국\n도시: ${cityKo}`,
+            response_json_schema: {
+              type: "object",
+              properties: {
+                country_en: { type: "string" },
+                country_jp: { type: "string" },
+                country_zh: { type: "string" },
+                city_en: { type: "string" },
+                city_jp: { type: "string" },
+                city_zh: { type: "string" }
+              },
+              required: ["country_en", "country_jp", "country_zh", "city_en", "city_jp", "city_zh"]
+            }
+          }).catch(() => ({
+            country_en: 'South Korea', country_jp: '韓国', country_zh: '韩国',
+            city_en: cityKo, city_jp: cityKo, city_zh: cityKo
+          }));
+          countryTranslations = { ko: '대한민국', en: locationLlm.country_en, jp: locationLlm.country_jp, zh: locationLlm.country_zh };
+          cityTranslations = { ko: cityKo, en: locationLlm.city_en, jp: locationLlm.city_jp, zh: locationLlm.city_zh };
         }
         
         console.log(`[Transform] ✓ Multi-language translation completed`);
