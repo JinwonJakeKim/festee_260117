@@ -749,7 +749,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           ) : (
             <img
               src={currentMedia?.url || festival.thumbnail_url}
-              alt={currentMedia?.caption || festival.name}
+              alt={currentMedia?.caption || festival.name_ko || festival.name_original || festival.name}
               className="w-full h-full object-contain"
               onError={(e) => {
                 console.error('[FestivalDetail] ❌ Image load FAILED in Hero Media:', e.target.src);
