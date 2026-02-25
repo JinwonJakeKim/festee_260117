@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -180,7 +179,7 @@ export default function FestivalVenueMap() {
             <Popup className="custom-popup">
               <div className="bg-white p-3 rounded text-center"> {/* Changed from bg-gray-900 */}
                 <p className="text-black font-bold mb-1">축제 중심</p> {/* Changed from text-white */}
-                <p className="text-gray-700 text-xs">{festival.name}</p> {/* Changed from text-gray-300 */}
+                <p className="text-gray-700 text-xs">{festival.name_ko || festival.name_original || festival.name}</p> {/* Changed from text-gray-300 */}
               </div>
             </Popup>
           </Marker>
