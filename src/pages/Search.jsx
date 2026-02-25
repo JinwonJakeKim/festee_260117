@@ -984,7 +984,7 @@ export default function Search() {
             setShowLocationModal(false);
             setLocationSearchQuery("");
           }}
-          filteredFestivals={filteredFestivals}
+          filteredFestivals={searchOnlyFestivals}
           festivals={festivals}
           searchQuery={searchQuery}
         />
