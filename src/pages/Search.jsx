@@ -919,11 +919,11 @@ export default function Search() {
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-900 hover:bg-gray-800 transition-colors">
                         <img
                           src={festival.thumbnail_url}
-                          alt={festival.name}
+                          alt={festival.name_ko || festival.name_original || festival.name}
                           className="w-16 h-16 rounded-lg object-cover"
                         />
                         <div className="flex-1">
-                          <h3 className="text-white font-bold text-sm mb-1">{festival.name}</h3>
+                          <h3 className="text-white font-bold text-sm mb-1">{festival.name_ko || festival.name_original || festival.name}</h3>
                           <p className="text-gray-400 text-xs">
                             {getLocalizedCity(festival)}, {getLocalizedCountry(festival)}{festival.category ? ` / ${festival.category}` : ''}
                           </p>
