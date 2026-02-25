@@ -327,8 +327,8 @@ export default function Search() {
     const stats = {};
     const lang = user?.language || 'ko';
 
-    // 검색어가 있으면 검색 결과 기반, 없으면 전체 기반
-    const sourceFestivals = searchQuery ? filteredFestivals : festivals;
+    // 항상 전체 festivals 기반으로 locationStats 계산 (위치 필터 선택 시에도 모든 국가/도시 표시)
+    const sourceFestivals = festivals;
 
     sourceFestivals.forEach(festival => {
       const countryKey = festival.country || '기타'; // 필터링용 원본 키
