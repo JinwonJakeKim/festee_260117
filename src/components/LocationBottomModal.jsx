@@ -24,11 +24,17 @@ export default function LocationBottomModal({
   // 다중 선택: selectedCities = ["Japan__Tokyo", "Korea__Seoul", ...]
   // selectedCountries = ["Japan", ...] (도시 없이 국가 전체 선택)
   const [selectedCities, setSelectedCities] = useState(() => {
-    if (selectedCity && selectedCountry) return [`${selectedCountry}__${selectedCity}`];
+    if (selectedCity && selectedCountry) {
+      // 콤마로 구분된 다중 도시 처리
+      const countries = selectedCountry.split(',');
+      const cities = selectedCity.split(',');
+      // 도시 수와 국가 수가 같으면 1:1 매핑, 아니면 첫 번째 국가 사용
+      return cities.map((city, i) => `${countries[i] || countries[0]}__${city}`);
+    }
     return [];
   });
   const [selectedCountries, setSelectedCountries] = useState(() => {
-    if (selectedCountry && !selectedCity) return [selectedCountry];
+    if (selectedCountry && !selectedCity) return selectedCountry.split(',');
     return [];
   });
 
