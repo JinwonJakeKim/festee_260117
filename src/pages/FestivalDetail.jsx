@@ -728,7 +728,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  title={currentMedia.caption || festival.name}
+                  title={currentMedia.caption || festival.name_ko || festival.name_original || festival.name}
                 />
               );
             })()
