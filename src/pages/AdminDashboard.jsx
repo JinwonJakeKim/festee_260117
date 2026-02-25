@@ -881,14 +881,14 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">🌐 UTC 시각:</span>
+                  <span className="text-gray-400">🌎 PT (태평양 표준시):</span>
                   <span className="text-white font-mono font-bold">
-                    {new Date().toLocaleString('en-US', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                    {new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </span>
                 </div>
               </div>
-              <p className="text-gray-400 text-xs mt-2">
-                ※ Google, YouTube API 사용량은 UTC 자정 기준 리셋
+              <p className="text-yellow-400/80 text-xs mt-2">
+                ⚠️ YouTube API 사용량은 PT 00:00 (한국시간 17:00 또는 18:00)에 초기화됩니다
               </p>
             </Card>
 
