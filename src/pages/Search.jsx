@@ -20,16 +20,17 @@ const removeDuplicateFestivals = (festivals) => {
   const festivalMap = new Map();
 
   festivals.forEach(festival => {
-    const existing = festivalMap.get(festival.name);
+    const key = festival.name_original || festival.name_ko || festival.name;
+    const existing = festivalMap.get(key);
 
     if (!existing) {
-      festivalMap.set(festival.name, festival);
+      festivalMap.set(key, festival);
     } else {
       const existingScore = calculateInfoScore(existing);
       const currentScore = calculateInfoScore(festival);
 
       if (currentScore > existingScore) {
-        festivalMap.set(festival.name, festival);
+        festivalMap.set(key, festival);
       }
     }
   });
