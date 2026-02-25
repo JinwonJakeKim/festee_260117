@@ -208,6 +208,26 @@ export default function Search() {
     });
   }, [festivals, currentDate]);
 
+  // 검색어만 적용된 결과 (위치 필터 제외) - 위치 모달의 도시별 카운터에 사용
+  const searchOnlyFestivals = useMemo(() => {
+    if (!searchQuery) return [];
+    return festivals.filter(festival => {
+      try {
+        return safeStringIncludes(festival.name, searchQuery) ||
+          safeStringIncludes(festival.name_ko, searchQuery) ||
+          safeStringIncludes(festival.name_en, searchQuery) ||
+          safeStringIncludes(festival.name_jp, searchQuery) ||
+          safeStringIncludes(festival.name_zh, searchQuery) ||
+          safeStringIncludes(festival.city, searchQuery) ||
+          safeStringIncludes(festival.city_ko, searchQuery) ||
+          safeStringIncludes(festival.country, searchQuery) ||
+          (festival.tags && festival.tags.some(tag => safeStringIncludes(tag, searchQuery)));
+      } catch (e) {
+        return false;
+      }
+    });
+  }, [festivals, searchQuery]);
+
   // 안전한 필터링 로직
   const filteredFestivals = useMemo(() => {
     // searchQuery는 이제 URL에서 파생된 값
