@@ -395,7 +395,7 @@ export default function Home() {
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     const searchMatch = !searchQuery || 
       getLocalizedContent(festival, 'name').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      festival.city.toLowerCase().includes(searchQuery.toLowerCase());
+      (festival.city || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     let dateMatch = true;
     if (dateRange && dateRange.from && dateRange.to) {
