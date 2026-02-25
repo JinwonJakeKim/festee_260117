@@ -509,7 +509,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
       festival.media_urls.forEach((media, index) => {
         let currentUrl = null;
         let currentType = null;
-        let currentCaption = festival.name;
+        let currentCaption = festival.name_ko || festival.name_original || festival.name || '';
 
         if (typeof media === 'string') {
           currentUrl = media;
