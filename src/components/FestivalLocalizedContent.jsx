@@ -81,7 +81,7 @@ export const useFestivalLocalizedContent = () => {
         localizedField = festival[`${field}_en`];
       }
       if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[field];
+        localizedField = festival[`${field}_original`];
       }
     } else if (preferredLang === 'en') {
       localizedField = festival[`${field}_en`];
@@ -91,9 +91,6 @@ export const useFestivalLocalizedContent = () => {
       if (!localizedField || localizedField.trim() === '') {
         localizedField = festival[`${field}_ko`];
       }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[field];
-      }
     } else {
       localizedField = festival[`${field}_original`];
       if (!localizedField || localizedField.trim() === '') {
@@ -101,9 +98,6 @@ export const useFestivalLocalizedContent = () => {
       }
       if (!localizedField || localizedField.trim() === '') {
         localizedField = festival[`${field}_ko`];
-      }
-      if (!localizedField || localizedField.trim() === '') {
-        localizedField = festival[field];
       }
     }
 
