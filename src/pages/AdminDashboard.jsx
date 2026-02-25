@@ -315,7 +315,7 @@ export default function AdminDashboard() {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
-      festival.name?.toLowerCase().includes(query) ||
+      (festival.name_original || festival.name_ko || festival.name || '')?.toLowerCase().includes(query) ||
       festival.city?.toLowerCase().includes(query) ||
       festival.country?.toLowerCase().includes(query) ||
       festival.category?.toLowerCase().includes(query)
@@ -652,7 +652,7 @@ export default function AdminDashboard() {
                         className="w-20 h-20 rounded-lg object-cover"
                       />
                       <div className="flex-1">
-                        <h3 className="text-white font-bold mb-1">{festival.name}</h3>
+                        <h3 className="text-white font-bold mb-1">{festival.name_original || festival.name_ko || festival.name}</h3>
                         <p className="text-gray-400 text-sm mb-1">
                           {festival.city}, {festival.country}
                         </p>
@@ -715,16 +715,16 @@ export default function AdminDashboard() {
               {festivals.map((festival) => (
                 <Card key={festival.id} className="bg-gray-900 border-gray-800 p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <img
-                      src={festival.thumbnail_url}
-                      alt={festival.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-white font-bold mb-1">{festival.name}</h3>
-                      <p className="text-gray-400 text-xs">
-                        {festival.city}, {festival.country}
-                      </p>
+                  <img
+                    src={festival.thumbnail_url}
+                    alt={festival.name_original || festival.name_ko || festival.name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1">{festival.name_original || festival.name_ko || festival.name}</h3>
+                    <p className="text-gray-400 text-xs">
+                      {festival.city}, {festival.country}
+                    </p>
                     </div>
                   </div>
 
