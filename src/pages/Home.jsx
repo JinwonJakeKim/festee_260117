@@ -411,7 +411,7 @@ export default function Home() {
     }
     
     const tagsMatch = selectedTags.length === 0 || 
-      (festival.tags && selectedTags.every(tag => festival.tags.includes(tag)));
+      (festival.tags_ko && selectedTags.every(tag => festival.tags_ko.includes(tag)));
     
     // 지난 축제 필터링
     const today = new Date();
