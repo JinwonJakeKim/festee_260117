@@ -884,7 +884,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           )}
         </div>
 
-        {(festival.category || (festival.tags && festival.tags.length > 0)) && (
+        {(festival.category || (festival.tags_ko && festival.tags_ko.length > 0)) && (
           <div className="flex gap-2 mb-4 flex-wrap max-w-full">
             {/* 카테고리 - 아이콘 포함한 채워진 그라데이션 배지 (약간 둥근 사각형) */}
             {festival.category && (
