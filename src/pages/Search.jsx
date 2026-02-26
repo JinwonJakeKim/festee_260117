@@ -46,7 +46,7 @@ const calculateInfoScore = (festival) => {
   if (festival.website) score += 1;
   if (festival.highlights?.length > 0) score += 2;
   if (festival.lineup?.length > 0) score += 2;
-  if (festival.tags?.length > 0) score += festival.tags.length * 0.5;
+  if (festival.tags_ko?.length > 0) score += festival.tags_ko.length * 0.5;
   if (festival.price > 0) score += 1;
   if (festival.latitude && festival.longitude) score += 1;
   return score;
