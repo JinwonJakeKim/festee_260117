@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
 
   const result = {
     total: festivals.length,
-    empty_tags: [],
     empty_tags_ko: [],
     empty_tags_en: [],
     empty_tags_jp: [],
@@ -22,7 +21,6 @@ Deno.serve(async (req) => {
 
   for (const f of festivals) {
     const name = f.name_ko || f.name_original || f.id;
-    if (isEmpty(f.tags)) result.empty_tags.push(name);
     if (isEmpty(f.tags_ko)) result.empty_tags_ko.push(name);
     if (isEmpty(f.tags_en)) result.empty_tags_en.push(name);
     if (isEmpty(f.tags_jp)) result.empty_tags_jp.push(name);
@@ -31,7 +29,6 @@ Deno.serve(async (req) => {
 
   return Response.json({
     total: result.total,
-    empty_tags: { count: result.empty_tags.length, names: result.empty_tags },
     empty_tags_ko: { count: result.empty_tags_ko.length, names: result.empty_tags_ko },
     empty_tags_en: { count: result.empty_tags_en.length, names: result.empty_tags_en },
     empty_tags_jp: { count: result.empty_tags_jp.length, names: result.empty_tags_jp },
