@@ -901,7 +901,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             )}
             
             {/* 태그 - 홈화면과 동일한 외곽선 pill 모양 */}
-            {festival.tags && festival.tags.map((tag, idx) => (
+            {festival.tags_ko && festival.tags_ko.map((tag, idx) => (
               <Badge 
                 key={idx} 
                 variant="outline" 

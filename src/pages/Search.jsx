@@ -296,8 +296,8 @@ export default function Search() {
 
         // 태그 필터
         const matchesTags = selectedTags.length === 0 ||
-          (festival.tags && Array.isArray(festival.tags) &&
-           selectedTags.every(tag => festival.tags.includes(tag)));
+          (festival.tags_ko && Array.isArray(festival.tags_ko) &&
+           selectedTags.every(tag => festival.tags_ko.includes(tag)));
         if (!matchesTags) return false;
 
         // 가격 필터
