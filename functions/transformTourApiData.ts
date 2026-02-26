@@ -1342,7 +1342,6 @@ ${context}
           summary_jp: summaryTranslations.jp,
           summary_zh: summaryTranslations.zh,
           
-          highlights: highlightsTranslations.ko,
           highlights_ko: highlightsTranslations.ko,
           highlights_en: highlightsTranslations.en,
           highlights_jp: highlightsTranslations.jp,
