@@ -1337,7 +1337,6 @@ ${context}
           description_jp: descriptionTranslations.jp,
           description_zh: descriptionTranslations.zh,
           
-          summary: summaryTranslations.ko,
           summary_ko: summaryTranslations.ko,
           summary_en: summaryTranslations.en,
           summary_jp: summaryTranslations.jp,

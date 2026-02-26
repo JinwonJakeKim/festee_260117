@@ -348,7 +348,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
   const festivalPayload = {
     name_original: festivalData.name_original,
-    summary_original: festivalData.summary_original,
     description_original: festivalData.description_original,
     original_language: festivalData.original_language,
 
@@ -377,7 +376,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     tags_ko: translatedData.tags_ko || [],
 
     name: translatedData.name_ko || festivalData.name_original,
-    summary: translatedData.summary_ko || festivalData.summary_original,
     opening_hours: festivalData.opening_hours,
     access_info: accessInfo,
     parking_info: festivalData.parking,
