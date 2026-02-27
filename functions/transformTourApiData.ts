@@ -1352,7 +1352,7 @@ ${context}
           category_jp: categoryTranslations.jp,
           category_zh: categoryTranslations.zh,
           
-          tags: finalTags,
+          tags_ko: tagsTranslations.ko && tagsTranslations.ko.length > 0 ? tagsTranslations.ko : finalTags,
           tags_en: tagsTranslations.en,
           tags_jp: tagsTranslations.jp,
           tags_zh: tagsTranslations.zh,
