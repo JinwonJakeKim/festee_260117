@@ -710,27 +710,30 @@ FESTEE에서 더 자세히 확인하세요 👉`;
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden bg-black">
           {currentMedia?.type === 'youtube' ? (
             (() => {
-              const embedUrl = getYoutubeEmbedUrl(currentMedia.url);
-              if (!embedUrl) {
-                console.error('[FestivalDetail] Failed to generate embed URL for:', currentMedia.url);
+              const videoId = getYoutubeVideoId(currentMedia.url);
+              if (!videoId || youtubeError) {
                 return (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-900">
-                    <div className="text-center">
-                      <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-2" />
-                      <p className="text-white">영상을 불러올 수 없습니다</p>
-                      <p className="text-gray-400 text-sm mt-1">유효하지 않은 YouTube URL</p>
-                    </div>
-                  </div>
+                  <img
+                    src={currentMedia.url.includes('youtu') && videoId
+                      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+                      : (festival.thumbnail_url || '')}
+                    alt={currentMedia.caption || ''}
+                    className="w-full h-full object-contain"
+                  />
                 );
               }
+              // origin이 허용된 도메인이어야 autoplay가 동작함
+              const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`;
               return (
                 <iframe
+                  key={videoId}
                   src={embedUrl}
                   className="w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title={currentMedia.caption || festival.name_ko || festival.name_original || festival.name}
+                  onError={() => setYoutubeError(true)}
                 />
               );
             })()
