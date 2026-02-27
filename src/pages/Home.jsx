@@ -488,12 +488,7 @@ export default function Home() {
 
   const koreaWinterFestivals = useMemo(() => {
     return festivals
-      .filter(f => {
-        if (f.country !== '대한민국') return false;
-        if (!f.start_date) return false;
-        const month = new Date(f.start_date).getMonth() + 1;
-        return month === 12 || month === 1 || month === 2;
-      })
+      .filter(f => f.country === '대한민국')
       .slice(0, 10);
   }, [festivals]);
 
