@@ -334,7 +334,7 @@ export default function FestivalDetail() {
   const getYoutubeEmbedUrl = (url) => {
     const videoId = getYoutubeVideoId(url);
     if (!videoId) return null;
-    return `https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1`;
   };
 
   const isFreeEntry = !festival?.price || festival.price === 0;
