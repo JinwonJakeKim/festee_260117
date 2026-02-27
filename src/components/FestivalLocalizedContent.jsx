@@ -71,31 +71,33 @@ export const useFestivalLocalizedContent = () => {
     }
     
     // 문자열 필드 처리 (name 필드는 _ko/_en/_jp/_zh/_original 순으로 폴백, legacy `name` 필드는 마지막 폴백)
+    const isEmpty = (v) => !v || (typeof v === 'string' && v.trim() === '');
+
     if (preferredLang === 'ko') {
       localizedField = festival[`${field}_ko`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_en`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_original`];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_en`];
+      if (isEmpty(localizedField)) localizedField = festival[field];
     } else if (preferredLang === 'en') {
       localizedField = festival[`${field}_en`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_original`];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_ko`];
+      if (isEmpty(localizedField)) localizedField = festival[field];
     } else if (preferredLang === 'jp') {
       localizedField = festival[`${field}_jp`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_original`];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_ko`];
+      if (isEmpty(localizedField)) localizedField = festival[field];
     } else if (preferredLang === 'zh') {
       localizedField = festival[`${field}_zh`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_original`];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_ko`];
+      if (isEmpty(localizedField)) localizedField = festival[field];
     } else {
       localizedField = festival[`${field}_original`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_ko`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[`${field}_en`];
-      if (!localizedField || localizedField.trim() === '') localizedField = festival[field];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_ko`];
+      if (isEmpty(localizedField)) localizedField = festival[`${field}_en`];
+      if (isEmpty(localizedField)) localizedField = festival[field];
     }
 
     return localizedField || fallback;
