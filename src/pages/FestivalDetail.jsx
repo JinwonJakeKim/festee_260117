@@ -167,6 +167,7 @@ export default function FestivalDetail() {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [youtubeError, setYoutubeError] = useState(false);
   
   // New states for the unified gallery popup
   const [showGalleryPopup, setShowGalleryPopup] = useState(false);
