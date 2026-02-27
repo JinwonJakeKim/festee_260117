@@ -175,6 +175,7 @@ export default function FestivalDetail() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setYoutubeError(false);
   }, [festivalId]);
 
   const { data: user } = useQuery({
