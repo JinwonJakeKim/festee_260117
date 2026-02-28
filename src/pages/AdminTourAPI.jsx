@@ -697,6 +697,35 @@ export default function AdminTourAPI() {
 
               {/* 대기중 탭 */}
               <TabsContent value="pending" className="mt-4 space-y-3">
+                {pendingData.length > 0 && (
+                  <div className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                    <button
+                      onClick={() => {
+                        const allIds = pendingData.map(r => r.id);
+                        const allSelected = allIds.every(id => selectedRawData.includes(id));
+                        setSelectedRawData(prev => allSelected ? prev.filter(id => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+                      }}
+                      className="text-sm text-cyan-400 hover:text-cyan-300"
+                    >
+                      {pendingData.every(r => selectedRawData.includes(r.id)) ? '전체 선택 해제' : `전체 선택 (${pendingData.length}개)`}
+                    </button>
+                    {selectedRawData.filter(id => pendingData.find(r => r.id === id)).length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{selectedRawData.filter(id => pendingData.find(r => r.id === id)).length}개 선택됨</span>
+                        <Button size="sm" onClick={() => handleTransform(selectedRawData.filter(id => pendingData.find(r => r.id === id)), false)} className="bg-purple-500 hover:bg-purple-600 text-xs h-7">
+                          선택 변환
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const ids = selectedRawData.filter(id => pendingData.find(r => r.id === id));
+                          if (confirm(`선택한 ${ids.length}개를 삭제하시겠습니까?`)) ids.forEach(id => deleteRawDataMutation.mutate(id));
+                          setSelectedRawData(prev => prev.filter(id => !ids.includes(id)));
+                        }} className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs h-7">
+                          선택 삭제
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {pendingData.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
                 ) : (
@@ -704,6 +733,8 @@ export default function AdminTourAPI() {
                     <RawDataCard
                       key={raw.id}
                       raw={raw}
+                      selected={selectedRawData.includes(raw.id)}
+                      onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
                     />
@@ -713,6 +744,35 @@ export default function AdminTourAPI() {
 
               {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
+                {processedData.length > 0 && (
+                  <div className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                    <button
+                      onClick={() => {
+                        const allIds = processedData.map(r => r.id);
+                        const allSelected = allIds.every(id => selectedRawData.includes(id));
+                        setSelectedRawData(prev => allSelected ? prev.filter(id => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+                      }}
+                      className="text-sm text-cyan-400 hover:text-cyan-300"
+                    >
+                      {processedData.every(r => selectedRawData.includes(r.id)) ? '전체 선택 해제' : `전체 선택 (${processedData.length}개)`}
+                    </button>
+                    {selectedRawData.filter(id => processedData.find(r => r.id === id)).length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{selectedRawData.filter(id => processedData.find(r => r.id === id)).length}개 선택됨</span>
+                        <Button size="sm" onClick={() => handleTransform(selectedRawData.filter(id => processedData.find(r => r.id === id)), true)} className="bg-orange-500 hover:bg-orange-600 text-xs h-7">
+                          선택 재변환
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const ids = selectedRawData.filter(id => processedData.find(r => r.id === id));
+                          if (confirm(`선택한 ${ids.length}개를 삭제하시겠습니까?`)) ids.forEach(id => deleteRawDataMutation.mutate(id));
+                          setSelectedRawData(prev => prev.filter(id => !ids.includes(id)));
+                        }} className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs h-7">
+                          선택 삭제
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {processedData.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
                 ) : (
@@ -720,6 +780,8 @@ export default function AdminTourAPI() {
                     <RawDataCard
                       key={raw.id}
                       raw={raw}
+                      selected={selectedRawData.includes(raw.id)}
+                      onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], true)}
                     />
@@ -729,6 +791,35 @@ export default function AdminTourAPI() {
 
               {/* 실패 탭 */}
               <TabsContent value="failed" className="mt-4 space-y-3">
+                {failedData.length > 0 && (
+                  <div className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                    <button
+                      onClick={() => {
+                        const allIds = failedData.map(r => r.id);
+                        const allSelected = allIds.every(id => selectedRawData.includes(id));
+                        setSelectedRawData(prev => allSelected ? prev.filter(id => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+                      }}
+                      className="text-sm text-cyan-400 hover:text-cyan-300"
+                    >
+                      {failedData.every(r => selectedRawData.includes(r.id)) ? '전체 선택 해제' : `전체 선택 (${failedData.length}개)`}
+                    </button>
+                    {selectedRawData.filter(id => failedData.find(r => r.id === id)).length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{selectedRawData.filter(id => failedData.find(r => r.id === id)).length}개 선택됨</span>
+                        <Button size="sm" onClick={() => handleTransform(selectedRawData.filter(id => failedData.find(r => r.id === id)), false)} className="bg-purple-500 hover:bg-purple-600 text-xs h-7">
+                          선택 재시도
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const ids = selectedRawData.filter(id => failedData.find(r => r.id === id));
+                          if (confirm(`선택한 ${ids.length}개를 삭제하시겠습니까?`)) ids.forEach(id => deleteRawDataMutation.mutate(id));
+                          setSelectedRawData(prev => prev.filter(id => !ids.includes(id)));
+                        }} className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs h-7">
+                          선택 삭제
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {failedData.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-8">실패한 데이터가 없습니다.</p>
                 ) : (
@@ -736,6 +827,8 @@ export default function AdminTourAPI() {
                     <RawDataCard
                       key={raw.id}
                       raw={raw}
+                      selected={selectedRawData.includes(raw.id)}
+                      onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
                     />
