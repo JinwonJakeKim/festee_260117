@@ -218,19 +218,6 @@ export default function AdminTourAPI() {
     },
   });
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids) => {
-      for (const id of ids) {
-        await base44.entities.TourApiRawData.delete(id);
-      }
-    },
-    onSuccess: (_, ids) => {
-      refetchRawData();
-      setSelectedRawData([]);
-      alert(`${ids.length}개의 원본 데이터가 삭제되었습니다`);
-    },
-  });
-
   const stopProcessingMutation = useMutation({
     mutationFn: async (id) => {
       await base44.entities.TourApiRawData.update(id, {
