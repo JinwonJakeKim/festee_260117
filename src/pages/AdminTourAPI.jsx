@@ -539,7 +539,7 @@ export default function AdminTourAPI() {
               <div className="flex items-start justify-between mb-2">
                 <h3 className="text-white font-bold flex items-center gap-2">
                   <RefreshCw className="w-5 h-5 text-purple-400" />
-                  2단계: 원본 데이터를 Festival로 변환 (자동화)
+                  RawData를 Festival로 변환
                 </h3>
                 <Button
                   onClick={() => refetchRawData()}
@@ -552,8 +552,9 @@ export default function AdminTourAPI() {
                 </Button>
               </div>
               <ul className="text-gray-300 text-sm space-y-1">
+                <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
+                <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
                 <li>✓ 대기중인 RawData를 5분마다 최대 10개씩 자동 변환</li>
-                <li>✓ 변환 완료까지 페이지를 닫아도 됩니다</li>
                 <li>✓ 실패한 데이터는 재시도 가능</li>
               </ul>
             </Card>
