@@ -99,7 +99,6 @@ export default function AdminTourAPI() {
   const [numOfRows, setNumOfRows] = useState(100);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchResults, setFetchResults] = useState(null);
-  const [selectedRawData, setSelectedRawData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
 
