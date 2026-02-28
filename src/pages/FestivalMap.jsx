@@ -136,10 +136,13 @@ export default function FestivalMap() {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
       const festival = festivals.find(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.country.toLowerCase().includes(searchQuery.toLowerCase())
+        getFestivalName(f).toLowerCase().includes(q) ||
+        (f.city_ko || f.city || '').toLowerCase().includes(q) ||
+        (f.city_en || '').toLowerCase().includes(q) ||
+        (f.country_ko || f.country || '').toLowerCase().includes(q) ||
+        (f.country_en || '').toLowerCase().includes(q)
       );
       if (festival && festival.latitude && festival.longitude) {
         setMapCenter([festival.latitude, festival.longitude]);
