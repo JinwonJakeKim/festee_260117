@@ -624,12 +624,8 @@ export default function AdminUrlExtraction() {
 
   const handleAutoTransform = async () => {
     const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
-    
-    if (pendingCount === 0) {
-      alert('변환할 대기중인 데이터가 없습니다');
-      return;
-    }
-
+    if (pendingCount === 0) { alert('변환할 대기중인 데이터가 없습니다'); return; }
+    try { await base44.functions.invoke('enableAutomationWithEndDate', { automationId: '699038fa8d0cf8ae0977327e' }); } catch (e) { console.error('자동화 활성화 실패:', e); }
     autoTransformMutation.mutate();
   };
 
