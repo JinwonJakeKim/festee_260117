@@ -264,7 +264,8 @@ Deno.serve(async (req) => {
     console.log(`[TourAPI] Successfully saved: ${savedRawData.length} raw data records`);
     console.log(`[TourAPI] Failed: ${errors.length} records`);
     console.log(`[TourAPI] New records: ${savedRawData.filter(r => r.isNew).length}`);
-    console.log(`[TourAPI] Updated records: ${savedRawData.filter(r => !r.isNew).length}`);
+    console.log(`[TourAPI] Updated records (no change): ${savedRawData.filter(r => !r.isNew && !r.needsReprocessing).length}`);
+    console.log(`[TourAPI] Updated records (needs reprocessing): ${savedRawData.filter(r => !r.isNew && r.needsReprocessing).length}`);
     
     return Response.json({
       success: true,
