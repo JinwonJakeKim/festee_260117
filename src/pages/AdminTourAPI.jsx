@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
 // 공통 RawData 카드 컴포넌트
-function RawDataCard({ raw, onDelete, onTransform }) {
+function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect }) {
   const isNew = !raw.festival_id;
   const statusColors = {
     pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -25,9 +25,18 @@ function RawDataCard({ raw, onDelete, onTransform }) {
   const statusLabels = { pending: '대기 중', processing: '처리 중', processed: '완료', failed: '실패' };
 
   return (
-    <Card className={`border-2 transition-all ${statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'}`}>
+    <Card className={`border-2 transition-all ${selected ? 'ring-2 ring-cyan-400' : ''} ${statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'}`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
+          {/* 선택 체크박스 */}
+          <button
+            onClick={onToggleSelect}
+            className={`flex-shrink-0 w-5 h-5 mt-1 rounded border-2 flex items-center justify-center transition-colors ${
+              selected ? 'bg-cyan-400 border-cyan-400' : 'border-gray-600 hover:border-cyan-400'
+            }`}
+          >
+            {selected && <span className="text-black text-xs font-bold">✓</span>}
+          </button>
           {raw.firstimage && (
             <img src={raw.firstimage} alt={raw.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
           )}
