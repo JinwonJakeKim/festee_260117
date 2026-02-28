@@ -252,11 +252,11 @@ export default function FestivalMap() {
                           className="w-full h-32 object-cover rounded-lg mb-2"
                         />
                       )}
-                      <h3 className="font-bold text-base mb-2 text-white">{festival.name}</h3>
+                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(festival)}</h3>
                       <div className="space-y-1 text-sm">
                         <div className="flex items-center gap-2 text-gray-300">
                           <MapPin className="w-4 h-4 text-cyan-400" />
-                          {festival.city}, {festival.country}
+                          {festival.city_ko || festival.city}, {festival.country_ko || festival.country}
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Calendar className="w-4 h-4 text-pink-500" />
