@@ -110,6 +110,7 @@ export default function AdminTourAPI() {
   const [fetchResults, setFetchResults] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
+  const [selectedRawData, setSelectedRawData] = useState([]);
 
   // 최대 변환 개수 제한 제거 (자동화 모드)
   const MAX_TRANSFORM_COUNT = 999;
