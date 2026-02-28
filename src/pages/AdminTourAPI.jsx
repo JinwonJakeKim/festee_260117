@@ -13,6 +13,71 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
+// 공통 RawData 카드 컴포넌트
+function RawDataCard({ raw, onDelete, onTransform }) {
+  const isNew = !raw.festival_id;
+  const statusColors = {
+    pending: 'bg-yellow-900/20 border-yellow-500/50',
+    processing: 'bg-blue-900/20 border-blue-500/50',
+    processed: 'bg-green-900/20 border-green-500/50',
+    failed: 'bg-red-900/20 border-red-500/50',
+  };
+  const statusLabels = { pending: '대기 중', processing: '처리 중', processed: '완료', failed: '실패' };
+
+  return (
+    <Card className={`border-2 transition-all ${statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'}`}>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {raw.firstimage && (
+            <img src={raw.firstimage} alt={raw.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <h3 className="text-white font-bold text-sm">{raw.title}</h3>
+              <Badge className={`${statusColors[raw.processing_status]} flex items-center gap-1 text-xs`}>
+                {raw.processing_status === 'processing' && <Loader className="w-3 h-3 animate-spin" />}
+                {statusLabels[raw.processing_status]}
+              </Badge>
+              <Badge className={`text-xs border ${isNew ? 'bg-purple-900/50 text-purple-400 border-purple-400/50' : 'bg-blue-900/50 text-blue-400 border-blue-400/50'}`}>
+                {isNew ? '신규' : '기존'}
+              </Badge>
+            </div>
+            <div className="text-gray-400 text-xs space-y-1">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-green-400" />
+                <span>
+                  {raw.eventstartdate ? `${raw.eventstartdate.substring(0,4)}-${raw.eventstartdate.substring(4,6)}-${raw.eventstartdate.substring(6,8)}` : '시작일 없음'}
+                  {' ~ '}
+                  {raw.eventenddate ? `${raw.eventenddate.substring(0,4)}-${raw.eventenddate.substring(4,6)}-${raw.eventenddate.substring(6,8)}` : '종료일 없음'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-teal-400" />
+                <span>{raw.addr1 || '주소 없음'}</span>
+              </div>
+              <p className="text-gray-500">ContentID: {raw.contentid}</p>
+              {raw.processing_status === 'processed' && raw.festival_id && (
+                <Badge variant="outline" className="text-green-400 border-green-400 text-xs">✓ Festival ID: {raw.festival_id}</Badge>
+              )}
+              {raw.processing_status === 'failed' && raw.error_message && (
+                <p className="text-red-400 bg-red-900/20 p-2 rounded">❌ {raw.error_message}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Button onClick={onTransform} size="sm" className={`${isNew ? 'bg-purple-500 hover:bg-purple-600' : 'bg-orange-500 hover:bg-orange-600'} text-white`} title="변환">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button onClick={onDelete} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 const safeFormatDate = (dateString, formatString) => {
   if (!dateString) return '날짜 미정';
   try {
