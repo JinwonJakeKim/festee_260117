@@ -195,7 +195,6 @@ export default function AdminTourAPI() {
         });
       }
       
-      setSelectedRawData([]);
       refetchRawData();
       
       // 대기열 추가 후 바로 변환 시작
