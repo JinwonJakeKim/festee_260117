@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -57,20 +56,26 @@ function MapController({ center }) {
   return null;
 }
 
+const getFestivalName = (festival) => {
+  return festival.name_ko || festival.name_original || festival.name_en || festival.name || '';
+};
+
 const removeDuplicateFestivals = (festivals) => {
   const festivalMap = new Map();
 
   festivals.forEach(festival => {
-    const existing = festivalMap.get(festival.name);
+    const key = getFestivalName(festival);
+    if (!key) return; // 이름 없는 경우 스킵
+    const existing = festivalMap.get(key);
 
     if (!existing) {
-      festivalMap.set(festival.name, festival);
+      festivalMap.set(key, festival);
     } else {
       const existingScore = calculateInfoScore(existing);
       const currentScore = calculateInfoScore(festival);
 
       if (currentScore > existingScore) {
-        festivalMap.set(festival.name, festival);
+        festivalMap.set(key, festival);
       }
     }
   });
