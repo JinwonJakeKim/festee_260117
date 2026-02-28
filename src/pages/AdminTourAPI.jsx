@@ -698,33 +698,42 @@ export default function AdminTourAPI() {
               {/* 대기중 탭 */}
               <TabsContent value="pending" className="mt-4 space-y-3">
                 {pendingData.length > 0 && (
-                  <div className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
-                    <button
-                      onClick={() => {
-                        const allIds = pendingData.map(r => r.id);
-                        const allSelected = allIds.every(id => selectedRawData.includes(id));
-                        setSelectedRawData(prev => allSelected ? prev.filter(id => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
-                      }}
-                      className="text-sm text-cyan-400 hover:text-cyan-300"
-                    >
-                      {pendingData.every(r => selectedRawData.includes(r.id)) ? '전체 선택 해제' : `전체 선택 (${pendingData.length}개)`}
-                    </button>
+                  <Card className="bg-gray-900 border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => {
+                          const allIds = pendingData.map(r => r.id);
+                          const allSelected = allIds.every(id => selectedRawData.includes(id));
+                          setSelectedRawData(prev => allSelected ? prev.filter(id => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400"
+                      >
+                        {pendingData.every(r => selectedRawData.includes(r.id)) ? (
+                          <CheckSquare className="w-5 h-5 text-cyan-400" />
+                        ) : (
+                          <Square className="w-5 h-5" />
+                        )}
+                        <span className="font-medium">전체 선택</span>
+                      </button>
+                      {selectedRawData.filter(id => pendingData.find(r => r.id === id)).length > 0 && (
+                        <span className="text-cyan-400 text-sm">{selectedRawData.filter(id => pendingData.find(r => r.id === id)).length}개 선택됨</span>
+                      )}
+                    </div>
                     {selectedRawData.filter(id => pendingData.find(r => r.id === id)).length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">{selectedRawData.filter(id => pendingData.find(r => r.id === id)).length}개 선택됨</span>
-                        <Button size="sm" onClick={() => handleTransform(selectedRawData.filter(id => pendingData.find(r => r.id === id)), false)} className="bg-purple-500 hover:bg-purple-600 text-xs h-7">
-                          선택 변환
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleTransform(selectedRawData.filter(id => pendingData.find(r => r.id === id)), false)} className="flex-1 bg-purple-500 hover:bg-purple-600">
+                          <RefreshCw className="w-4 h-4 mr-2" />선택 변환
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
+                        <Button onClick={() => {
                           const ids = selectedRawData.filter(id => pendingData.find(r => r.id === id));
                           if (confirm(`선택한 ${ids.length}개를 삭제하시겠습니까?`)) ids.forEach(id => deleteRawDataMutation.mutate(id));
                           setSelectedRawData(prev => prev.filter(id => !ids.includes(id)));
-                        }} className="border-red-600 text-red-400 hover:bg-red-900/20 text-xs h-7">
-                          선택 삭제
+                        }} className="bg-red-500 hover:bg-red-600">
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 )}
                 {pendingData.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
