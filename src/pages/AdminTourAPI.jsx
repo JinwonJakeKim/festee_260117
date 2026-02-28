@@ -493,109 +493,27 @@ export default function AdminTourAPI() {
           {/* 원본 데이터 관리 탭 */}
           <TabsContent value="manage" className="space-y-4">
             <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
-              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                <RefreshCw className="w-5 h-5 text-purple-400" />
-                2단계: 원본 데이터를 Festival로 변환 (자동화)
-              </h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-white font-bold flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-purple-400" />
+                  2단계: 원본 데이터를 Festival로 변환 (자동화)
+                </h3>
+                <Button
+                  onClick={() => refetchRawData()}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-400 text-purple-400 hover:bg-purple-900/20"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  새로고침
+                </Button>
+              </div>
               <ul className="text-gray-300 text-sm space-y-1">
-                <li>✓ 변환 버튼 클릭 시 대기열에 추가되며, 자동화가 백그라운드에서 처리</li>
-                <li>✓ 5분마다 최대 10개씩 자동 변환 (타임아웃 없음)</li>
+                <li>✓ 대기중인 RawData를 5분마다 최대 10개씩 자동 변환</li>
                 <li>✓ 변환 완료까지 페이지를 닫아도 됩니다</li>
-                <li>✓ 실패한 데이터는 자동으로 재시도 가능</li>
-                <li className="text-cyan-400 font-medium">💡 원하는 만큼 선택 가능 - 자동으로 순차 처리됩니다</li>
+                <li>✓ 실패한 데이터는 재시도 가능</li>
               </ul>
             </Card>
-
-            {/* 백그라운드 변환 진행 중 알림 배너 */}
-            {processingData.length > 0 && (
-              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Loader className="w-6 h-6 text-blue-400 animate-spin flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="text-blue-400 font-bold mb-1">
-                      백그라운드 변환 진행 중
-                    </h3>
-                    <p className="text-gray-300 text-sm">
-                      현재 {processingData.length}개의 축제가 자동으로 변환되고 있습니다. 
-                      처리가 너무 오래 걸리면 아래에서 중단할 수 있습니다.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => refetchRawData()}
-                    size="sm"
-                    variant="outline"
-                    className="border-blue-400 text-blue-400 hover:bg-blue-900/20 flex-shrink-0"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    새로고침
-                  </Button>
-                </div>
-
-                {/* 처리 중인 축제 목록 */}
-                <div className="space-y-2">
-                  {processingData.map((raw) => (
-                    <div key={raw.id} className="flex items-center justify-between bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Loader className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-medium text-sm truncate">{raw.title}</h4>
-                          <p className="text-gray-400 text-xs">
-                            시작: {safeFormatDate(raw.updated_date, 'HH:mm:ss')}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => {
-                          if (confirm(`"${raw.title}" 처리를 중단하시겠습니까?\n\n다음 대기 중인 축제가 처리됩니다.`)) {
-                            stopProcessingMutation.mutate(raw.id);
-                          }
-                        }}
-                        size="sm"
-                        className="bg-red-900/30 border border-red-500 text-red-400 hover:bg-red-900/50 hover:border-red-400 flex-shrink-0"
-                        disabled={stopProcessingMutation.isPending}
-                      >
-                        {stopProcessingMutation.isPending ? (
-                          <Loader className="w-4 h-4 animate-spin" />
-                        ) : (
-                          '중단'
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* 통계 카드 */}
-            <div className="grid grid-cols-4 gap-3">
-              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-400">{pendingData.length}</div>
-                  <div className="text-xs text-gray-400">대기 중</div>
-                </div>
-              </Card>
-              <Card className="bg-blue-900/20 border-blue-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400 flex items-center justify-center gap-1">
-                    {processingData.length}
-                    {processingData.length > 0 && <Loader className="w-4 h-4 animate-spin" />}
-                  </div>
-                  <div className="text-xs text-gray-400">처리 중</div>
-                </div>
-              </Card>
-              <Card className="bg-green-900/20 border-green-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">{processedData.length}</div>
-                  <div className="text-xs text-gray-400">완료</div>
-                </div>
-              </Card>
-              <Card className="bg-red-900/20 border-red-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-400">{failedData.length}</div>
-                  <div className="text-xs text-gray-400">실패</div>
-                </div>
-              </Card>
-            </div>
 
             {/* 검색 및 필터 */}
             <div className="flex gap-3">
@@ -625,504 +543,170 @@ export default function AdminTourAPI() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                onClick={() => refetchRawData()}
-                variant="outline"
-                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-900/20"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
             </div>
 
-            {/* 필터 결과 표시 및 선택 버튼 */}
-            <div className="flex items-center justify-between gap-3">
-              {(searchQuery || filterMonth !== "all") && (
-                <p className="text-gray-400 text-sm">
-                  {searchQuery && `"${searchQuery}" 검색 결과`}
-                  {searchQuery && filterMonth !== "all" && " · "}
-                  {filterMonth !== "all" && `${months.find(m => m.value === filterMonth)?.label}`}
-                  : {filteredRawDataList.length}개
+            {/* 자동 일괄 변환 버튼 */}
+            {pendingData.length > 0 && (
+              <Card className="bg-purple-900/20 border-purple-400/30 p-4">
+                <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
+                <p className="text-gray-400 text-sm mb-3">
+                  대기중인 RawData를 10개씩 자동 변환합니다 (5분 간격)
                 </p>
-              )}
-              <div className="flex gap-2 ml-auto">
-                <Button
-                   onClick={() => {
-                     const allFilteredIds = filteredRawDataList.map(r => r.id);
-                     setSelectedRawData(allFilteredIds);
-                   }}
-                   size="sm"
-                   className="bg-gray-800 border border-cyan-500/50 text-cyan-400 hover:bg-gray-700 hover:border-cyan-400 text-xs"
-                 >
-                   {searchQuery ? '검색 결과 전체 선택' : '전체 선택'} ({filteredRawDataList.length}개)
-                 </Button>
-                <Button
-                   onClick={() => setSelectedRawData([])}
-                   size="sm"
-                   className="bg-gray-800 border border-cyan-500/50 text-cyan-400 hover:bg-gray-700 hover:border-cyan-400"
-                   disabled={selectedRawData.length === 0}
-                 >
-                   선택 해제
-                 </Button>
-                <Button
-                   onClick={() => {
-                     if (selectedRawData.length === 0) {
-                       alert('삭제할 데이터를 선택해주세요');
-                       return;
-                     }
-                     if (confirm(`선택한 ${selectedRawData.length}개의 원본 데이터를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.`)) {
-                       bulkDeleteMutation.mutate(selectedRawData);
-                     }
-                   }}
-                   size="sm"
-                   className="bg-gray-800 border border-red-500/50 text-red-400 hover:bg-gray-700 hover:border-red-400"
-                   disabled={selectedRawData.length === 0 || bulkDeleteMutation.isPending}
-                 >
-                   {bulkDeleteMutation.isPending ? (
-                     <>
-                       <Loader className="w-4 h-4 mr-1 animate-spin" />
-                       삭제 중...
-                     </>
-                   ) : (
-                     <>
-                       <Trash2 className="w-4 h-4 mr-1" />
-                       일괄 삭제 ({selectedRawData.length})
-                     </>
-                   )}
-                 </Button>
-              </div>
-            </div>
-
-            {/* 신규 변환 섹션 - 항상 표시 */}
-            <div className="space-y-3 border border-purple-800/50 rounded-lg p-4 bg-purple-900/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-purple-400 font-bold flex items-center gap-2">
-                    <Database className="w-5 h-5" />
-                    신규 축제 ({newFestivalData.length}개)
-                  </h3>
-                  <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 없는 새로운 데이터</p>
+                <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
+                  <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• 첫 번째 배치 즉시 변환 시작</li>
+                    <li>• 남은 RawData는 5분마다 자동 변환</li>
+                    <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
+                    <li>• 페이지를 새로고침하여 진행 상황 확인</li>
+                  </ul>
                 </div>
-              </div>
-              
-              <div className="flex gap-2 flex-wrap">
                 <Button
-                  onClick={() => {
-                      const pendingNewIds = newFestivalData.filter(r => r.processing_status !== 'processed').map(r => r.id);
-                      setSelectedRawData(prev => [...new Set([...prev, ...pendingNewIds])]);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
-                  >
-                    대기중 선택 ({newFestivalData.filter(r => r.processing_status !== 'processed').length}개)
-                </Button>
-                <Button
-                  onClick={() => {
-                    const allNewIds = newFestivalData.map(r => r.id);
-                    setSelectedRawData(prev => [...new Set([...prev, ...allNewIds])]);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
+                  onClick={() => startTransformNowMutation.mutate()}
+                  disabled={startTransformNowMutation.isPending}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
                 >
-                  전체 선택 ({newFestivalData.length}개)
+                  {startTransformNowMutation.isPending ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      자동화 시작 중...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5 mr-2" />
+                      자동 일괄 변환 시작
+                    </>
+                  )}
                 </Button>
-                <Button
-                  onClick={() => {
-                    const newFestivalIds = selectedRawData.filter(id => newFestivalData.some(r => r.id === id));
-                    if (newFestivalIds.length === 0) {
-                      alert('⚠️ 신규 축제 영역에서 선택된 항목이 없습니다.');
-                      return;
-                    }
-                    handleTransform(newFestivalIds, false);
-                  }}
-                  disabled={selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length === 0}
-                  size="sm"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                >
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  변환 ({selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length}개)
-                </Button>
-                <Button
-                  onClick={async () => {
-                    const newFestivalIds = selectedRawData.filter(id => newFestivalData.some(r => r.id === id));
-                    if (newFestivalIds.length === 0) {
-                      alert('⚠️ 신규 축제 영역에서 선택된 항목이 없습니다.');
-                      return;
-                    }
-                    if (!confirm(`선택한 ${newFestivalIds.length}개를 완료 처리하시겠습니까?`)) return;
-                    for (const id of newFestivalIds) {
-                      await base44.entities.TourApiRawData.update(id, { processing_status: 'processed', error_message: '' });
-                    }
-                    setSelectedRawData(prev => prev.filter(id => !newFestivalIds.includes(id)));
-                    refetchRawData();
-                    alert(`${newFestivalIds.length}개 완료 처리되었습니다.`);
-                  }}
-                  disabled={selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length === 0}
-                  size="sm"
-                  variant="outline"
-                  className="border-green-600 text-green-400 hover:bg-green-900/20"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  완료처리 ({selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length}개)
-                </Button>
-              </div>
-
-              {newFestivalData.length > 0 ? (
-                <div className="space-y-3 mt-4">
-                  {newFestivalData.map((raw) => {
-                    const isSelected = selectedRawData.includes(raw.id);
-                  return (
-                    <Card
-                      key={raw.id}
-                      className={`border-2 transition-all ${
-                        isSelected
-                          ? 'bg-purple-900/30 border-purple-400'
-                          : 'bg-yellow-900/20 border-yellow-500/50'
-                      }`}
-                    >
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          {/* 체크박스 */}
-                          <div className="flex-shrink-0 mt-1">
-                            <div 
-                              onClick={() => toggleRawData(raw.id)}
-                              className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
-                                isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600 hover:border-gray-500'
-                              }`}
-                            >
-                              {isSelected && <Check className="w-4 h-4 text-black" />}
-                            </div>
-                          </div>
-
-                          {/* 이미지 */}
-                          {raw.firstimage && (
-                            <div className="flex-shrink-0">
-                              <img
-                                src={raw.firstimage}
-                                alt={raw.title}
-                                className="w-20 h-20 rounded-lg object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {/* 정보 */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3 className="text-white font-bold text-base">{raw.title}</h3>
-                              {raw.processing_status === 'processing' ? (
-                                <Badge className="bg-blue-900/20 border-blue-500/50 flex items-center gap-1">
-                                  <Loader className="w-3 h-3 animate-spin" />
-                                  처리 중
-                                </Badge>
-                              ) : (
-                                <Badge className="bg-yellow-900/20 border-yellow-500/50">대기 중</Badge>
-                              )}
-                              <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">
-                                신규 축제
-                              </Badge>
-                            </div>
-
-                            <div className="text-gray-400 text-sm space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-green-400" />
-                                <span>
-                                  {raw.eventstartdate ? 
-                                    `${raw.eventstartdate.substring(0,4)}-${raw.eventstartdate.substring(4,6)}-${raw.eventstartdate.substring(6,8)}` : 
-                                    '시작일 없음'
-                                  } ~ {raw.eventenddate ? 
-                                    `${raw.eventenddate.substring(0,4)}-${raw.eventenddate.substring(4,6)}-${raw.eventenddate.substring(6,8)}` : 
-                                    '종료일 없음'
-                                  }
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-teal-400" />
-                                <span>{raw.addr1 || '주소 없음'}</span>
-                              </div>
-
-                              <p className="text-xs text-gray-500">
-                                ContentID: {raw.contentid} · 수집: {safeFormatDate(raw.fetch_date || raw.created_date, 'yy-MM-dd HH:mm')}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* 삭제 버튼 */}
-                          <Button
-                            onClick={() => {
-                              if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
-                                deleteRawDataMutation.mutate(raw.id);
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm text-center py-4">신규 축제 데이터가 없습니다.</p>
-              )}
-            </div>
-
-            {/* 재변환 섹션 - 데이터가 있을 때만 표시 */}
-            {existingFestivalData.length > 0 && (
-              <div className="space-y-3 border border-orange-800/50 rounded-lg p-4 bg-orange-900/10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-orange-400 font-bold flex items-center gap-2">
-                      <Database className="w-5 h-5" />
-                      기존 축제 ({existingFestivalData.length}개)
-                    </h3>
-                    <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 이미 존재하는 축제 (재변환 가능)</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    onClick={() => {
-                      const pendingExistingIds = existingFestivalData.filter(r => r.processing_status !== 'processed').map(r => r.id);
-                      setSelectedRawData(prev => [...new Set([...prev, ...pendingExistingIds])]);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
-                  >
-                    대기중 선택 ({existingFestivalData.filter(r => r.processing_status !== 'processed').length}개)
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const allExistingIds = existingFestivalData.map(r => r.id);
-                      setSelectedRawData(prev => [...new Set([...prev, ...allExistingIds])]);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
-                  >
-                    전체 선택 ({existingFestivalData.length}개)
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const updateFestivalIds = selectedRawData.filter(id => existingFestivalData.some(r => r.id === id));
-                      if (updateFestivalIds.length === 0) {
-                        alert('⚠️ 기존 축제 영역에서 선택된 항목이 없습니다.');
-                        return;
-                      }
-                      handleTransform(updateFestivalIds, true);
-                    }}
-                    disabled={selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length === 0}
-                    size="sm"
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    변환 ({selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length}개)
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      const existingIds = selectedRawData.filter(id => existingFestivalData.some(r => r.id === id));
-                      if (existingIds.length === 0) {
-                        alert('⚠️ 기존 축제 영역에서 선택된 항목이 없습니다.');
-                        return;
-                      }
-                      if (!confirm(`선택한 ${existingIds.length}개를 완료 처리하시겠습니까?`)) return;
-                      for (const id of existingIds) {
-                        await base44.entities.TourApiRawData.update(id, { processing_status: 'processed', error_message: '' });
-                      }
-                      setSelectedRawData(prev => prev.filter(id => !existingIds.includes(id)));
-                      refetchRawData();
-                      alert(`${existingIds.length}개 완료 처리되었습니다.`);
-                    }}
-                    disabled={selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length === 0}
-                    size="sm"
-                    variant="outline"
-                    className="border-green-600 text-green-400 hover:bg-green-900/20"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                    완료처리 ({selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length}개)
-                  </Button>
-                </div>
-
-                <div className="space-y-3 mt-4">
-                  {existingFestivalData.map((raw) => {
-                  const isSelected = selectedRawData.includes(raw.id);
-                  const statusColors = {
-                    pending: 'bg-yellow-900/20 border-yellow-500/50',
-                    processing: 'bg-blue-900/20 border-blue-500/50',
-                    processed: 'bg-green-900/20 border-green-500/50',
-                    failed: 'bg-red-900/20 border-red-500/50',
-                  };
-                  const statusLabels = {
-                    pending: '대기 중',
-                    processing: '처리 중',
-                    processed: '완료',
-                    failed: '실패',
-                  };
-                  const statusIcons = {
-                    processing: <Loader className="w-3 h-3 animate-spin" />,
-                  };
-                  
-                  return (
-                    <Card
-                      key={raw.id}
-                      className={`border-2 transition-all ${
-                        isSelected
-                          ? 'bg-purple-900/30 border-purple-400'
-                          : statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'
-                      }`}
-                    >
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        {/* 체크박스 - 모든 상태에서 표시 */}
-                        <div className="flex-shrink-0 mt-1">
-                          <div 
-                            onClick={() => toggleRawData(raw.id)}
-                            className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer ${
-                              isSelected ? 'bg-purple-400 border-purple-400' : 'border-gray-600 hover:border-gray-500'
-                            }`}
-                          >
-                            {isSelected && <Check className="w-4 h-4 text-black" />}
-                          </div>
-                        </div>
-
-                        {/* 이미지 */}
-                        {raw.firstimage && (
-                          <div className="flex-shrink-0">
-                            <img
-                              src={raw.firstimage}
-                              alt={raw.title}
-                              className="w-20 h-20 rounded-lg object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {/* 정보 */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="text-white font-bold text-base">{raw.title}</h3>
-                            <Badge className={statusColors[raw.processing_status] + " flex items-center gap-1"}>
-                              {statusIcons[raw.processing_status]}
-                              {statusLabels[raw.processing_status]}
-                            </Badge>
-                            <Badge className="bg-blue-900/50 text-blue-400 border border-blue-400/50">
-                              기존 축제
-                            </Badge>
-                          </div>
-
-                          <div className="text-gray-400 text-sm space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-green-400" />
-                              <span>
-                                {raw.eventstartdate ? 
-                                  `${raw.eventstartdate.substring(0,4)}-${raw.eventstartdate.substring(4,6)}-${raw.eventstartdate.substring(6,8)}` : 
-                                  '시작일 없음'
-                                } ~ {raw.eventenddate ? 
-                                  `${raw.eventenddate.substring(0,4)}-${raw.eventenddate.substring(4,6)}-${raw.eventenddate.substring(6,8)}` : 
-                                  '종료일 없음'
-                                }
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-teal-400" />
-                              <span>{raw.addr1 || '주소 없음'}</span>
-                            </div>
-
-                            <p className="text-xs text-gray-500">
-                              ContentID: {raw.contentid} · 수집: {safeFormatDate(raw.fetch_date || raw.created_date, 'yy-MM-dd HH:mm')}
-                            </p>
-
-                            {raw.processing_status === 'failed' && raw.error_message && (
-                              <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded">
-                                <p className="text-red-400 text-xs">
-                                  <AlertCircle className="w-3 h-3 inline mr-1" />
-                                  {raw.error_message}
-                                </p>
-                              </div>
-                            )}
-
-                            {raw.processing_status === 'processed' && raw.festival_id && (
-                              <div className="mt-2">
-                                <Badge variant="outline" className="text-green-400 border-green-400">
-                                  ✓ Festival ID: {raw.festival_id}
-                                </Badge>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* 액션 버튼 */}
-                        <div className="flex flex-col gap-2">
-                          {/* 개별 재변환 버튼 */}
-                          <Button
-                            onClick={() => handleTransform([raw.id], true)}
-                            size="sm"
-                            className="bg-orange-500 hover:bg-orange-600 text-white"
-                            title="대기열에 추가"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </Button>
-                          
-                          {/* 삭제 버튼 */}
-                          <Button
-                            onClick={() => {
-                              if (confirm('이 원본 데이터를 삭제하시겠습니까?')) {
-                                deleteRawDataMutation.mutate(raw.id);
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-700 text-red-400 hover:bg-red-900/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-                </div>
-              </div>
-            )}
-
-            {/* 선택 개수 안내 */}
-            {selectedRawData.length > 0 && (
-              <Card className="p-3 bg-blue-900/20 border-blue-400/30">
-                <p className="text-sm text-center text-blue-400">
-                  ✓ {selectedRawData.length}개 선택됨 (자동화가 백그라운드에서 처리합니다)
-                </p>
               </Card>
             )}
 
-            {/* 데이터가 없을 때 표시 */}
-            {newFestivalData.length === 0 && existingFestivalData.length === 0 && filteredRawDataList.length > 0 && searchQuery && (
-                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                  <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">검색 결과가 없습니다</p>
-                  <p className="text-gray-600 text-sm">다른 검색어를 시도해보세요</p>
-                </Card>
-              )}
+            {/* 백그라운드 변환 진행 중 알림 배너 */}
+            {processingData.length > 0 && (
+              <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-400/50 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Loader className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-blue-400 font-bold">백그라운드 변환 진행 중 ({processingData.length}개)</h3>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {processingData.map((raw) => (
+                    <div key={raw.id} className="flex items-center justify-between bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Loader className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
+                        <span className="text-white text-sm truncate">{raw.title}</span>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          if (confirm(`"${raw.title}" 처리를 중단하시겠습니까?`)) {
+                            stopProcessingMutation.mutate(raw.id);
+                          }
+                        }}
+                        size="sm"
+                        className="bg-red-900/30 border border-red-500 text-red-400 hover:bg-red-900/50 flex-shrink-0 ml-2"
+                        disabled={stopProcessingMutation.isPending}
+                      >
+                        중단
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
-              {rawDataList.length === 0 && (
-                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                  <Database className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">저장된 원본 데이터가 없습니다</p>
-                  <p className="text-gray-600 text-sm">먼저 "데이터 가져오기" 탭에서 데이터를 가져오세요</p>
-                </Card>
-              )}
+            {/* 통계 카드 */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400">{pendingData.length}</div>
+                  <div className="text-xs text-gray-400">대기 중</div>
+                </div>
+              </Card>
+              <Card className="bg-green-900/20 border-green-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{processedData.length}</div>
+                  <div className="text-xs text-gray-400">완료</div>
+                </div>
+              </Card>
+              <Card className="bg-red-900/20 border-red-400/30 p-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">{failedData.length}</div>
+                  <div className="text-xs text-gray-400">실패</div>
+                </div>
+              </Card>
+            </div>
+
+            {/* 상태별 탭 */}
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="w-full bg-gray-900 grid grid-cols-3">
+                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
+                  대기중 ({pendingData.length})
+                </TabsTrigger>
+                <TabsTrigger value="processed" className="data-[state=active]:bg-green-500 data-[state=active]:text-black">
+                  완료 ({processedData.length})
+                </TabsTrigger>
+                <TabsTrigger value="failed" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
+                  실패 ({failedData.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* 대기중 탭 */}
+              <TabsContent value="pending" className="mt-4 space-y-3">
+                {pendingData.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
+                ) : (
+                  pendingData.map((raw) => (
+                    <RawDataCard
+                      key={raw.id}
+                      raw={raw}
+                      onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
+                      onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
+                    />
+                  ))
+                )}
+              </TabsContent>
+
+              {/* 완료 탭 */}
+              <TabsContent value="processed" className="mt-4 space-y-3">
+                {processedData.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
+                ) : (
+                  processedData.map((raw) => (
+                    <RawDataCard
+                      key={raw.id}
+                      raw={raw}
+                      onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
+                      onTransform={() => handleTransform([raw.id], true)}
+                    />
+                  ))
+                )}
+              </TabsContent>
+
+              {/* 실패 탭 */}
+              <TabsContent value="failed" className="mt-4 space-y-3">
+                {failedData.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-8">실패한 데이터가 없습니다.</p>
+                ) : (
+                  failedData.map((raw) => (
+                    <RawDataCard
+                      key={raw.id}
+                      raw={raw}
+                      onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
+                      onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
+                    />
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {rawDataList.length === 0 && (
+              <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                <Database className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 mb-2">저장된 원본 데이터가 없습니다</p>
+                <p className="text-gray-600 text-sm">먼저 "데이터 가져오기" 탭에서 데이터를 가져오세요</p>
+              </Card>
+            )}
           </TabsContent>
 
           {/* 자동화 스케줄 탭 */}
