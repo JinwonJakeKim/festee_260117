@@ -698,47 +698,73 @@ export default function AdminTourAPI() {
                 <div>
                   <h3 className="text-purple-400 font-bold flex items-center gap-2">
                     <Database className="w-5 h-5" />
-                    신규 축제 변환 ({newFestivalData.length}개)
+                    신규 축제 ({newFestivalData.length}개)
                   </h3>
-                  <p className="text-gray-400 text-xs mt-1">축제명으로 검색 시 Festival 엔티티에 없는 새로운 데이터</p>
+                  <p className="text-gray-400 text-xs mt-1">Festival 엔티티에 없는 새로운 데이터</p>
                 </div>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   onClick={() => {
-                    if (newFestivalData.length === 0) {
-                      alert('변환할 신규 데이터가 없습니다.');
-                      return;
-                    }
-                    const allNewIds = newFestivalData.map(r => r.id);
-                    setSelectedRawData(allNewIds);
+                    const pendingNewIds = newFestivalData.filter(r => r.processing_status === 'pending').map(r => r.id);
+                    setSelectedRawData(prev => [...new Set([...prev, ...pendingNewIds])]);
                   }}
                   variant="outline"
-                  className="flex-1 border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
+                  size="sm"
+                  className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
                 >
-                  신규 축제 전체 선택 ({newFestivalData.length}개)
+                  대기중 선택 ({newFestivalData.filter(r => r.processing_status === 'pending').length}개)
                 </Button>
                 <Button
                   onClick={() => {
-                    const newFestivalIds = selectedRawData.filter(id => {
-                      const item = rawDataList.find(r => r.id === id);
-                      return !item?.festival_id;
-                    });
+                    const allNewIds = newFestivalData.map(r => r.id);
+                    setSelectedRawData(prev => [...new Set([...prev, ...allNewIds])]);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-600 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
+                >
+                  전체 선택 ({newFestivalData.length}개)
+                </Button>
+                <Button
+                  onClick={() => {
+                    const newFestivalIds = selectedRawData.filter(id => newFestivalData.some(r => r.id === id));
                     if (newFestivalIds.length === 0) {
-                      alert('⚠️ 선택된 항목 중 신규 축제가 없습니다.\n\n"신규 축제 전체 선택" 버튼을 눌러주세요.');
+                      alert('⚠️ 신규 축제 영역에서 선택된 항목이 없습니다.');
                       return;
                     }
                     handleTransform(newFestivalIds, false);
                   }}
-                  disabled={selectedRawData.filter(id => {
-                    const item = rawDataList.find(r => r.id === id);
-                    return !item?.festival_id;
-                  }).length === 0}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                  disabled={selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length === 0}
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  대기열에 추가
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  변환 ({selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length}개)
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const newFestivalIds = selectedRawData.filter(id => newFestivalData.some(r => r.id === id));
+                    if (newFestivalIds.length === 0) {
+                      alert('⚠️ 신규 축제 영역에서 선택된 항목이 없습니다.');
+                      return;
+                    }
+                    if (!confirm(`선택한 ${newFestivalIds.length}개를 완료 처리하시겠습니까?`)) return;
+                    for (const id of newFestivalIds) {
+                      await base44.entities.TourApiRawData.update(id, { processing_status: 'processed', error_message: '' });
+                    }
+                    setSelectedRawData(prev => prev.filter(id => !newFestivalIds.includes(id)));
+                    refetchRawData();
+                    alert(`${newFestivalIds.length}개 완료 처리되었습니다.`);
+                  }}
+                  disabled={selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length === 0}
+                  size="sm"
+                  variant="outline"
+                  className="border-green-600 text-green-400 hover:bg-green-900/20"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                  완료처리 ({selectedRawData.filter(id => newFestivalData.some(r => r.id === id)).length}개)
                 </Button>
               </div>
 
