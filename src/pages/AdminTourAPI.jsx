@@ -888,41 +888,67 @@ export default function AdminTourAPI() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     onClick={() => {
-                      if (existingFestivalData.length === 0) {
-                        alert('재변환할 기존 데이터가 없습니다.');
-                        return;
-                      }
-                      const allExistingIds = existingFestivalData.map(r => r.id);
-                      setSelectedRawData(allExistingIds);
+                      const pendingExistingIds = existingFestivalData.filter(r => r.processing_status === 'pending').map(r => r.id);
+                      setSelectedRawData(prev => [...new Set([...prev, ...pendingExistingIds])]);
                     }}
                     variant="outline"
-                    className="flex-1 border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
+                    size="sm"
+                    className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
                   >
-                    기존 축제 전체 선택 ({existingFestivalData.length}개)
+                    대기중 선택 ({existingFestivalData.filter(r => r.processing_status === 'pending').length}개)
                   </Button>
                   <Button
                     onClick={() => {
-                      const updateFestivalIds = selectedRawData.filter(id => {
-                        const item = rawDataList.find(r => r.id === id);
-                        return item?.festival_id;
-                      });
+                      const allExistingIds = existingFestivalData.map(r => r.id);
+                      setSelectedRawData(prev => [...new Set([...prev, ...allExistingIds])]);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-orange-600 bg-orange-900/20 text-orange-400 hover:bg-orange-900/40"
+                  >
+                    전체 선택 ({existingFestivalData.length}개)
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const updateFestivalIds = selectedRawData.filter(id => existingFestivalData.some(r => r.id === id));
                       if (updateFestivalIds.length === 0) {
-                        alert('⚠️ 선택된 항목 중 기존 축제가 없습니다.\n\n"기존 축제 전체 선택" 버튼을 눌러주세요.');
+                        alert('⚠️ 기존 축제 영역에서 선택된 항목이 없습니다.');
                         return;
                       }
                       handleTransform(updateFestivalIds, true);
                     }}
-                    disabled={selectedRawData.filter(id => {
-                      const item = rawDataList.find(r => r.id === id);
-                      return item?.festival_id;
-                    }).length === 0}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    disabled={selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length === 0}
+                    size="sm"
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    대기열에 추가
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    변환 ({selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length}개)
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const existingIds = selectedRawData.filter(id => existingFestivalData.some(r => r.id === id));
+                      if (existingIds.length === 0) {
+                        alert('⚠️ 기존 축제 영역에서 선택된 항목이 없습니다.');
+                        return;
+                      }
+                      if (!confirm(`선택한 ${existingIds.length}개를 완료 처리하시겠습니까?`)) return;
+                      for (const id of existingIds) {
+                        await base44.entities.TourApiRawData.update(id, { processing_status: 'processed', error_message: '' });
+                      }
+                      setSelectedRawData(prev => prev.filter(id => !existingIds.includes(id)));
+                      refetchRawData();
+                      alert(`${existingIds.length}개 완료 처리되었습니다.`);
+                    }}
+                    disabled={selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length === 0}
+                    size="sm"
+                    variant="outline"
+                    className="border-green-600 text-green-400 hover:bg-green-900/20"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    완료처리 ({selectedRawData.filter(id => existingFestivalData.some(r => r.id === id)).length}개)
                   </Button>
                 </div>
 
