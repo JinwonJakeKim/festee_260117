@@ -208,16 +208,6 @@ export default function AdminTourAPI() {
     }
   };
 
-  const toggleRawData = (id) => {
-    setSelectedRawData(prev => {
-      const newSelection = prev.includes(id)
-        ? prev.filter(i => i !== id)
-        : [...prev, id];
-      
-      return newSelection;
-    });
-  };
-
   const deleteRawDataMutation = useMutation({
     mutationFn: async (id) => {
       await base44.entities.TourApiRawData.delete(id);
