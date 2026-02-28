@@ -366,12 +366,6 @@ export default function AdminTourAPI() {
   const processedData = filteredRawDataList.filter(r => r.processing_status === 'processed');
   const failedData = filteredRawDataList.filter(r => r.processing_status === 'failed');
 
-  // 신규 축제 데이터 - festival_id가 없는 모든 데이터 (필터 적용)
-  const newFestivalData = filteredRawDataList.filter(r => !r.festival_id);
-  
-  // 기존 축제 데이터 - festival_id가 있는 모든 데이터 (필터 적용)
-  const existingFestivalData = filteredRawDataList.filter(r => r.festival_id);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
