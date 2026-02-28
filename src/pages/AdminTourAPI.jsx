@@ -366,10 +366,10 @@ export default function AdminTourAPI() {
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="w-full bg-gray-900 grid grid-cols-3 mb-6">
             <TabsTrigger value="fetch" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
-              1. 데이터 가져오기
+              축제정보가져오기
             </TabsTrigger>
             <TabsTrigger value="manage" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
-              2. 데이터 관리
+              RawData 변환
             </TabsTrigger>
             <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               3. 자동화
