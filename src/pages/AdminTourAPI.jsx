@@ -707,14 +707,14 @@ export default function AdminTourAPI() {
               <div className="flex gap-2 flex-wrap">
                 <Button
                   onClick={() => {
-                    const pendingNewIds = newFestivalData.filter(r => r.processing_status === 'pending').map(r => r.id);
-                    setSelectedRawData(prev => [...new Set([...prev, ...pendingNewIds])]);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
-                >
-                  대기중 선택 ({newFestivalData.filter(r => r.processing_status === 'pending').length}개)
+                      const pendingNewIds = newFestivalData.filter(r => r.processing_status !== 'processed').map(r => r.id);
+                      setSelectedRawData(prev => [...new Set([...prev, ...pendingNewIds])]);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-yellow-600 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/40"
+                  >
+                    대기중 선택 ({newFestivalData.filter(r => r.processing_status !== 'processed').length}개)
                 </Button>
                 <Button
                   onClick={() => {
