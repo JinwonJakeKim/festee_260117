@@ -29,13 +29,12 @@ function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect }) {
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* 선택 체크박스 */}
-          <button
-            onClick={onToggleSelect}
-            className={`flex-shrink-0 w-5 h-5 mt-1 rounded border-2 flex items-center justify-center transition-colors ${
-              selected ? 'bg-cyan-400 border-cyan-400' : 'border-gray-600 hover:border-cyan-400'
-            }`}
-          >
-            {selected && <span className="text-black text-xs font-bold">✓</span>}
+          <button onClick={onToggleSelect} className="flex-shrink-0 mt-1">
+            {selected ? (
+              <CheckSquare className="w-6 h-6 text-cyan-400" />
+            ) : (
+              <Square className="w-6 h-6 text-gray-600" />
+            )}
           </button>
           {raw.firstimage && (
             <img src={raw.firstimage} alt={raw.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
