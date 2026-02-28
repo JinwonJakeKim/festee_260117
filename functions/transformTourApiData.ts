@@ -1292,6 +1292,21 @@ ${context}
         const longitude = (detailData.mapx || rawData.mapx) ? parseFloat(detailData.mapx || rawData.mapx) : null;
         const latitude = (detailData.mapy || rawData.mapy) ? parseFloat(detailData.mapy || rawData.mapy) : null;
         
+        // 주소 추출: detailData → rawData 직접 필드 → raw_search_json 순으로 fallback
+        let resolvedAddr1 = detailData.addr1 || rawData.addr1 || '';
+        let resolvedAddr2 = detailData.addr2 || rawData.addr2 || '';
+        if (!resolvedAddr1 && rawData.raw_search_json) {
+          try {
+            const searchJson = JSON.parse(rawData.raw_search_json);
+            resolvedAddr1 = searchJson.addr1 || '';
+            resolvedAddr2 = searchJson.addr2 || '';
+          } catch (e) {}
+        }
+        // eventplace를 최후 보조 주소로 사용
+        if (!resolvedAddr1 && introData.eventplace) {
+          resolvedAddr1 = introData.eventplace;
+        }
+        
         // 웹사이트 URL 파싱 개선
         const websiteUrl = parseWebsiteUrls(introData.eventhomepage || detailData.homepage || rawData.homepage || '');
         
