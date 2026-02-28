@@ -415,7 +415,7 @@ export default function AdminTourAPI() {
               RawData 변환
             </TabsTrigger>
             <TabsTrigger value="schedule" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
-              3. 자동화
+              자동화
             </TabsTrigger>
           </TabsList>
 
