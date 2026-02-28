@@ -272,6 +272,7 @@ Deno.serve(async (req) => {
       raw_data_saved: savedRawData.length,
       new_records: savedRawData.filter(r => r.isNew).length,
       updated_records: savedRawData.filter(r => !r.isNew).length,
+      reprocessing_needed: savedRawData.filter(r => !r.isNew && r.needsReprocessing).length,
       raw_data_ids: savedRawData.map(r => r.id),
       message: `${savedRawData.length}개의 원본 데이터를 저장했습니다. 이제 변환 작업을 진행하세요.`,
       errors: errors.length > 0 ? errors : undefined
