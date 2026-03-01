@@ -602,13 +602,13 @@ export default function AdminTourAPI() {
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
                 <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
                 <p className="text-gray-400 text-sm mb-3">
-                  대기중인 RawData를 10개씩 자동 변환합니다 (5분 간격)
+                  대기중인 RawData를 2개씩 자동 변환합니다 (5분 간격)
                 </p>
                 <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
                   <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
                   <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 첫 번째 배치 즉시 변환 시작</li>
-                    <li>• 남은 RawData는 5분마다 자동 변환</li>
+                    <li>• 첫 번째 배치 즉시 2개 변환 시작</li>
+                    <li>• 남은 RawData는 5분마다 2개씩 자동 변환</li>
                     <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
                     <li>• 페이지를 새로고침하여 진행 상황 확인</li>
                   </ul>
