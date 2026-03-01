@@ -25,7 +25,7 @@ function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect }) {
   const statusLabels = { pending: '대기 중', processing: '처리 중', processed: '완료', failed: '실패' };
 
   return (
-    <Card className={`border-2 transition-all ${selected ? 'ring-2 ring-cyan-400' : ''} ${statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'}`}>
+    <Card className={`border-2 transition-all ${statusColors[raw.processing_status] || 'bg-gray-900 border-gray-800'}`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* 선택 체크박스 */}
