@@ -880,7 +880,7 @@ export default function AdminUrlExtraction() {
 
       <div className="px-4 py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-4">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-3">
             <TabsTrigger value="extract" className="data-[state=active]:bg-pink-500">
               URL 추출
             </TabsTrigger>
@@ -889,9 +889,6 @@ export default function AdminUrlExtraction() {
             </TabsTrigger>
             <TabsTrigger value="rawdataTransform" className="data-[state=active]:bg-pink-500">
               RawData 변환
-            </TabsTrigger>
-            <TabsTrigger value="automation" className="data-[state=active]:bg-pink-500">
-              자동화
             </TabsTrigger>
           </TabsList>
 
