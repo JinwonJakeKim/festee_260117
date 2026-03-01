@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const VERSION = "ENABLE-AUTOMATION-V5";
+  const VERSION = "ENABLE-AUTOMATION-V6";
   console.log(`[${VERSION}] Starting...`);
 
   try {
@@ -18,42 +18,40 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'automationId required' }, { status: 400 });
     }
 
-    // 다음 날 23:59 계산
+    console.log(`[${VERSION}] Target automation: ${automationId}`);
+
+    // 현재 상태 조회
+    const tasks = await base44.asServiceRole.scheduledTasks.list();
+    const task = tasks.find(t => t.id === automationId);
+    
+    if (!task) {
+      return Response.json({ success: false, error: 'Automation not found' }, { status: 404 });
+    }
+
+    console.log(`[${VERSION}] Current is_active: ${task.is_active}`);
+
+    // 비활성 상태이면 토글로 활성화
+    if (!task.is_active) {
+      await base44.asServiceRole.scheduledTasks.toggle(automationId);
+      console.log(`[${VERSION}] ✅ Toggled to active`);
+    } else {
+      console.log(`[${VERSION}] Already active`);
+    }
+
+    // 종료 날짜 업데이트 (다음 날 23:59)
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(23, 59, 0, 0);
     const endsOnDate = tomorrow.toISOString();
 
-    const appId = Deno.env.get('BASE44_APP_ID');
-    const authHeader = req.headers.get('Authorization');
-
-    console.log(`[${VERSION}] Target: ${automationId}, ends_on: ${endsOnDate}`);
-
-    // 자동화 활성화 + ends_on_date 업데이트 (단일 PUT)
-    const updateRes = await fetch(`https://api.base44.com/api/apps/${appId}/automations/${automationId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
-      },
-      body: JSON.stringify({
-        is_active: true,
-        ends_type: 'on',
-        ends_on_date: endsOnDate,
-        ends_after_count: null
-      })
+    await base44.asServiceRole.scheduledTasks.update(automationId, {
+      ends_type: 'on',
+      ends_on_date: endsOnDate,
+      ends_after_count: null
     });
 
-    if (!updateRes.ok) {
-      const errText = await updateRes.text();
-      console.error(`[${VERSION}] PATCH failed: ${updateRes.status} - ${errText}`);
-      return Response.json({ success: false, error: `API update failed: ${updateRes.status}` }, { status: 500 });
-    }
-
-    console.log(`[${VERSION}] ✅ 자동화 활성화 + ends_on_date 업데이트 완료`);
-
-    console.log(`[${VERSION}] ✅ Done. Automation should be active now.`);
+    console.log(`[${VERSION}] ✅ ends_on_date updated to ${endsOnDate}`);
 
     return Response.json({
       success: true,
