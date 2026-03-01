@@ -68,6 +68,21 @@ export default function HomeChatbot({ festivals = [] }) {
       });
 
       const data = response.data;
+
+      if (data.error === 'rate_limit_exceeded') {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.message, error: true },
+        ]);
+        setUsageInfo({ usedCount: data.usedCount, dailyLimit: data.dailyLimit, isAdmin: false });
+        return;
+      }
+
+      // 사용량 정보 업데이트
+      if (data.dailyLimit !== undefined) {
+        setUsageInfo({ usedCount: data.usedCount, dailyLimit: data.dailyLimit, isAdmin: data.isAdmin });
+      }
+
       setMessages((prev) => [
         ...prev,
         {
