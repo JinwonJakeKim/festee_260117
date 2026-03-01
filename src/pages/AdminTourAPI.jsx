@@ -138,17 +138,6 @@ export default function AdminTourAPI() {
     initialData: [],
   });
 
-  const { data: scheduledTasksData, isLoading: isLoadingTasks, refetch: refetchTasks } = useQuery({
-    queryKey: ['scheduledTasks'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('listScheduledTasks', {});
-      return response.data;
-    },
-    initialData: { success: true, tasks: [] },
-  });
-
-  const scheduledTasks = scheduledTasksData?.tasks || [];
-
   const handleFetch = async () => {
     setIsFetching(true);
     
