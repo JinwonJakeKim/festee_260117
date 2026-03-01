@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       console.log(`[${VERSION}] Already active, skipping toggle.`);
     }
 
-    // 3) ends_type, ends_on_date 업데이트
+    // 3) ends_type, ends_on_date, is_active 업데이트 (한 번에)
     const updateRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
       method: 'PUT',
       headers: {
@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
         'Authorization': authHeader
       },
       body: JSON.stringify({
+        is_active: true,
         ends_type: 'on',
         ends_on_date: endsOnDate,
         ends_after_count: null
