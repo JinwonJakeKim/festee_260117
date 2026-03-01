@@ -1084,7 +1084,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <p className="text-gray-500 text-xs">
-                        일일 무료 한도: 100 쿼리
+                        일일 무료 한도: 100 쿼리 · <span className="text-yellow-400">매일 PT 00:00 초기화</span>
                       </p>
                     </div>
                   </div>
