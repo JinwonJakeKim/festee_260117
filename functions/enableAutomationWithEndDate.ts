@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const VERSION = "ENABLE-AUTOMATION-V6";
+  const VERSION = "ENABLE-AUTOMATION-V7";
   console.log(`[${VERSION}] Starting...`);
 
   try {
@@ -18,40 +18,43 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'automationId required' }, { status: 400 });
     }
 
-    console.log(`[${VERSION}] Target automation: ${automationId}`);
+    console.log(`[${VERSION}] Activating automation: ${automationId}`);
 
-    // 현재 상태 조회
-    const tasks = await base44.asServiceRole.scheduledTasks.list();
+    // listScheduledTasks 함수로 현재 상태 확인
+    const listResult = await base44.asServiceRole.functions.invoke('listScheduledTasks', {});
+    const tasks = listResult?.data?.tasks || [];
     const task = tasks.find(t => t.id === automationId);
-    
+
     if (!task) {
       return Response.json({ success: false, error: 'Automation not found' }, { status: 404 });
     }
 
     console.log(`[${VERSION}] Current is_active: ${task.is_active}`);
 
-    // 비활성 상태이면 토글로 활성화
+    // 비활성 상태이면 toggleScheduledTask로 활성화
     if (!task.is_active) {
-      await base44.asServiceRole.scheduledTasks.toggle(automationId);
-      console.log(`[${VERSION}] ✅ Toggled to active`);
+      const toggleResult = await base44.asServiceRole.functions.invoke('toggleScheduledTask', { taskId: automationId });
+      console.log(`[${VERSION}] Toggle result:`, JSON.stringify(toggleResult?.data));
     } else {
-      console.log(`[${VERSION}] Already active`);
+      console.log(`[${VERSION}] Already active, skipping toggle.`);
     }
 
-    // 종료 날짜 업데이트 (다음 날 23:59)
+    // ends_on_date 업데이트 (다음 날 23:59)
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(23, 59, 0, 0);
     const endsOnDate = tomorrow.toISOString();
 
-    await base44.asServiceRole.scheduledTasks.update(automationId, {
+    const updateResult = await base44.asServiceRole.functions.invoke('updateScheduledTask', {
+      taskId: automationId,
       ends_type: 'on',
       ends_on_date: endsOnDate,
       ends_after_count: null
     });
 
-    console.log(`[${VERSION}] ✅ ends_on_date updated to ${endsOnDate}`);
+    console.log(`[${VERSION}] Update result:`, JSON.stringify(updateResult?.data));
+    console.log(`[${VERSION}] ✅ Done. ends_on_date: ${endsOnDate}`);
 
     return Response.json({
       success: true,
