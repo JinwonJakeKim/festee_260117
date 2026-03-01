@@ -1408,6 +1408,7 @@ ${context}
           video_url: (isUpdate && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '') 
             ? preservedAdminFields.video_url 
             : topVideoUrl,
+          video_channel_name: topVideoChannelName || '',
           
           youtube_shorts_urls: youtubeShorts,
           media_urls: [
