@@ -1470,16 +1470,25 @@ ${context}
         
         // 업데이트 또는 생성
         let festivalResult;
+        const nowIso = new Date().toISOString().replace('T', ' ').substring(0, 19);
         
         if (isUpdate && existingFestival) {
-          // 기존 Festival 업데이트 (ID 유지)
+          // 기존 Festival 업데이트 (ID 유지) - update_time만 갱신, create_time은 기존값 유지
           console.log(`[Transform] 🔄 Updating existing Festival (ID: ${existingFestival.id})...`);
-          festivalResult = await base44.asServiceRole.entities.Festival.update(existingFestival.id, festivalData);
+          festivalResult = await base44.asServiceRole.entities.Festival.update(existingFestival.id, {
+            ...festivalData,
+            create_time: existingFestival.create_time || nowIso,
+            update_time: nowIso
+          });
           console.log(`[Transform] ✓ Festival updated (ID maintained: ${existingFestival.id})`);
         } else {
-          // 새로운 Festival 생성
+          // 새로운 Festival 생성 - create_time, update_time 모두 현재 시각
           console.log(`[Transform] ➕ Creating new Festival...`);
-          festivalResult = await base44.asServiceRole.entities.Festival.create(festivalData);
+          festivalResult = await base44.asServiceRole.entities.Festival.create({
+            ...festivalData,
+            create_time: nowIso,
+            update_time: nowIso
+          });
           console.log(`[Transform] ✓ New Festival created (ID: ${festivalResult.id})`);
         }
         
