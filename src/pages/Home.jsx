@@ -959,10 +959,10 @@ export default function Home() {
               return (
                 <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
-                    <div className="flex-shrink-0">
-                      <div className={`w-8 h-8 rounded-lg ${getRankColor(index)} flex items-center justify-center font-bold text-sm ${index < 3 ? 'text-black' : 'text-white'}`}>
+                    <div className="flex-shrink-0 w-6 text-center">
+                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${getRankColor(index)}`}>
                         {index + 1}
-                      </div>
+                      </span>
                     </div>
 
                     <div className="flex-shrink-0">
