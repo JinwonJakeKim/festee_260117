@@ -289,7 +289,7 @@ export default function HomeChatbot({ festivals = [] }) {
                 />
                 <Button
                   onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
+                  disabled={!input.trim() || isLoading || (usageInfo && !usageInfo.isAdmin && usageInfo.usedCount >= usageInfo.dailyLimit)}
                   className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 h-11 w-11 p-0 flex-shrink-0"
                 >
                   <Send className="w-5 h-5" />
