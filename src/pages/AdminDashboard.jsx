@@ -1031,7 +1031,7 @@ export default function AdminDashboard() {
                               <div className={`h-full ${barColor}`} style={{ width: `${percentage}%` }} />
                             </div>
                             <p className="text-gray-500 text-xs">
-                              월 무료 한도: 500,000자 · 잔여 {(monthlyLimit - monthlyUsage).toLocaleString()}자
+                              월 무료 한도: 500,000자 · 잔여 {(monthlyLimit - monthlyUsage).toLocaleString()}자 · <span className="text-yellow-400">매월 1일 PT 00:00 초기화</span>
                             </p>
                           </>
                         );
