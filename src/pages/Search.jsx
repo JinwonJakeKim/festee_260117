@@ -67,6 +67,35 @@ const getStarRating = (festival) => {
   return Math.abs(hash % 5) + 1;
 };
 
+// 검색어에서 월 추출 함수 (예: "3월 축제" → 3, "5월" → 5)
+const extractMonthFromQuery = (query) => {
+  if (!query) return null;
+  const match = query.match(/(\d{1,2})월/);
+  if (match) {
+    const month = parseInt(match[1]);
+    if (month >= 1 && month <= 12) return month;
+  }
+  return null;
+};
+
+// 축제가 해당 월에 포함되는지 확인
+const festivalIncludesMonth = (festival, month) => {
+  if (!festival.start_date || !festival.end_date) return false;
+  const start = new Date(festival.start_date);
+  const end = new Date(festival.end_date);
+  // 시작월 ~ 종료월 사이에 해당 월이 포함되는지
+  const startMonth = start.getMonth() + 1;
+  const endMonth = end.getMonth() + 1;
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  // 같은 해일 경우
+  if (startYear === endYear) {
+    return month >= startMonth && month <= endMonth;
+  }
+  // 연도가 다를 경우
+  return month >= startMonth || month <= endMonth;
+};
+
 // 안전한 문자열 비교 함수 추가
 const safeStringIncludes = (str, search) => {
   if (typeof str !== 'string' || typeof search !== 'string') return false;
