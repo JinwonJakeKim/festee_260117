@@ -42,6 +42,28 @@ const removeDuplicateFestivals = (festivals) => {
   return Array.from(nameMap.values());
 };
 
+const extractMonthFromQuery = (query) => {
+  if (!query) return null;
+  const match = query.match(/(\d{1,2})월/);
+  if (match) {
+    const month = parseInt(match[1]);
+    if (month >= 1 && month <= 12) return month;
+  }
+  return null;
+};
+
+const festivalIncludesMonth = (festival, month) => {
+  if (!festival.start_date || !festival.end_date) return false;
+  const start = new Date(festival.start_date);
+  const end = new Date(festival.end_date);
+  const startMonth = start.getMonth() + 1;
+  const endMonth = end.getMonth() + 1;
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  if (startYear === endYear) return month >= startMonth && month <= endMonth;
+  return month >= startMonth || month <= endMonth;
+};
+
 const safeFormatDate = (dateString, formatStr) => {
   if (!dateString) return '';
   try {
