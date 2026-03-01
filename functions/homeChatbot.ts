@@ -1,13 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// 질문을 정규화 + 해시하는 함수 (비슷한 질문은 같은 캐시로)
+const DAILY_LIMIT = 5;
+
 function normalizeQuestion(question) {
   return question
     .trim()
     .toLowerCase()
     .replace(/[?？！!]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/[은는이가을를의]/g, '') // 조사 제거
+    .replace(/[은는이가을를의]/g, '')
     .trim();
 }
 
@@ -19,18 +20,19 @@ async function hashString(str) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 }
 
-// 날짜/시간 관련 키워드가 있으면 캐시하지 않음 (실시간성 필요)
 function isTimeSensitive(question) {
   const timeKeywords = ['오늘', '내일', '이번주', '이번달', '이번 주', '이번 달', '지금', '현재'];
   return timeKeywords.some(kw => question.includes(kw));
 }
 
-const DAILY_LIMIT = 5;
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const { question, festivals = [], conversationHistory = [] } = await req.json();
+
+    if (!question) {
+      return Response.json({ error: 'question is required' }, { status: 400 });
+    }
 
     // 사용자 인증 확인
     const user = await base44.auth.me();
@@ -38,50 +40,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 어드민은 Rate Limiting 제외
-    if (user.role !== 'admin') {
-      const today = new Date().toISOString().slice(0, 10);
-      const usageLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
-        api_name: 'invoke_llm',
-        date: today,
-      });
+    const today = new Date().toISOString().slice(0, 10);
+    const isAdmin = user.role === 'admin';
 
-      // 현재 사용자의 오늘 챗봇 사용 횟수 (ChatCache에서 캐시 히트는 카운트 안 함)
-      // 별도 필드로 user_email 기반 추적을 위해 ChatCache에서 오늘 질문 수 확인
-      const todayChats = await base44.asServiceRole.entities.ChatCache.filter({});
-      const userTodayCount = todayChats.filter(c => 
-        c.created_by === user.email && 
-        c.created_date && 
-        c.created_date.slice(0, 10) === today &&
-        c.is_user_query === true
-      ).length;
+    // 오늘 사용량 조회
+    const usageLogs = await base44.asServiceRole.entities.ChatUsageLog.filter({
+      user_email: user.email,
+      date: today,
+    });
+    const usageLog = usageLogs[0];
+    const usedCount = usageLog ? usageLog.count : 0;
 
-      if (userTodayCount >= DAILY_LIMIT) {
-        return Response.json({
-          error: 'rate_limit_exceeded',
-          message: '오늘의 AI 질문 횟수(5회)를 모두 사용했습니다. 내일 다시 이용해주세요!',
-          dailyLimit: DAILY_LIMIT,
-          usedCount: userTodayCount,
-        }, { status: 429 });
-      }
+    // Rate Limit 체크 (어드민 제외)
+    if (!isAdmin && usedCount >= DAILY_LIMIT) {
+      return Response.json({
+        error: 'rate_limit_exceeded',
+        message: `오늘의 AI 질문 횟수(${DAILY_LIMIT}회)를 모두 사용했습니다. 내일 다시 이용해주세요! 🙏`,
+        dailyLimit: DAILY_LIMIT,
+        usedCount,
+      }, { status: 429 });
     }
 
-    if (!question) {
-      return Response.json({ error: 'question is required' }, { status: 400 });
-    }
-
+    // 캐시 확인
     const normalized = normalizeQuestion(question);
     const questionHash = await hashString(normalized);
-    const isConversational = conversationHistory.length > 2; // 대화 중간은 캐시 안함
+    const isConversational = conversationHistory.length > 2;
     const timeSensitive = isTimeSensitive(question);
     const shouldCache = !isConversational && !timeSensitive;
 
-    // 캐시 확인
     if (shouldCache) {
       const cached = await base44.asServiceRole.entities.ChatCache.filter({ question_hash: questionHash });
       const validCache = cached.find(c => c.expires_at && new Date(c.expires_at) > new Date());
       if (validCache) {
-        // 캐시된 응답에서 추천 축제 매핑
         const recommendedFestivals = (validCache.recommended_festival_ids || [])
           .map(id => {
             const f = festivals.find(fest => fest.id === id);
@@ -100,11 +90,14 @@ Deno.serve(async (req) => {
           answer: validCache.answer,
           recommendedFestivals,
           cached: true,
+          usedCount,
+          dailyLimit: isAdmin ? null : DAILY_LIMIT,
+          isAdmin,
         });
       }
     }
 
-    // 축제 데이터를 LLM이 이해하기 쉬운 텍스트로 변환
+    // LLM 호출
     const festivalListText = festivals.map(f => {
       const name = f.name_ko || f.name_en || f.name_original || '이름 없음';
       const dateStr = f.start_date && f.end_date ? `${f.start_date} ~ ${f.end_date}` : '날짜 미정';
@@ -122,7 +115,7 @@ Deno.serve(async (req) => {
 Festee 데이터에 없는 내용이라면 인터넷에서 찾아서 알려주세요.
 
 ## 현재 날짜
-2026-03-01 (한국 서울 기준)
+${today} (한국 서울 기준)
 
 ## Festee 축제 데이터 (${festivals.length}개)
 ${festivalListText}
@@ -135,7 +128,7 @@ ${question}
 
 ## 답변 지침
 1. 사용자가 특정 조건(날짜, 지역, 카테고리, 위치)을 언급하면 해당 조건으로 축제를 필터링해서 추천하세요.
-2. 위치 추천의 경우: 예를 들어 "성남에서 서울 가는 길"처럼 지리적 근접성을 고려하세요. 성남은 서울 강남/송파 인접, 수원은 서울 남부 인접 등 한국 지리를 활용하세요.
+2. 위치 추천의 경우: 예를 들어 "성남에서 서울 가는 길"처럼 지리적 근접성을 고려하세요.
 3. 추천 축제는 최대 3개까지만 상세히 설명하세요.
 4. Festee 데이터에 없는 일반적인 축제 정보(역사, 배경 등)는 알고 있는 지식으로 답변하세요.
 5. 친근하고 자연스러운 한국어로 답변하세요.
@@ -156,10 +149,7 @@ ${question}
         type: "object",
         properties: {
           answer: { type: "string" },
-          recommendedFestivalIds: {
-            type: "array",
-            items: { type: "string" }
-          }
+          recommendedFestivalIds: { type: "array", items: { type: "string" } }
         },
         required: ["answer", "recommendedFestivalIds"]
       }
@@ -179,16 +169,26 @@ ${question}
       })
       .filter(Boolean);
 
-    // 캐시에 저장 (24시간 유효)
+    // 사용량 업데이트 (어드민 제외, LLM 실제 호출한 경우만)
+    if (!isAdmin) {
+      if (usageLog) {
+        await base44.asServiceRole.entities.ChatUsageLog.update(usageLog.id, { count: usedCount + 1 });
+      } else {
+        await base44.asServiceRole.entities.ChatUsageLog.create({
+          user_email: user.email,
+          date: today,
+          count: 1,
+        });
+      }
+    }
+
+    // 캐시 저장 (24시간)
     if (shouldCache && result.answer) {
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-      // 기존 캐시 삭제 후 신규 저장
       const existingCaches = await base44.asServiceRole.entities.ChatCache.filter({ question_hash: questionHash });
       for (const old of existingCaches) {
         await base44.asServiceRole.entities.ChatCache.delete(old.id);
       }
-
       await base44.asServiceRole.entities.ChatCache.create({
         question_hash: questionHash,
         question: question.slice(0, 500),
@@ -198,10 +198,15 @@ ${question}
       });
     }
 
+    const newUsedCount = isAdmin ? 0 : usedCount + 1;
+
     return Response.json({
       answer: result.answer,
       recommendedFestivals,
       cached: false,
+      usedCount: newUsedCount,
+      dailyLimit: isAdmin ? null : DAILY_LIMIT,
+      isAdmin,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
