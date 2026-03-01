@@ -263,21 +263,28 @@ export default function Search() {
     // searchQuery는 이제 URL에서 파생된 값
     if (!searchQuery) return [];
 
+    const monthFilter = extractMonthFromQuery(searchQuery);
+
     return festivals.filter(festival => {
       try {
-        // 검색어 매칭 - 안전한 문자열 비교 (다국어 필드 포함)
-        const matchesQuery =
-          safeStringIncludes(festival.name, searchQuery) ||
-          safeStringIncludes(festival.name_ko, searchQuery) ||
-          safeStringIncludes(festival.name_en, searchQuery) ||
-          safeStringIncludes(festival.name_jp, searchQuery) ||
-          safeStringIncludes(festival.name_zh, searchQuery) ||
-          safeStringIncludes(festival.city, searchQuery) ||
-          safeStringIncludes(festival.city_ko, searchQuery) ||
-          safeStringIncludes(festival.country, searchQuery) ||
-          (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery)));
+        // 월 검색인 경우 (예: "3월 축제", "5월")
+        if (monthFilter !== null) {
+          if (!festivalIncludesMonth(festival, monthFilter)) return false;
+        } else {
+          // 일반 검색어 매칭 - 안전한 문자열 비교 (다국어 필드 포함)
+          const matchesQuery =
+            safeStringIncludes(festival.name, searchQuery) ||
+            safeStringIncludes(festival.name_ko, searchQuery) ||
+            safeStringIncludes(festival.name_en, searchQuery) ||
+            safeStringIncludes(festival.name_jp, searchQuery) ||
+            safeStringIncludes(festival.name_zh, searchQuery) ||
+            safeStringIncludes(festival.city, searchQuery) ||
+            safeStringIncludes(festival.city_ko, searchQuery) ||
+            safeStringIncludes(festival.country, searchQuery) ||
+            (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery)));
 
-        if (!matchesQuery) return false;
+          if (!matchesQuery) return false;
+        }
 
         // 국가 필터 (다중 선택 OR 조건)
         const selectedCountries = selectedCountry ? selectedCountry.split(',') : [];
