@@ -184,12 +184,9 @@ export default function AdminTourAPI() {
       return;
     }
 
-    const actionText = isRetransform ? '재변환' : '변환';
-    const warningText = isRetransform 
-      ? '\n\n⚠️ 기존 Festival 데이터가 삭제되고 새로 생성됩니다!'
-      : '';
-    
-    const confirmMessage = `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하고 지금 바로 시작하시겠습니까?${warningText}`;
+    const confirmMessage = isRetransform
+      ? `${rawDataIds.length}개의 데이터를 재변환하시겠습니까?\n\n기존 Festival 데이터에 새로운 정보가 덮어쓰기됩니다.`
+      : `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하고 지금 바로 시작하시겠습니까?`;
     
     if (!confirm(confirmMessage)) {
       return;
