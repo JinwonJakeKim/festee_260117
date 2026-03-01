@@ -258,14 +258,6 @@ export default function AdminTourAPI() {
 
     const startTransformNowMutation = useMutation({
       mutationFn: async () => {
-        // Koreatourapi_RawData_Transform_Auto 자동화 활성화 (다음날 23:59 종료)
-        try {
-          await base44.functions.invoke('enableAutomationWithEndDate', {
-            automationId: '696b525cfc0c1f2eb1e43a10'
-          });
-        } catch (e) {
-          console.error('자동화 활성화 실패:', e);
-        }
         const response = await base44.functions.invoke('autoTransformPendingData', {});
         return response.data;
       },
