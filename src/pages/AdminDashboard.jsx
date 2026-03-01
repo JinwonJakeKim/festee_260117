@@ -873,7 +873,7 @@ export default function AdminDashboard() {
                 연동된 API
               </h3>
               <p className="text-gray-300 text-sm mb-3">
-                외부 API 연동 현황과 일일 사용량을 확인할 수 있습니다.
+                외부 API 연동 현황과 사용량을 확인할 수 있습니다. GCP의 모든 API는 <strong className="text-yellow-300">태평양시(PT) 기준</strong>으로 초기화됩니다 — 일간 API는 <strong className="text-yellow-300">매일 PT 00:00</strong>, 월간 API는 <strong className="text-yellow-300">매월 1일 PT 00:00</strong> 리셋 (한국 시간 기준 표준시 +17h, 서머타임 +16h).
               </p>
               <div className="flex items-center gap-4 text-xs flex-wrap">
                 <div className="flex items-center gap-2">
@@ -883,15 +883,12 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">🌎 PT (태평양 표준시):</span>
+                  <span className="text-gray-400">🌎 PT (태평양시):</span>
                   <span className="text-white font-mono font-bold">
                     {new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </span>
                 </div>
               </div>
-              <p className="text-yellow-400/80 text-xs mt-2">
-                ⚠️ YouTube API 사용량은 PT 00:00 (한국시간 17:00 또는 18:00)에 초기화됩니다
-              </p>
             </Card>
 
             <div className="space-y-3">
