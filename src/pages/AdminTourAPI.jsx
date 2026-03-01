@@ -891,7 +891,7 @@ export default function AdminTourAPI() {
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ 매월 1일 00:00에 모든 지역의 TourAPI 데이터를 자동 수집</li>
                 <li>✓ 각 지역별로 5분 간격으로 순차적 수집 (서버 부하 관리)</li>
-                <li>✓ 수집 완료 후 대기 중인 데이터를 10개씩 자동 변환</li>
+                <li>✓ 수집 완료 후 대기 중인 데이터를 2개씩 자동 변환</li>
                 <li>✓ 현재 월과 다음 월 데이터를 모두 수집</li>
               </ul>
             </Card>
