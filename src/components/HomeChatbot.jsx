@@ -24,6 +24,7 @@ export default function HomeChatbot({ festivals = [] }) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [usageInfo, setUsageInfo] = useState(null); // { usedCount, dailyLimit, isAdmin }
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
