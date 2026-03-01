@@ -25,10 +25,46 @@ function isTimeSensitive(question) {
   return timeKeywords.some(kw => question.includes(kw));
 }
 
+const DAILY_LIMIT = 5;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const { question, festivals = [], conversationHistory = [] } = await req.json();
+
+    // 사용자 인증 확인
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 어드민은 Rate Limiting 제외
+    if (user.role !== 'admin') {
+      const today = new Date().toISOString().slice(0, 10);
+      const usageLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+        api_name: 'invoke_llm',
+        date: today,
+      });
+
+      // 현재 사용자의 오늘 챗봇 사용 횟수 (ChatCache에서 캐시 히트는 카운트 안 함)
+      // 별도 필드로 user_email 기반 추적을 위해 ChatCache에서 오늘 질문 수 확인
+      const todayChats = await base44.asServiceRole.entities.ChatCache.filter({});
+      const userTodayCount = todayChats.filter(c => 
+        c.created_by === user.email && 
+        c.created_date && 
+        c.created_date.slice(0, 10) === today &&
+        c.is_user_query === true
+      ).length;
+
+      if (userTodayCount >= DAILY_LIMIT) {
+        return Response.json({
+          error: 'rate_limit_exceeded',
+          message: '오늘의 AI 질문 횟수(5회)를 모두 사용했습니다. 내일 다시 이용해주세요!',
+          dailyLimit: DAILY_LIMIT,
+          usedCount: userTodayCount,
+        }, { status: 429 });
+      }
+    }
 
     if (!question) {
       return Response.json({ error: 'question is required' }, { status: 400 });
