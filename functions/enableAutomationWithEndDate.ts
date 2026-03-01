@@ -48,9 +48,12 @@ Deno.serve(async (req) => {
 
     const updateResult = await base44.asServiceRole.functions.invoke('updateScheduledTask', {
       taskId: automationId,
-      ends_type: 'on',
-      ends_on_date: endsOnDate,
-      ends_after_count: null
+      updates: {
+        is_active: true,
+        ends_type: 'on',
+        ends_on_date: endsOnDate,
+        ends_after_count: null
+      }
     });
 
     console.log(`[${VERSION}] Update result:`, JSON.stringify(updateResult?.data));
