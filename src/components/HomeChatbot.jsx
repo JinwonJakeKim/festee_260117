@@ -201,22 +201,38 @@ export default function HomeChatbot({ festivals = [] }) {
 
                     {/* 추천 축제 카드 */}
                     {message.recommendedFestivals?.length > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-2 mt-1">
+                        <p className="text-gray-500 text-xs px-1">🎪 추천 축제 · 탭해서 자세히 보기</p>
                         {message.recommendedFestivals.map((f) => (
                           <Link
                             key={f.id}
                             to={createPageUrl(`FestivalDetail?id=${f.id}`)}
                             onClick={() => setIsOpen(false)}
+                            className="block"
                           >
-                            <div className="bg-gray-800/80 border border-gray-700 hover:border-cyan-400/50 rounded-xl p-3 flex items-center gap-3 transition-all">
-                              {f.thumbnail_url && (
-                                <img src={f.thumbnail_url} alt={f.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" onError={(e) => e.target.style.display='none'} />
+                            <div className="bg-gray-800 border border-cyan-500/30 hover:border-cyan-400 rounded-xl overflow-hidden flex items-center gap-0 transition-all active:scale-95">
+                              {f.thumbnail_url ? (
+                                <img
+                                  src={f.thumbnail_url}
+                                  alt={f.name}
+                                  className="w-16 h-16 object-cover flex-shrink-0"
+                                  onError={(e) => { e.target.style.display='none'; }}
+                                />
+                              ) : (
+                                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-2xl">🎉</span>
+                                </div>
                               )}
-                              <div className="flex-1 min-w-0">
+                              <div className="flex-1 min-w-0 px-3 py-2">
                                 <p className="text-white text-xs font-bold truncate">{f.name}</p>
-                                <p className="text-gray-400 text-xs truncate">{f.city} · {f.date}</p>
+                                <p className="text-gray-400 text-xs mt-0.5 truncate">📍 {f.city}</p>
+                                <p className="text-cyan-400 text-xs mt-0.5">📅 {f.date}</p>
                               </div>
-                              <span className="text-cyan-400 text-xs">→</span>
+                              <div className="pr-3 flex-shrink-0">
+                                <div className="bg-cyan-500/20 rounded-full p-1.5">
+                                  <span className="text-cyan-400 text-xs font-bold">›</span>
+                                </div>
+                              </div>
                             </div>
                           </Link>
                         ))}
