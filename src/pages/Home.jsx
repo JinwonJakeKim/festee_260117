@@ -882,24 +882,6 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-            {quickFilters.map(filter => (
-              <Button
-                key={filter}
-                onClick={() => toggleTag(filter)}
-                variant="outline"
-                size="sm"
-                className={`rounded-full whitespace-nowrap h-8 text-xs transition-all ${
-                  selectedTags.includes(filter)
-                    ? 'bg-cyan-400 text-black border-cyan-400 hover:bg-cyan-500 hover:text-black'
-                    : 'border-gray-700 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-600 hover:text-white'
-                }`}
-              >
-                {filter}
-              </Button>
-            ))}
-          </div>
-
           {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
             <div className="mb-4 flex items-center gap-2 flex-wrap">
               <span className="text-gray-400 text-xs">활성 필터:</span>
