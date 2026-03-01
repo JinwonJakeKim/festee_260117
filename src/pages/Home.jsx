@@ -739,13 +739,10 @@ export default function Home() {
                 <div className="absolute bottom-4 left-4 right-20">
                   {banners[bannerIndex].type === 'festival' ? (
                     <>
-                      <p className="text-white text-base font-medium mb-1">
-                        Don't miss a moment of
-                      </p>
-                      <p className="text-white text-xl font-bold mb-2">
+                      <p className="text-white text-base font-bold mb-1">
                         {banners[bannerIndex].name}
                       </p>
-                      <p className="text-gray-300 text-sm">
+                      <p className="text-gray-300 text-xs">
                         {banners[bannerIndex].date}
                       </p>
                     </>
