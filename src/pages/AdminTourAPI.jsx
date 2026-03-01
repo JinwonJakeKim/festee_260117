@@ -257,48 +257,6 @@ export default function AdminTourAPI() {
       }
     });
 
-  const createScheduleMutation = useMutation({
-    mutationFn: async () => {
-      alert('⚠️ 스케줄 생성 기능은 시스템 제약으로 인해 현재 사용할 수 없습니다.\n\n관리자가 직접 스케줄을 생성해드렸습니다.');
-      throw new Error('Not supported');
-    },
-    onSuccess: () => {
-      refetchTasks();
-    },
-    onError: (error) => {
-      refetchTasks();
-    }
-  });
-
-  const toggleScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('toggleScheduledTask', { taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchTasks();
-    },
-    onError: (error) => {
-      alert(`상태 변경 실패:\n\n${error.message}`);
-    }
-  });
-
-  const deleteScheduleMutation = useMutation({
-    mutationFn: async (taskId) => {
-      const response = await base44.functions.invoke('deleteScheduledTask', { taskId });
-      return response.data;
-    },
-    onSuccess: () => {
-      refetchTasks();
-      alert('스케줄이 삭제되었습니다');
-    },
-    onError: (error) => {
-      alert(`스케줄 삭제 실패:\n\n${error.message}`);
-    }
-  });
-
-
-
   const areaCodes = [
     { value: "all", label: "전체" },
     { value: "1", label: "서울" },
