@@ -1085,10 +1085,12 @@ ${context}
         // ===== YouTube 동영상 검색 =====
         let youtubeShorts = [];
         let topVideoUrl = '';
+        let topVideoChannelName = '';
         
         console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
         const youtubeResult = await searchYouTubeVideos(rawData.title);
         topVideoUrl = youtubeResult.topVideoUrl;
+        topVideoChannelName = youtubeResult.topVideoChannelName || '';
         
         // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
         if (preservedYoutubeShorts.length >= 5) {
