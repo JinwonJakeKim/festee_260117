@@ -2392,17 +2392,8 @@ export default function AdminUrlExtraction() {
             )}
           </TabsContent>
 
-          <TabsContent value="automation" className="mt-4 space-y-4">
-            <Card className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border-cyan-400/30 p-4">
-              <h3 className="text-white font-bold mb-2">자동화 관리</h3>
-              <ul className="text-gray-300 text-sm space-y-1">
-                <li>✓ 소스 URL에서 축제 링크를 자동으로 추출합니다</li>
-                <li>✓ 대기 중인 링크를 자동으로 처리합니다</li>
-                <li>✓ 자동화 주기는 필요에 따라 조정하세요</li>
-              </ul>
-            </Card>
-
-            {/* 링크 추출 자동화 */}
+          {/* automation tab removed */}
+          <TabsContent value="__automation_removed__" className="mt-4 space-y-4">
             <Card className="bg-gray-900 border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
