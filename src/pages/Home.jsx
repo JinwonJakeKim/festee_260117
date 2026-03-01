@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
+import HomeChatbot from "../components/HomeChatbot";
 
 // 앱 초기 로드 시 홈 페이지로 리다이렉트 처리
 if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
