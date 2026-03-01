@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Globe, CheckCircle, Loader, MapPin, Calendar, AlertCircle, Database, RefreshCw, Trash2, Clock, Play, Pause, Power, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Globe, Loader, MapPin, Calendar, Database, RefreshCw, Trash2, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
