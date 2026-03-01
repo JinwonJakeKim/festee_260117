@@ -157,12 +157,29 @@ export default function HomeChatbot({ festivals = [] }) {
                   <p className="text-cyan-400 text-xs">축제 추천 · 정보 검색</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* 사용량 표시 */}
+                {usageInfo && !usageInfo.isAdmin && usageInfo.dailyLimit && (
+                  <div className="flex items-center gap-1.5 bg-gray-800 rounded-full px-3 py-1">
+                    <span className="text-xs text-gray-400">오늘</span>
+                    <span className={`text-xs font-bold ${usageInfo.usedCount >= usageInfo.dailyLimit ? 'text-red-400' : 'text-cyan-400'}`}>
+                      {usageInfo.usedCount}/{usageInfo.dailyLimit}
+                    </span>
+                    <span className="text-xs text-gray-400">회</span>
+                  </div>
+                )}
+                {usageInfo?.isAdmin && (
+                  <div className="bg-purple-900/50 border border-purple-500/30 rounded-full px-2 py-0.5">
+                    <span className="text-purple-400 text-xs font-bold">무제한</span>
+                  </div>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
             </div>
 
             {/* 메시지 목록 */}
