@@ -30,34 +30,11 @@ Deno.serve(async (req) => {
 
     console.log(`[${VERSION}] Target: ${automationId}, ends_on: ${endsOnDate}`);
 
-    // 1) 현재 자동화 상태 조회
-    const getRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
-      headers: { 'x-app-id': appId, 'Authorization': authHeader }
-    });
-
-    let currentIsActive = false;
-    if (getRes.ok) {
-      const currentData = await getRes.json();
-      currentIsActive = currentData.is_active || false;
-      console.log(`[${VERSION}] Current is_active: ${currentIsActive}`);
-    } else {
-      console.warn(`[${VERSION}] Could not GET current state: ${getRes.status}`);
-    }
-
-    // 2) 비활성 상태이면 toggleScheduledTask 함수 invoke로 활성화
-    if (!currentIsActive) {
-      const toggleResult = await base44.asServiceRole.functions.invoke('toggleScheduledTask', { taskId: automationId });
-      console.log(`[${VERSION}] Toggle result:`, toggleResult?.data);
-    } else {
-      console.log(`[${VERSION}] Already active, skipping toggle.`);
-    }
-
-    // 3) ends_type, ends_on_date, is_active 업데이트 (한 번에)
-    const updateRes = await fetch(`https://api.base44.com/api/scheduled-tasks/${automationId}`, {
-      method: 'PUT',
+    // 자동화 활성화 + ends_on_date 업데이트 (단일 PUT)
+    const updateRes = await fetch(`https://api.base44.com/api/apps/${appId}/automations/${automationId}`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'x-app-id': appId,
         'Authorization': authHeader
       },
       body: JSON.stringify({
@@ -70,11 +47,11 @@ Deno.serve(async (req) => {
 
     if (!updateRes.ok) {
       const errText = await updateRes.text();
-      console.error(`[${VERSION}] PUT update failed: ${updateRes.status} - ${errText}`);
-      // ends_on_date 업데이트 실패해도 활성화는 됐으므로 성공으로 간주
-    } else {
-      console.log(`[${VERSION}] ends_on_date updated successfully.`);
+      console.error(`[${VERSION}] PATCH failed: ${updateRes.status} - ${errText}`);
+      return Response.json({ success: false, error: `API update failed: ${updateRes.status}` }, { status: 500 });
     }
+
+    console.log(`[${VERSION}] ✅ 자동화 활성화 + ends_on_date 업데이트 완료`);
 
     console.log(`[${VERSION}] ✅ Done. Automation should be active now.`);
 
