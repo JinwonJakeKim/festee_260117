@@ -763,7 +763,18 @@ ${context}
             }
           }
           
-          // 2. festival_id로 못찾았으면 name_original로 검색
+          // 2. festival_id로 못찾았으면 tour_api_raw_data_id로 검색
+          if (!existingFestival) {
+            console.log(`[Transform] 🔍 Searching by tour_api_raw_data_id: "${rawDataId}"...`);
+            const festivalByRawId = await base44.asServiceRole.entities.Festival.filter({ tour_api_raw_data_id: rawDataId });
+            if (festivalByRawId && festivalByRawId.length > 0) {
+              existingFestival = festivalByRawId[0];
+              isUpdate = true;
+              console.log(`[Transform] ✓ Found existing Festival by tour_api_raw_data_id: ${existingFestival.id}`);
+            }
+          }
+          
+          // 3. 위에서 못찾았으면 name_original로 검색
           if (!existingFestival) {
             console.log(`[Transform] 🔍 Searching by name_original: "${rawData.title}"...`);
             const festivalByName = await base44.asServiceRole.entities.Festival.filter({ name_original: rawData.title });
