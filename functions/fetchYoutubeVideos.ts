@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
               const officialKeywords = [
                 '문화재청', '한국관광공사', '문화체육관광부', '국립문화재연구원',
                 '국립중앙박물관', '국립국악원', '한국문화재재단', '국가유산진흥원',
-                '공식', 'official'
+                '공식', 'official', 'seoul_4k', 'seoul'
               ];
               
               return officialKeywords.some(keyword => channelTitle.includes(keyword) || title.includes(keyword));
