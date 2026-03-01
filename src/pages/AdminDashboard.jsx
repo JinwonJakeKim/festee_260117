@@ -976,7 +976,7 @@ export default function AdminDashboard() {
                               />
                             </div>
                             <p className="text-gray-500 text-xs">
-                              월 무료 한도: 10,000 호출 · 잔여 {(monthlyLimit - monthlyUsage).toLocaleString()}회
+                              월 무료 한도: 10,000 호출 · 잔여 {(monthlyLimit - monthlyUsage).toLocaleString()}회 · <span className="text-yellow-400">매월 1일 PT 00:00 초기화</span>
                             </p>
                           </>
                         );
