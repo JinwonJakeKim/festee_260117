@@ -254,6 +254,29 @@ export default function HomeChatbot({ festivals = [] }) {
 
             {/* 입력창 */}
             <div className="p-4 border-t border-gray-800 bg-gray-900/50 rounded-b-2xl">
+              {/* 사용량 바 */}
+              {usageInfo && !usageInfo.isAdmin && usageInfo.dailyLimit && (
+                <div className="mb-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-gray-500">무료 사용량</span>
+                    <span className={`text-xs font-medium ${usageInfo.usedCount >= usageInfo.dailyLimit ? 'text-red-400' : 'text-gray-400'}`}>
+                      {usageInfo.dailyLimit - usageInfo.usedCount}회 남음
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-1.5">
+                    <div
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        usageInfo.usedCount >= usageInfo.dailyLimit
+                          ? 'bg-red-500'
+                          : usageInfo.usedCount >= usageInfo.dailyLimit - 1
+                          ? 'bg-yellow-500'
+                          : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                      }`}
+                      style={{ width: `${Math.min((usageInfo.usedCount / usageInfo.dailyLimit) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <Textarea
                   value={input}
