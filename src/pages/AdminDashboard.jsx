@@ -1199,11 +1199,10 @@ export default function AdminDashboard() {
             <Card className="bg-blue-900/20 border-blue-400/30 p-4 mt-4">
               <h4 className="text-blue-400 font-bold mb-2 text-sm">💡 API 사용량 안내</h4>
               <ul className="text-gray-300 text-xs space-y-1">
-                <li>• Google Custom Search와 YouTube Data API는 하루 100회 무료 제한이 있습니다</li>
-                <li>• YouTube API 사용량은 PT 00:00 (한국시간 17:00/서머타임 시 18:00)에 초기화됩니다</li>
-                <li>• Google Custom Search API는 UTC 00:00 (한국시간 09:00)에 초기화됩니다</li>
+                <li>• <strong className="text-yellow-300">GCP의 모든 API</strong>는 태평양시(PT) 기준으로 초기화됩니다 (표준시 KST -17h, 서머타임 KST -16h)</li>
+                <li>• <strong className="text-white">일간 리셋:</strong> YouTube Data API, Google Custom Search API → 매일 PT 00:00 초기화</li>
+                <li>• <strong className="text-white">월간 리셋:</strong> Google Translation API, Geocoding API → 매월 1일 PT 00:00 초기화</li>
                 <li>• 변환/재변환 작업 시 자동으로 API 사용량이 추적됩니다</li>
-                <li>• Geocoding API는 월 10,000회 무료 제한이 있으며, 월 초에 자동 리셋됩니다</li>
                 <li>• TourAPI와 Eventbrite는 충분한 무료 한도를 제공합니다</li>
               </ul>
             </Card>
