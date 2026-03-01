@@ -148,10 +148,10 @@ const getCountryNameInKorean = (country) => {
 };
 
 const getRankColor = (index) => {
-  if (index === 0) return "bg-gradient-to-r from-yellow-400 to-orange-500";
-  if (index === 1) return "bg-gradient-to-r from-gray-300 to-gray-400";
-  if (index === 2) return "bg-gradient-to-r from-amber-600 to-amber-700";
-  return "bg-gray-700";
+  if (index === 0) return "bg-cyan-400 text-black";
+  if (index === 1) return "bg-gray-600 text-white";
+  if (index === 2) return "bg-gray-700 text-white";
+  return "bg-gray-800 text-gray-400";
 };
 
 export default function Home() {
