@@ -777,8 +777,8 @@ export default function AdminTourAPI() {
                     </div>
                     {selectedRawData.filter(id => processedData.find(r => r.id === id)).length > 0 && (
                       <div className="flex gap-2">
-                        <Button onClick={() => handleTransform(selectedRawData.filter(id => processedData.find(r => r.id === id)), true)} className="flex-1 bg-orange-500 hover:bg-orange-600">
-                          <RefreshCw className="w-4 h-4 mr-2" />선택 재변환
+                        <Button onClick={() => handleTransform(selectedRawData.filter(id => processedData.find(r => r.id === id)), true)} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white">
+                          <RefreshCw className="w-4 h-4 mr-2" />재변환
                         </Button>
                         <Button onClick={() => {
                           const ids = selectedRawData.filter(id => processedData.find(r => r.id === id));
