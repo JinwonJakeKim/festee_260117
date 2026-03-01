@@ -782,7 +782,7 @@ export default function Home() {
         {/* Top Festival Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-2xl font-bold">Top Festival</h2>
+            <h2 className="text-white text-2xl font-bold">축제 차트</h2>
             <Link to={createPageUrl("FestivalMore")}>
               <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
                 더보기 →
