@@ -1289,6 +1289,8 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <HomeChatbot festivals={festivals} />
     </div>
   );
 }
