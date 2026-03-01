@@ -1,5 +1,30 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// 질문을 정규화 + 해시하는 함수 (비슷한 질문은 같은 캐시로)
+function normalizeQuestion(question) {
+  return question
+    .trim()
+    .toLowerCase()
+    .replace(/[?？！!]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[은는이가을를의]/g, '') // 조사 제거
+    .trim();
+}
+
+async function hashString(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+
+// 날짜/시간 관련 키워드가 있으면 캐시하지 않음 (실시간성 필요)
+function isTimeSensitive(question) {
+  const timeKeywords = ['오늘', '내일', '이번주', '이번달', '이번 주', '이번 달', '지금', '현재'];
+  return timeKeywords.some(kw => question.includes(kw));
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -7,6 +32,40 @@ Deno.serve(async (req) => {
 
     if (!question) {
       return Response.json({ error: 'question is required' }, { status: 400 });
+    }
+
+    const normalized = normalizeQuestion(question);
+    const questionHash = await hashString(normalized);
+    const isConversational = conversationHistory.length > 2; // 대화 중간은 캐시 안함
+    const timeSensitive = isTimeSensitive(question);
+    const shouldCache = !isConversational && !timeSensitive;
+
+    // 캐시 확인
+    if (shouldCache) {
+      const cached = await base44.asServiceRole.entities.ChatCache.filter({ question_hash: questionHash });
+      const validCache = cached.find(c => c.expires_at && new Date(c.expires_at) > new Date());
+      if (validCache) {
+        // 캐시된 응답에서 추천 축제 매핑
+        const recommendedFestivals = (validCache.recommended_festival_ids || [])
+          .map(id => {
+            const f = festivals.find(fest => fest.id === id);
+            if (!f) return null;
+            return {
+              id: f.id,
+              name: f.name_ko || f.name_en || f.name_original,
+              city: f.city_ko || f.city,
+              date: f.start_date ? f.start_date.slice(0, 10) : '날짜 미정',
+              thumbnail_url: f.thumbnail_url || null,
+            };
+          })
+          .filter(Boolean);
+
+        return Response.json({
+          answer: validCache.answer,
+          recommendedFestivals,
+          cached: true,
+        });
+      }
     }
 
     // 축제 데이터를 LLM이 이해하기 쉬운 텍스트로 변환
@@ -18,7 +77,6 @@ Deno.serve(async (req) => {
       return `[ID:${f.id}] ${name} | 위치: ${f.city_ko || f.city}, ${f.country} | 카테고리: ${f.category || '기타'} | 날짜: ${dateStr} | 가격: ${priceStr} | 좋아요: ${f.likes_count || 0} | 태그: ${tags}`;
     }).join('\n');
 
-    // 대화 이력 구성
     const historyText = conversationHistory.length > 0
       ? conversationHistory.map(m => `${m.role === 'user' ? '사용자' : 'AI'}: ${m.content}`).join('\n')
       : '';
@@ -71,26 +129,43 @@ ${question}
       }
     });
 
-    // 추천 축제 ID로 실제 축제 데이터 찾기
     const recommendedFestivals = (result.recommendedFestivalIds || [])
       .map(id => {
         const f = festivals.find(fest => fest.id === id);
         if (!f) return null;
-        const name = f.name_ko || f.name_en || f.name_original;
-        const dateStr = f.start_date ? f.start_date.slice(0, 10) : '날짜 미정';
         return {
           id: f.id,
-          name,
+          name: f.name_ko || f.name_en || f.name_original,
           city: f.city_ko || f.city,
-          date: dateStr,
+          date: f.start_date ? f.start_date.slice(0, 10) : '날짜 미정',
           thumbnail_url: f.thumbnail_url || null,
         };
       })
       .filter(Boolean);
 
+    // 캐시에 저장 (24시간 유효)
+    if (shouldCache && result.answer) {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      // 기존 캐시 삭제 후 신규 저장
+      const existingCaches = await base44.asServiceRole.entities.ChatCache.filter({ question_hash: questionHash });
+      for (const old of existingCaches) {
+        await base44.asServiceRole.entities.ChatCache.delete(old.id);
+      }
+
+      await base44.asServiceRole.entities.ChatCache.create({
+        question_hash: questionHash,
+        question: question.slice(0, 500),
+        answer: result.answer,
+        recommended_festival_ids: result.recommendedFestivalIds || [],
+        expires_at: expiresAt,
+      });
+    }
+
     return Response.json({
       answer: result.answer,
       recommendedFestivals,
+      cached: false,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
