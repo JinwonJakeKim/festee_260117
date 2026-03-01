@@ -241,8 +241,12 @@ export default function Search() {
   // 검색어만 적용된 결과 (위치 필터 제외) - 위치 모달의 도시별 카운터에 사용
   const searchOnlyFestivals = useMemo(() => {
     if (!searchQuery) return [];
+    const monthFilter = extractMonthFromQuery(searchQuery);
     return festivals.filter(festival => {
       try {
+        if (monthFilter !== null) {
+          return festivalIncludesMonth(festival, monthFilter);
+        }
         return safeStringIncludes(festival.name, searchQuery) ||
           safeStringIncludes(festival.name_ko, searchQuery) ||
           safeStringIncludes(festival.name_en, searchQuery) ||
