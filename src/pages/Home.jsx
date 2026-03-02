@@ -805,8 +805,7 @@ export default function Home() {
                       style={{
                         backgroundColor: '#000',
                         transform: isCenter ? 'scale(1)' : 'scale(0.95)',
-                        opacity: isCenter ? 1 : 0.5,
-                        transition: 'transform 300ms, opacity 300ms',
+                        transition: 'transform 300ms',
                       }}
                       className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
                     >
@@ -816,6 +815,12 @@ export default function Home() {
                         className="w-full h-full object-cover"
                         style={{ backgroundColor: '#000', display: 'block' }}
                       />
+                      {/* 반투명 오버레이 레이어 */}
+                      {!isCenter && (
+                        <div 
+                          className="absolute inset-0 bg-black/50 z-10 pointer-events-none transition-opacity duration-300" 
+                        />
+                      )}
 
                       {isCenter && banner.type === 'ad' && banner.videoUrl && (
                         <div className="absolute bottom-4 right-4">
