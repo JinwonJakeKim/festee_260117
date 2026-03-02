@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   const [selectedAds, setSelectedAds] = useState(new Set());
   const [festivalBannerSearch, setFestivalBannerSearch] = useState("");
   const [featuredFestivalIds, setFeaturedFestivalIds] = useState([]);
+  const [popularityLogs, setPopularityLogs] = useState([]);
+  const [isCollectingPopularity, setIsCollectingPopularity] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -572,7 +574,7 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="px-4 py-4">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-5">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-6">
             <TabsTrigger value="festivals" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               축제 관리
             </TabsTrigger>
@@ -584,6 +586,9 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="ads" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               배너 관리
+            </TabsTrigger>
+            <TabsTrigger value="popularity" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
+              인기도 수집
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               API
@@ -1097,6 +1102,118 @@ export default function AdminDashboard() {
                   </Card>
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          {/* 인기도 수집 탭 */}
+          <TabsContent value="popularity" className="mt-4">
+            <Card className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 border-cyan-400/30 p-4 mb-4">
+              <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-cyan-400" />
+                축제 인기도 수집
+              </h3>
+              <p className="text-gray-300 text-sm">
+                YouTube API를 사용하여 각 축제의 관련 영상 조회수를 수집합니다. 실행 시점 이후 종료되는 축제만 대상입니다.
+              </p>
+            </Card>
+
+            <Card className="bg-gray-900 border-gray-800 p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-white font-bold mb-1">수집 시작</h3>
+                  <p className="text-gray-400 text-sm">
+                    {new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} 기준으로 수집됩니다
+                  </p>
+                </div>
+                <Button
+                  onClick={async () => {
+                    setIsCollectingPopularity(true);
+                    try {
+                      const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {});
+                      setPopularityLogs([{
+                        timestamp: new Date().toISOString(),
+                        status: 'success',
+                        result
+                      }, ...popularityLogs]);
+                      alert('인기도 수집이 완료되었습니다');
+                    } catch (error) {
+                      setPopularityLogs([{
+                        timestamp: new Date().toISOString(),
+                        status: 'error',
+                        error: error.message
+                      }, ...popularityLogs]);
+                      alert('수집 중 오류가 발생했습니다: ' + error.message);
+                    } finally {
+                      setIsCollectingPopularity(false);
+                    }
+                  }}
+                  disabled={isCollectingPopularity}
+                  className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold"
+                >
+                  {isCollectingPopularity ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      수집 중...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      지금 수집 시작
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+
+            <div>
+              <h3 className="text-white font-bold mb-3">최근 수집 로그</h3>
+              {popularityLogs.length === 0 ? (
+                <Card className="bg-gray-900 border-gray-800 p-8 text-center">
+                  <p className="text-gray-500">수집 기록이 없습니다</p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {popularityLogs.map((log, idx) => (
+                    <Card
+                      key={idx}
+                      className={`border p-4 ${
+                        log.status === 'success'
+                          ? 'bg-green-900/20 border-green-400/30'
+                          : 'bg-red-900/20 border-red-400/30'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {log.status === 'success' ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-1" />
+                        )}
+                        <div className="flex-1">
+                          <p className={`font-bold mb-1 ${log.status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                            {log.status === 'success' ? '수집 완료' : '수집 실패'}
+                          </p>
+                          <p className="text-gray-400 text-sm mb-2">
+                            {new Date(log.timestamp).toLocaleString('ko-KR')}
+                          </p>
+                          {log.status === 'success' && log.result && (
+                            <div className="text-xs text-gray-300 space-y-1 bg-gray-800/50 rounded p-2">
+                              <p>📊 처리된 축제: {log.result.total_festivals_processed}개</p>
+                              <p>✓ 성공: {log.result.success_count}개</p>
+                              <p>✗ 실패: {log.result.error_count}개</p>
+                              <p>📅 측정 기간: {log.result.metric_period_start} ~ {log.result.metric_period_end}</p>
+                            </div>
+                          )}
+                          {log.status === 'error' && (
+                            <p className="text-xs text-red-300 bg-red-800/50 rounded p-2">
+                              {log.error}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
 
