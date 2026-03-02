@@ -800,7 +800,7 @@ export default function Home() {
                     }}
                   >
                     <div
-                      className={`relative h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                      className={`relative h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-black ${
                         isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-50'
                       }`}
                     >
