@@ -771,7 +771,7 @@ export default function Home() {
         <div className="py-4">
           {/* 캐러셀 트랙 - overflow visible로 양쪽 이미지 노출 */}
           <div
-            className="relative overflow-hidden"
+            className="relative overflow-hidden bg-black"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
