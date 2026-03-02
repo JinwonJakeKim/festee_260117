@@ -463,7 +463,7 @@ export default function Home() {
 
     const result = [];
 
-    advertisements.forEach(ad => {
+    advertisements.filter(ad => ad.is_active !== false).forEach(ad => {
       // 광고 배너 추가
       result.push({
         type: 'ad',
