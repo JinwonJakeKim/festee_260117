@@ -79,6 +79,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
+    // 요청 본문에서 festival_id 확인 (특정 축제만 수집하는 경우)
+    let body = {};
+    try {
+      body = await req.json();
+    } catch (e) {
+      // JSON 파싱 실패 시 무시
+    }
+
     // 실행 시점의 측정 기간 계산
     const executionDate = new Date();
     const { start: periodStart, end: periodEnd, startDate } = calculateMetricPeriod(executionDate);
@@ -89,12 +97,19 @@ Deno.serve(async (req) => {
     // 모든 축제 조회
     const allFestivals = await base44.entities.Festival.list();
     
-    // 필터링: 실행 시점 이후에 끝나는 축제만 수집
-    const targetFestivals = allFestivals.filter(festival => {
-      if (!festival.end_date) return false;
-      const festivalEndDate = new Date(festival.end_date);
-      return festivalEndDate >= startDate;
-    });
+    // 필터링: 특정 축제만 수집하거나, 실행 시점 이후에 끝나는 축제만 수집
+    let targetFestivals;
+    if (body.festival_id) {
+      // 특정 축제만 수집
+      targetFestivals = allFestivals.filter(f => f.id === body.festival_id);
+    } else {
+      // 실행 시점 이후에 끝나는 축제만 수집
+      targetFestivals = allFestivals.filter(festival => {
+        if (!festival.end_date) return false;
+        const festivalEndDate = new Date(festival.end_date);
+        return festivalEndDate >= startDate;
+      });
+    }
 
     console.log(`[collectFestivalPopularity] Found ${targetFestivals.length} target festivals out of ${allFestivals.length} total`);
 
