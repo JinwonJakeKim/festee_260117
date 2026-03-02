@@ -771,7 +771,7 @@ export default function Home() {
           {/* 캐러셀 트랙 */}
           <div
             className="relative overflow-hidden"
-            style={{ height: '208px', background: '#000' }}
+            style={{ height: '208px', backgroundColor: '#000' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -780,9 +780,8 @@ export default function Home() {
               className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 height: '208px',
-                background: '#000',
-                gap: '12px',
-                transform: `translateX(calc(9vw - (${bannerIndex + 1} * (82vw + 12px)) + ${dragOffset}px))`,
+                backgroundColor: '#000',
+                transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
@@ -791,7 +790,7 @@ export default function Home() {
                   <div
                     key={idx}
                     className="flex-shrink-0"
-                    style={{ width: '82vw', height: '208px', backgroundColor: '#000' }}
+                    style={{ width: '84vw', height: '208px', padding: '0 8px', backgroundColor: '#000' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
@@ -805,63 +804,53 @@ export default function Home() {
                     <div
                       style={{
                         backgroundColor: '#000',
-                        padding: '1px',
-                        transform: isCenter ? 'scale(1) translateZ(0)' : 'scale(0.95) translateZ(0)',
+                        transform: isCenter ? 'scale(1)' : 'scale(0.95)',
                         transition: 'transform 300ms',
-                        borderRadius: '17px',
                       }}
-                      className="relative w-full h-full cursor-pointer"
+                      className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
                     >
-                      <div
-                        style={{
-                          backgroundColor: '#000',
-                          WebkitMaskImage: '-webkit-radial-gradient(white, black)',
-                        }}
-                        className="relative w-full h-full rounded-2xl overflow-hidden"
-                      >
-                        <img
-                          src={banner.image}
-                          alt={banner.name}
-                          className="w-full h-full object-cover"
-                          style={{ backgroundColor: '#000', display: 'block' }}
+                      <img
+                        src={banner.image}
+                        alt={banner.name}
+                        className="w-full h-full object-cover"
+                        style={{ backgroundColor: '#000', display: 'block' }}
+                      />
+                      {/* 반투명 오버레이 레이어 */}
+                      {!isCenter && (
+                        <div 
+                          className="absolute inset-0 bg-black/50 z-10 pointer-events-none transition-opacity duration-300" 
                         />
-                        {/* 반투명 오버레이 레이어 */}
-                        {!isCenter && (
-                          <div 
-                            className="absolute inset-0 bg-black/50 z-10 pointer-events-none transition-opacity duration-300" 
-                          />
-                        )}
+                      )}
 
-                        {isCenter && banner.type === 'ad' && banner.videoUrl && (
-                          <div className="absolute bottom-4 right-4">
-                            <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
-                              <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
-                            </div>
+                      {isCenter && banner.type === 'ad' && banner.videoUrl && (
+                        <div className="absolute bottom-4 right-4">
+                          <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
+                            <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
                           </div>
-                        )}
-
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                          {banner.type === 'festival' ? (
-                            <>
-                              <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
-                                {banner.name}
-                              </p>
-                              <p className="text-gray-200 text-xs drop-shadow">
-                                {banner.date}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
-                              <p className="text-white text-xl font-bold mb-1 drop-shadow-lg">
-                                {banner.name}
-                              </p>
-                              <p className="text-gray-200 text-sm drop-shadow">
-                                {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
-                              </p>
-                            </>
-                          )}
                         </div>
+                      )}
+
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                        {banner.type === 'festival' ? (
+                          <>
+                            <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
+                              {banner.name}
+                            </p>
+                            <p className="text-gray-200 text-xs drop-shadow">
+                              {banner.date}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
+                            <p className="text-white text-xl font-bold mb-1 drop-shadow-lg">
+                              {banner.name}
+                            </p>
+                            <p className="text-gray-200 text-sm drop-shadow">
+                              {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
