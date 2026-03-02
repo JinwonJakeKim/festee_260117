@@ -450,30 +450,47 @@ export default function Home() {
   });
 
   const banners = useMemo(() => {
-    const festivalBanners = filteredFestivals.slice(0, 3).map(festival => ({
+    const makeFestivalBanner = (festival) => ({
       type: 'festival',
       id: festival.id,
       name: getLocalizedContent(festival, 'name'),
       image: festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-      date: festival.start_date && festival.end_date 
+      date: festival.start_date && festival.end_date
         ? `${safeFormatDate(festival.start_date, 'M월 d일')}-${safeFormatDate(festival.end_date, 'M월 d일')}`
         : '날짜 미정',
-    }));
+    });
 
-    const adBanners = advertisements.map(ad => ({
-      type: 'ad',
-      name: ad.name || 'Advertisement',
-      image: ad.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-      videoUrl: ad.video_url,
-      link: ad.link_url,
-    }));
-    
-    if (adBanners.length > 0) {
-      return [adBanners[0], ...festivalBanners, ...adBanners.slice(1)];
+    const result = [];
+
+    advertisements.forEach(ad => {
+      // 광고 배너 추가
+      result.push({
+        type: 'ad',
+        name: ad.name || 'Advertisement',
+        image: ad.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+        videoUrl: ad.video_url,
+        link: ad.link_url,
+      });
+
+      // 이 광고에 지정된 축제들 추가
+      if (ad.featured_festival_ids && ad.featured_festival_ids.length > 0) {
+        ad.featured_festival_ids.forEach(fid => {
+          const festival = festivals.find(f => f.id === fid);
+          if (festival) result.push(makeFestivalBanner(festival));
+        });
+      }
+    });
+
+    // 광고가 없거나 지정 축제가 없으면 인기 축제 자동 배치
+    if (result.length === 0) {
+      filteredFestivals.slice(0, 3).forEach(f => result.push(makeFestivalBanner(f)));
+    } else if (!advertisements.some(ad => ad.featured_festival_ids?.length > 0)) {
+      // 광고는 있지만 지정 축제가 하나도 없으면 인기 축제 추가
+      filteredFestivals.slice(0, 3).forEach(f => result.push(makeFestivalBanner(f)));
     }
-    
-    return festivalBanners;
-  }, [filteredFestivals, advertisements, getLocalizedContent]);
+
+    return result;
+  }, [filteredFestivals, festivals, advertisements, getLocalizedContent]);
 
   const countries = [...new Set(festivals.map(f => f.country))];
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
