@@ -768,7 +768,7 @@ export default function Home() {
 
       {banners.length > 0 && (
         <div className="py-4" style={{ backgroundColor: '#000' }}>
-          {/* 캐러셀 트랙 - overflow visible로 양쪽 이미지 노출 */}
+          {/* 캐러셀 트랙 */}
           <div
             className="relative overflow-hidden"
             style={{ height: '208px', backgroundColor: '#000' }}
@@ -780,6 +780,7 @@ export default function Home() {
               className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 height: '208px',
+                backgroundColor: '#000',
                 transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
@@ -801,10 +802,13 @@ export default function Home() {
                     }}
                   >
                     <div
-                      style={{ backgroundColor: '#000' }}
-                      className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                        isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-50'
-                      }`}
+                      style={{
+                        backgroundColor: '#000',
+                        transform: isCenter ? 'scale(1)' : 'scale(0.95)',
+                        opacity: isCenter ? 1 : 0.5,
+                        transition: 'transform 300ms, opacity 300ms',
+                      }}
+                      className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
                     >
                       <img
                         src={banner.image}
