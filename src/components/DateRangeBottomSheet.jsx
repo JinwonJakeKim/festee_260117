@@ -151,7 +151,7 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
             </div>
 
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <div className="px-4 py-3 border-b border-black flex items-center justify-between flex-shrink-0">
               <h2 className="text-lg font-bold text-white">날짜 선택</h2>
               <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
                 <X className="w-4 h-4 text-white" />
