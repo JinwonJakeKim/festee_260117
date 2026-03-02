@@ -1105,7 +1105,7 @@ export default function Home() {
 
         {topUsers.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-white text-xl font-bold mb-4">Festival Ranker</h2>
+            <h2 className="text-white text-xl font-bold mb-4">페스티 랭커</h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
                 {topUsers.map((user) => (
