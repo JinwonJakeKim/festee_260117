@@ -244,7 +244,9 @@ export default function LocationBottomModal({
             {resultCount}개 결과 보기
           </Button>
         </div>
-      </div>
+      </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 }
