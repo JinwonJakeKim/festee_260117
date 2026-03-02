@@ -785,7 +785,6 @@ export default function Search() {
                 setStarRange([1, 5]);
                 setPriceRange([0, 500000]);
                 setDateRange({ from: null, to: null });
-                setTempDateRange({ from: null, to: null }); // Also reset temp date range
                 setHidePastFestivals(false);
                 // URL 파라미터 초기화
                 updateUrlParams({ q: '', country: '', city: '', categories: [], tags: [] });
