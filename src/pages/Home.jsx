@@ -726,7 +726,7 @@ export default function Home() {
                   alt={banners[bannerIndex].name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 
                 {banners[bannerIndex].type === 'ad' && banners[bannerIndex].videoUrl && (
                   <div className="absolute bottom-4 right-4">
