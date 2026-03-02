@@ -159,23 +159,6 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
               </button>
             </div>
 
-            {/* Selected Range Display */}
-            <div className="px-4 py-3 flex items-center gap-2 flex-shrink-0">
-              <div className={`flex-1 rounded-xl px-3 py-2 text-center ${tempRange?.from ? 'bg-cyan-500/20 border border-cyan-500' : 'bg-gray-900 border border-gray-700'}`}>
-                <p className="text-gray-400 text-xs mb-0.5">시작일</p>
-                <p className={`text-sm font-bold ${tempRange?.from ? 'text-cyan-400' : 'text-gray-500'}`}>
-                  {tempRange?.from ? safeFormat(tempRange.from, 'M월 d일') : '선택 없음'}
-                </p>
-              </div>
-              <div className="w-6 text-gray-600 text-center">→</div>
-              <div className={`flex-1 rounded-xl px-3 py-2 text-center ${tempRange?.to ? 'bg-cyan-500/20 border border-cyan-500' : 'bg-gray-900 border border-gray-700'}`}>
-                <p className="text-gray-400 text-xs mb-0.5">종료일</p>
-                <p className={`text-sm font-bold ${tempRange?.to ? 'text-cyan-400' : 'text-gray-500'}`}>
-                  {tempRange?.to ? safeFormat(tempRange.to, 'M월 d일') : '선택 없음'}
-                </p>
-              </div>
-            </div>
-
             {/* Scrollable Calendar */}
             <div ref={scrollRef} className="overflow-y-auto flex-1 px-4 pt-2">
               {months.map((monthDate, idx) => (
