@@ -246,7 +246,7 @@ export default function LocationBottomModal({
         </div>
       </motion.div>
     </div>
-      )}
+    )}
     </AnimatePresence>
   );
 }
