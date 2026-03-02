@@ -804,10 +804,11 @@ export default function Home() {
                     <div
                       style={{
                         backgroundColor: '#000',
-                        transform: isCenter ? 'scale(1)' : 'scale(0.95)',
+                        transform: isCenter ? 'scale(1) translateZ(0)' : 'scale(0.95) translateZ(0)',
                         transition: 'transform 300ms',
+                        WebkitMaskImage: '-webkit-radial-gradient(white, black)', // WebKit border-radius 렌더링 버그 수정
                       }}
-                      className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer"
+                      className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer ring-1 ring-inset ring-black border border-black"
                     >
                       <img
                         src={banner.image}
