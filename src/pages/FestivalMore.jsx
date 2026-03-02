@@ -205,7 +205,6 @@ export default function FestivalMore() {
         message="축제에 좋아요를 누르려면 로그인이 필요합니다"
       />
 
-      {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
@@ -228,12 +227,10 @@ export default function FestivalMore() {
       </div>
 
       <div className="px-4 pt-4">
-        {/* 홈과 동일한 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-2xl font-bold">축제 차트</h2>
         </div>
 
-        {/* 홈과 동일한 필터 */}
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
           <Select value={countryFilter} onValueChange={setCountryFilter}>
             <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
@@ -317,7 +314,6 @@ export default function FestivalMore() {
           </AnimatePresence>
         </div>
 
-        {/* 활성 필터 - 홈과 동일 */}
         {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
           <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-gray-400 text-xs">활성 필터:</span>
@@ -352,7 +348,6 @@ export default function FestivalMore() {
           </div>
         )}
 
-        {/* 전체 리스트 (홈은 5개, 더보기는 전체) */}
         <div className="space-y-3">
           {filteredFestivals.map((festival, index) => (
             <FestivalListItem
