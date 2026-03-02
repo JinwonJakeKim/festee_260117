@@ -100,8 +100,7 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
       setTimeout(() => {
         if (scrollRef.current) {
           // 현재 달은 index 3 (앞에 3개 이전 달)
-          const monthHeight = scrollRef.current.scrollHeight / months.length;
-          scrollRef.current.scrollTop = monthHeight * 3;
+          scrollRef.current.scrollTop = 0;
         }
       }, 100);
     }
@@ -160,7 +159,7 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
             </div>
 
             {/* Scrollable Calendar */}
-            <div ref={scrollRef} className="overflow-y-auto flex-1 px-4 pt-2">
+            <div ref={scrollRef} className="overflow-y-auto flex-1 px-4 pt-4">
               {months.map((monthDate, idx) => (
                 <MonthCalendar
                   key={idx}
