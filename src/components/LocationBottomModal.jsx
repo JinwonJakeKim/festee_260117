@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { X, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const safeStringIncludes = (str, search) => {
   if (typeof str !== 'string' || typeof search !== 'string') return false;
