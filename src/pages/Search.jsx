@@ -880,117 +880,125 @@ export default function Search() {
       )}
 
       {/* Filter Bottom Modal */}
-      {searchQuery && showFilters && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setShowFilters(false)} />
-          <div className="relative bg-gray-950 rounded-t-3xl flex flex-col max-h-[85vh]">
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-gray-700" />
-            </div>
-
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">필터</h2>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-              <div>
-                <h3 className="text-white font-bold mb-2">카테고리</h3>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map(category => (
-                    <Badge
-                      key={category}
-                      onClick={() => toggleCategory(category)}
-                      className={`cursor-pointer ${selectedCategories.includes(category) ? 'bg-cyan-400 text-black' : 'bg-gray-800 text-white'}`}
-                    >
-                      {category}
-                    </Badge>
-                  ))}
-                </div>
+      <AnimatePresence>
+        {searchQuery && showFilters && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowFilters(false)}
+              className="fixed inset-0 bg-black/60 z-[100]"
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed left-0 right-0 z-[101] bg-gray-950 rounded-t-3xl flex flex-col"
+              style={{ bottom: '64px', maxHeight: 'calc(85vh - 64px)' }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                <div className="w-10 h-1 rounded-full bg-gray-700" />
               </div>
 
-              <div>
-                <h3 className="text-white font-bold mb-2">TAG</h3>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map(tag => (
-                    <Badge
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`cursor-pointer ${selectedTags.includes(tag) ? 'bg-pink-500 text-white' : 'bg-gray-800 text-white'}`}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+                <h2 className="text-lg font-bold text-white">필터</h2>
+                <button onClick={() => setShowFilters(false)} className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+                  <X className="w-4 h-4 text-white" />
+                </button>
               </div>
 
-              <div>
-                <h3 className="text-white font-bold mb-2">Likes</h3>
-                <div className="flex items-center gap-4">
-                  <span className="text-gray-400 text-sm">{likesRange[0]}</span>
-                  <Slider value={likesRange} onValueChange={setLikesRange} max={1000000} step={1000} className="flex-1" />
-                  <span className="text-gray-400 text-sm">{likesRange[1].toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-white font-bold mb-2">FESTEE Star</h3>
-                <div className="flex items-center gap-4">
-                  <div className="flex">
-                    {Array.from({ length: starRange[0] }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                    ))}
-                  </div>
-                  <Slider value={starRange} onValueChange={setStarRange} max={5} min={1} step={1} className="flex-1" />
-                  <div className="flex">
-                    {Array.from({ length: starRange[1] }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+                <div>
+                  <h3 className="text-white font-bold mb-2">카테고리</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(category => (
+                      <Badge
+                        key={category}
+                        onClick={() => toggleCategory(category)}
+                        className={`cursor-pointer ${selectedCategories.includes(category) ? 'bg-cyan-400 text-black' : 'bg-gray-800 text-white'}`}
+                      >
+                        {category}
+                      </Badge>
                     ))}
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <h3 className="text-white font-bold mb-2">금액 (원)</h3>
-                <div className="flex items-center gap-4">
-                  <span className="text-gray-400 text-sm">₩{priceRange[0].toLocaleString()}</span>
-                  <Slider value={priceRange} onValueChange={setPriceRange} max={500000} step={10000} className="flex-1" />
-                  <span className="text-gray-400 text-sm">₩{priceRange[1].toLocaleString()}</span>
+                <div>
+                  <h3 className="text-white font-bold mb-2">TAG</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map(tag => (
+                      <Badge
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`cursor-pointer ${selectedTags.includes(tag) ? 'bg-pink-500 text-white' : 'bg-gray-800 text-white'}`}
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold mb-2">Likes</h3>
+                  <div className="flex items-center gap-4">
+                    <span className="text-gray-400 text-sm">{likesRange[0]}</span>
+                    <Slider value={likesRange} onValueChange={setLikesRange} max={1000000} step={1000} className="flex-1" />
+                    <span className="text-gray-400 text-sm">{likesRange[1].toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold mb-2">FESTEE Star</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex">
+                      {Array.from({ length: starRange[0] }).map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                    <Slider value={starRange} onValueChange={setStarRange} max={5} min={1} step={1} className="flex-1" />
+                    <div className="flex">
+                      {Array.from({ length: starRange[1] }).map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold mb-2">금액 (원)</h3>
+                  <div className="flex items-center gap-4">
+                    <span className="text-gray-400 text-sm">₩{priceRange[0].toLocaleString()}</span>
+                    <Slider value={priceRange} onValueChange={setPriceRange} max={500000} step={10000} className="flex-1" />
+                    <span className="text-gray-400 text-sm">₩{priceRange[1].toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Buttons */}
-            <div className="px-4 py-4 border-t border-gray-800 flex gap-2">
-              <Button
-                onClick={() => {
-                  setLikesRange([0, 1000000]);
-                  setStarRange([1, 5]);
-                  setPriceRange([0, 500000]);
-                  setDateRange({ from: null, to: null });
-                  setHidePastFestivals(false);
-                  updateUrlParams({ q: searchQuery, country: '', city: '', categories: [], tags: [] });
-                }}
-                variant="outline"
-                className="flex-1 bg-gray-800 text-white border-gray-700"
-              >
-                초기화
-              </Button>
-              <Button onClick={() => setShowFilters(false)} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
-                적용
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+              {/* Buttons */}
+              <div className="px-4 py-4 border-t border-gray-800 flex gap-2 flex-shrink-0" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+                <Button
+                  onClick={() => {
+                    setLikesRange([0, 1000000]);
+                    setStarRange([1, 5]);
+                    setPriceRange([0, 500000]);
+                    setDateRange({ from: null, to: null });
+                    setHidePastFestivals(false);
+                    updateUrlParams({ q: searchQuery, country: '', city: '', categories: [], tags: [] });
+                  }}
+                  variant="outline"
+                  className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+                >
+                  초기화
+                </Button>
+                <Button onClick={() => setShowFilters(false)} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white">
+                  적용
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
