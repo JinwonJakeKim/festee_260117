@@ -620,12 +620,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (banners.length === 0) return;
+    if (banners.length === 0 || isDragging) return;
     const timer = setInterval(() => {
       setBannerIndex((prev) => prev + 1);
     }, 5000);
     return () => clearInterval(timer);
-  }, [banners.length]);
+  }, [banners.length, isDragging]);
 
   const handleLoginRedirect = () => {
     base44.auth.redirectToLogin(window.location.pathname);
