@@ -728,56 +728,82 @@ export default function Home() {
       </AnimatePresence>
 
       {banners.length > 0 && (
-        <div className="px-4 py-4">
-          <div 
-            className="relative h-48 rounded-2xl overflow-hidden cursor-pointer group"
+        <div className="py-4 overflow-hidden">
+          {/* 캐러셀 트랙 */}
+          <div
+            className="flex transition-transform duration-300 ease-out"
+            style={{
+              transform: `translateX(calc(-${bannerIndex * 100}% + ${bannerIndex === 0 ? '16px' : bannerIndex === banners.length - 1 ? '-16px' : '0px'}))`,
+            }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            onClick={handleBannerClick}
           >
-            {banners[bannerIndex] && (
-              <>
-                <img
-                  src={banners[bannerIndex].image}
-                  alt={banners[bannerIndex].name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                {banners[bannerIndex].type === 'ad' && banners[bannerIndex].videoUrl && (
-                  <div className="absolute bottom-4 right-4">
-                    <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all group-hover:scale-110 shadow-lg">
-                      <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
-                    </div>
-                  </div>
-                )}
+            {banners.map((banner, idx) => {
+              const isCenter = idx === bannerIndex;
+              return (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 px-2 transition-all duration-300"
+                  style={{ width: '88%' }}
+                  onClick={() => {
+                    if (isCenter) {
+                      handleBannerClick();
+                    } else {
+                      setBannerIndex(idx);
+                    }
+                  }}
+                >
+                  <div
+                    className={`relative h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                      isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-60'
+                    }`}
+                  >
+                    <img
+                      src={banner.image}
+                      alt={banner.name}
+                      className="w-full h-full object-cover"
+                    />
 
-                <div className="absolute bottom-4 left-4 right-20">
-                  {banners[bannerIndex].type === 'festival' ? (
-                    <>
-                      <p className="text-white text-base font-bold mb-1">
-                        {banners[bannerIndex].name}
-                      </p>
-                      <p className="text-gray-300 text-xs">
-                        {banners[bannerIndex].date}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
-                      <p className="text-white text-xl font-bold mb-1">
-                        {banners[bannerIndex].name}
-                      </p>
-                      <p className="text-gray-300 text-sm">
-                        {banners[bannerIndex].videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
-                      </p>
-                    </>
-                  )}
+                    {isCenter && banner.type === 'ad' && banner.videoUrl && (
+                      <div className="absolute bottom-4 right-4">
+                        <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
+                          <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
+                        </div>
+                      </div>
+                    )}
+
+                    {isCenter && (
+                      <div className="absolute bottom-4 left-4 right-20">
+                        {banner.type === 'festival' ? (
+                          <>
+                            <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
+                              {banner.name}
+                            </p>
+                            <p className="text-gray-200 text-xs drop-shadow">
+                              {banner.date}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
+                            <p className="text-white text-xl font-bold mb-1 drop-shadow-lg">
+                              {banner.name}
+                            </p>
+                            <p className="text-gray-200 text-sm drop-shadow">
+                              {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </>
-            )}
+              );
+            })}
           </div>
+
+          {/* 인디케이터 */}
           <div className="flex justify-center gap-2 mt-3">
             {banners.map((_, idx) => (
               <button
