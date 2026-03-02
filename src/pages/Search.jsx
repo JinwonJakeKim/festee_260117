@@ -150,8 +150,7 @@ export default function Search() {
 
   // 이 필터들은 현재 URL에 저장되지 않고 컴포넌트 내부 상태로 관리됨
   const [dateRange, setDateRange] = useState({ from: null, to: null });
-  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null }); // Temporary state for date picker
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false); // State to control date picker popover
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [likesRange, setLikesRange] = useState([0, 1000000]);
   const [starRange, setStarRange] = useState([1, 5]);
   const [priceRange, setPriceRange] = useState([0, 500000]);
