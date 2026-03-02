@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const [featuredFestivalIds, setFeaturedFestivalIds] = useState([]);
   const [popularityLogs, setPopularityLogs] = useState([]);
   const [isCollectingPopularity, setIsCollectingPopularity] = useState(false);
+  const [popularityFestivalSearch, setPopularityFestivalSearch] = useState("");
+  const [selectedPopularityFestival, setSelectedPopularityFestival] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1117,38 +1119,150 @@ export default function AdminDashboard() {
               </p>
             </Card>
 
-            <Card className="bg-gray-900 border-gray-800 p-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-white font-bold mb-1">수집 시작</h3>
-                  <p className="text-gray-400 text-sm">
-                    {new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} 기준으로 수집됩니다
-                  </p>
+            <div className="space-y-4 mb-4">
+              {/* 전체 수집 */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-bold mb-1">전체 수집</h3>
+                    <p className="text-gray-400 text-sm">
+                      {new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} 기준으로 수집됩니다
+                    </p>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      setIsCollectingPopularity(true);
+                      try {
+                        const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {});
+                        setPopularityLogs([{
+                          timestamp: new Date().toISOString(),
+                          status: 'success',
+                          result,
+                          type: 'all'
+                        }, ...popularityLogs]);
+                        alert('인기도 수집이 완료되었습니다');
+                      } catch (error) {
+                        setPopularityLogs([{
+                          timestamp: new Date().toISOString(),
+                          status: 'error',
+                          error: error.message,
+                          type: 'all'
+                        }, ...popularityLogs]);
+                        alert('수집 중 오류가 발생했습니다: ' + error.message);
+                      } finally {
+                        setIsCollectingPopularity(false);
+                      }
+                    }}
+                    disabled={isCollectingPopularity}
+                    className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold"
+                  >
+                    {isCollectingPopularity ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        수집 중...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        전체 수집 시작
+                      </>
+                    )}
+                  </Button>
                 </div>
+              </Card>
+
+              {/* 특정 축제만 수집 */}
+              <Card className="bg-gray-900 border-gray-800 p-4">
+                <h3 className="text-white font-bold mb-3">특정 축제 수집</h3>
+                
+                {selectedPopularityFestival && (
+                  <div className="mb-3 flex items-center gap-3 bg-cyan-900/20 border border-cyan-400/30 rounded-lg p-3">
+                    {selectedPopularityFestival.thumbnail_url && (
+                      <img src={selectedPopularityFestival.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate">{selectedPopularityFestival.name_ko || selectedPopularityFestival.name_original}</p>
+                      <p className="text-gray-400 text-xs">{selectedPopularityFestival.city}, {selectedPopularityFestival.country}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPopularityFestival(null)}
+                      className="w-6 h-6 rounded-full bg-red-900/40 hover:bg-red-500/40 flex items-center justify-center transition-colors flex-shrink-0"
+                    >
+                      <X className="w-3 h-3 text-red-400" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    value={popularityFestivalSearch}
+                    onChange={(e) => setPopularityFestivalSearch(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-cyan-400"
+                    placeholder="축제 검색..."
+                  />
+                </div>
+
+                {popularityFestivalSearch && (
+                  <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg divide-y divide-gray-800 mb-3">
+                    {festivals.filter(f => {
+                      const q = popularityFestivalSearch.toLowerCase();
+                      return (f.name_ko || f.name_original || '').toLowerCase().includes(q) ||
+                        (f.city || '').toLowerCase().includes(q) ||
+                        (f.country || '').toLowerCase().includes(q);
+                    }).slice(0, 10).map(f => (
+                      <div
+                        key={f.id}
+                        onClick={() => {
+                          setSelectedPopularityFestival(f);
+                          setPopularityFestivalSearch("");
+                        }}
+                        className="flex items-center gap-3 p-2 cursor-pointer hover:bg-gray-800 transition-colors"
+                      >
+                        {f.thumbnail_url && <img src={f.thumbnail_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm truncate">{f.name_ko || f.name_original}</p>
+                          <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <Button
                   onClick={async () => {
+                    if (!selectedPopularityFestival) {
+                      alert('축제를 선택해주세요');
+                      return;
+                    }
                     setIsCollectingPopularity(true);
                     try {
-                      const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {});
+                      const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {
+                        festival_id: selectedPopularityFestival.id
+                      });
                       setPopularityLogs([{
                         timestamp: new Date().toISOString(),
                         status: 'success',
-                        result
+                        result,
+                        type: 'single',
+                        festivalName: selectedPopularityFestival.name_ko || selectedPopularityFestival.name_original
                       }, ...popularityLogs]);
                       alert('인기도 수집이 완료되었습니다');
                     } catch (error) {
                       setPopularityLogs([{
                         timestamp: new Date().toISOString(),
                         status: 'error',
-                        error: error.message
+                        error: error.message,
+                        type: 'single',
+                        festivalName: selectedPopularityFestival.name_ko || selectedPopularityFestival.name_original
                       }, ...popularityLogs]);
                       alert('수집 중 오류가 발생했습니다: ' + error.message);
                     } finally {
                       setIsCollectingPopularity(false);
                     }
                   }}
-                  disabled={isCollectingPopularity}
-                  className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold"
+                  disabled={isCollectingPopularity || !selectedPopularityFestival}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white font-bold"
                 >
                   {isCollectingPopularity ? (
                     <>
@@ -1158,12 +1272,12 @@ export default function AdminDashboard() {
                   ) : (
                     <>
                       <Zap className="w-4 h-4 mr-2" />
-                      지금 수집 시작
+                      선택된 축제만 수집
                     </>
                   )}
                 </Button>
-              </div>
-            </Card>
+              </Card>
+            </div>
 
             <div>
               <h3 className="text-white font-bold mb-3">최근 수집 로그</h3>
@@ -1189,11 +1303,18 @@ export default function AdminDashboard() {
                           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-1" />
                         )}
                         <div className="flex-1">
-                          <p className={`font-bold mb-1 ${log.status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                            {log.status === 'success' ? '수집 완료' : '수집 실패'}
-                          </p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-bold ${log.status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                              {log.status === 'success' ? '수집 완료' : '수집 실패'}
+                            </p>
+                            {log.type && (
+                              <Badge className={log.type === 'all' ? 'bg-blue-500 text-white text-xs' : 'bg-purple-500 text-white text-xs'}>
+                                {log.type === 'all' ? '전체' : '단일'}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-gray-400 text-sm mb-2">
-                            {new Date(log.timestamp).toLocaleString('ko-KR')}
+                            {log.festivalName ? `${log.festivalName} · ` : ''}{new Date(log.timestamp).toLocaleString('ko-KR')}
                           </p>
                           {log.status === 'success' && log.result && (
                             <div className="text-xs text-gray-300 space-y-1 bg-gray-800/50 rounded p-2">
