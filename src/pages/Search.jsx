@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Search as SearchIcon, X, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, Star, Heart, MapPin, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import LocationBottomModal from "@/components/LocationBottomModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
