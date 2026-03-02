@@ -746,9 +746,9 @@ export default function Home() {
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className="flex transition-transform duration-300 ease-out"
+              className={`flex ${isDragging ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
-                transform: `translateX(calc(-${bannerIndex} * 84vw + 8vw))`,
+                transform: `translateX(calc(-${bannerIndex} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
               {banners.map((banner, idx) => {
