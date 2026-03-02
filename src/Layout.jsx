@@ -378,7 +378,7 @@ export default function Layout({ children, currentPageName }) {
 
         a:hover {
           color: #00b8e6 !important;
-          text-decoration: underline !important;
+          text-decoration: none !important;
         }
 
         /* 카드/패널 요소 */
