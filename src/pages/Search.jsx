@@ -591,17 +591,6 @@ export default function Search() {
     return selectedCountry || selectedCity || (dateRange.from && dateRange.to) || selectedCategories.length > 0 || selectedTags.length > 0 || likesRange[0] !== 0 || likesRange[1] !== 1000000 || starRange[0] !== 1 || starRange[1] !== 5 || priceRange[0] !== 0 || priceRange[1] !== 500000;
   };
 
-  const handleDateFilterApply = () => {
-    setDateRange(tempDateRange);
-    setIsDatePickerOpen(false);
-  };
-
-  const handleDateFilterReset = () => {
-    setTempDateRange({ from: null, to: null });
-    setDateRange({ from: null, to: null });
-    setIsDatePickerOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Login Prompt Modal */}
