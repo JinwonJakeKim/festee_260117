@@ -808,6 +808,7 @@ export default function Home() {
                         src={banner.image}
                         alt={banner.name}
                         className="w-full h-full object-cover"
+                        style={{ backgroundColor: '#000', display: 'block' }}
                       />
 
                       {isCenter && banner.type === 'ad' && banner.videoUrl && (
