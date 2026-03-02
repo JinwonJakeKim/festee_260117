@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
+import FestivalListItem from "../components/FestivalListItem";
 
 const removeDuplicateFestivals = (festivals) => {
   const nameMap = new Map();
