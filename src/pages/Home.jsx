@@ -623,7 +623,7 @@ export default function Home() {
   useEffect(() => {
     if (banners.length === 0) return;
     const timer = setInterval(() => {
-      setBannerIndex((prev) => (prev + 1) % banners.length);
+      setBannerIndex((prev) => prev + 1);
     }, 5000);
     return () => clearInterval(timer);
   }, [banners.length]);
