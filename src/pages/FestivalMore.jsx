@@ -3,13 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, ArrowLeft, Calendar as CalendarIcon, Globe, Tag, X } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Globe, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
@@ -18,28 +17,19 @@ import FestivalListItem from "../components/FestivalListItem";
 
 const removeDuplicateFestivals = (festivals) => {
   const nameMap = new Map();
-  
   festivals.forEach(festival => {
     const name = festival.name_original || festival.name_ko || festival.name;
     if (!nameMap.has(name)) {
       nameMap.set(name, festival);
     } else {
-      // 같은 이름이면 더 많은 정보를 가진 것 또는 최근에 업데이트된 것을 유지
       const existing = nameMap.get(name);
-      const existingScore = (existing.youtube_shorts_urls?.length || 0) + 
-                           (existing.image_gallery_urls?.length || 0) + 
-                           (existing.description?.length || 0);
-      const currentScore = (festival.youtube_shorts_urls?.length || 0) + 
-                          (festival.image_gallery_urls?.length || 0) + 
-                          (festival.description?.length || 0);
-      
-      if (currentScore > existingScore || 
-          (currentScore === existingScore && new Date(festival.updated_date) > new Date(existing.updated_date))) {
+      const existingScore = (existing.youtube_shorts_urls?.length || 0) + (existing.image_gallery_urls?.length || 0) + (existing.description?.length || 0);
+      const currentScore = (festival.youtube_shorts_urls?.length || 0) + (festival.image_gallery_urls?.length || 0) + (festival.description?.length || 0);
+      if (currentScore > existingScore || (currentScore === existingScore && new Date(festival.updated_date) > new Date(existing.updated_date))) {
         nameMap.set(name, festival);
       }
     }
   });
-  
   return Array.from(nameMap.values());
 };
 
@@ -67,73 +57,23 @@ const festivalIncludesMonth = (festival, month) => {
 
 const safeFormatDate = (dateString, formatStr) => {
   if (!dateString) return '';
-  try {
-    return format(new Date(dateString), formatStr, { locale: ko });
-  } catch (error) {
-    return '';
-  }
-};
-
-const formatNumber = (num) => {
-  if (!num) return '0';
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-  return num.toString();
-};
-
-const getRankColor = (index) => {
-  if (index === 0) return "bg-gradient-to-r from-yellow-400 to-orange-500";
-  if (index === 1) return "bg-gradient-to-r from-gray-300 to-gray-400";
-  if (index === 2) return "bg-gradient-to-r from-amber-600 to-amber-700";
-  return "bg-gray-700";
+  try { return format(new Date(dateString), formatStr, { locale: ko }); } catch (e) { return ''; }
 };
 
 const getCountryNameInKorean = (country) => {
   const countryMap = {
-    'Japan': '일본',
-    'Korea': '한국',
-    'South Korea': '한국',
-    '대한민국': '한국',
-    'China': '중국',
-    'USA': '미국',
-    'United States': '미국',
-    'UK': '영국',
-    'United Kingdom': '영국',
-    'France': '프랑스',
-    'Germany': '독일',
-    'Italy': '이탈리아',
-    'Spain': '스페인',
-    'Thailand': '태국',
-    'Vietnam': '베트남',
-    'Philippines': '필리핀',
-    'Indonesia': '인도네시아',
-    'Malaysia': '말레이시아',
-    'Singapore': '싱가포르',
-    'Australia': '호주',
-    'Canada': '캐나다',
-    'Mexico': '멕시코',
-    'Brazil': '브라질',
-    'Argentina': '아르헨티나',
-    'Netherlands': '네덜란드',
-    'Belgium': '벨기에',
-    'Switzerland': '스위스',
-    'Austria': '오스트리아',
-    'Sweden': '스웨덴',
-    'Norway': '노르웨이',
-    'Denmark': '덴마크',
-    'Poland': '폴란드',
-    'Czech Republic': '체코',
-    'Hungary': '헝가리',
-    'Russia': '러시아',
-    'Turkey': '터키',
-    'India': '인도',
-    'Pakistan': '파키스탄',
-    'Bangladesh': '방글라데시',
-    'Taiwan': '대만',
-    'Hong Kong': '홍콩',
-    'New Zealand': '뉴질랜드',
+    'Japan': '일본', 'Korea': '한국', 'South Korea': '한국', '대한민국': '한국',
+    'China': '중국', 'USA': '미국', 'United States': '미국', 'UK': '영국',
+    'United Kingdom': '영국', 'France': '프랑스', 'Germany': '독일', 'Italy': '이탈리아',
+    'Spain': '스페인', 'Thailand': '태국', 'Vietnam': '베트남', 'Philippines': '필리핀',
+    'Indonesia': '인도네시아', 'Malaysia': '말레이시아', 'Singapore': '싱가포르',
+    'Australia': '호주', 'Canada': '캐나다', 'Mexico': '멕시코', 'Brazil': '브라질',
+    'Argentina': '아르헨티나', 'Netherlands': '네덜란드', 'Belgium': '벨기에',
+    'Switzerland': '스위스', 'Austria': '오스트리아', 'Sweden': '스웨덴',
+    'Norway': '노르웨이', 'Denmark': '덴마크', 'Poland': '폴란드', 'Czech Republic': '체코',
+    'Hungary': '헝가리', 'Russia': '러시아', 'Turkey': '터키', 'India': '인도',
+    'Taiwan': '대만', 'Hong Kong': '홍콩', 'New Zealand': '뉴질랜드',
   };
-  
   return countryMap[country] || country;
 };
 
@@ -142,27 +82,16 @@ export default function FestivalMore() {
   const queryClient = useQueryClient();
   const { getLocalizedContent } = useFestivalLocalizedContent();
   const urlParams = new URLSearchParams(window.location.search);
-  
-  // URL에서 필터 초기값 읽기
+
   const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
   const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState(() => {
     const fromParam = urlParams.get('dateFrom');
     const toParam = urlParams.get('dateTo');
-    return {
-      from: fromParam ? new Date(fromParam) : null,
-      to: toParam ? new Date(toParam) : null
-    };
+    return { from: fromParam ? new Date(fromParam) : null, to: toParam ? new Date(toParam) : null };
   });
-  const [tempDateRange, setTempDateRange] = useState(() => {
-    const fromParam = urlParams.get('dateFrom');
-    const toParam = urlParams.get('dateTo');
-    return {
-      from: fromParam ? new Date(fromParam) : null,
-      to: toParam ? new Date(toParam) : null
-    };
-  });
+  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState(() => {
     const tagsParam = urlParams.get('tags');
@@ -171,21 +100,17 @@ export default function FestivalMore() {
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { setTempDateRange(dateRange); }, [dateRange]);
 
-  // 필터 변경 시 URL 업데이트
   useEffect(() => {
     const params = new URLSearchParams();
-    
     if (categoryFilter !== "all") params.set('category', categoryFilter);
     if (countryFilter !== "all") params.set('country', countryFilter);
     if (dateRange.from) params.set('dateFrom', dateRange.from.toISOString().split('T')[0]);
     if (dateRange.to) params.set('dateTo', dateRange.to.toISOString().split('T')[0]);
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
     if (hidePastFestivals) params.set('hidePast', 'true');
-    
     const newUrl = params.toString() ? `?${params.toString()}` : '';
     window.history.replaceState({}, '', createPageUrl('FestivalMore') + newUrl);
   }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
@@ -196,7 +121,7 @@ export default function FestivalMore() {
     retry: false,
   });
 
-  const { data: festivals, isLoading } = useQuery({
+  const { data: festivals = [] } = useQuery({
     queryKey: ['festivals'],
     queryFn: async () => {
       const allFestivals = await base44.entities.Festival.list('-likes_count', 200);
@@ -205,7 +130,7 @@ export default function FestivalMore() {
     initialData: [],
   });
 
-  const { data: myLikes } = useQuery({
+  const { data: myLikes = [] } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
     enabled: !!user,
@@ -214,25 +139,14 @@ export default function FestivalMore() {
 
   const likeMutation = useMutation({
     mutationFn: async (festivalId) => {
-      if (!user) {
-        setShowLoginModal(true);
-        return;
-      }
-
+      if (!user) { setShowLoginModal(true); return; }
       const existing = myLikes.find(like => like.festival_id === festivalId);
       if (existing) {
         await base44.entities.FestivalLike.delete(existing.id);
-        await base44.entities.Festival.update(festivalId, {
-          likes_count: Math.max(0, (festivals.find(f => f.id === festivalId)?.likes_count || 0) - 1)
-        });
+        await base44.entities.Festival.update(festivalId, { likes_count: Math.max(0, (festivals.find(f => f.id === festivalId)?.likes_count || 0) - 1) });
       } else {
-        await base44.entities.FestivalLike.create({
-          festival_id: festivalId,
-          user_email: user.email
-        });
-        await base44.entities.Festival.update(festivalId, {
-          likes_count: (festivals.find(f => f.id === festivalId)?.likes_count || 0) + 1
-        });
+        await base44.entities.FestivalLike.create({ festival_id: festivalId, user_email: user.email });
+        await base44.entities.Festival.update(festivalId, { likes_count: (festivals.find(f => f.id === festivalId)?.likes_count || 0) + 1 });
       }
     },
     onSuccess: () => {
@@ -241,65 +155,46 @@ export default function FestivalMore() {
     },
   });
 
-  const handleLoginRedirect = () => {
-    base44.auth.redirectToLogin(window.location.pathname);
-  };
-
-  const handleDateFilterApply = () => {
-    setDateRange(tempDateRange);
-    setIsDatePickerOpen(false);
-  };
-
-  const handleDateFilterReset = () => {
-    setTempDateRange({ from: null, to: null });
-    setDateRange({ from: null, to: null });
-    setIsDatePickerOpen(false);
-  };
-
-  const toggleTag = (tag) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-  };
+  const handleLoginRedirect = () => { base44.auth.redirectToLogin(window.location.pathname); };
+  const handleDateFilterApply = () => { setDateRange(tempDateRange); setIsDatePickerOpen(false); };
+  const handleDateFilterReset = () => { setTempDateRange({ from: null, to: null }); setDateRange({ from: null, to: null }); setIsDatePickerOpen(false); };
+  const toggleTag = (tag) => { setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]); };
 
   const filteredFestivals = festivals.filter(festival => {
     const categoryMatch = categoryFilter === "all" || festival.category === categoryFilter;
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     const monthFilter = extractMonthFromQuery(searchQuery);
-    const searchMatch = !searchQuery ||
-      (monthFilter !== null
-        ? festivalIncludesMonth(festival, monthFilter)
-        : (getLocalizedContent(festival, 'name').toLowerCase().includes(searchQuery.toLowerCase()) ||
-           (festival.city || '').toLowerCase().includes(searchQuery.toLowerCase())));
-
+    const searchMatch = !searchQuery || (monthFilter !== null
+      ? festivalIncludesMonth(festival, monthFilter)
+      : (getLocalizedContent(festival, 'name').toLowerCase().includes(searchQuery.toLowerCase()) || (festival.city || '').toLowerCase().includes(searchQuery.toLowerCase())));
     let dateMatch = true;
-    if (dateRange && dateRange.from && dateRange.to) {
+    if (dateRange?.from && dateRange?.to) {
       const festivalStart = festival.start_date ? new Date(festival.start_date) : null;
       const festivalEnd = festival.end_date ? new Date(festival.end_date) : null;
-
       if (festivalStart && festivalEnd) {
-        const normalizedDateRangeTo = new Date(dateRange.to);
-        normalizedDateRangeTo.setHours(23, 59, 59, 999);
-        dateMatch = (festivalStart <= normalizedDateRangeTo && festivalEnd >= dateRange.from);
+        const normalizedTo = new Date(dateRange.to);
+        normalizedTo.setHours(23, 59, 59, 999);
+        dateMatch = (festivalStart <= normalizedTo && festivalEnd >= dateRange.from);
       }
     }
-
-    const tagsMatch = selectedTags.length === 0 ||
-      (festival.tags && selectedTags.every(tag => festival.tags.includes(tag)));
-
+    const tagsMatch = selectedTags.length === 0 || (festival.tags_ko && selectedTags.every(tag => festival.tags_ko.includes(tag)));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const pastFestivalMatch = !hidePastFestivals ||
-      (festival.end_date && new Date(festival.end_date) >= today);
-
+    const pastFestivalMatch = !hidePastFestivals || (festival.end_date && new Date(festival.end_date) >= today);
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   });
 
   const countries = [...new Set(festivals.map(f => f.country))];
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
-  const quickFilters = ["연인과", "Kpop", "반려동물", "가족과", "여름", "무료", "불꽃놀이"];
+
+  const resetFilters = () => {
+    setCategoryFilter("all");
+    setCountryFilter("all");
+    setDateRange({ from: null, to: null });
+    setSearchQuery("");
+    setSelectedTags([]);
+    setHidePastFestivals(true);
+  };
 
   return (
     <div className="min-h-screen bg-black pb-20">
@@ -332,83 +227,132 @@ export default function FestivalMore() {
         </div>
       </div>
 
-      <div className="px-4 py-4">
+      <div className="px-4 pt-4">
+        {/* 홈과 동일한 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-2xl font-bold">축제 차트</h2>
         </div>
 
-        {/* Filters */}
+        {/* 홈과 동일한 필터 */}
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
-...
-        {/* Active Filters */}
-        {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to) || !hidePastFestivals) && (
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <div className="flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-cyan-400" />
+                <SelectValue>{countryFilter === "all" ? "국가" : getCountryNameInKorean(countryFilter)}</SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-800 text-white">
+              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 국가</SelectItem>
+              {countries.map(country => (
+                <SelectItem key={country} value={country} className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                  {getCountryNameInKorean(country)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <div className="flex items-center gap-1.5">
+                <Tag className="w-4 h-4 text-purple-400" />
+                <SelectValue>{categoryFilter === "all" ? "카테고리" : categoryFilter}</SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-800 text-white">
+              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
+              {categories.map(category => (
+                <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <button
+            onClick={() => setIsDatePickerOpen(true)}
+            className="px-4 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap flex items-center gap-2 text-sm hover:bg-gray-800 transition-colors"
+          >
+            <CalendarIcon className="w-4 h-4 text-pink-500" />
+            {dateRange.from && dateRange.to ? (
+              <span className="text-cyan-400">
+                {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')}
+              </span>
+            ) : (
+              <span>날짜</span>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {isDatePickerOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm"
+                />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                    className="relative pointer-events-auto"
+                  >
+                    <button
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center z-10 border border-gray-700"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                    <DateRangePicker
+                      selected={tempDateRange}
+                      onSelect={setTempDateRange}
+                      onApply={handleDateFilterApply}
+                      onReset={handleDateFilterReset}
+                      hidePastFestivals={hidePastFestivals}
+                      onHidePastFestivalsChange={setHidePastFestivals}
+                    />
+                  </motion.div>
+                </div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 활성 필터 - 홈과 동일 */}
+        {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
           <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-gray-400 text-xs">활성 필터:</span>
             {categoryFilter !== "all" && (
-              <Badge
-                variant="outline"
-                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                onClick={() => setCategoryFilter("all")}
-              >
+              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setCategoryFilter("all")}>
                 {categoryFilter} ✕
               </Badge>
             )}
             {countryFilter !== "all" && (
-              <Badge
-                variant="outline"
-                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                onClick={() => setCountryFilter("all")}
-              >
+              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setCountryFilter("all")}>
                 {getCountryNameInKorean(countryFilter)} ✕
               </Badge>
             )}
             {dateRange.from && dateRange.to && (
-              <Badge
-                variant="outline"
-                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                onClick={() => setDateRange({ from: null, to: null })}
-              >
+              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setDateRange({ from: null, to: null })}>
                 {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')} ✕
               </Badge>
             )}
             {!hidePastFestivals && (
-              <Badge
-                variant="outline"
-                className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                onClick={() => setHidePastFestivals(true)}
-              >
+              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setHidePastFestivals(true)}>
                 지난 축제 포함 ✕
               </Badge>
             )}
             {selectedTags.map(tag => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="bg-pink-900/30 text-pink-400 border-pink-400/50 cursor-pointer"
-                onClick={() => toggleTag(tag)}
-              >
+              <Badge key={tag} variant="outline" className="bg-pink-900/30 text-pink-400 border-pink-400/50 cursor-pointer" onClick={() => toggleTag(tag)}>
                 {tag} ✕
               </Badge>
             ))}
-            <Button
-              onClick={() => {
-                setCategoryFilter("all");
-                setCountryFilter("all");
-                setDateRange({ from: null, to: null });
-                setSearchQuery("");
-                setSelectedTags([]);
-                setHidePastFestivals(true);
-              }}
-              variant="ghost"
-              size="sm"
-              className="text-xs text-gray-400 hover:text-white h-6"
-            >
+            <Button onClick={resetFilters} variant="ghost" size="sm" className="text-xs text-gray-400 hover:text-white h-6">
               모두 지우기
             </Button>
           </div>
         )}
 
-        {/* Festival List */}
+        {/* 전체 리스트 (홈은 5개, 더보기는 전체) */}
         <div className="space-y-3">
           {filteredFestivals.map((festival, index) => (
             <FestivalListItem
@@ -422,24 +366,10 @@ export default function FestivalMore() {
           ))}
         </div>
 
-        {/* Empty State */}
         {filteredFestivals.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🎪</div>
-            <p className="text-gray-400 text-lg mb-2">검색 결과가 없습니다</p>
-            <p className="text-gray-500 text-sm">다른 필터를 시도해보세요</p>
-            <Button
-              onClick={() => {
-                setCategoryFilter("all");
-                setCountryFilter("all");
-                setDateRange({ from: null, to: null });
-                setSearchQuery("");
-                setSelectedTags([]);
-                setHidePastFestivals(true);
-              }}
-              variant="outline"
-              className="mt-4 bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
-            >
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-2">선택한 조건에 맞는 축제가 없습니다</p>
+            <Button onClick={resetFilters} variant="outline" className="bg-gray-900 text-white border-gray-800 hover:bg-gray-800">
               필터 초기화
             </Button>
           </div>
