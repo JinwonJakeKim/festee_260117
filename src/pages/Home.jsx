@@ -753,11 +753,13 @@ export default function Home() {
             <div
               className={`flex ${isDragging ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
-                transform: `translateX(calc(-${bannerIndex} * 84vw + 8vw + ${dragOffset}px))`,
+                transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
-              {banners.map((banner, idx) => {
-                const isCenter = idx === bannerIndex;
+              {loopedBanners.map((banner, idx) => {
+                const realIdx = idx - 1;
+                const normalizedIdx = ((realIdx % banners.length) + banners.length) % banners.length;
+                const isCenter = normalizedIdx === bannerIndex && (idx === bannerIndex + 1);
                 return (
                   <div
                     key={idx}
