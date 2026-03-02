@@ -892,7 +892,7 @@ export default function Search() {
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed left-0 right-0 z-[101] bg-gray-950 rounded-t-3xl flex flex-col"
-              style={{ bottom: '64px', maxHeight: 'calc(85vh - 64px)' }}
+              style={{ bottom: '64px', maxHeight: 'calc(80vh - 64px)' }}
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
