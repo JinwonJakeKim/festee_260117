@@ -281,38 +281,12 @@ export default function FestivalMore() {
             )}
           </button>
 
-          <AnimatePresence>
-            {isDatePickerOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={() => setIsDatePickerOpen(false)}
-                  className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm"
-                />
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative pointer-events-auto"
-                  >
-                    <button
-                      onClick={() => setIsDatePickerOpen(false)}
-                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center z-10 border border-gray-700"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                    <DateRangePicker
-                      selected={tempDateRange}
-                      onSelect={setTempDateRange}
-                      onApply={handleDateFilterApply}
-                      onReset={handleDateFilterReset}
-                      hidePastFestivals={hidePastFestivals}
-                      onHidePastFestivalsChange={setHidePastFestivals}
-                    />
-                  </motion.div>
-                </div>
-              </>
-            )}
-          </AnimatePresence>
+          <DateRangeBottomSheet
+            isOpen={isDatePickerOpen}
+            onClose={() => setIsDatePickerOpen(false)}
+            dateRange={dateRange}
+            onApply={(range) => setDateRange(range)}
+          />
         </div>
 
         {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
