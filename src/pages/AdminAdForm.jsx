@@ -50,6 +50,11 @@ export default function AdminAdForm() {
     enabled: isEdit,
   });
 
+  const { data: allFestivals = [] } = useQuery({
+    queryKey: ['allFestivalsForAd'],
+    queryFn: () => base44.entities.Festival.list('-likes_count', 200),
+  });
+
   useEffect(() => {
     if (advertisement && isEdit) {
       setFormData({
@@ -62,6 +67,7 @@ export default function AdminAdForm() {
         is_active: advertisement.is_active !== undefined ? advertisement.is_active : true,
         start_date: advertisement.start_date || "",
         end_date: advertisement.end_date || "",
+        featured_festival_ids: advertisement.featured_festival_ids || [],
       });
     }
   }, [advertisement, isEdit]);
