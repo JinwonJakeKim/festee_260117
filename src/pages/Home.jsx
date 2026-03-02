@@ -788,8 +788,8 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="flex-shrink-0 px-2 transition-all duration-300 bg-black"
-                    style={{ width: '84vw', fontSize: 'initial', lineHeight: 'initial' }}
+                    className="flex-shrink-0 px-2 bg-black h-full flex items-center"
+                    style={{ width: '84vw' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
