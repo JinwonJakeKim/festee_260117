@@ -767,7 +767,7 @@ export default function Home() {
       </AnimatePresence>
 
       {banners.length > 0 && (
-        <div className="py-4 bg-black">
+        <div className="py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 - overflow visible로 양쪽 이미지 노출 */}
           <div
             className="relative overflow-hidden"
