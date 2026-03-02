@@ -296,6 +296,49 @@ export default function AdminDashboard() {
     setDeletionProgress(null);
   };
 
+  // 광고 개별 삭제
+  const deleteAdMutation = useMutation({
+    mutationFn: async (adId) => {
+      if (confirm('이 광고를 삭제하시겠습니까?')) {
+        await base44.entities.Advertisement.delete(adId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['advertisements'] });
+    },
+  });
+
+  // 광고 선택 토글
+  const handleSelectAd = (adId) => {
+    const newSelected = new Set(selectedAds);
+    if (newSelected.has(adId)) {
+      newSelected.delete(adId);
+    } else {
+      newSelected.add(adId);
+    }
+    setSelectedAds(newSelected);
+  };
+
+  // 광고 전체 선택/해제
+  const handleSelectAllAds = () => {
+    if (selectedAds.size === advertisements.length) {
+      setSelectedAds(new Set());
+    } else {
+      setSelectedAds(new Set(advertisements.map(a => a.id)));
+    }
+  };
+
+  // 선택 광고 삭제
+  const handleDeleteSelectedAds = async () => {
+    if (selectedAds.size === 0) return;
+    if (!confirm(`선택한 ${selectedAds.size}개의 광고를 삭제하시겠습니까?`)) return;
+    for (const adId of selectedAds) {
+      await base44.entities.Advertisement.delete(adId);
+    }
+    queryClient.invalidateQueries({ queryKey: ['advertisements'] });
+    setSelectedAds(new Set());
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
