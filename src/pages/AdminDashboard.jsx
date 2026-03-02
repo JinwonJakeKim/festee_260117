@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [selectedFestivals, setSelectedFestivals] = useState(new Set());
   const [deletionProgress, setDeletionProgress] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAds, setSelectedAds] = useState(new Set());
 
   useEffect(() => {
     window.scrollTo(0, 0);
