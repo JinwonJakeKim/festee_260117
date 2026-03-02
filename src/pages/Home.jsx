@@ -787,7 +787,7 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="flex-shrink-0 px-2 transition-all duration-300"
+                    className="flex-shrink-0 px-2 transition-all duration-300 bg-black"
                     style={{ width: '84vw' }}
                     onClick={() => {
                       if (isCenter) {
