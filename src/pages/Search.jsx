@@ -1110,7 +1110,6 @@ export default function Search() {
                   setStarRange([1, 5]);
                   setPriceRange([0, 500000]);
                   setDateRange({ from: null, to: null });
-                  setTempDateRange({ from: null, to: null });
                   setHidePastFestivals(false);
                   updateUrlParams({ q: searchQuery, country: '', city: '', categories: [], tags: [] });
                 }}
