@@ -860,7 +860,7 @@ export default function AdminDashboard() {
 
           {/* 광고 관리 탭 */}
           <TabsContent value="ads" className="mt-4">
-            <div className="mb-4">
+            <div className="mb-4 space-y-2">
               <Button
                 onClick={() => navigate(createPageUrl('AdminAdForm'))}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -870,35 +870,88 @@ export default function AdminDashboard() {
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {advertisements.map((ad) => (
-                <Card key={ad.id} className="bg-gray-900 border-gray-800 p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={ad.image_url}
-                      alt={ad.name}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-white font-bold mb-1">{ad.name}</h3>
-                      <p className="text-gray-400 text-sm mb-1">{ad.type}</p>
-                      <Badge variant="outline" className={ad.is_active ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-700'}>
-                        {ad.is_active ? '활성' : '비활성'}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-col gap-2">
+            {/* 광고 선택 컨트롤 */}
+            {advertisements.length > 0 && (
+              <Card className="bg-gray-900 border-gray-800 p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={handleSelectAllAds}
+                    className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
+                  >
+                    {selectedAds.size === advertisements.length ? (
+                      <CheckSquare className="w-5 h-5 text-cyan-400" />
+                    ) : (
+                      <Square className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">
+                      {selectedAds.size === advertisements.length ? '전체 해제' : '전체 선택'}
+                    </span>
+                  </button>
+
+                  {selectedAds.size > 0 && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-cyan-400 text-sm">{selectedAds.size}개 선택됨</span>
                       <Button
-                        variant="outline"
+                        onClick={handleDeleteSelectedAds}
+                        className="bg-red-500 hover:bg-red-600 text-white"
                         size="sm"
-                        onClick={() => navigate(createPageUrl(`AdminAdForm?id=${ad.id}`))}
-                        className="border-gray-700 text-cyan-400"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        선택 삭제
                       </Button>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  )}
+                </div>
+              </Card>
+            )}
+
+            <div className="space-y-3">
+              {advertisements.map((ad) => {
+                const isAdSelected = selectedAds.has(ad.id);
+                return (
+                  <Card key={ad.id} className={`border p-4 transition-all ${isAdSelected ? 'bg-cyan-900/20 border-cyan-400' : 'bg-gray-900 border-gray-800'}`}>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => handleSelectAd(ad.id)} className="flex-shrink-0">
+                        {isAdSelected ? (
+                          <CheckSquare className="w-6 h-6 text-cyan-400" />
+                        ) : (
+                          <Square className="w-6 h-6 text-gray-600 hover:text-gray-400" />
+                        )}
+                      </button>
+                      <img
+                        src={ad.image_url}
+                        alt={ad.name}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-white font-bold mb-1">{ad.name}</h3>
+                        <p className="text-gray-400 text-sm mb-1">{ad.type}</p>
+                        <Badge variant="outline" className={ad.is_active ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-700'}>
+                          {ad.is_active ? '활성' : '비활성'}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(createPageUrl(`AdminAdForm?id=${ad.id}`))}
+                          className="border-gray-700 text-cyan-400"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteAdMutation.mutate(ad.id)}
+                          className="border-gray-700 text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
 
               {advertisements.length === 0 && (
                 <Card className="bg-gray-900 border-gray-800 p-12 text-center">
