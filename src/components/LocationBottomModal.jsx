@@ -112,15 +112,23 @@ export default function LocationBottomModal({
     // 모달을 닫지 않고 선택만 초기화
   };
 
-  if (!show) return null;
-
   return (
+    <AnimatePresence>
+      {show && (
     <div className="fixed inset-0 z-[100] flex flex-col justify-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/60" onClick={onClose}
+      />
 
       {/* Bottom Sheet */}
-      <div className="relative bg-gray-950 rounded-t-3xl flex flex-col h-[80vh]" style={{marginBottom: 'calc(64px + env(safe-area-inset-bottom))'}}>
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative bg-gray-950 rounded-t-3xl flex flex-col"
+        style={{ bottom: 0, marginBottom: '64px', maxHeight: 'calc(80vh - 64px)' }}
+      >
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-gray-700" />
