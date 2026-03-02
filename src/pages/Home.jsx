@@ -777,15 +777,13 @@ export default function Home() {
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex ${isDragging ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
-                const realIdx = idx - 1;
-                const normalizedIdx = ((realIdx % banners.length) + banners.length) % banners.length;
-                const isCenter = normalizedIdx === bannerIndex && (idx === bannerIndex + 1);
+                const isCenter = idx === bannerIndex + 1;
                 return (
                   <div
                     key={idx}
