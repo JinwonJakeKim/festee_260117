@@ -583,7 +583,7 @@ export default function AdminDashboard() {
               피드백
             </TabsTrigger>
             <TabsTrigger value="ads" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
-              광고
+              배너 관리
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               API
