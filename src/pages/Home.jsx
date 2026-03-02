@@ -180,6 +180,8 @@ export default function Home() {
   });
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const [showFeedbackCard, setShowFeedbackCard] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
