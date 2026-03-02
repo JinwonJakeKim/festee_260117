@@ -778,8 +778,9 @@ export default function Home() {
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex h-full ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
+                height: '208px',
                 transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
               }}
             >
@@ -788,8 +789,8 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="flex-shrink-0 px-2 bg-black h-full flex items-center"
-                    style={{ width: '84vw' }}
+                    className="flex-shrink-0 px-2 bg-black"
+                    style={{ width: '84vw', height: '208px' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
@@ -801,7 +802,7 @@ export default function Home() {
                     }}
                   >
                     <div
-                      className={`relative w-full h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-black ${
+                      className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-black ${
                         isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-50'
                       }`}
                     >
