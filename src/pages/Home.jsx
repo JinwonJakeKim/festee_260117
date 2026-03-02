@@ -569,6 +569,11 @@ export default function Home() {
     setIsDragging(false);
   };
 
+  // 무한 루프를 위해 앞뒤에 복제 배너 포함한 확장 배열
+  const loopedBanners = banners.length > 0
+    ? [banners[banners.length - 1], ...banners, banners[0]]
+    : [];
+
   const handleBannerClick = () => {
     const currentBanner = banners[bannerIndex];
     if (!currentBanner) return;
