@@ -637,26 +637,22 @@ export default function Search() {
               위치 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
             </Button>
 
-            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`rounded-full ${dateRange.from && dateRange.to ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
-                >
-                  <CalendarIcon className="w-4 h-4 mr-1" />
-                  날짜 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-transparent border-0">
-                <DateRangePicker
-                  selected={tempDateRange}
-                  onSelect={setTempDateRange}
-                  onApply={handleDateFilterApply}
-                  onReset={handleDateFilterReset}
-                />
-              </PopoverContent>
-            </Popover>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDatePickerOpen(true)}
+              className={`rounded-full ${dateRange.from && dateRange.to ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
+            >
+              <CalendarIcon className="w-4 h-4 mr-1" />
+              날짜 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
+            </Button>
+
+            <DateRangeBottomSheet
+              isOpen={isDatePickerOpen}
+              onClose={() => setIsDatePickerOpen(false)}
+              dateRange={dateRange}
+              onApply={(range) => setDateRange(range)}
+            />
 
             <Button
               variant="outline"
