@@ -728,53 +728,55 @@ export default function Home() {
       </AnimatePresence>
 
       {banners.length > 0 && (
-        <div className="py-4 overflow-hidden">
-          {/* 캐러셀 트랙 */}
+        <div className="py-4">
+          {/* 캐러셀 트랙 - overflow visible로 양쪽 이미지 노출 */}
           <div
-            className="flex transition-transform duration-300 ease-out"
-            style={{
-              transform: `translateX(calc(-${bannerIndex * 100}% + ${bannerIndex === 0 ? '16px' : bannerIndex === banners.length - 1 ? '-16px' : '0px'}))`,
-            }}
+            className="relative overflow-hidden"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {banners.map((banner, idx) => {
-              const isCenter = idx === bannerIndex;
-              return (
-                <div
-                  key={idx}
-                  className="flex-shrink-0 px-2 transition-all duration-300"
-                  style={{ width: '88%' }}
-                  onClick={() => {
-                    if (isCenter) {
-                      handleBannerClick();
-                    } else {
-                      setBannerIndex(idx);
-                    }
-                  }}
-                >
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{
+                transform: `translateX(calc(-${bannerIndex} * 84vw + 8vw))`,
+              }}
+            >
+              {banners.map((banner, idx) => {
+                const isCenter = idx === bannerIndex;
+                return (
                   <div
-                    className={`relative h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                      isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-60'
-                    }`}
+                    key={idx}
+                    className="flex-shrink-0 px-2 transition-all duration-300"
+                    style={{ width: '84vw' }}
+                    onClick={() => {
+                      if (isCenter) {
+                        handleBannerClick();
+                      } else {
+                        setBannerIndex(idx);
+                      }
+                    }}
                   >
-                    <img
-                      src={banner.image}
-                      alt={banner.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <div
+                      className={`relative h-52 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                        isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-50'
+                      }`}
+                    >
+                      <img
+                        src={banner.image}
+                        alt={banner.name}
+                        className="w-full h-full object-cover"
+                      />
 
-                    {isCenter && banner.type === 'ad' && banner.videoUrl && (
-                      <div className="absolute bottom-4 right-4">
-                        <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
-                          <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
+                      {isCenter && banner.type === 'ad' && banner.videoUrl && (
+                        <div className="absolute bottom-4 right-4">
+                          <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
+                            <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {isCenter && (
-                      <div className="absolute bottom-4 left-4 right-20">
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                         {banner.type === 'festival' ? (
                           <>
                             <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
@@ -796,11 +798,11 @@ export default function Home() {
                           </>
                         )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* 인디케이터 */}
