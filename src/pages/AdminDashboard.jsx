@@ -973,6 +973,26 @@ export default function AdminDashboard() {
                   })}
                 </div>
               )}
+              {/* 현재 배너에 표시 중인 축제 (자동 인기순) */}
+              {featuredFestivalIds.length === 0 && (
+                <div className="mb-3">
+                  <p className="text-gray-400 text-xs mb-2">📊 현재 자동 표시 중 (인기순 상위 3개)</p>
+                  <div className="space-y-2">
+                    {allFestivals.slice(0, 3).map((f, idx) => (
+                      <div key={f.id} className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-2 opacity-70">
+                        <span className="text-gray-500 font-bold text-xs w-5 text-center">{idx + 1}</span>
+                        {f.thumbnail_url && <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-300 text-sm truncate">{f.name_ko || f.name_original}</p>
+                          <p className="text-gray-500 text-xs">{f.city}, {f.country} · ❤️ {f.likes_count || 0}</p>
+                        </div>
+                        <span className="text-gray-600 text-xs">자동</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <Button
                 onClick={() => saveFeaturedFestivalsMutation.mutate(featuredFestivalIds)}
                 disabled={saveFeaturedFestivalsMutation.isPending || advertisements.length === 0}
