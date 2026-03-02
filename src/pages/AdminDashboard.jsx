@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { collectFestivalPopularity } from "@/functions/collectFestivalPopularity";
 import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1133,7 +1134,8 @@ export default function AdminDashboard() {
                     onClick={async () => {
                       setIsCollectingPopularity(true);
                       try {
-                        const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {});
+                        const response = await collectFestivalPopularity({});
+                        const result = response.data;
                         setPopularityLogs([{
                           timestamp: new Date().toISOString(),
                           status: 'success',
@@ -1237,9 +1239,10 @@ export default function AdminDashboard() {
                     }
                     setIsCollectingPopularity(true);
                     try {
-                      const result = await base44.asServiceRole.functions.invoke('collectFestivalPopularity', {
+                      const response = await collectFestivalPopularity({
                         festival_id: selectedPopularityFestival.id
                       });
+                      const result = response.data;
                       setPopularityLogs([{
                         timestamp: new Date().toISOString(),
                         status: 'success',
