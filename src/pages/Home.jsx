@@ -792,8 +792,10 @@ export default function Home() {
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
+                      } else if (idx < bannerIndex + 1) {
+                        setBannerIndex((prev) => prev - 1);
                       } else {
-                        setBannerIndex(idx);
+                        setBannerIndex((prev) => prev + 1);
                       }
                     }}
                   >
