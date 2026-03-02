@@ -788,8 +788,8 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="flex-shrink-0 px-2 bg-black"
-                    style={{ width: '84vw', height: '208px' }}
+                    className="flex-shrink-0"
+                    style={{ width: '84vw', height: '208px', padding: '0 8px', backgroundColor: '#000' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
@@ -801,7 +801,8 @@ export default function Home() {
                     }}
                   >
                     <div
-                      className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-black ${
+                      style={{ backgroundColor: '#000' }}
+                      className={`relative w-full h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
                         isCenter ? 'scale-100 opacity-100' : 'scale-95 opacity-50'
                       }`}
                     >
