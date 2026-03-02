@@ -804,54 +804,63 @@ export default function Home() {
                     <div
                       style={{
                         backgroundColor: '#000',
+                        padding: '1px',
                         transform: isCenter ? 'scale(1) translateZ(0)' : 'scale(0.95) translateZ(0)',
                         transition: 'transform 300ms',
-                        WebkitMaskImage: '-webkit-radial-gradient(white, black)', // WebKit border-radius 렌더링 버그 수정
+                        borderRadius: '17px',
                       }}
-                      className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer ring-1 ring-inset ring-black border border-black"
+                      className="relative w-full h-full cursor-pointer"
                     >
-                      <img
-                        src={banner.image}
-                        alt={banner.name}
-                        className="w-full h-full object-cover"
-                        style={{ backgroundColor: '#000', display: 'block' }}
-                      />
-                      {/* 반투명 오버레이 레이어 */}
-                      {!isCenter && (
-                        <div 
-                          className="absolute inset-0 bg-black/50 z-10 pointer-events-none transition-opacity duration-300" 
+                      <div
+                        style={{
+                          backgroundColor: '#000',
+                          WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+                        }}
+                        className="relative w-full h-full rounded-2xl overflow-hidden"
+                      >
+                        <img
+                          src={banner.image}
+                          alt={banner.name}
+                          className="w-full h-full object-cover"
+                          style={{ backgroundColor: '#000', display: 'block' }}
                         />
-                      )}
-
-                      {isCenter && banner.type === 'ad' && banner.videoUrl && (
-                        <div className="absolute bottom-4 right-4">
-                          <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
-                            <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        {banner.type === 'festival' ? (
-                          <>
-                            <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
-                              {banner.name}
-                            </p>
-                            <p className="text-gray-200 text-xs drop-shadow">
-                              {banner.date}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
-                            <p className="text-white text-xl font-bold mb-1 drop-shadow-lg">
-                              {banner.name}
-                            </p>
-                            <p className="text-gray-200 text-sm drop-shadow">
-                              {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
-                            </p>
-                          </>
+                        {/* 반투명 오버레이 레이어 */}
+                        {!isCenter && (
+                          <div 
+                            className="absolute inset-0 bg-black/50 z-10 pointer-events-none transition-opacity duration-300" 
+                          />
                         )}
+
+                        {isCenter && banner.type === 'ad' && banner.videoUrl && (
+                          <div className="absolute bottom-4 right-4">
+                            <div className="w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all shadow-lg">
+                              <Play className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" />
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                          {banner.type === 'festival' ? (
+                            <>
+                              <p className="text-white text-base font-bold mb-1 drop-shadow-lg">
+                                {banner.name}
+                              </p>
+                              <p className="text-gray-200 text-xs drop-shadow">
+                                {banner.date}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <Badge className="bg-yellow-500 text-black font-bold mb-2">AD</Badge>
+                              <p className="text-white text-xl font-bold mb-1 drop-shadow-lg">
+                                {banner.name}
+                              </p>
+                              <p className="text-gray-200 text-sm drop-shadow">
+                                {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
+                              </p>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
