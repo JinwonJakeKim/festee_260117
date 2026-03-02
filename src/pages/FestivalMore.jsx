@@ -515,75 +515,18 @@ export default function FestivalMore() {
           </div>
         )}
 
-        {/* Festival List - 홈화면 스타일 */}
+        {/* Festival List */}
         <div className="space-y-3">
-          {filteredFestivals.map((festival, index) => {
-            const isLiked = myLikes.some(like => like.festival_id === festival.id);
-            const dateStatus = festival.date_status || 'confirmed';
-            const localizedName = getLocalizedContent(festival, 'name');
-
-            return (
-              <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
-                  {/* Rank Badge */}
-                  <div className="flex-shrink-0">
-                    <div className={`w-8 h-8 rounded-lg ${getRankColor(index)} flex items-center justify-center font-bold text-sm ${index < 3 ? 'text-black' : 'text-white'}`}>
-                      {index + 1}
-                    </div>
-                  </div>
-
-                  {/* Thumbnail */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
-                      alt={localizedName}
-                      className="w-16 h-16 rounded-xl object-cover"
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-bold text-sm truncate mb-1">
-                      {localizedName}
-                    </h3>
-                    <div className="text-gray-400 text-xs">
-                      {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}{festival.category ? ` / ${festival.category}` : ''}
-                    </div>
-                    <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
-                      <span>
-                        {safeFormatDate(festival.start_date, 'yyyy.MM.dd')} - {safeFormatDate(festival.end_date, 'MM.dd')}
-                      </span>
-                      {dateStatus === 'tentative' && (
-                        <Badge variant="outline" className="text-[10px] h-4 px-1 border-yellow-500 text-yellow-500">
-                          미확정
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Like Button */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      likeMutation.mutate(festival.id);
-                    }}
-                    className="flex-shrink-0 flex flex-col items-center gap-1"
-                  >
-                    <Heart
-                      className={`w-6 h-6 transition-all ${
-                        isLiked
-                          ? 'fill-pink-500 text-pink-500'
-                          : 'text-gray-500'
-                      }`}
-                    />
-                    <span className={`text-xs font-medium ${isLiked ? 'text-pink-500' : 'text-gray-500'}`}>
-                      {formatNumber(festival.likes_count || 0)}
-                    </span>
-                  </button>
-                </div>
-              </Link>
-            );
-          })}
+          {filteredFestivals.map((festival, index) => (
+            <FestivalListItem
+              key={festival.id}
+              festival={festival}
+              index={index}
+              isLiked={myLikes.some(like => like.festival_id === festival.id)}
+              onLike={(id) => likeMutation.mutate(id)}
+              getLocalizedContent={getLocalizedContent}
+            />
+          ))}
         </div>
 
         {/* Empty State */}
