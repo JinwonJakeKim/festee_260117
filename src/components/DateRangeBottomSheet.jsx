@@ -89,22 +89,22 @@ function MonthCalendar({ monthDate, tempRange, onDateClick }) {
 }
 
 export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApply }) {
-  const [tempRange, setTempRange] = React.useState(dateRange || { from: null, to: null });
-  const scrollRef = useRef(null);
-  const months = React.useMemo(() => generateMonths(), []);
+   const [tempRange, setTempRange] = React.useState(dateRange || { from: null, to: null });
+   const scrollRef = useRef(null);
+   const currentMonthRef = useRef(null);
+   const months = React.useMemo(() => generateMonths(), []);
 
-  React.useEffect(() => {
-    if (isOpen) {
-      setTempRange(dateRange || { from: null, to: null });
-      // 현재 달로 스크롤
-      setTimeout(() => {
-        if (scrollRef.current) {
-          // 현재 달은 index 3 (앞에 3개 이전 달)
-          scrollRef.current.scrollTop = 0;
-        }
-      }, 100);
-    }
-  }, [isOpen]);
+   React.useEffect(() => {
+     if (isOpen) {
+       setTempRange(dateRange || { from: null, to: null });
+       // 현재 달로 스크롤
+       setTimeout(() => {
+         if (currentMonthRef.current) {
+           currentMonthRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+         }
+       }, 100);
+     }
+   }, [isOpen]);
 
   const handleDateClick = (monthDate, day) => {
     const clicked = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
@@ -161,12 +161,13 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
             {/* Scrollable Calendar */}
             <div ref={scrollRef} className="overflow-y-auto flex-1 px-4 pt-4">
               {months.map((monthDate, idx) => (
-                <MonthCalendar
-                  key={idx}
-                  monthDate={monthDate}
-                  tempRange={tempRange}
-                  onDateClick={handleDateClick}
-                />
+                <div key={idx} ref={idx === 3 ? currentMonthRef : null}>
+                  <MonthCalendar
+                    monthDate={monthDate}
+                    tempRange={tempRange}
+                    onDateClick={handleDateClick}
+                  />
+                </div>
               ))}
             </div>
 
