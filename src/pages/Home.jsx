@@ -772,16 +772,15 @@ export default function Home() {
           {/* 캐러셀 트랙 - overflow visible로 양쪽 이미지 노출 */}
           <div
             className="relative overflow-hidden bg-black"
+            style={{ height: '208px' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex items-stretch ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex h-full ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
-                fontSize: 0,
-                lineHeight: 0,
               }}
             >
               {loopedBanners.map((banner, idx) => {
