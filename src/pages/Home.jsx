@@ -771,17 +771,18 @@ export default function Home() {
           {/* 캐러셀 트랙 */}
           <div
             className="relative overflow-hidden"
-            style={{ height: '208px', backgroundColor: '#000' }}
+            style={{ height: '208px', background: '#000' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex gap-4 ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 height: '208px',
-                backgroundColor: '#000',
-                transform: `translateX(calc(9vw - (${bannerIndex + 1} * (82vw + 16px)) + ${dragOffset}px))`,
+                background: '#000',
+                gap: '12px',
+                transform: `translateX(calc(9vw - (${bannerIndex + 1} * (82vw + 12px)) + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
