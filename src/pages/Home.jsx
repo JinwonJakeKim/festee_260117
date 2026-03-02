@@ -574,6 +574,32 @@ export default function Home() {
     ? [banners[banners.length - 1], ...banners, banners[0]]
     : [];
 
+  // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
+  const [isJumping, setIsJumping] = useState(false);
+
+  useEffect(() => {
+    if (isJumping) return;
+    if (banners.length === 0) return;
+
+    // bannerIndex가 -1이면 마지막으로, length이면 첫번째로 점프
+    if (bannerIndex === -1) {
+      const timer = setTimeout(() => {
+        setIsJumping(true);
+        setBannerIndex(banners.length - 1);
+        setTimeout(() => setIsJumping(false), 50);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    if (bannerIndex === banners.length) {
+      const timer = setTimeout(() => {
+        setIsJumping(true);
+        setBannerIndex(0);
+        setTimeout(() => setIsJumping(false), 50);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [bannerIndex, banners.length, isJumping]);
+
   const handleBannerClick = () => {
     const currentBanner = banners[bannerIndex];
     if (!currentBanner) return;
