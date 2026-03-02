@@ -777,9 +777,11 @@ export default function Home() {
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex items-stretch ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
+                fontSize: 0,
+                lineHeight: 0,
               }}
             >
               {loopedBanners.map((banner, idx) => {
