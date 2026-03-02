@@ -340,6 +340,109 @@ export default function AdminAdForm() {
           </div>
         </Card>
 
+        {/* 노출 축제 설정 */}
+        <Card className="bg-gray-900 border-gray-800 p-4">
+          <h2 className="text-white font-bold mb-2">배너에 노출할 축제</h2>
+          <p className="text-gray-500 text-xs mb-4">
+            선택한 축제들이 이 광고 다음에 배너에 표시됩니다. 선택하지 않으면 기존처럼 인기 축제가 자동 표시됩니다.
+          </p>
+
+          {/* 선택된 축제 목록 */}
+          {formData.featured_festival_ids.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <p className="text-cyan-400 text-sm font-medium">선택된 축제 ({formData.featured_festival_ids.length}개)</p>
+              {formData.featured_festival_ids.map((fid, idx) => {
+                const f = allFestivals.find(f => f.id === fid);
+                if (!f) return null;
+                return (
+                  <div key={fid} className="flex items-center gap-3 bg-gray-800 rounded-lg p-2">
+                    <span className="text-cyan-400 font-bold text-xs w-5 text-center">{idx + 1}</span>
+                    {f.thumbnail_url && (
+                      <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original || f.name}</p>
+                      <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        featured_festival_ids: prev.featured_festival_ids.filter(id => id !== fid)
+                      }))}
+                      className="flex-shrink-0 w-7 h-7 rounded-full bg-red-900/40 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-3 h-3 text-red-400" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 축제 검색 & 추가 */}
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input
+              value={festivalSearchQuery}
+              onChange={(e) => setFestivalSearchQuery(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-white pl-9"
+              placeholder="축제 이름, 도시, 국가로 검색..."
+            />
+          </div>
+          {festivalSearchQuery && (
+            <div className="max-h-60 overflow-y-auto space-y-1 border border-gray-700 rounded-lg p-2">
+              {allFestivals
+                .filter(f => {
+                  const q = festivalSearchQuery.toLowerCase();
+                  return (
+                    (f.name_ko || f.name_original || f.name || '').toLowerCase().includes(q) ||
+                    (f.city || '').toLowerCase().includes(q) ||
+                    (f.country || '').toLowerCase().includes(q)
+                  );
+                })
+                .slice(0, 20)
+                .map(f => {
+                  const isAlreadyAdded = formData.featured_festival_ids.includes(f.id);
+                  return (
+                    <div
+                      key={f.id}
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${isAlreadyAdded ? 'bg-cyan-900/30 opacity-60' : 'hover:bg-gray-700'}`}
+                      onClick={() => {
+                        if (isAlreadyAdded) return;
+                        setFormData(prev => ({
+                          ...prev,
+                          featured_festival_ids: [...prev.featured_festival_ids, f.id]
+                        }));
+                      }}
+                    >
+                      {f.thumbnail_url && (
+                        <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm truncate">{f.name_ko || f.name_original || f.name}</p>
+                        <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                      </div>
+                      {isAlreadyAdded ? (
+                        <span className="text-cyan-400 text-xs">추가됨</span>
+                      ) : (
+                        <Plus className="w-4 h-4 text-gray-400" />
+                      )}
+                    </div>
+                  );
+                })
+              }
+              {allFestivals.filter(f => {
+                const q = festivalSearchQuery.toLowerCase();
+                return (f.name_ko || f.name_original || f.name || '').toLowerCase().includes(q) ||
+                  (f.city || '').toLowerCase().includes(q) || (f.country || '').toLowerCase().includes(q);
+              }).length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-4">검색 결과가 없습니다</p>
+              )}
+            </div>
+          )}
+        </Card>
+
         {/* Submit Button */}
         <Button
           type="submit"
