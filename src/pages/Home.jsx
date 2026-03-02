@@ -558,9 +558,9 @@ export default function Home() {
     const minSwipeDistance = 50;
 
     if (distance > minSwipeDistance) {
-      setBannerIndex((prev) => (prev + 1) % banners.length);
+      setBannerIndex((prev) => prev + 1);
     } else if (distance < -minSwipeDistance) {
-      setBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+      setBannerIndex((prev) => prev - 1);
     }
 
     setTouchStart(0);
