@@ -892,107 +892,191 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          {/* 광고 관리 탭 */}
-          <TabsContent value="ads" className="mt-4">
-            <div className="mb-4 space-y-2">
+          {/* 배너 관리 탭 */}
+          <TabsContent value="ads" className="mt-4 space-y-6">
+
+            {/* ── 섹션 1: 축제 배너 관리 ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="bg-cyan-500 text-black text-xs font-bold px-2 py-0.5 rounded">축제</span>
+                <h2 className="text-white font-bold text-base">홈 배너 축제 설정</h2>
+              </div>
+              <p className="text-gray-500 text-xs mb-3">
+                아래에서 축제를 검색·선택하면 홈 상단 배너에 해당 축제가 노출됩니다. 선택하지 않으면 인기 순으로 자동 표시됩니다.
+              </p>
+
+              {/* 선택된 축제 목록 */}
+              {featuredFestivalIds.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  <p className="text-cyan-400 text-sm font-medium">선택된 축제 ({featuredFestivalIds.length}개)</p>
+                  {featuredFestivalIds.map((fid, idx) => {
+                    const f = allFestivals.find(f => f.id === fid);
+                    if (!f) return null;
+                    return (
+                      <div key={fid} className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-2">
+                        <span className="text-cyan-400 font-bold text-xs w-5 text-center">{idx + 1}</span>
+                        {f.thumbnail_url && (
+                          <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original}</p>
+                          <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                        </div>
+                        <button
+                          onClick={() => setFeaturedFestivalIds(prev => prev.filter(id => id !== fid))}
+                          className="flex-shrink-0 w-7 h-7 rounded-full bg-red-900/40 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+                        >
+                          <X className="w-3 h-3 text-red-400" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 축제 검색 */}
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  value={festivalBannerSearch}
+                  onChange={(e) => setFestivalBannerSearch(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-cyan-400"
+                  placeholder="축제 이름, 도시, 국가로 검색..."
+                />
+              </div>
+              {festivalBannerSearch && (
+                <div className="max-h-56 overflow-y-auto border border-gray-700 rounded-lg divide-y divide-gray-800 mb-3">
+                  {allFestivals.filter(f => {
+                    const q = festivalBannerSearch.toLowerCase();
+                    return (f.name_ko || f.name_original || '').toLowerCase().includes(q) ||
+                      (f.city || '').toLowerCase().includes(q) ||
+                      (f.country || '').toLowerCase().includes(q);
+                  }).slice(0, 15).map(f => {
+                    const already = featuredFestivalIds.includes(f.id);
+                    return (
+                      <div
+                        key={f.id}
+                        onClick={() => {
+                          if (already) return;
+                          setFeaturedFestivalIds(prev => [...prev, f.id]);
+                        }}
+                        className={`flex items-center gap-3 p-2 cursor-pointer transition-colors ${already ? 'opacity-50 cursor-default' : 'hover:bg-gray-800'}`}
+                      >
+                        {f.thumbnail_url && <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm truncate">{f.name_ko || f.name_original}</p>
+                          <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                        </div>
+                        {already ? <span className="text-cyan-400 text-xs">추가됨</span> : <Plus className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Button
+                onClick={() => saveFeaturedFestivalsMutation.mutate(featuredFestivalIds)}
+                disabled={saveFeaturedFestivalsMutation.isPending || advertisements.length === 0}
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-bold"
+              >
+                {saveFeaturedFestivalsMutation.isPending ? '저장 중...' : '배너 축제 저장'}
+              </Button>
+              {advertisements.length === 0 && (
+                <p className="text-yellow-400 text-xs mt-2 text-center">광고를 먼저 하나 추가해야 축제 설정을 저장할 수 있습니다.</p>
+              )}
+            </div>
+
+            {/* 구분선 */}
+            <div className="border-t border-gray-800" />
+
+            {/* ── 섹션 2: 상업광고 관리 ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded">상업광고</span>
+                <h2 className="text-white font-bold text-base">광고 관리</h2>
+              </div>
+
               <Button
                 onClick={() => navigate(createPageUrl('AdminAdForm'))}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="w-full mb-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 새 광고 추가
               </Button>
-            </div>
 
-            {/* 광고 선택 컨트롤 */}
-            {advertisements.length > 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={handleSelectAllAds}
-                    className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
-                  >
-                    {selectedAds.size === advertisements.length ? (
-                      <CheckSquare className="w-5 h-5 text-cyan-400" />
-                    ) : (
-                      <Square className="w-5 h-5" />
+              {/* 광고 선택 컨트롤 */}
+              {advertisements.length > 0 && (
+                <Card className="bg-gray-900 border-gray-800 p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleSelectAllAds}
+                      className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
+                    >
+                      {selectedAds.size === advertisements.length ? (
+                        <CheckSquare className="w-5 h-5 text-cyan-400" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                      <span className="font-medium">
+                        {selectedAds.size === advertisements.length ? '전체 해제' : '전체 선택'}
+                      </span>
+                    </button>
+                    {selectedAds.size > 0 && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-cyan-400 text-sm">{selectedAds.size}개 선택됨</span>
+                        <Button onClick={handleDeleteSelectedAds} className="bg-red-500 hover:bg-red-600 text-white" size="sm">
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          선택 삭제
+                        </Button>
+                      </div>
                     )}
-                    <span className="font-medium">
-                      {selectedAds.size === advertisements.length ? '전체 해제' : '전체 선택'}
-                    </span>
-                  </button>
-
-                  {selectedAds.size > 0 && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-cyan-400 text-sm">{selectedAds.size}개 선택됨</span>
-                      <Button
-                        onClick={handleDeleteSelectedAds}
-                        className="bg-red-500 hover:bg-red-600 text-white"
-                        size="sm"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        선택 삭제
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            <div className="space-y-3">
-              {advertisements.map((ad) => {
-                const isAdSelected = selectedAds.has(ad.id);
-                return (
-                  <Card key={ad.id} className={`border p-4 transition-all ${isAdSelected ? 'bg-cyan-900/20 border-cyan-400' : 'bg-gray-900 border-gray-800'}`}>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => handleSelectAd(ad.id)} className="flex-shrink-0">
-                        {isAdSelected ? (
-                          <CheckSquare className="w-6 h-6 text-cyan-400" />
-                        ) : (
-                          <Square className="w-6 h-6 text-gray-600 hover:text-gray-400" />
-                        )}
-                      </button>
-                      <img
-                        src={ad.image_url}
-                        alt={ad.name}
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-white font-bold mb-1">{ad.name}</h3>
-                        <p className="text-gray-400 text-sm mb-1">{ad.type}</p>
-                        <Badge variant="outline" className={ad.is_active ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-700'}>
-                          {ad.is_active ? '활성' : '비활성'}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(createPageUrl(`AdminAdForm?id=${ad.id}`))}
-                          className="border-gray-700 text-cyan-400"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteAdMutation.mutate(ad.id)}
-                          className="border-gray-700 text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-
-              {advertisements.length === 0 && (
-                <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                  <ImageIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500">광고가 없습니다</p>
+                  </div>
                 </Card>
               )}
+
+              <div className="space-y-3">
+                {advertisements.map((ad) => {
+                  const isAdSelected = selectedAds.has(ad.id);
+                  return (
+                    <Card key={ad.id} className={`border p-4 transition-all ${isAdSelected ? 'bg-purple-900/20 border-purple-400' : 'bg-gray-900 border-gray-800'}`}>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => handleSelectAd(ad.id)} className="flex-shrink-0">
+                          {isAdSelected ? (
+                            <CheckSquare className="w-6 h-6 text-purple-400" />
+                          ) : (
+                            <Square className="w-6 h-6 text-gray-600 hover:text-gray-400" />
+                          )}
+                        </button>
+                        <img src={ad.image_url} alt={ad.name} className="w-20 h-20 rounded-lg object-cover" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-purple-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">상업광고</span>
+                            <h3 className="text-white font-bold">{ad.name}</h3>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-1">{ad.type}</p>
+                          <Badge variant="outline" className={ad.is_active ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-700'}>
+                            {ad.is_active ? '활성' : '비활성'}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button variant="outline" size="sm" onClick={() => navigate(createPageUrl(`AdminAdForm?id=${ad.id}`))} className="border-gray-700 text-cyan-400">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => deleteAdMutation.mutate(ad.id)} className="border-gray-700 text-red-400">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+
+                {advertisements.length === 0 && (
+                  <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+                    <ImageIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500">광고가 없습니다</p>
+                  </Card>
+                )}
+              </div>
             </div>
           </TabsContent>
 
