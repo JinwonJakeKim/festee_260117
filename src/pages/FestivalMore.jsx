@@ -333,120 +333,13 @@ export default function FestivalMore() {
       </div>
 
       <div className="px-4 py-4">
-        <h2 className="text-white text-2xl font-bold mb-4">Top Festival</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white text-2xl font-bold">축제 차트</h2>
+        </div>
 
         {/* Filters */}
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
-          <Select value={countryFilter} onValueChange={setCountryFilter}>
-            <SelectTrigger className="w-auto min-w-[100px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
-              <div className="flex items-center gap-1.5">
-                <Globe className="w-4 h-4 text-cyan-400" />
-                <SelectValue>
-                  {countryFilter === "all" ? "국가" : getCountryNameInKorean(countryFilter)}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 text-white">
-              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 국가</SelectItem>
-              {countries.map(country => (
-                <SelectItem key={country} value={country} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                  {getCountryNameInKorean(country)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-auto min-w-[120px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-4 h-4 text-purple-400" />
-                <SelectValue>
-                  {categoryFilter === "all" ? "카테고리" : categoryFilter}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 text-white">
-              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <button 
-            onClick={() => setIsDatePickerOpen(true)}
-            className="px-4 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap flex items-center gap-2 text-sm hover:bg-gray-800 transition-colors"
-          >
-            <CalendarIcon className="w-4 h-4 text-pink-500" />
-            {dateRange.from && dateRange.to ? (
-              <span className="text-cyan-400">
-                {format(dateRange.from, 'M/d', { locale: ko })} - {format(dateRange.to, 'M/d', { locale: ko })}
-              </span>
-            ) : (
-              <span>날짜</span>
-            )}
-          </button>
-
-          {/* Date Picker Modal */}
-          <AnimatePresence>
-            {isDatePickerOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsDatePickerOpen(false)}
-                  className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm"
-                />
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative pointer-events-auto"
-                  >
-                    <button
-                      onClick={() => setIsDatePickerOpen(false)}
-                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center z-10 border border-gray-700"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                    <DateRangePicker
-                      selected={tempDateRange}
-                      onSelect={setTempDateRange}
-                      onApply={handleDateFilterApply}
-                      onReset={handleDateFilterReset}
-                      hidePastFestivals={hidePastFestivals}
-                      onHidePastFestivalsChange={setHidePastFestivals}
-                    />
-                  </motion.div>
-                </div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Quick Filters */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-          {quickFilters.map(filter => (
-            <Button
-              key={filter}
-              onClick={() => toggleTag(filter)}
-              variant="outline"
-              size="sm"
-              className={`rounded-full whitespace-nowrap h-8 text-xs transition-all ${
-                selectedTags.includes(filter)
-                  ? 'bg-cyan-400 text-black border-cyan-400 hover:bg-cyan-500 hover:text-black'
-                  : 'border-gray-700 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-600 hover:text-white'
-              }`}
-            >
-              {filter}
-            </Button>
-          ))}
-        </div>
-
+...
         {/* Active Filters */}
         {(categoryFilter !== "all" || countryFilter !== "all" || searchQuery || selectedTags.length > 0 || (dateRange.from && dateRange.to) || !hidePastFestivals) && (
           <div className="mb-4 flex items-center gap-2 flex-wrap">
