@@ -540,10 +540,15 @@ export default function Home() {
 
   const handleTouchStart = (e) => {
     setTouchStart(e.targetTouches[0].clientX);
+    setTouchEnd(e.targetTouches[0].clientX);
+    setIsDragging(true);
+    setDragOffset(0);
   };
 
   const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    const currentX = e.targetTouches[0].clientX;
+    setTouchEnd(currentX);
+    setDragOffset(currentX - touchStart);
   };
 
   const handleTouchEnd = () => {
@@ -560,6 +565,8 @@ export default function Home() {
 
     setTouchStart(0);
     setTouchEnd(0);
+    setDragOffset(0);
+    setIsDragging(false);
   };
 
   const handleBannerClick = () => {
