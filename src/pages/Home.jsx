@@ -777,11 +777,11 @@ export default function Home() {
             onTouchEnd={handleTouchEnd}
           >
             <div
-              className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex gap-4 ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 height: '208px',
                 backgroundColor: '#000',
-                transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
+                transform: `translateX(calc(9vw - (${bannerIndex + 1} * (82vw + 16px)) + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
@@ -790,7 +790,7 @@ export default function Home() {
                   <div
                     key={idx}
                     className="flex-shrink-0"
-                    style={{ width: '84vw', height: '208px', padding: '0 8px', backgroundColor: '#000' }}
+                    style={{ width: '82vw', height: '208px', backgroundColor: '#000' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
