@@ -28,9 +28,11 @@ export default function AdminAdForm() {
     is_active: true,
     start_date: "",
     end_date: "",
+    featured_festival_ids: [],
   });
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [festivalSearchQuery, setFestivalSearchQuery] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
