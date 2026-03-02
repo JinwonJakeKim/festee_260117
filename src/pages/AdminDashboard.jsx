@@ -74,6 +74,38 @@ export default function AdminDashboard() {
     initialData: [],
   });
 
+  const { data: allFestivals = [] } = useQuery({
+    queryKey: ['allFestivalsForBanner'],
+    queryFn: () => base44.entities.Festival.list('-likes_count', 200),
+  });
+
+  // 저장된 featured_festival_ids 로드 (첫 번째 광고 또는 별도 설정에서)
+  useEffect(() => {
+    if (advertisements.length > 0 && featuredFestivalIds.length === 0) {
+      // 모든 광고에서 featured_festival_ids 합산 (중복 제거)
+      const ids = [];
+      advertisements.forEach(ad => {
+        (ad.featured_festival_ids || []).forEach(id => {
+          if (!ids.includes(id)) ids.push(id);
+        });
+      });
+      if (ids.length > 0) setFeaturedFestivalIds(ids);
+    }
+  }, [advertisements]);
+
+  const saveFeaturedFestivalsMutation = useMutation({
+    mutationFn: async (ids) => {
+      // 모든 광고의 featured_festival_ids를 동일하게 업데이트 (첫 광고에만 저장)
+      if (advertisements.length > 0) {
+        await base44.entities.Advertisement.update(advertisements[0].id, { featured_festival_ids: ids });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['advertisements'] });
+      alert('배너 축제 설정이 저장되었습니다');
+    },
+  });
+
   const { data: apiUsageLogs } = useQuery({
     queryKey: ['apiUsageLogs'],
     queryFn: async () => {
