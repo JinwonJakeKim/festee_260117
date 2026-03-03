@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
     for (const festival of targetFestivals) {
       try {
         // 연도 제거 함수 (예: "2024 서울 불꽃축제" → "서울 불꽃축제")
-        const removeYear = (name) => name ? name.replace(/\b(19|20)\d{2}\b/g, '').replace(/\s+/g, ' ').trim() : '';
+        const removeYear = (name) => name ? name.replace(/(19|20)\d{2}년?/g, '').replace(/\s+/g, ' ').trim() : '';
 
         // 4개 언어 (한국어, 영어, 일본어, 중국어) 조회
         const languageConfigs = [
