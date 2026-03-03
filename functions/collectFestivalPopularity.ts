@@ -172,7 +172,9 @@ Deno.serve(async (req) => {
           }
 
           const { videoIds, count } = await searchYouTubeVideos(query, 50);
+          totalApiCalls += 1; // search API call
           const { totalViews } = await getVideoStats(videoIds);
+          if (videoIds.length > 0) totalApiCalls += 1; // videos stats API call
 
           populairtyData[`query_used_${config.key}`] = query;
           populairtyData[`videonums_${config.key}`] = count;
