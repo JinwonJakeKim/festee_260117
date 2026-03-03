@@ -41,6 +41,11 @@ export default function AdminDashboard() {
   const [isCollectingPopularity, setIsCollectingPopularity] = useState(false);
   const [popularityFestivalSearch, setPopularityFestivalSearch] = useState("");
   const [selectedPopularityFestival, setSelectedPopularityFestival] = useState(null);
+  const [popularityListSearch, setPopularityListSearch] = useState("");
+  const [popularityMonthFilter, setPopularityMonthFilter] = useState("all");
+  const [selectedPopularityFestivals, setSelectedPopularityFestivals] = useState(new Set());
+  const [isCollectingSelected, setIsCollectingSelected] = useState(false);
+  const [collectProgress, setCollectProgress] = useState(null);
 
   // localStorage에서 1개월 내 로그 로드
   const [popularityLogs, setPopularityLogs] = useState(() => {
