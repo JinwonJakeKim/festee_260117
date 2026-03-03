@@ -1435,7 +1435,7 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
-              {/* 선택 컨트롤 바 */}
+              {/* 선택 컨트롤 바 + 상태별 탭 */}
               {(() => {
                 const filteredForList = festivals.filter(f => {
                   const q = popularityListSearch.toLowerCase();
@@ -1451,140 +1451,157 @@ export default function AdminDashboard() {
                   return matchSearch && matchMonth;
                 });
 
-                const allFilteredSelected = filteredForList.length > 0 && filteredForList.every(f => selectedPopularityFestivals.has(f.id));
+                const pendingList = filteredForList.filter(f => !popularityMap[f.id]);
+                const doneList = filteredForList.filter(f => !!popularityMap[f.id]);
 
-                return (
-                  <>
+                const handleCollectSelected = async () => {
+                  const ids = Array.from(selectedPopularityFestivals);
+                  setIsCollectingSelected(true);
+                  setCollectProgress({ total: ids.length, current: 0, success: 0, failed: 0, currentName: '' });
+                  let successCount = 0, errorCount = 0;
+                  for (let i = 0; i < ids.length; i++) {
+                    const id = ids[i];
+                    const f = festivals.find(f => f.id === id);
+                    const name = f?.name_ko || f?.name_original || id;
+                    setCollectProgress(prev => ({ ...prev, current: i + 1, currentName: name }));
+                    try {
+                      await collectFestivalPopularity({ festival_id: id });
+                      successCount++;
+                      setCollectProgress(prev => ({ ...prev, success: successCount }));
+                    } catch (e) {
+                      errorCount++;
+                      setCollectProgress(prev => ({ ...prev, failed: errorCount }));
+                    }
+                  }
+                  const logEntry = {
+                    timestamp: new Date().toISOString(),
+                    status: errorCount === ids.length ? 'error' : 'success',
+                    type: 'selected',
+                    result: { total_festivals_processed: ids.length, success_count: successCount, error_count: errorCount, metric_period_start: '-', metric_period_end: '-' },
+                    error: errorCount === ids.length ? '전체 실패' : undefined
+                  };
+                  savePopularityLogs([logEntry, ...popularityLogs]);
+                  setIsCollectingSelected(false);
+                  setCollectProgress(null);
+                  setSelectedPopularityFestivals(new Set());
+                  alert(`수집 완료: 성공 ${successCount}개, 실패 ${errorCount}개`);
+                };
+
+                const FestivalItem = ({ f }) => {
+                  const isSelected = selectedPopularityFestivals.has(f.id);
+                  const popRecord = popularityMap[f.id];
+                  return (
+                    <div
+                      onClick={() => {
+                        const next = new Set(selectedPopularityFestivals);
+                        if (isSelected) next.delete(f.id); else next.add(f.id);
+                        setSelectedPopularityFestivals(next);
+                      }}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        isSelected ? 'bg-cyan-900/20 border-cyan-400/50' : 'bg-gray-900 border-gray-800 hover:border-gray-700'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                      )}
+                      {f.thumbnail_url && (
+                        <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original}</p>
+                        <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                        {popRecord && (
+                          <p className="text-green-400 text-xs mt-0.5 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            {new Date(popRecord.updated_date).toLocaleDateString('ko-KR')} · 조회수 {(popRecord.views_total || 0).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-gray-500 text-xs">{f.start_date ? `${new Date(f.start_date).getMonth()+1}월` : '-'}</p>
+                      </div>
+                    </div>
+                  );
+                };
+
+                const SelectBar = ({ list }) => {
+                  const allSel = list.length > 0 && list.every(f => selectedPopularityFestivals.has(f.id));
+                  return (
                     <div className="flex items-center justify-between mb-3 bg-gray-900 border border-gray-800 rounded-lg p-3">
                       <button
                         onClick={() => {
-                          if (allFilteredSelected) {
-                            const next = new Set(selectedPopularityFestivals);
-                            filteredForList.forEach(f => next.delete(f.id));
-                            setSelectedPopularityFestivals(next);
-                          } else {
-                            const next = new Set(selectedPopularityFestivals);
-                            filteredForList.forEach(f => next.add(f.id));
-                            setSelectedPopularityFestivals(next);
-                          }
+                          const next = new Set(selectedPopularityFestivals);
+                          if (allSel) list.forEach(f => next.delete(f.id));
+                          else list.forEach(f => next.add(f.id));
+                          setSelectedPopularityFestivals(next);
                         }}
                         className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
                       >
-                        {allFilteredSelected ? (
-                          <CheckSquare className="w-5 h-5 text-cyan-400" />
-                        ) : (
-                          <Square className="w-5 h-5" />
-                        )}
-                        <span className="text-sm font-medium">
-                          {allFilteredSelected ? '전체 해제' : `전체 선택 (${filteredForList.length}개)`}
-                        </span>
+                        {allSel ? <CheckSquare className="w-5 h-5 text-cyan-400" /> : <Square className="w-5 h-5" />}
+                        <span className="text-sm font-medium">{allSel ? '전체 해제' : `전체 선택 (${list.length}개)`}</span>
                       </button>
                       {selectedPopularityFestivals.size > 0 && (
                         <div className="flex items-center gap-2">
                           <span className="text-cyan-400 text-sm font-bold">{selectedPopularityFestivals.size}개 선택</span>
-                          <Button
-                            onClick={async () => {
-                              const ids = Array.from(selectedPopularityFestivals);
-                              setIsCollectingSelected(true);
-                              setCollectProgress({ total: ids.length, current: 0, success: 0, failed: 0, currentName: '' });
-                              let successCount = 0, errorCount = 0;
-                              for (let i = 0; i < ids.length; i++) {
-                                const id = ids[i];
-                                const f = festivals.find(f => f.id === id);
-                                const name = f?.name_ko || f?.name_original || id;
-                                setCollectProgress(prev => ({ ...prev, current: i + 1, currentName: name }));
-                                try {
-                                  await collectFestivalPopularity({ festival_id: id });
-                                  successCount++;
-                                  setCollectProgress(prev => ({ ...prev, success: successCount }));
-                                } catch (e) {
-                                  errorCount++;
-                                  setCollectProgress(prev => ({ ...prev, failed: errorCount }));
-                                }
-                              }
-                              const logEntry = {
-                                timestamp: new Date().toISOString(),
-                                status: errorCount === ids.length ? 'error' : 'success',
-                                type: 'selected',
-                                result: { total_festivals_processed: ids.length, success_count: successCount, error_count: errorCount, metric_period_start: '-', metric_period_end: '-' },
-                                error: errorCount === ids.length ? '전체 실패' : undefined
-                              };
-                              savePopularityLogs([logEntry, ...popularityLogs]);
-                              setIsCollectingSelected(false);
-                              setCollectProgress(null);
-                              setSelectedPopularityFestivals(new Set());
-                              alert(`수집 완료: 성공 ${successCount}개, 실패 ${errorCount}개`);
-                            }}
-                            disabled={isCollectingSelected}
-                            size="sm"
-                            className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
-                          >
-                            {isCollectingSelected ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <><Zap className="w-4 h-4 mr-1" />선택 수집</>
-                            )}
+                          <Button onClick={handleCollectSelected} disabled={isCollectingSelected} size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold">
+                            {isCollectingSelected ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Zap className="w-4 h-4 mr-1" />선택 수집</>}
                           </Button>
-                          <button
-                            onClick={() => setSelectedPopularityFestivals(new Set())}
-                            className="text-gray-500 hover:text-red-400 text-xs"
-                          >
-                            초기화
-                          </button>
+                          <button onClick={() => setSelectedPopularityFestivals(new Set())} className="text-gray-500 hover:text-red-400 text-xs">초기화</button>
                         </div>
                       )}
                     </div>
+                  );
+                };
 
-                    {/* 축제 리스트 */}
-                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                      {filteredForList.map(f => {
-                        const isSelected = selectedPopularityFestivals.has(f.id);
-                        const popRecord = popularityMap[f.id];
-                        return (
-                          <div
-                            key={f.id}
-                            onClick={() => {
-                              const next = new Set(selectedPopularityFestivals);
-                              if (isSelected) next.delete(f.id); else next.add(f.id);
-                              setSelectedPopularityFestivals(next);
-                            }}
-                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                              isSelected ? 'bg-cyan-900/20 border-cyan-400/50' : 'bg-gray-900 border-gray-800 hover:border-gray-700'
-                            }`}
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                            ) : (
-                              <Square className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                            )}
-                            {f.thumbnail_url && (
-                              <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original}</p>
-                              <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
-                              {popRecord && (
-                                <p className="text-green-400 text-xs mt-0.5 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  수집완료 · {new Date(popRecord.updated_date).toLocaleDateString('ko-KR')} · 조회수 {(popRecord.views_total || 0).toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                            <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
-                              <p className="text-gray-500 text-xs">{f.start_date ? `${new Date(f.start_date).getMonth()+1}월` : '-'}</p>
-                              {popRecord && (
-                                <span className="text-xs bg-green-900/40 text-green-400 border border-green-400/30 rounded px-1.5 py-0.5">수집됨</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {filteredForList.length === 0 && (
-                        <Card className="bg-gray-900 border-gray-800 p-8 text-center">
-                          <p className="text-gray-500 text-sm">검색 결과가 없습니다</p>
-                        </Card>
-                      )}
+                return (
+                  <>
+                    {/* 통계 */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <Card className="bg-yellow-900/20 border-yellow-400/30 p-3 text-center">
+                        <div className="text-2xl font-bold text-yellow-400">{pendingList.length}</div>
+                        <div className="text-xs text-gray-400">대기중 (미수집)</div>
+                      </Card>
+                      <Card className="bg-green-900/20 border-green-400/30 p-3 text-center">
+                        <div className="text-2xl font-bold text-green-400">{doneList.length}</div>
+                        <div className="text-xs text-gray-400">완료 (수집됨)</div>
+                      </Card>
                     </div>
+
+                    {/* 상태별 탭 */}
+                    <Tabs defaultValue="pending" className="w-full">
+                      <TabsList className="w-full bg-gray-900 grid grid-cols-2">
+                        <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black text-xs">
+                          대기중 ({pendingList.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="done" className="data-[state=active]:bg-green-500 data-[state=active]:text-black text-xs">
+                          완료 ({doneList.length})
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="pending" className="mt-3">
+                        <SelectBar list={pendingList} />
+                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                          {pendingList.length === 0 ? (
+                            <Card className="bg-gray-900 border-gray-800 p-8 text-center">
+                              <p className="text-gray-500 text-sm">대기중인 축제가 없습니다</p>
+                            </Card>
+                          ) : pendingList.map(f => <FestivalItem key={f.id} f={f} />)}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="done" className="mt-3">
+                        <SelectBar list={doneList} />
+                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                          {doneList.length === 0 ? (
+                            <Card className="bg-gray-900 border-gray-800 p-8 text-center">
+                              <p className="text-gray-500 text-sm">수집 완료된 축제가 없습니다</p>
+                            </Card>
+                          ) : doneList.map(f => <FestivalItem key={f.id} f={f} />)}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </>
                 );
               })()}
