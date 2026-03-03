@@ -1539,6 +1539,7 @@ export default function AdminDashboard() {
                     <div className="space-y-2 max-h-[500px] overflow-y-auto">
                       {filteredForList.map(f => {
                         const isSelected = selectedPopularityFestivals.has(f.id);
+                        const popRecord = popularityMap[f.id];
                         return (
                           <div
                             key={f.id}
@@ -1562,9 +1563,18 @@ export default function AdminDashboard() {
                             <div className="flex-1 min-w-0">
                               <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original}</p>
                               <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                              {popRecord && (
+                                <p className="text-green-400 text-xs mt-0.5 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  수집완료 · {new Date(popRecord.updated_date).toLocaleDateString('ko-KR')} · 조회수 {(popRecord.views_total || 0).toLocaleString()}
+                                </p>
+                              )}
                             </div>
-                            <div className="text-right flex-shrink-0">
+                            <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                               <p className="text-gray-500 text-xs">{f.start_date ? `${new Date(f.start_date).getMonth()+1}월` : '-'}</p>
+                              {popRecord && (
+                                <span className="text-xs bg-green-900/40 text-green-400 border border-green-400/30 rounded px-1.5 py-0.5">수집됨</span>
+                              )}
                             </div>
                           </div>
                         );
