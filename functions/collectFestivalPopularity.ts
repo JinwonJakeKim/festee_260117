@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
     const results = [];
     let successCount = 0;
     let errorCount = 0;
+    let totalApiCalls = 0;
 
     // 각 축제의 인기도 수집
     for (const festival of targetFestivals) {
