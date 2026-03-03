@@ -23,24 +23,38 @@ async function searchYouTubeVideos(query, maxResults = 50) {
   }
 }
 
-async function logYoutubeApiUsage(base44, callCount) {
+const YOUTUBE_DAILY_LIMIT = 100;
+
+async function getYoutubeUsage(base44) {
   try {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
     const existing = await base44.asServiceRole.entities.ApiUsageLog.filter({ api_name: 'youtube_data_api', date: today });
     if (existing.length > 0) {
-      await base44.asServiceRole.entities.ApiUsageLog.update(existing[0].id, {
-        count: (existing[0].count || 0) + callCount
+      return { id: existing[0].id, count: existing[0].count || 0, date: today };
+    }
+    return { id: null, count: 0, date: today };
+  } catch (e) {
+    console.error('[collectFestivalPopularity] Failed to get API usage:', e.message);
+    return { id: null, count: 0, date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) };
+  }
+}
+
+async function incrementYoutubeUsage(base44, usageInfo, callCount) {
+  try {
+    if (usageInfo.id) {
+      await base44.asServiceRole.entities.ApiUsageLog.update(usageInfo.id, {
+        count: usageInfo.count + callCount
       });
     } else {
       await base44.asServiceRole.entities.ApiUsageLog.create({
         api_name: 'youtube_data_api',
-        date: today,
+        date: usageInfo.date,
         count: callCount,
-        limit: 100
+        limit: YOUTUBE_DAILY_LIMIT
       });
     }
   } catch (e) {
-    console.error('[collectFestivalPopularity] Failed to log API usage:', e.message);
+    console.error('[collectFestivalPopularity] Failed to increment API usage:', e.message);
   }
 }
 
