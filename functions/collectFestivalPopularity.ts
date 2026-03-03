@@ -23,6 +23,27 @@ async function searchYouTubeVideos(query, maxResults = 50) {
   }
 }
 
+async function logYoutubeApiUsage(base44, callCount) {
+  try {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    const existing = await base44.asServiceRole.entities.ApiUsageLog.filter({ api_name: 'youtube_data_api', date: today });
+    if (existing.length > 0) {
+      await base44.asServiceRole.entities.ApiUsageLog.update(existing[0].id, {
+        count: (existing[0].count || 0) + callCount
+      });
+    } else {
+      await base44.asServiceRole.entities.ApiUsageLog.create({
+        api_name: 'youtube_data_api',
+        date: today,
+        count: callCount,
+        limit: 100
+      });
+    }
+  } catch (e) {
+    console.error('[collectFestivalPopularity] Failed to log API usage:', e.message);
+  }
+}
+
 async function getVideoStats(videoIds) {
   if (videoIds.length === 0) return { totalViews: 0 };
   
