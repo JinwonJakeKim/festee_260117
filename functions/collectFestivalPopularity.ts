@@ -120,12 +120,15 @@ Deno.serve(async (req) => {
     // 각 축제의 인기도 수집
     for (const festival of targetFestivals) {
       try {
+        // 연도 제거 함수 (예: "2024 서울 불꽃축제" → "서울 불꽃축제")
+        const removeYear = (name) => name ? name.replace(/\b(19|20)\d{2}\b/g, '').replace(/\s+/g, ' ').trim() : '';
+
         // 4개 언어 (한국어, 영어, 일본어, 중국어) 조회
         const languageConfigs = [
-          { key: 'ko', name: festival.name_ko || festival.name_original, lang: '한국어' },
-          { key: 'en', name: festival.name_en || festival.name_original, lang: '영어' },
-          { key: 'jp', name: festival.name_jp || festival.name_original, lang: '일본어' },
-          { key: 'zh', name: festival.name_zh || festival.name_original, lang: '중국어' }
+          { key: 'ko', name: removeYear(festival.name_ko || festival.name_original), lang: '한국어' },
+          { key: 'en', name: removeYear(festival.name_en || festival.name_original), lang: '영어' },
+          { key: 'jp', name: removeYear(festival.name_jp || festival.name_original), lang: '일본어' },
+          { key: 'zh', name: removeYear(festival.name_zh || festival.name_original), lang: '중국어' }
         ];
 
         const populairtyData = {
@@ -139,7 +142,7 @@ Deno.serve(async (req) => {
 
         // 각 언어별로 YouTube 데이터 수집
         for (const config of languageConfigs) {
-          const query = config.name ? `${config.name} festival` : '';
+          const query = config.name || '';
           
           if (!query) {
             console.warn(`[collectFestivalPopularity] No name for festival ${festival.id} in ${config.lang}`);
