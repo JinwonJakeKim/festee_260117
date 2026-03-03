@@ -168,6 +168,25 @@ export default function AdminDashboard() {
     initialData: [],
   });
 
+  // 인기도 수집 이력 (festival_id → 최신 수집일)
+  const { data: popularityRecords } = useQuery({
+    queryKey: ['festivalPopularityRecords'],
+    queryFn: () => base44.entities.FestivalPopularity.list('-updated_date', 500),
+    initialData: [],
+    enabled: selectedTab === 'popularity',
+  });
+
+  // festival_id별 최신 수집 기록 맵
+  const popularityMap = React.useMemo(() => {
+    const map = {};
+    popularityRecords.forEach(r => {
+      if (!map[r.festival_id] || r.updated_date > map[r.festival_id].updated_date) {
+        map[r.festival_id] = r;
+      }
+    });
+    return map;
+  }, [popularityRecords]);
+
   const updateFestivalStarMutation = useMutation({
     mutationFn: async ({ festivalId, starRating }) => {
       await base44.entities.Festival.update(festivalId, { star_rating: starRating });
