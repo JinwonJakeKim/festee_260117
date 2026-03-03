@@ -1156,7 +1156,7 @@ export default function AdminDashboard() {
                       try {
                         const response = await collectFestivalPopularity({});
                         const result = response.data;
-                        setPopularityLogs([{
+                        savePopularityLogs([{
                           timestamp: new Date().toISOString(),
                           status: 'success',
                           result,
