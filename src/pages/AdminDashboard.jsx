@@ -1666,6 +1666,9 @@ export default function AdminDashboard() {
                       <p className="text-gray-500 text-xs">
                         일일 무료 한도: 100 쿼리 · <span className="text-yellow-400">매일 PT 00:00 초기화</span>
                       </p>
+                      <p className="text-orange-400 text-xs mt-1">
+                        ⚠️ 90회 도달 시 인기도 수집 및 영상 검색 작업이 자동 중지됩니다
+                      </p>
                     </div>
                   </div>
                 </div>
