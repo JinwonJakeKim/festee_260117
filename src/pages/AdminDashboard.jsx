@@ -38,10 +38,30 @@ export default function AdminDashboard() {
   const [selectedAds, setSelectedAds] = useState(new Set());
   const [festivalBannerSearch, setFestivalBannerSearch] = useState("");
   const [featuredFestivalIds, setFeaturedFestivalIds] = useState([]);
-  const [popularityLogs, setPopularityLogs] = useState([]);
   const [isCollectingPopularity, setIsCollectingPopularity] = useState(false);
   const [popularityFestivalSearch, setPopularityFestivalSearch] = useState("");
   const [selectedPopularityFestival, setSelectedPopularityFestival] = useState(null);
+
+  // localStorage에서 1개월 내 로그 로드
+  const [popularityLogs, setPopularityLogs] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('popularityLogs') || '[]');
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      return saved.filter(log => new Date(log.timestamp) >= oneMonthAgo);
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // 로그 변경 시 localStorage에 저장 (1개월 이내만 유지)
+  const savePopularityLogs = (logs) => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const filtered = logs.filter(log => new Date(log.timestamp) >= oneMonthAgo);
+    setPopularityLogs(filtered);
+    localStorage.setItem('popularityLogs', JSON.stringify(filtered));
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
