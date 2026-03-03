@@ -1336,8 +1336,8 @@ export default function AdminDashboard() {
                               {log.status === 'success' ? '수집 완료' : '수집 실패'}
                             </p>
                             {log.type && (
-                              <Badge className={log.type === 'all' ? 'bg-blue-500 text-white text-xs' : 'bg-purple-500 text-white text-xs'}>
-                                {log.type === 'all' ? '전체' : '단일'}
+                              <Badge className={log.type === 'all' ? 'bg-blue-500 text-white text-xs' : log.type === 'selected' ? 'bg-orange-500 text-white text-xs' : 'bg-purple-500 text-white text-xs'}>
+                                {log.type === 'all' ? '전체' : log.type === 'selected' ? '선택' : '단일'}
                               </Badge>
                             )}
                           </div>
@@ -1363,6 +1363,202 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* 축제 리스트 선택 수집 */}
+            <div className="mt-6">
+              <div className="border-t border-gray-800 mb-5" />
+              <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 text-cyan-400" />
+                축제 선택 수집
+              </h3>
+
+              {/* 진행 상황 표시 */}
+              {collectProgress && (
+                <Card className="bg-gray-900 border-cyan-400/30 p-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-medium text-sm">수집 진행 중...</span>
+                    <span className="text-cyan-400 font-bold text-sm">{collectProgress.current} / {collectProgress.total}</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden mb-2">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-300"
+                      style={{ width: `${(collectProgress.current / collectProgress.total) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-gray-400 text-xs">✓ {collectProgress.success}개 완료 · ✗ {collectProgress.failed}개 실패</p>
+                  {collectProgress.currentName && (
+                    <p className="text-cyan-400 text-xs mt-1">현재: {collectProgress.currentName}</p>
+                  )}
+                </Card>
+              )}
+
+              {/* 검색 + 월 필터 */}
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    value={popularityListSearch}
+                    onChange={(e) => setPopularityListSearch(e.target.value)}
+                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-cyan-400"
+                    placeholder="축제명, 도시, 국가 검색..."
+                  />
+                </div>
+                <select
+                  value={popularityMonthFilter}
+                  onChange={(e) => setPopularityMonthFilter(e.target.value)}
+                  className="bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="all">전체 월</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={String(m)}>{m}월</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 선택 컨트롤 바 */}
+              {(() => {
+                const filteredForList = festivals.filter(f => {
+                  const q = popularityListSearch.toLowerCase();
+                  const matchSearch = !q ||
+                    (f.name_ko || f.name_original || '').toLowerCase().includes(q) ||
+                    (f.city || '').toLowerCase().includes(q) ||
+                    (f.country || '').toLowerCase().includes(q);
+                  const matchMonth = popularityMonthFilter === 'all' || (() => {
+                    if (!f.start_date) return false;
+                    const m = new Date(f.start_date).getMonth() + 1;
+                    return String(m) === popularityMonthFilter;
+                  })();
+                  return matchSearch && matchMonth;
+                });
+
+                const allFilteredSelected = filteredForList.length > 0 && filteredForList.every(f => selectedPopularityFestivals.has(f.id));
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-3 bg-gray-900 border border-gray-800 rounded-lg p-3">
+                      <button
+                        onClick={() => {
+                          if (allFilteredSelected) {
+                            const next = new Set(selectedPopularityFestivals);
+                            filteredForList.forEach(f => next.delete(f.id));
+                            setSelectedPopularityFestivals(next);
+                          } else {
+                            const next = new Set(selectedPopularityFestivals);
+                            filteredForList.forEach(f => next.add(f.id));
+                            setSelectedPopularityFestivals(next);
+                          }
+                        }}
+                        className="flex items-center gap-2 text-white hover:text-cyan-400 transition-colors"
+                      >
+                        {allFilteredSelected ? (
+                          <CheckSquare className="w-5 h-5 text-cyan-400" />
+                        ) : (
+                          <Square className="w-5 h-5" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {allFilteredSelected ? '전체 해제' : `전체 선택 (${filteredForList.length}개)`}
+                        </span>
+                      </button>
+                      {selectedPopularityFestivals.size > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-cyan-400 text-sm font-bold">{selectedPopularityFestivals.size}개 선택</span>
+                          <Button
+                            onClick={async () => {
+                              const ids = Array.from(selectedPopularityFestivals);
+                              setIsCollectingSelected(true);
+                              setCollectProgress({ total: ids.length, current: 0, success: 0, failed: 0, currentName: '' });
+                              let successCount = 0, errorCount = 0;
+                              for (let i = 0; i < ids.length; i++) {
+                                const id = ids[i];
+                                const f = festivals.find(f => f.id === id);
+                                const name = f?.name_ko || f?.name_original || id;
+                                setCollectProgress(prev => ({ ...prev, current: i + 1, currentName: name }));
+                                try {
+                                  await collectFestivalPopularity({ festival_id: id });
+                                  successCount++;
+                                  setCollectProgress(prev => ({ ...prev, success: successCount }));
+                                } catch (e) {
+                                  errorCount++;
+                                  setCollectProgress(prev => ({ ...prev, failed: errorCount }));
+                                }
+                              }
+                              const logEntry = {
+                                timestamp: new Date().toISOString(),
+                                status: errorCount === ids.length ? 'error' : 'success',
+                                type: 'selected',
+                                result: { total_festivals_processed: ids.length, success_count: successCount, error_count: errorCount, metric_period_start: '-', metric_period_end: '-' },
+                                error: errorCount === ids.length ? '전체 실패' : undefined
+                              };
+                              savePopularityLogs([logEntry, ...popularityLogs]);
+                              setIsCollectingSelected(false);
+                              setCollectProgress(null);
+                              setSelectedPopularityFestivals(new Set());
+                              alert(`수집 완료: 성공 ${successCount}개, 실패 ${errorCount}개`);
+                            }}
+                            disabled={isCollectingSelected}
+                            size="sm"
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
+                          >
+                            {isCollectingSelected ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <><Zap className="w-4 h-4 mr-1" />선택 수집</>
+                            )}
+                          </Button>
+                          <button
+                            onClick={() => setSelectedPopularityFestivals(new Set())}
+                            className="text-gray-500 hover:text-red-400 text-xs"
+                          >
+                            초기화
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 축제 리스트 */}
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                      {filteredForList.map(f => {
+                        const isSelected = selectedPopularityFestivals.has(f.id);
+                        return (
+                          <div
+                            key={f.id}
+                            onClick={() => {
+                              const next = new Set(selectedPopularityFestivals);
+                              if (isSelected) next.delete(f.id); else next.add(f.id);
+                              setSelectedPopularityFestivals(next);
+                            }}
+                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                              isSelected ? 'bg-cyan-900/20 border-cyan-400/50' : 'bg-gray-900 border-gray-800 hover:border-gray-700'
+                            }`}
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                            ) : (
+                              <Square className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                            )}
+                            {f.thumbnail_url && (
+                              <img src={f.thumbnail_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-sm font-medium truncate">{f.name_ko || f.name_original}</p>
+                              <p className="text-gray-400 text-xs">{f.city}, {f.country}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-gray-500 text-xs">{f.start_date ? `${new Date(f.start_date).getMonth()+1}월` : '-'}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {filteredForList.length === 0 && (
+                        <Card className="bg-gray-900 border-gray-800 p-8 text-center">
+                          <p className="text-gray-500 text-sm">검색 결과가 없습니다</p>
+                        </Card>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </TabsContent>
 
