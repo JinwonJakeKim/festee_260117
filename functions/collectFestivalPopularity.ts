@@ -23,7 +23,7 @@ async function searchYouTubeVideos(query, maxResults = 50) {
   }
 }
 
-const YOUTUBE_DAILY_LIMIT = 100;
+const YOUTUBE_DAILY_LIMIT = 90;
 
 async function getYoutubeUsage(base44) {
   try {
