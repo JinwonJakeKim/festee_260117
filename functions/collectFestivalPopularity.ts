@@ -221,6 +221,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    // YouTube API 사용량 기록
+    if (totalApiCalls > 0) {
+      await logYoutubeApiUsage(base44, totalApiCalls);
+    }
+
     return Response.json({
       success: true,
       execution_date: executionDate.toISOString(),
