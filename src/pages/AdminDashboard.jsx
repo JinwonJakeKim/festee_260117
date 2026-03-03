@@ -1164,7 +1164,7 @@ export default function AdminDashboard() {
                         }, ...popularityLogs]);
                         alert('인기도 수집이 완료되었습니다');
                       } catch (error) {
-                        setPopularityLogs([{
+                        savePopularityLogs([{
                           timestamp: new Date().toISOString(),
                           status: 'error',
                           error: error.message,
