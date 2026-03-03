@@ -151,7 +151,10 @@ Deno.serve(async (req) => {
     const results = [];
     let successCount = 0;
     let errorCount = 0;
-    let totalApiCalls = 0;
+
+    // YouTube API 사용량 사전 확인
+    let youtubeUsage = await getYoutubeUsage(base44);
+    console.log(`[collectFestivalPopularity] YouTube API usage today: ${youtubeUsage.count}/${YOUTUBE_DAILY_LIMIT}`);
 
     // 각 축제의 인기도 수집
     for (const festival of targetFestivals) {
