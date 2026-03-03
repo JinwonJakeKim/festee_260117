@@ -188,10 +188,32 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          // 한도 초과 확인 (search 1회 + stats 1회 = 최대 2회 필요)
+          if (youtubeUsage.count + 1 > YOUTUBE_DAILY_LIMIT) {
+            console.warn(`[collectFestivalPopularity] YouTube API daily limit reached: ${youtubeUsage.count}/${YOUTUBE_DAILY_LIMIT}`);
+            return Response.json({
+              success: false,
+              error: 'YOUTUBE_API_LIMIT_REACHED',
+              message: `YouTube Data API 하루 ${YOUTUBE_DAILY_LIMIT}회 무료 한도를 초과했습니다. (현재 ${youtubeUsage.count}회 사용) 내일 다시 시도해주세요.`,
+              partial: { success_count: successCount, error_count: errorCount }
+            }, { status: 429 });
+          }
+
           const { videoIds, count } = await searchYouTubeVideos(query, 50);
-          totalApiCalls += 1; // search API call
+          youtubeUsage.count += 1;
+          await incrementYoutubeUsage(base44, youtubeUsage, 1);
+          youtubeUsage.id = youtubeUsage.id || 'updated'; // mark as existing
+
           const { totalViews } = await getVideoStats(videoIds);
-          if (videoIds.length > 0) totalApiCalls += 1; // videos stats API call
+          if (videoIds.length > 0) {
+            if (youtubeUsage.count + 1 > YOUTUBE_DAILY_LIMIT) {
+              // stats 호출도 한도 초과 시 views=0으로 처리하고 계속
+              console.warn(`[collectFestivalPopularity] Limit reached for stats call, skipping`);
+            } else {
+              youtubeUsage.count += 1;
+              await incrementYoutubeUsage(base44, youtubeUsage, 1);
+            }
+          }
 
           populairtyData[`query_used_${config.key}`] = query;
           populairtyData[`videonums_${config.key}`] = count;
