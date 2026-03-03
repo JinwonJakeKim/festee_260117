@@ -1263,7 +1263,7 @@ export default function AdminDashboard() {
                         festival_id: selectedPopularityFestival.id
                       });
                       const result = response.data;
-                      setPopularityLogs([{
+                      savePopularityLogs([{
                         timestamp: new Date().toISOString(),
                         status: 'success',
                         result,
