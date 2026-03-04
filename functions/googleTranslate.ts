@@ -86,10 +86,26 @@ Deno.serve(async (req) => {
     const results = {};
     let usedChars = 0;
 
+    // 원본 언어 감지 (texts의 값으로 판단)
+    const firstText = Object.values(texts)[0];
+    const firstTextStr = Array.isArray(firstText) ? firstText.join(' ') : (firstText || '');
+    const hasKorean = /[\uAC00-\uD7A3]/.test(firstTextStr);
+    const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(firstTextStr);
+    const hasChineseOnly = /[\u4E00-\u9FFF]/.test(firstTextStr) && !hasKorean && !hasJapanese;
+    const detectedSourceLang = hasKorean ? 'ko' : hasJapanese ? 'ja' : hasChineseOnly ? 'zh-CN' : 'en';
+
     for (const [fieldName, textValue] of Object.entries(texts)) {
       results[fieldName] = {};
       for (const targetLang of targetLanguages) {
         const appLangKey = langMap[targetLang] || targetLang;
+
+        // 원본 언어와 번역 대상 언어가 동일하면 API 호출 없이 원본 반환
+        if (targetLang === detectedSourceLang) {
+          results[fieldName][appLangKey] = Array.isArray(textValue) ? [...textValue] : (textValue || '');
+          console.log(`[Translate] ⏭️ Skipping ${fieldName}→${targetLang} (same as source language)`);
+          continue;
+        }
+
         if (Array.isArray(textValue)) {
           // 배열 번역 (highlights, tags 등)
           const translated = [];
