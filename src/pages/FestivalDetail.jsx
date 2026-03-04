@@ -688,20 +688,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleShare}
-              className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
-            >
-              <Share2 className="w-5 h-5 text-white" />
-            </button>
-            <button 
-              onClick={handleLike}
-              className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center"
-            >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-white'}`} />
-            </button>
-          </div>
+          <div />
         </div>
       </div>
 
@@ -932,18 +919,25 @@ FESTEE에서 더 자세히 확인하세요 👉`;
             <MessageCircle className="w-6 h-6 text-gray-400" />
             <span className="text-white font-medium">{festival.comments_count || 0}</span>
           </div>
-          {festival.latitude && festival.longitude && (
-            <Link to={createPageUrl(`FestivalVenueMap?id=${festival.id}&name=${encodeURIComponent(festival.name)}`)}>
-              <button className="flex items-center gap-2">
-                <Map className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
-              </button>
-            </Link>
-          )}
+          <a
+            href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2"
+          >
+            <Map className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
+          </a>
           <Link to={createPageUrl(`Catch?festival=${festival.id}`)}>
             <button className="flex items-center gap-2">
               <Target className="w-6 h-6 text-gray-400 hover:text-pink-500 transition-colors" />
             </button>
           </Link>
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-2"
+          >
+            <Share2 className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
+          </button>
         </div>
       </div>
 
