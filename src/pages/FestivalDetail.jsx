@@ -172,6 +172,7 @@ export default function FestivalDetail() {
   // New states for the unified gallery popup
   const [showGalleryPopup, setShowGalleryPopup] = useState(false);
   const [galleryPopupIndex, setGalleryPopupIndex] = useState(0);
+  const commentSectionRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
