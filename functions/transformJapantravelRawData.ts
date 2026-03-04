@@ -153,16 +153,27 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   // 번역이 이미 완료된 경우 Google Translate, LLM 모두 스킵
   const googleTranslatePromise = (alreadyTranslated && !retransform)
     ? Promise.resolve({ data: { success: false, skipped: true } })
-    : base44.functions.invoke('googleTranslate', {
-        texts: {
-          name: festivalData.name_original || '',
-          summary: truncatedSummary || '',
-          description: truncatedDescription || '',
-          city: festivalData.city || '',
-          country: festivalData.country || '',
-        },
-        targetLanguages: ['ko', 'en', 'ja', 'zh-CN']
-      }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
+    : (() => {
+        // 원본 언어와 동일한 언어는 번역 대상에서 제외
+        const originalLang = festivalData.original_language || 'ja';
+        const langCodeMap = { 'ja': 'ja', 'ko': 'ko', 'en': 'en', 'zh': 'zh-CN' };
+        const allTargets = ['ko', 'en', 'ja', 'zh-CN'];
+        const googleOriginalCode = langCodeMap[originalLang] || null;
+        const filteredTargets = googleOriginalCode
+          ? allTargets.filter(l => l !== googleOriginalCode)
+          : allTargets;
+        console.log(`[Transform] Google Translate targets (excl. source ${originalLang}): ${filteredTargets.join(', ')}`);
+        return base44.functions.invoke('googleTranslate', {
+          texts: {
+            name: festivalData.name_original || '',
+            summary: truncatedSummary || '',
+            description: truncatedDescription || '',
+            city: festivalData.city || '',
+            country: festivalData.country || '',
+          },
+          targetLanguages: filteredTargets
+        }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
+      })();
 
   // LLM translation promise (description 길이 제한 적용) - 폴백용
   const llmPromise = (alreadyTranslated && !retransform)
