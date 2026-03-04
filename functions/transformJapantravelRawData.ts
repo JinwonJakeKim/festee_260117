@@ -155,7 +155,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     ? Promise.resolve({ data: { success: false, skipped: true } })
     : (() => {
         // 원본 언어와 동일한 언어는 번역 대상에서 제외
-        const originalLang = festivalData.original_language || 'ja';
+        const originalLang = festivalData.original_language || 'en';
         const langCodeMap = { 'ja': 'ja', 'ko': 'ko', 'en': 'en', 'zh': 'zh-CN' };
         const allTargets = ['ko', 'en', 'ja', 'zh-CN'];
         const googleOriginalCode = langCodeMap[originalLang] || null;
