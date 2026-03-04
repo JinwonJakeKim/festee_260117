@@ -916,10 +916,13 @@ FESTEE에서 더 자세히 확인하세요 👉`;
               {formatNumber(festival.likes_count || 0)}
             </span>
           </button>
-          <div className="flex items-center gap-2">
-            <MessageCircle className="w-6 h-6 text-gray-400" />
+          <button
+            onClick={() => commentSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex items-center gap-2"
+          >
+            <MessageCircle className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
             <span className="text-white font-medium">{festival.comments_count || 0}</span>
-          </div>
+          </button>
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
             target="_blank"
@@ -1141,7 +1144,7 @@ FESTEE에서 더 자세히 확인하세요 👉`;
           </div>
 
       {/* Comments Section */}
-      <div className="px-4 py-6">
+      <div className="px-4 py-6" ref={commentSectionRef}>
         <h2 className="text-white text-xl font-bold mb-4">댓글 ({comments.length})</h2>
         
         <div className="mb-6">
