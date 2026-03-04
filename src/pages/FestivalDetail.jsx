@@ -354,120 +354,79 @@ export default function FestivalDetail() {
   };
 
   const handleShare = async () => {
-    const shortId = generateShortId(festivalId);
     const shareUrl = `${window.location.origin}${createPageUrl(`FestivalDetail?id=${festivalId}`)}`;
     
     const dateInfo = festival.start_date && festival.end_date
-      ? `📅 ${safeFormatDate(festival.start_date, 'yyyy년 M월 d일')} - ${safeFormatDate(festival.end_date, 'M월 d일')}`
-      : '📅 날짜 추후 공지';
+      ? `${safeFormatDate(festival.start_date, 'yyyy.MM.dd')} ~ ${safeFormatDate(festival.end_date, 'MM.dd')}`
+      : '날짜 미정';
     
-    const priceInfo = festival.price 
-      ? `💰 ₩${festival.price.toLocaleString()}`
-      : '💰 무료 입장';
-    
-    const shareTitle = `🎪 ${localizedName}`;
-    const shareText = `${localizedName}
+    const priceInfo = festival.price ? `₩${festival.price.toLocaleString()}` : '무료';
+    const summarySnippet = localizedSummary
+      ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
+      : '';
 
-${dateInfo}
-📍 ${festival.city}, ${festival.country}
-${priceInfo}
-${festival.category ? `🎭 ${festival.category}` : ''}
+    const shareTitle = `${localizedName} | FESTEE`;
+    const shareText = [
+      `[ ${localizedName} ]`,
+      ``,
+      `📅 ${dateInfo}`,
+      `📍 ${localizedCity}, ${localizedCountry}`,
+      `🎟 ${priceInfo}`,
+      summarySnippet ? `` : null,
+      summarySnippet ? summarySnippet : null,
+      ``,
+      `FESTEE에서 자세히 보기`,
+    ].filter(line => line !== null).join('\n');
 
-${localizedSummary ? localizedSummary.substring(0, 100) + (localizedSummary.length > 100 ? '...' : '') : ''}
+    const shareData = { title: shareTitle, text: shareText, url: shareUrl };
 
-FESTEE에서 더 자세히 확인하세요 👉`;
-
-    const shareData = {
-      title: shareTitle,
-      text: shareText,
-      url: shareUrl,
-    };
-
+    // 1. Web Share API - 이미지 포함 시도
     if (festival.thumbnail_url && navigator.canShare) {
       try {
         const imageResponse = await fetch(festival.thumbnail_url);
         const imageBlob = await imageResponse.blob();
-        const imageFile = new File([imageBlob], `${localizedName}.jpg`, { type: imageBlob.type });
-        
-        const shareDataWithImage = {
-          ...shareData,
-          files: [imageFile],
-        };
+        const imageFile = new File([imageBlob], `festival.jpg`, { type: imageBlob.type });
+        const shareDataWithImage = { ...shareData, files: [imageFile] };
         
         if (navigator.canShare(shareDataWithImage)) {
-          console.log('✅ 이미지 포함 공유 가능');
           await navigator.share(shareDataWithImage);
-          console.log('Web Share API 성공 (이미지 포함)');
           return;
-        } else {
-          console.log('⚠️ 이미지 포함 공유 불가능 - 텍스트만 공유');
         }
       } catch (error) {
-        console.log('이미지 fetch 실패:', error.message);
+        console.log('이미지 포함 공유 실패, 텍스트 공유 시도:', error.message);
       }
     }
 
+    // 2. Web Share API - 텍스트만
     if (navigator.share) {
       try {
-        if (navigator.canShare && !navigator.canShare(shareData)) {
-          console.log('Web Share API: 이 데이터는 공유할 수 없습니다. 클립보드로 전환합니다.');
-          throw new Error('Cannot share this data');
-        }
-
         await navigator.share(shareData);
-        console.log('Web Share API 성공');
         return;
       } catch (error) {
-        if (error.name === 'AbortError') {
-          console.log('사용자가 공유를 취소했습니다.');
-          return;
-        }
-        
-        console.log('Web Share API 실패:', error.name, error.message);
-        console.log('클립보드 복사로 전환합니다.');
+        if (error.name === 'AbortError') return;
+        console.log('Web Share API 실패, 클립보드 복사로 전환:', error.message);
       }
-    } else {
-      console.log('Web Share API가 지원되지 않는 환경입니다. 클립보드 복사를 시도합니다.');
     }
-    
-    const clipboardText = `${shareText}\n\n${shareUrl}`;
+
+    // 3. 클립보드 복사 (fallback) - 썸네일 URL 포함
+    const thumbnailLine = festival.thumbnail_url ? `\n🖼 ${festival.thumbnail_url}` : '';
+    const clipboardText = `${shareText}${thumbnailLine}\n${shareUrl}`;
     
     try {
       await navigator.clipboard.writeText(clipboardText);
-      setShowShareCopied(true);
-      setTimeout(() => {
-        setShowShareCopied(false);
-      }, 2000);
-      console.log('클립보드 복사 성공');
-    } catch (error) {
-      console.error('클립보드 복사 실패:', error);
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = clipboardText;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '0';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (successful) {
-          setShowShareCopied(true);
-          setTimeout(() => {
-            setShowShareCopied(false);
-          }, 2000);
-          console.log('대체 복사 방법 성공');
-        } else {
-          throw new Error('execCommand copy failed');
-        }
-      } catch (fallbackError) {
-        console.error('대체 복사 방법도 실패:', fallbackError);
-        alert('링크 복사에 실패했습니다. 주소창의 URL을 복사해주세요.');
-      }
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = clipboardText;
+      textArea.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     }
+
+    setShowShareCopied(true);
+    setTimeout(() => setShowShareCopied(false), 2000);
   };
 
   // 수정된 미디어 배열 생성 로직 - media_urls 순서 정확히 반영
