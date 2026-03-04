@@ -162,13 +162,30 @@ Deno.serve(async (req) => {
         // 연도 제거 함수 (예: "2024 서울 불꽃축제" → "서울 불꽃축제")
         const removeYear = (name) => name ? name.replace(/(19|20)\d{2}년?/g, '').replace(/\s+/g, ' ').trim() : '';
 
-        // 4개 언어 (한국어, 영어, 일본어, 중국어) 조회
-        const languageConfigs = [
-          { key: 'ko', name: removeYear(festival.name_ko || festival.name_original), lang: '한국어' },
-          { key: 'en', name: removeYear(festival.name_en || festival.name_original), lang: '영어' },
-          { key: 'jp', name: removeYear(festival.name_jp || festival.name_original), lang: '일본어' },
-          { key: 'zh', name: removeYear(festival.name_zh || festival.name_original), lang: '중국어' }
-        ];
+        // 국가별 언어 쿼리 설정
+        // 대한민국: 한국어 + 영어, 일본: 일본어 + 영어, 그 외: 영어 + 원어
+        const country = (festival.country || festival.country_en || '').toLowerCase();
+        const isKorea = country.includes('korea') || country.includes('한국') || country.includes('대한민국');
+        const isJapan = country.includes('japan') || country.includes('일본');
+
+        let languageConfigs;
+        if (isKorea) {
+          languageConfigs = [
+            { key: 'ko', name: removeYear(festival.name_ko || festival.name_original), lang: '한국어' },
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original), lang: '영어' }
+          ];
+        } else if (isJapan) {
+          languageConfigs = [
+            { key: 'jp', name: removeYear(festival.name_jp || festival.name_original), lang: '일본어' },
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original), lang: '영어' }
+          ];
+        } else {
+          // 기타 국가: 영어 + 한국어
+          languageConfigs = [
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original), lang: '영어' },
+            { key: 'ko', name: removeYear(festival.name_ko || festival.name_original), lang: '한국어' }
+          ];
+        }
 
         const populairtyData = {
           festival_id: festival.id,
