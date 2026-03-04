@@ -109,12 +109,27 @@ Deno.serve(async (req) => {
 
     for (const festival of targetFestivals) {
       try {
-        const languageConfigs = [
-          { key: 'ko', name: removeYear(festival.name_ko || festival.name_original) },
-          { key: 'en', name: removeYear(festival.name_en || festival.name_original) },
-          { key: 'jp', name: removeYear(festival.name_jp || festival.name_original) },
-          { key: 'zh', name: removeYear(festival.name_zh || festival.name_original) }
-        ];
+        const country = (festival.country || festival.country_en || '').toLowerCase();
+        const isKorea = country.includes('korea') || country.includes('한국') || country.includes('대한민국');
+        const isJapan = country.includes('japan') || country.includes('일본');
+
+        let languageConfigs;
+        if (isKorea) {
+          languageConfigs = [
+            { key: 'ko', name: removeYear(festival.name_ko || festival.name_original) },
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original) }
+          ];
+        } else if (isJapan) {
+          languageConfigs = [
+            { key: 'jp', name: removeYear(festival.name_jp || festival.name_original) },
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original) }
+          ];
+        } else {
+          languageConfigs = [
+            { key: 'en', name: removeYear(festival.name_en || festival.name_original) },
+            { key: 'ko', name: removeYear(festival.name_ko || festival.name_original) }
+          ];
+        }
 
         const popularityData = {
           festival_id: festival.id,
