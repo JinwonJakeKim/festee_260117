@@ -365,7 +365,8 @@ export default function FestivalDetail() {
       ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
       : '';
 
-    const shareTitle = `${localizedName} | FESTEE`;
+    const shareTitle = localizedName;
+    const addressLine = localizedAccessInfo || `${localizedCity}, ${localizedCountry}`;
     const shareText = [
       `[Festee]`,
       `세상의 모든축제, Festee`,
@@ -373,7 +374,7 @@ export default function FestivalDetail() {
       `축제명 : ${localizedName}`,
       `축제기간 : ${dateInfo}`,
       `금액 : ${priceInfo}`,
-      `주소 : ${localizedCity}, ${localizedCountry}`,
+      `주소 : ${addressLine}`,
       ``,
       summarySnippet,
       ``,
