@@ -411,9 +411,8 @@ export default function FestivalDetail() {
       }
     }
 
-    // 3. 클립보드 복사 (fallback) - 썸네일 URL 포함
-    const thumbnailLine = festival.thumbnail_url ? `\n🖼 ${festival.thumbnail_url}` : '';
-    const clipboardText = `${shareText}${thumbnailLine}\n${shareUrl}`;
+    // 3. 클립보드 복사 (fallback)
+    const clipboardText = `${shareText}\n${shareUrl}`;
     
     try {
       await navigator.clipboard.writeText(clipboardText);
