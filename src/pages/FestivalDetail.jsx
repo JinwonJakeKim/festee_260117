@@ -367,16 +367,18 @@ export default function FestivalDetail() {
 
     const shareTitle = `${localizedName} | FESTEE`;
     const shareText = [
-      `[ ${localizedName} ]`,
+      `[Festee]`,
+      `세상의 모든축제, Festee`,
       ``,
-      `📅 ${dateInfo}`,
-      `📍 ${localizedCity}, ${localizedCountry}`,
-      `🎟 ${priceInfo}`,
-      summarySnippet ? `` : null,
-      summarySnippet ? summarySnippet : null,
+      `축제명 : ${localizedName}`,
+      `축제기간 : ${dateInfo}`,
+      `금액 : ${priceInfo}`,
+      `주소 : ${localizedCity}, ${localizedCountry}`,
       ``,
-      `FESTEE에서 자세히 보기`,
-    ].filter(line => line !== null).join('\n');
+      summarySnippet,
+      ``,
+      `FESTEE에서 자세히보기`,
+    ].filter(line => line !== null && line !== undefined).join('\n');
 
     const shareData = { title: shareTitle, text: shareText, url: shareUrl };
 
