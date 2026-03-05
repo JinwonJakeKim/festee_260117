@@ -354,7 +354,7 @@ export default function FestivalDetail() {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}${createPageUrl(`FestivalDetail?id=${festivalId}`)}`;
+    const shareUrl = `https://festee.org${createPageUrl(`FestivalDetail?id=${festivalId}`)}`;
     
     const dateInfo = festival.start_date && festival.end_date
       ? `${safeFormatDate(festival.start_date, 'yyyy.MM.dd')} ~ ${safeFormatDate(festival.end_date, 'MM.dd')}`
