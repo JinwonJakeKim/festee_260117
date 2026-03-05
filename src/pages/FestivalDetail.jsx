@@ -365,7 +365,7 @@ export default function FestivalDetail() {
       ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
       : '';
 
-    const shareTitle = localizedName;
+    const shareTitle = 'Festee';
     const addressLine = localizedAccessInfo || `${localizedCity}, ${localizedCountry}`;
     const shareText = [
       `[Festee]`,
