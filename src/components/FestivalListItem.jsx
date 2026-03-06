@@ -36,9 +36,9 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
 
   return (
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-      <div className="flex items-center gap-2 py-2 pr-2 pl-1 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
-        <div className="flex-shrink-0 text-center" style={{ width: '22px' }}>
-          <span className={`font-black ${index === 0 ? 'text-cyan-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-gray-400' : 'text-gray-500'}`} style={{ fontSize: '18px' }}>
+      <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
+        <div className="flex-shrink-0 w-6 text-center">
+          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${getRankColor(index)}`}>
             {index + 1}
           </span>
         </div>
@@ -47,7 +47,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
           <img
             src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
             alt={localizedName}
-            className="w-12 h-12 rounded-xl object-cover"
+            className="w-16 h-16 rounded-xl object-cover"
           />
         </div>
 

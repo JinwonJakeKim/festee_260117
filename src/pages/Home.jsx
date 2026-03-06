@@ -1032,51 +1032,36 @@ export default function Home() {
               </div>
               )}
 
-          {/* Festival List - 5개씩 2열, 2페이지 가로 스크롤 (다음 페이지 순위 힌트 노출) */}
+          {/* Festival List - 5개씩 4페이지 가로 스크롤, 20위까지 */}
           <div className="overflow-x-auto scrollbar-hide -mx-4 pl-4">
             <div className="flex" style={{ width: 'max-content' }}>
-              {[0, 1].map((pageIdx) => (
-                <div key={pageIdx} className="flex gap-2 pr-2" style={{ width: 'calc(100vw - 16px)', flexShrink: 0 }}>
-                  {/* 왼쪽 열 (1~5위, 11~15위) */}
-                  <div className="space-y-2 flex-1 min-w-0">
-                    {filteredFestivals.slice(pageIdx * 10, pageIdx * 10 + 5).map((festival, i) => (
+              {[0, 1, 2, 3].map((pageIdx) => (
+                <div key={pageIdx} className="flex" style={{ width: 'calc(100vw - 16px)', flexShrink: 0 }}>
+                  {/* 현재 페이지 아이템 */}
+                  <div className="space-y-3 flex-1 min-w-0">
+                    {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
                       <FestivalListItem
                         key={festival.id}
                         festival={festival}
-                        index={pageIdx * 10 + i}
+                        index={pageIdx * 5 + i}
                         isLiked={myLikes.some(like => like.festival_id === festival.id)}
                         onLike={(id) => likeMutation.mutate(id)}
                         getLocalizedContent={getLocalizedContent}
                       />
                     ))}
                   </div>
-                  {/* 오른쪽 열 (6~10위, 16~20위) — 다음 페이지 순위 힌트 포함 */}
-                  <div className="space-y-2 flex-1 min-w-0">
-                    {filteredFestivals.slice(pageIdx * 10 + 5, pageIdx * 10 + 10).map((festival, i) => (
-                      <FestivalListItem
-                        key={festival.id}
-                        festival={festival}
-                        index={pageIdx * 10 + 5 + i}
-                        isLiked={myLikes.some(like => like.festival_id === festival.id)}
-                        onLike={(id) => likeMutation.mutate(id)}
-                        getLocalizedContent={getLocalizedContent}
-                      />
-                    ))}
-                  </div>
+                  {/* 다음 페이지 순위 숫자 힌트 */}
+                  {pageIdx < 3 && filteredFestivals.length > (pageIdx + 1) * 5 && (
+                    <div className="flex flex-col justify-around pl-2 pr-1" style={{ width: '28px' }}>
+                      {filteredFestivals.slice((pageIdx + 1) * 5, (pageIdx + 1) * 5 + 5).map((_, i) => (
+                        <span key={i} className="text-gray-600 font-bold text-lg leading-none text-center">
+                          {(pageIdx + 1) * 5 + i + 1}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
-              {/* 다음 페이지 순위 힌트 (11위~ 숫자만 살짝 노출) */}
-              <div className="flex gap-2" style={{ width: '28px', flexShrink: 0 }}>
-                <div className="space-y-2 flex-1">
-                  {filteredFestivals.slice(20, 25).map((festival, i) => (
-                    <div key={festival.id} className="flex items-center py-2 h-[72px]">
-                      <span className={`font-black text-gray-600`} style={{ fontSize: '18px' }}>
-                        {21 + i}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 
