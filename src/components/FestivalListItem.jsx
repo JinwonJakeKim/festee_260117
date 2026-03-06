@@ -37,8 +37,8 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
   return (
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
       <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
-        <div className="flex-shrink-0 w-6 text-center">
-          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${getRankColor(index)}`}>
+        <div className="flex-shrink-0 text-center" style={{ width: '22px' }}>
+          <span className={`inline-flex items-center justify-center rounded-full font-bold ${getRankColor(index)}`} style={{ width: '22px', height: '22px', fontSize: '13px' }}>
             {index + 1}
           </span>
         </div>
