@@ -244,22 +244,22 @@ export default function Layout({ children, currentPageName }) {
         
         /* 전체 페이지 배경 검정색 */
         * {
-          scrollbar-width: thin;
+          scrollbar-width: none;
           scrollbar-color: #333 #000;
         }
         
         *::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
+          display: none;
+          width: 0;
+          height: 0;
         }
         
-        *::-webkit-scrollbar-track {
-          background: #000;
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
-        
-        *::-webkit-scrollbar-thumb {
-          background: #333;
-          border-radius: 3px;
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
         
         html, body {
