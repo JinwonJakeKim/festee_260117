@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
         console.warn(`[UpdateShortsViews] ⛔ YouTube API 일일 한도 초과 (${usage.count}/90)`);
         return Response.json({
           success: false,
-          error: `YouTube API 일일 한도 초과 (${usage.count}/90)`,
+          error: `YouTube API 일일 한도 초과 (${usage.count}/95)`,
           updated,
           skipped
         }, { status: 429 });
