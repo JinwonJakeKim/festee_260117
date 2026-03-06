@@ -931,16 +931,10 @@ export default function Home() {
 
             <button 
               onClick={() => setIsDatePickerOpen(true)}
-              className="px-4 h-9 bg-gray-900 text-white rounded-full whitespace-nowrap flex items-center gap-2 text-xs hover:bg-gray-800 transition-colors"
+              className={`px-4 h-9 rounded-full whitespace-nowrap flex items-center gap-2 text-xs hover:bg-gray-800 transition-colors border ${dateRange.from && dateRange.to ? "bg-pink-500/20 border-pink-400 text-pink-400" : "bg-gray-900 border-gray-800 text-white"}`}
             >
               <Calendar className="w-4 h-4 text-pink-500" />
-              {dateRange.from && dateRange.to ? (
-                <span className="text-cyan-400">
-                  {safeFormatDate(dateRange.from, 'M/d')} - {safeFormatDate(dateRange.to, 'M/d')}
-                </span>
-              ) : (
-                <span>날짜</span>
-              )}
+              <span>날짜</span>
             </button>
 
             <DateRangeBottomSheet
