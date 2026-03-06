@@ -1053,11 +1053,15 @@ export default function Home() {
                   {/* 다음 페이지 순위 숫자 힌트 */}
                   {pageIdx < 3 && filteredFestivals.length > (pageIdx + 1) * 5 && (
                     <div className="flex flex-col justify-around pl-2 pr-1" style={{ width: '28px' }}>
-                      {filteredFestivals.slice((pageIdx + 1) * 5, (pageIdx + 1) * 5 + 5).map((_, i) => (
-                        <span key={i} className="text-gray-600 font-bold text-lg leading-none text-center">
-                          {(pageIdx + 1) * 5 + i + 1}
-                        </span>
-                      ))}
+                      {filteredFestivals.slice((pageIdx + 1) * 5, (pageIdx + 1) * 5 + 5).map((_, i) => {
+                        const rankIndex = (pageIdx + 1) * 5 + i;
+                        const rankClass = rankIndex === 0 ? "bg-cyan-400 text-black" : rankIndex === 1 ? "bg-gray-600 text-white" : rankIndex === 2 ? "bg-gray-700 text-white" : "bg-gray-800 text-gray-400";
+                        return (
+                          <span key={i} className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${rankClass}`}>
+                            {rankIndex + 1}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
