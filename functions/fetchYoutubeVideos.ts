@@ -301,17 +301,25 @@ Deno.serve(async (req) => {
                 
                 if (videosResponse.ok) {
                   const videosData = await videosResponse.json();
-                  const embeddableShorts = videosData.items
-                    ?.filter(video => video.contentDetails?.embeddable === true)
+                  const embeddableItems = videosData.items?.filter(video => video.contentDetails?.embeddable === true) || [];
+                  
+                  // 조회수 합산
+                  shortsViewsTotal = embeddableItems.reduce((sum, video) => {
+                    return sum + parseInt(video.statistics?.viewCount || '0', 10);
+                  }, 0);
+                  
+                  const embeddableShorts = embeddableItems
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
                     .slice(0, 5);
                   
                   // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 5개)
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
-                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts`);
+                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                    // 조회수 없는 경우도 합산 시도
+                    shortsViewsTotal = (videosData.items || []).reduce((sum, video) => sum + parseInt(video.statistics?.viewCount || '0', 10), 0);
                     console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
                   }
                 } else {
