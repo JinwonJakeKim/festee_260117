@@ -351,7 +351,8 @@ Deno.serve(async (req) => {
       highlightVideoUrl,
       highlightVideoChannelName,
       shortsUrls,
-      message: `YouTube 검색 완료: 하이라이트 ${highlightVideoUrl ? '✓' : '✗'}, 쇼츠 ${shortsUrls.length}개`
+      shortsViewsTotal,
+      message: `YouTube 검색 완료: 하이라이트 ${highlightVideoUrl ? '✓' : '✗'}, 쇼츠 ${shortsUrls.length}개, 총 조회수 ${shortsViewsTotal}`
     });
 
   } catch (error) {
