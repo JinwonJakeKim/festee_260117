@@ -345,6 +345,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       });
       if (shortsResult.data?.success) {
         youtubeShortUrls = shortsResult.data.shortsUrls || [];
+        shortsViewsTotal = shortsResult.data.shortsViewsTotal || 0;
       }
     } else {
       // 같은 이름이거나 둘 중 하나만 필요한 경우 단일 호출
@@ -363,6 +364,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         }
         if (shouldSearchShorts) {
           youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+          shortsViewsTotal = youtubeResult.data.shortsViewsTotal || 0;
         }
       }
     }
