@@ -1050,16 +1050,7 @@ export default function Home() {
                       />
                     ))}
                   </div>
-                  {/* 다음 페이지 순위 숫자 힌트 */}
-                  {pageIdx < 3 && filteredFestivals.length > (pageIdx + 1) * 5 && (
-                    <div className="flex flex-col justify-around pl-1" style={{ width: '24px' }}>
-                      {Array.from({ length: Math.min(5, filteredFestivals.length - (pageIdx + 1) * 5) }).map((_, i) => (
-                        <span key={i} className="text-gray-600 font-bold text-lg leading-none text-center">
-                          {(pageIdx + 1) * 5 + i + 1}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+
                 </div>
               ))}
             </div>
