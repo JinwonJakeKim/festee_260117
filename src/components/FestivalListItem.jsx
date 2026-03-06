@@ -43,7 +43,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
           </span>
         </div>
 
-        <div className="flex-shrink-0 ml-0">
+        <div className="flex-shrink-0 ml-0.5">
           <img
             src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
             alt={localizedName}
