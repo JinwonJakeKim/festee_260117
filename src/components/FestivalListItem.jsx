@@ -36,14 +36,14 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
 
   return (
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-      <div className="flex items-center gap-3 py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
-        <div className="flex-shrink-0 w-6 text-center pr-0 mr-0">
+      <div className="flex items-center py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
+        <div className="flex-shrink-0 w-6 text-center">
           <span className="text-gray-600 font-bold text-lg leading-none">
             {index + 1}
           </span>
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 ml-0">
           <img
             src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
             alt={localizedName}
