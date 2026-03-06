@@ -387,7 +387,7 @@ Deno.serve(async (req) => {
           };
         } else {
           console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
-          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '' };
+          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0 };
         }
         
       } catch (error) {
