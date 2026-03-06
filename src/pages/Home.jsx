@@ -102,9 +102,9 @@ const formatNumber = (num) => {
 const getCountryNameInKorean = (country) => {
   const countryMap = {
     'Japan': '일본',
-    'Korea': '한국',
-    'South Korea': '한국',
-    '대한민국': '한국',
+    'Korea': '대한민국',
+    'South Korea': '대한민국',
+    '대한민국': '대한민국',
     'China': '중국',
     'USA': '미국',
     'United States': '미국',

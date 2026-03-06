@@ -63,7 +63,7 @@ const safeFormatDate = (dateString, formatStr) => {
 
 const getCountryNameInKorean = (country) => {
   const countryMap = {
-    'Japan': '일본', 'Korea': '한국', 'South Korea': '한국', '대한민국': '한국',
+    'Japan': '일본', 'Korea': '대한민국', 'South Korea': '대한민국', '대한민국': '대한민국',
     'China': '중국', 'USA': '미국', 'United States': '미국', 'UK': '영국',
     'United Kingdom': '영국', 'France': '프랑스', 'Germany': '독일', 'Italy': '이탈리아',
     'Spain': '스페인', 'Thailand': '태국', 'Vietnam': '베트남', 'Philippines': '필리핀',
