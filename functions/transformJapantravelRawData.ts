@@ -62,6 +62,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   let videoUrl = festivalData.video_url;
   let videoChannelName = '';
   let youtubeShortUrls = [];
+  let shortsViewsTotal = existingFestivalRecord?.shorts_views_5_total || 0;
 
   // description 길이 제한 (LLM 응답 속도 향상)
   const truncatedDescription = truncateText(festivalData.description_original, 1500);
