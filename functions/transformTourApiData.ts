@@ -395,9 +395,9 @@ Deno.serve(async (req) => {
         if (error.message.includes('YOUTUBE_API_LIMIT_REACHED') || error.message.includes('API_LIMIT_REACHED')) {
           throw error;
         }
-        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '' };
-      }
-    };
+        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0 };
+        }
+        };
     
     // API 사용량 체크 및 증가 함수
     const checkAndIncrementApiUsage = async (apiName, limit) => {
