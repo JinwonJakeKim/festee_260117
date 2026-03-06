@@ -47,7 +47,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
           <img
             src={festival.thumbnail_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
             alt={localizedName}
-            className="w-16 h-16 rounded-xl object-cover"
+            className="w-12 h-12 rounded-xl object-cover"
           />
         </div>
 
