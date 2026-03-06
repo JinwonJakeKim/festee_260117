@@ -1,9 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 // YouTube Shorts URL에서 비디오 ID 추출
 function extractVideoId(url) {
   if (!url) return null;
-  // https://www.youtube.com/shorts/VIDEO_ID 또는 https://youtu.be/VIDEO_ID
   const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
   if (shortsMatch) return shortsMatch[1];
   const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
@@ -71,12 +70,8 @@ Deno.serve(async (req) => {
     const targetFestivals = allFestivals.filter(f => {
       if (!f.youtube_shorts_urls || f.youtube_shorts_urls.length === 0) return false;
       if (onlyMissing && f.shorts_views_5_total > 0) return false;
-      // 국가 필터
       if (country && f.country !== country) return false;
-      // 시작월 필터 (예: "2026-03" → start_date가 해당 월인 것만)
-      if (startMonth && f.start_date) {
-        if (!f.start_date.startsWith(startMonth)) return false;
-      }
+      if (startMonth && f.start_date && !f.start_date.startsWith(startMonth)) return false;
       return true;
     }).slice(0, batchSize);
 
@@ -95,9 +90,7 @@ Deno.serve(async (req) => {
     let skipped = 0;
     let apiCallCount = 0;
 
-    // 모든 축제의 비디오 ID 수집 후 배치로 처리
-    // 최대 50개씩 묶어서 videos.list 1번 호출
-    const festivalVideoMap = []; // { festivalId, videoIds[] }
+    const festivalVideoMap = [];
 
     for (const festival of targetFestivals) {
       const videoIds = (festival.youtube_shorts_urls || [])
@@ -111,13 +104,11 @@ Deno.serve(async (req) => {
       festivalVideoMap.push({ festivalId: festival.id, videoIds });
     }
 
-    // 모든 비디오 ID를 하나로 모아서 배치 호출 (중복 제거)
     const allVideoIds = [...new Set(festivalVideoMap.flatMap(f => f.videoIds))];
     console.log(`[UpdateShortsViews] Total unique video IDs: ${allVideoIds.length}`);
 
-    // YouTube videos.list는 요청당 최대 50개 ID 지원
     const BATCH_SIZE = 50;
-    const viewCountMap = {}; // videoId -> viewCount
+    const viewCountMap = {};
 
     for (let i = 0; i < allVideoIds.length; i += BATCH_SIZE) {
       const batchIds = allVideoIds.slice(i, i + BATCH_SIZE);
@@ -154,7 +145,6 @@ Deno.serve(async (req) => {
       console.log(`[UpdateShortsViews] ✓ Got stats for ${(data.items || []).length} videos`);
     }
 
-    // 각 Festival의 조회수 합산 후 업데이트
     for (const { festivalId, videoIds } of festivalVideoMap) {
       const totalViews = videoIds.reduce((sum, id) => sum + (viewCountMap[id] || 0), 0);
       console.log(`[UpdateShortsViews] Festival ${festivalId}: ${videoIds.length} shorts, total views = ${totalViews}`);
