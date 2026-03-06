@@ -240,10 +240,10 @@ export default function FestivalMore() {
 
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
           <Select value={countryFilter} onValueChange={setCountryFilter}>
-            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${countryFilter !== "all" ? "bg-cyan-500/20 border-cyan-400 text-cyan-400" : "bg-gray-900 border-gray-800 text-white"}`}>
               <div className="flex items-center gap-1.5">
                 <Globe className="w-4 h-4 text-cyan-400" />
-                <SelectValue>{countryFilter === "all" ? "국가" : getCountryNameInKorean(countryFilter)}</SelectValue>
+                <span>국가</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
@@ -257,10 +257,10 @@ export default function FestivalMore() {
           </Select>
 
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
               <div className="flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-purple-400" />
-                <SelectValue>{categoryFilter === "all" ? "분류" : categoryFilter}</SelectValue>
+                <span>분류</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
@@ -295,12 +295,10 @@ export default function FestivalMore() {
           />
 
           <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${sortOrder !== "popularity" ? "bg-yellow-500/20 border-yellow-400 text-yellow-400" : "bg-gray-900 border-gray-800 text-white"}`}>
               <div className="flex items-center gap-1.5">
                 <ArrowUpDown className="w-4 h-4 text-yellow-400" />
-                <SelectValue>
-                  {sortOrder === "popularity" ? "인기도" : sortOrder === "likes" ? "좋아요" : "날짜"}
-                </SelectValue>
+                <span>정렬</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
