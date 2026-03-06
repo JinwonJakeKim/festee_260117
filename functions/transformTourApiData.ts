@@ -1087,6 +1087,7 @@ ${context}
         let youtubeShorts = [];
         let topVideoUrl = '';
         let topVideoChannelName = '';
+        let shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
         
         console.log(`[Transform] 🎬 Searching YouTube for: "${rawData.title}"`);
         const youtubeResult = await searchYouTubeVideos(rawData.title);
@@ -1099,7 +1100,8 @@ ${context}
           console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
-          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos`);
+          shortsViewsTotal = youtubeResult.shortsViewsTotal || 0;
+          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
