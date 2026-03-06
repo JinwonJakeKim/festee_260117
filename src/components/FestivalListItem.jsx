@@ -36,7 +36,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
 
   return (
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-      <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
+      <div className="flex items-center gap-3 py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
         <div className="flex-shrink-0 w-6 text-center">
           <span className="text-gray-600 font-bold text-lg leading-none">
             {index + 1}
