@@ -184,6 +184,7 @@ export default function Home() {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [showFeedbackCard, setShowFeedbackCard] = useState(true);
+  const [sortOrder, setSortOrder] = useState("popularity"); // popularity | likes | date
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");

@@ -156,6 +156,7 @@ export default function Search() {
   const [starRange, setStarRange] = useState([1, 5]);
   const [priceRange, setPriceRange] = useState([0, 500000]);
   const [hidePastFestivals, setHidePastFestivals] = useState(false);
+  const [sortOrder, setSortOrder] = useState("popularity"); // popularity | likes | date
 
   // 페이지 진입 시 스크롤 초기화 제거 - 검색 결과 위치 유지
 

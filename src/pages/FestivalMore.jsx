@@ -99,6 +99,7 @@ export default function FestivalMore() {
     return tagsParam ? tagsParam.split(',') : [];
   });
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
+  const [sortOrder, setSortOrder] = useState("popularity"); // popularity | likes | date
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
