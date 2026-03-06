@@ -65,7 +65,6 @@ import FestivalMap from './pages/FestivalMap';
 import FestivalMore from './pages/FestivalMore';
 import FestivalVenueMap from './pages/FestivalVenueMap';
 import GoTogetherDetail from './pages/GoTogetherDetail';
-import Home from './pages/Home';
 import MessageDetail from './pages/MessageDetail';
 import Messages from './pages/Messages';
 import MyCatches from './pages/MyCatches';
@@ -83,6 +82,7 @@ import Search from './pages/Search';
 import SelectCity from './pages/SelectCity';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -105,7 +105,6 @@ export const PAGES = {
     "FestivalMore": FestivalMore,
     "FestivalVenueMap": FestivalVenueMap,
     "GoTogetherDetail": GoTogetherDetail,
-    "Home": Home,
     "MessageDetail": MessageDetail,
     "Messages": Messages,
     "MyCatches": MyCatches,
@@ -123,6 +122,7 @@ export const PAGES = {
     "SelectCity": SelectCity,
     "Settings": Settings,
     "UserProfile": UserProfile,
+    "Home": Home,
 }
 
 export const pagesConfig = {
