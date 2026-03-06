@@ -267,6 +267,7 @@ export default function Layout({ children, currentPageName }) {
           margin: 0 !important;
           padding: 0 !important;
           color: #fff !important;
+          overscroll-behavior-y: none !important;
         }
 
         #root {
