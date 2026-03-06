@@ -283,8 +283,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   });
 
 
-  // Google Translate + LLM + YouTube 병렬 실행
-  const [googleTranslateResult, llmTranslatedData, youtubeResult] = await Promise.all([googleTranslatePromise, llmPromise, youtubePromise]);
+  // Google Translate + LLM 병렬 실행 (YouTube는 번역 완료 후 순차 실행)
+  const [googleTranslateResult, llmTranslatedData] = await Promise.all([googleTranslatePromise, llmPromise]);
 
   // Google Translate 결과를 우선 사용, 실패 시 LLM 폴백
   let translatedData = llmTranslatedData;
@@ -318,36 +318,65 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   } else {
     console.warn(`[Transform] ⚠️ Google Translate failed/limit, using LLM results`);
   }
-  console.log(`[Transform] Parallel done for: ${festivalData.name_original}`);
+  console.log(`[Transform] Translation done for: ${festivalData.name_original}`);
 
-  // YouTube 결과 처리
-  if (youtubeResult.data?.success) {
-    if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
-      videoUrl = youtubeResult.data.highlightVideoUrl;
-      videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
-    }
-    if (shouldSearchShorts) {
-      youtubeShortUrls = youtubeResult.data.shortsUrls || [];
-    }
-  }
+  // YouTube 검색 (번역 완료 후 순차 실행 - name_jp 사용)
+  if (shouldSearchHighlight || shouldSearchShorts) {
+    // 숏츠 검색은 name_jp 우선, 없으면 name_original 폴백
+    const shortsSearchName = (shouldSearchShorts && translatedData.name_jp)
+      ? translatedData.name_jp
+      : festivalData.name_original;
 
-  // 쇼츠가 5개 미만이면 일본어명으로 추가 검색하여 총 5개까지 채우기
-  if (shouldSearchShorts && youtubeShortUrls.length < 5) {
-    const japaneseNames = { 'japan': 'name_jp', 'china': 'name_zh', 'korea': 'name_ko' };
-    const localName = translatedData[japaneseNames[(festivalData.country || '').toLowerCase()]];
-    if (localName && localName !== festivalData.name_original) {
-      console.log(`[Transform] 🔍 Shorts ${youtubeShortUrls.length}/5, searching with local name: "${localName}"`);
-      const localYt = await base44.functions.invoke('fetchYoutubeVideos', {
-        festivalName: localName, searchHighlightVideo: false, searchShorts: true
-      }).catch(() => ({ data: { success: false } }));
-      if (localYt.data?.success) {
-        const localShorts = localYt.data.shortsUrls || [];
-        // 기존 쇼츠와 중복 제거 후 합쳐서 5개까지만
-        const existingUrls = new Set(youtubeShortUrls);
-        const newShorts = localShorts.filter(url => !existingUrls.has(url));
-        const needed = 5 - youtubeShortUrls.length;
-        youtubeShortUrls = [...youtubeShortUrls, ...newShorts.slice(0, needed)];
-        console.log(`[Transform] ✅ Shorts after local search: ${youtubeShortUrls.length}`);
+    console.log(`[Transform] 🎬 YouTube search: highlight="${shouldSearchHighlight ? festivalData.name_original : 'skip'}", shorts="${shouldSearchShorts ? shortsSearchName : 'skip'}"`);
+
+    // 하이라이트는 name_original, 숏츠는 name_jp로 별도 쿼리가 필요한 경우 분리
+    const needsSeparateQuery = shouldSearchShorts && shouldSearchHighlight && shortsSearchName !== festivalData.name_original;
+
+    if (needsSeparateQuery) {
+      // 하이라이트 먼저 (name_original)
+      const highlightResult = await base44.functions.invoke('fetchYoutubeVideos', {
+        festivalName: festivalData.name_original,
+        searchHighlightVideo: true,
+        searchShorts: false
+      }).catch(e => {
+        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
+        return { data: { success: false } };
+      });
+      if (highlightResult.data?.success && highlightResult.data.highlightVideoUrl) {
+        videoUrl = highlightResult.data.highlightVideoUrl;
+        videoChannelName = highlightResult.data.highlightVideoChannelName || '';
+      }
+
+      // 숏츠 (name_jp)
+      const shortsResult = await base44.functions.invoke('fetchYoutubeVideos', {
+        festivalName: shortsSearchName,
+        searchHighlightVideo: false,
+        searchShorts: true
+      }).catch(e => {
+        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
+        return { data: { success: false } };
+      });
+      if (shortsResult.data?.success) {
+        youtubeShortUrls = shortsResult.data.shortsUrls || [];
+      }
+    } else {
+      // 같은 이름이거나 둘 중 하나만 필요한 경우 단일 호출
+      const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+        festivalName: shouldSearchHighlight ? festivalData.name_original : shortsSearchName,
+        searchHighlightVideo: shouldSearchHighlight,
+        searchShorts: shouldSearchShorts
+      }).catch(e => {
+        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
+        return { data: { success: false } };
+      });
+      if (youtubeResult.data?.success) {
+        if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
+          videoUrl = youtubeResult.data.highlightVideoUrl;
+          videoChannelName = youtubeResult.data.highlightVideoChannelName || '';
+        }
+        if (shouldSearchShorts) {
+          youtubeShortUrls = youtubeResult.data.shortsUrls || [];
+        }
       }
     }
   }
