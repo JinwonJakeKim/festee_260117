@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown } from "lucide-react";
+import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -191,6 +191,7 @@ export default function Home() {
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showBetaBanner, setShowBetaBanner] = useState(true);
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
+  const [showPopularityTooltip, setShowPopularityTooltip] = useState(false);
   const { getLocalizedContent } = useFestivalLocalizedContent();
 
   // URL 업데이트 함수
@@ -892,6 +893,23 @@ export default function Home() {
                 더보기 →
               </Button>
             </Link>
+          </div>
+
+          <div className="flex items-center gap-1.5 mb-3 text-gray-400 text-xs">
+            <span>인기도 순위의 기준은 무엇인가요?</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowPopularityTooltip(!showPopularityTooltip)}
+                className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+              >
+                <Info className="w-3 h-3" />
+              </button>
+              {showPopularityTooltip && (
+                <div className="absolute bottom-full right-0 mb-2 bg-gray-800 text-white text-xs rounded-lg p-2 whitespace-nowrap border border-gray-700 shadow-lg">
+                  축제마다 관련성 기준으로 선정된 TOP5 영상의 각 조회수를 합산합니다
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
