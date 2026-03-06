@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    const { batchSize = 50, onlyMissing = true, festivalIds = null } = await req.json().catch(() => ({}));
+    const { batchSize = 50, onlyMissing = true, festivalIds = null, country = null, startMonth = null } = await req.json().catch(() => ({}));
 
     const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
     if (!youtubeApiKey) {
@@ -56,22 +56,27 @@ Deno.serve(async (req) => {
     };
 
     // Festival 목록 조회
-    console.log(`[UpdateShortsViews] Fetching festivals...`);
+    console.log(`[UpdateShortsViews] Fetching festivals... country=${country}, startMonth=${startMonth}`);
     let allFestivals;
     if (festivalIds && Array.isArray(festivalIds) && festivalIds.length > 0) {
-      // 특정 ID 목록이 주어진 경우 해당 ID만 조회
       allFestivals = await Promise.all(
         festivalIds.map(id => base44.asServiceRole.entities.Festival.filter({ id }).then(r => r[0]).catch(() => null))
       );
       allFestivals = allFestivals.filter(Boolean);
       console.log(`[UpdateShortsViews] Using provided festivalIds: ${allFestivals.length} festivals`);
     } else {
-      allFestivals = await base44.asServiceRole.entities.Festival.list('-created_date', 500);
+      allFestivals = await base44.asServiceRole.entities.Festival.list('-created_date', 1000);
     }
 
     const targetFestivals = allFestivals.filter(f => {
       if (!f.youtube_shorts_urls || f.youtube_shorts_urls.length === 0) return false;
       if (onlyMissing && f.shorts_views_5_total > 0) return false;
+      // 국가 필터
+      if (country && f.country !== country) return false;
+      // 시작월 필터 (예: "2026-03" → start_date가 해당 월인 것만)
+      if (startMonth && f.start_date) {
+        if (!f.start_date.startsWith(startMonth)) return false;
+      }
       return true;
     }).slice(0, batchSize);
 
