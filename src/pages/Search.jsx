@@ -363,8 +363,13 @@ export default function Search() {
         console.error('Error during festival filtering:', e, festival);
         return false;
       }
+    }).sort((a, b) => {
+      if (sortOrder === "popularity") return (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0);
+      if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
+      if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
+      return 0;
     });
-  }, [festivals, searchQuery, selectedCountry, selectedCity, selectedCategories, likesRange, dateRange, selectedTags, priceRange, starRange, hidePastFestivals]);
+  }, [festivals, searchQuery, selectedCountry, selectedCity, selectedCategories, likesRange, dateRange, selectedTags, priceRange, starRange, hidePastFestivals, sortOrder]);
 
   // 사용자 언어에 맞는 현지화 이름 가져오기
   const getLocalizedCountry = (festival) => {

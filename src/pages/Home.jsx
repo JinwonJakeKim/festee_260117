@@ -451,6 +451,11 @@ export default function Home() {
       (festival.end_date && new Date(festival.end_date) >= today);
     
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
+  }).sort((a, b) => {
+    if (sortOrder === "popularity") return (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0);
+    if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
+    if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
+    return 0;
   });
 
   const banners = useMemo(() => {
