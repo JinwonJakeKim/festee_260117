@@ -1414,6 +1414,7 @@ ${context}
           video_channel_name: topVideoChannelName || '',
           
           youtube_shorts_urls: youtubeShorts,
+          shorts_views_5_total: shortsViewsTotal,
           media_urls: [
             // 1. 대표 이미지 (thumbnail) - null이면 제외
             ...(thumbnailUrl ? [{
