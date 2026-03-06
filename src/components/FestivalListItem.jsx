@@ -51,7 +51,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
           />
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 ml-3">
           <h3 className="text-white font-bold text-sm truncate mb-1">
             {localizedName}
           </h3>
