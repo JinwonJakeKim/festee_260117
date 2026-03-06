@@ -1088,14 +1088,14 @@ export default function Home() {
              </div>
            </button>
            {showPopularityTooltip && (
-             <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 whitespace-nowrap border border-gray-700 shadow-lg">
+             <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg">
                <button
                  onClick={() => setShowPopularityTooltip(false)}
                  className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
                >
                  <X className="w-3 h-3" />
                </button>
-               <p className="pr-4">축제마다 관련성 기준으로 선정된 TOP5 영상의 각 조회수를 합산합니다</p>
+               <p className="pr-4">축제마다 관련성 기준으로<br/>선정된 TOP5 영상의<br/>각 조회수를 합산합니다</p>
              </div>
            )}
           </div>
