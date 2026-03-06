@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    const { batchSize = 50, onlyMissing = true } = await req.json().catch(() => ({}));
+    const { batchSize = 50, onlyMissing = true, festivalIds = null } = await req.json().catch(() => ({}));
 
     const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
     if (!youtubeApiKey) {
@@ -55,9 +55,19 @@ Deno.serve(async (req) => {
       return { allowed: true, count: log.count + 1 };
     };
 
-    // Festival 목록 조회 (youtube_shorts_urls가 있는 것만)
+    // Festival 목록 조회
     console.log(`[UpdateShortsViews] Fetching festivals...`);
-    const allFestivals = await base44.asServiceRole.entities.Festival.list('-created_date', 500);
+    let allFestivals;
+    if (festivalIds && Array.isArray(festivalIds) && festivalIds.length > 0) {
+      // 특정 ID 목록이 주어진 경우 해당 ID만 조회
+      allFestivals = await Promise.all(
+        festivalIds.map(id => base44.asServiceRole.entities.Festival.filter({ id }).then(r => r[0]).catch(() => null))
+      );
+      allFestivals = allFestivals.filter(Boolean);
+      console.log(`[UpdateShortsViews] Using provided festivalIds: ${allFestivals.length} festivals`);
+    } else {
+      allFestivals = await base44.asServiceRole.entities.Festival.list('-created_date', 500);
+    }
 
     const targetFestivals = allFestivals.filter(f => {
       if (!f.youtube_shorts_urls || f.youtube_shorts_urls.length === 0) return false;
