@@ -439,6 +439,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     image_gallery_urls: festivalData.image_gallery_urls,
     media_urls: mediaUrls,
     youtube_shorts_urls: youtubeShortUrls,
+    shorts_views_5_total: shortsViewsTotal,
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
     price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
     price_yen: festivalData.price_yen || null,
