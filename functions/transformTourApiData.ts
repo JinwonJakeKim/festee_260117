@@ -378,11 +378,12 @@ Deno.serve(async (req) => {
         });
         
         if (result.data.success) {
-          console.log(`[Transform] ✓ fetchYoutubeVideos result: topVideo=${result.data.highlightVideoUrl ? '✓' : '✗'}, shorts=${result.data.shortsUrls.length}, channel=${result.data.highlightVideoChannelName || '(없음)'}`);
+          console.log(`[Transform] ✓ fetchYoutubeVideos result: topVideo=${result.data.highlightVideoUrl ? '✓' : '✗'}, shorts=${result.data.shortsUrls.length}, channel=${result.data.highlightVideoChannelName || '(없음)'}, shortsViews=${result.data.shortsViewsTotal || 0}`);
           return {
             topVideoUrl: result.data.highlightVideoUrl || '',
             topVideoChannelName: result.data.highlightVideoChannelName || '',
-            shortsUrls: result.data.shortsUrls || []
+            shortsUrls: result.data.shortsUrls || [],
+            shortsViewsTotal: result.data.shortsViewsTotal || 0
           };
         } else {
           console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
