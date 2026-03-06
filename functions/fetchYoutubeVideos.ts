@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
     let highlightVideoUrl = '';
     let highlightVideoChannelName = '';
     let shortsUrls = [];
+    let shortsViewsTotal = 0;
 
     // ========== 하이라이트 영상 검색 ==========
     if (searchHighlightVideo) {
