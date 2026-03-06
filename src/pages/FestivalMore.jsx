@@ -293,6 +293,22 @@ export default function FestivalMore() {
             dateRange={dateRange}
             onApply={(range) => setDateRange(range)}
           />
+
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
+              <div className="flex items-center gap-1.5">
+                <ArrowUpDown className="w-4 h-4 text-yellow-400" />
+                <SelectValue>
+                  {sortOrder === "popularity" ? "인기도" : sortOrder === "likes" ? "좋아요" : "날짜"}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-800 text-white">
+              <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">인기도순</SelectItem>
+              <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">좋아요순</SelectItem>
+              <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">날짜순</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
