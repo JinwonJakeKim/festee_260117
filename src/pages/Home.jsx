@@ -1032,35 +1032,23 @@ export default function Home() {
               </div>
               )}
 
-          {/* Festival List - 2열 가로 스크롤, 20위까지 */}
+          {/* Festival List - 5개씩 4페이지 가로 스크롤, 20위까지 */}
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-4" style={{ width: 'max-content' }}>
-              {/* 왼쪽 열: 홀수 순위 (1,3,5,...) */}
-              <div className="space-y-3" style={{ width: 'calc(100vw - 52px)' }}>
-                {filteredFestivals.filter((_, i) => i % 2 === 0).slice(0, 10).map((festival, colIndex) => (
-                  <FestivalListItem
-                    key={festival.id}
-                    festival={festival}
-                    index={colIndex * 2}
-                    isLiked={myLikes.some(like => like.festival_id === festival.id)}
-                    onLike={(id) => likeMutation.mutate(id)}
-                    getLocalizedContent={getLocalizedContent}
-                  />
-                ))}
-              </div>
-              {/* 오른쪽 열: 짝수 순위 (2,4,6,...) */}
-              <div className="space-y-3" style={{ width: 'calc(100vw - 52px)' }}>
-                {filteredFestivals.filter((_, i) => i % 2 === 1).slice(0, 10).map((festival, colIndex) => (
-                  <FestivalListItem
-                    key={festival.id}
-                    festival={festival}
-                    index={colIndex * 2 + 1}
-                    isLiked={myLikes.some(like => like.festival_id === festival.id)}
-                    onLike={(id) => likeMutation.mutate(id)}
-                    getLocalizedContent={getLocalizedContent}
-                  />
-                ))}
-              </div>
+            <div className="flex" style={{ width: 'max-content' }}>
+              {[0, 1, 2, 3].map((pageIdx) => (
+                <div key={pageIdx} className="space-y-3 pr-4" style={{ width: 'calc(100vw - 32px)' }}>
+                  {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
+                    <FestivalListItem
+                      key={festival.id}
+                      festival={festival}
+                      index={pageIdx * 5 + i}
+                      isLiked={myLikes.some(like => like.festival_id === festival.id)}
+                      onLike={(id) => likeMutation.mutate(id)}
+                      getLocalizedContent={getLocalizedContent}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
 
