@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       }
 
       const log = logs[0];
-      if (log.count >= 90) {
+      if (log.count >= 95) {
         return { allowed: false, count: log.count };
       }
       await base44.asServiceRole.entities.ApiUsageLog.update(log.id, { count: log.count + 1 }).catch(() => {});
