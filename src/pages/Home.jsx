@@ -919,7 +919,7 @@ export default function Home() {
                 <div className="flex items-center gap-1.5">
                   <Tag className="w-4 h-4 text-purple-400" />
                   <SelectValue>
-                    {categoryFilter === "all" ? "카테고리" : categoryFilter}
+                    {categoryFilter === "all" ? "분류" : categoryFilter}
                   </SelectValue>
                 </div>
               </SelectTrigger>

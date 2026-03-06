@@ -260,7 +260,7 @@ export default function FestivalMore() {
             <SelectTrigger className="w-auto min-w-[80px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
               <div className="flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-purple-400" />
-                <SelectValue>{categoryFilter === "all" ? "카테고리" : categoryFilter}</SelectValue>
+                <SelectValue>{categoryFilter === "all" ? "분류" : categoryFilter}</SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
