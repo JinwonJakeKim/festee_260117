@@ -132,20 +132,6 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     }
   }
 
-  // YouTube promise - 하이라이트도 숏츠도 필요없으면 스킵
-  const youtubePromise = (shouldSearchHighlight || shouldSearchShorts)
-    ? base44.functions.invoke('fetchYoutubeVideos', {
-        festivalName: festivalData.name_original,
-        searchHighlightVideo: shouldSearchHighlight,
-        searchShorts: shouldSearchShorts
-      }).catch(e => {
-        console.error('[Transform] YouTube error:', e.message);
-        // API 한도 초과 에러는 상위로 전파
-        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
-        return { data: { success: false } };
-      })
-    : Promise.resolve({ data: { success: false, skipped: true } });
-
   if (!shouldSearchHighlight && !shouldSearchShorts) {
     console.log(`[Transform] ⏭️ YouTube API skipped (existing video & shorts found)`);
   }
