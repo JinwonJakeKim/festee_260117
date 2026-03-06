@@ -296,25 +296,27 @@ Deno.serve(async (req) => {
                 // Rate limiting 방지를 위한 지연 (300ms)
                 await new Promise(resolve => setTimeout(resolve, 300));
                 
-                const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${shortsVideoIds.join(',')}&key=${youtubeApiKey}`;
-                console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${shortsVideoIds.length} shorts...`);
+                const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${shortsVideoIds.join(',')}&key=${youtubeApiKey}`;
+                console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status & view counts for ${shortsVideoIds.length} shorts...`);
                 const videosResponse = await fetch(videosUrl);
                 
                 if (videosResponse.ok) {
                   const videosData = await videosResponse.json();
-                  const embeddableShorts = videosData.items
+                  const embeddableItems = videosData.items
                     ?.filter(video => video.contentDetails?.embeddable === true)
-                    .map(video => `https://www.youtube.com/shorts/${video.id}`)
                     .slice(0, 5);
                   
                   // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 5개)
-                  if (embeddableShorts && embeddableShorts.length > 0) {
-                    shortsUrls = embeddableShorts;
-                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts`);
-                  } else {
-                    shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
-                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
-                  }
+                  const finalItems = (embeddableItems && embeddableItems.length > 0)
+                    ? embeddableItems
+                    : videosData.items?.slice(0, 5) || [];
+
+                  shortsUrls = finalItems.map(video => `https://www.youtube.com/shorts/${video.id}`);
+                  shortsViewsTotal = finalItems.reduce((sum, video) => {
+                    return sum + parseInt(video.statistics?.viewCount || '0', 10);
+                  }, 0);
+
+                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} YouTube Shorts, total views: ${shortsViewsTotal}`);
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
                   shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
