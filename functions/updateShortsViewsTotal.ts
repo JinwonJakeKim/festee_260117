@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
 
       const usage = await checkAndIncrementApiUsage();
       if (!usage.allowed) {
-        console.warn(`[UpdateShortsViews] ⛔ YouTube API 일일 한도 초과 (${usage.count}/90)`);
+        console.warn(`[UpdateShortsViews] ⛔ YouTube API 일일 한도 초과 (${usage.count}/95)`);
         return Response.json({
           success: false,
           error: `YouTube API 일일 한도 초과 (${usage.count}/95)`,
