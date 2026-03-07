@@ -1088,7 +1088,7 @@ export default function Home() {
              </div>
            </button>
            {showPopularityTooltip && (
-             <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg min-w-[400px]">
+             <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg w-80">
                <button
                  onClick={() => setShowPopularityTooltip(false)}
                  className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
