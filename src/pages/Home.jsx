@@ -1075,7 +1075,7 @@ export default function Home() {
           </div>
 
           {/* Popularity Ranking Info */}
-          <div className="flex justify-end mb-8 -mr-4 pr-4">
+          <div className="flex justify-end mb-3 -mr-4 pr-4">
           <div className="relative">
            <button
              onClick={() => setShowPopularityTooltip(!showPopularityTooltip)}
