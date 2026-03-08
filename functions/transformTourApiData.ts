@@ -1114,9 +1114,10 @@ ${context}
         topVideoUrl = youtubeResult.topVideoUrl;
         topVideoChannelName = youtubeResult.topVideoChannelName || '';
         
-        // YouTube Shorts: 기존값 5개 이상이면 유지, 아니면 새로 검색
-        if (preservedYoutubeShorts.length >= 5) {
+        // YouTube Shorts: retransform이면 항상 재쿼리, 아니면 기존값 5개 이상이면 유지
+        if (!retransform && preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
+          shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
           console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
