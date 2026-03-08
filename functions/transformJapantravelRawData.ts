@@ -309,8 +309,27 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
   // YouTube 검색 (번역 완료 후 순차 실행 - name_jp 사용)
   if (shouldSearchHighlight || shouldSearchShorts) {
+    // 일본어 YouTube 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가
+    const buildJapaneseYoutubeQuery = (nameJp) => {
+      if (!nameJp) return nameJp;
+      // 년도 숫자(4자리), 年, 년 제거
+      let cleaned = nameJp.replace(/\d{4}[年년]?/g, '').replace(/\s{2,}/g, ' ').trim();
+      // 축제 키워드 목록 (포함되어 있으면 뒤에 '祭り' 추가 불필요)
+      const festivalKeywords = [
+        '祭り', 'まつり', 'パレード', 'イベント', 'フェア', 'マラソン', 'ショー', '展示会', 'フェスタ',
+        'festival', 'festivals', 'parade', 'parades', 'fair', 'fairs',
+        'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'festa'
+      ];
+      const hasKeyword = festivalKeywords.some(kw => cleaned.includes(kw));
+      if (!hasKeyword) {
+        cleaned = cleaned + ' 祭り';
+      }
+      return cleaned;
+    };
+
     // 하이라이트, 숏츠 모두 name_jp(일본어) 우선, 없으면 name_original 폴백
-    const youtubeSearchName = translatedData.name_jp || festivalData.name_original;
+    const rawSearchName = translatedData.name_jp || festivalData.name_original;
+    const youtubeSearchName = buildJapaneseYoutubeQuery(rawSearchName);
 
     console.log(`[Transform] 🎬 YouTube search (name_jp 우선): "${youtubeSearchName}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
