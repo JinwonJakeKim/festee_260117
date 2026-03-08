@@ -93,15 +93,18 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
   const hasHighlight = !!(existingVideoUrl && existingVideoUrl.trim());
   const hasShorts = existingShorts.length > 0;
-  const shouldSearchHighlight = !hasHighlight && (!videoUrl || videoUrl.trim() === '');
-  const shouldSearchShorts = !hasShorts;
+  // 재변환(retransform=true)이면 항상 재쿼리, 아니면 기존 영상이 없을 때만 쿼리
+  const shouldSearchHighlight = retransform ? true : (!hasHighlight && (!videoUrl || videoUrl.trim() === ''));
+  const shouldSearchShorts = retransform ? true : !hasShorts;
 
-  // 기존 영상이 있으면 그대로 사용
-  if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
-    videoUrl = existingVideoUrl;
-  }
-  if (hasShorts) {
-    youtubeShortUrls = existingShorts;
+  // 재변환이 아닐 때만 기존 영상 유지
+  if (!retransform) {
+    if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
+      videoUrl = existingVideoUrl;
+    }
+    if (hasShorts) {
+      youtubeShortUrls = existingShorts;
+    }
   }
 
   // 이미 번역된 Festival이 있으면 번역 스킵
