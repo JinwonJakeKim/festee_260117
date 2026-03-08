@@ -366,6 +366,25 @@ Deno.serve(async (req) => {
       return schedule;
     };
     
+    // YouTube 검색 쿼리 보정 함수 (한국어)
+    const buildKoreanYoutubeQuery = (nameKo) => {
+      if (!nameKo) return nameKo;
+      // 년도 숫자(4자리) 및 '년' 글자 제거
+      let cleaned = nameKo.replace(/\d{4}년?/g, '').replace(/\s{2,}/g, ' ').trim();
+      // 축제 키워드 목록 (포함되어 있으면 뒤에 '축제' 추가 불필요)
+      const festivalKeywords = [
+        '축제', '페스티벌', '퍼레이드', '의식', '박람회', '마라톤', '쇼', '전시회', '페스타',
+        'festival', 'festivals', 'parade', 'parades', 'ceremony', 'ceremonies',
+        'fair', 'fairs', 'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'festa'
+      ];
+      const lowerCleaned = cleaned.toLowerCase();
+      const hasFestivalKeyword = festivalKeywords.some(kw => lowerCleaned.includes(kw.toLowerCase()));
+      if (!hasFestivalKeyword) {
+        cleaned = cleaned + ' 축제';
+      }
+      return cleaned;
+    };
+
     // YouTube 동영상 검색 - 중앙화된 함수 사용
     const searchYouTubeVideos = async (festivalName) => {
       try {
