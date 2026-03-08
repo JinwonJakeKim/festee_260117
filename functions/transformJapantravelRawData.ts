@@ -331,7 +331,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     const rawSearchName = translatedData.name_jp || festivalData.name_original;
     const youtubeSearchName = buildJapaneseYoutubeQuery(rawSearchName);
 
-    console.log(`[Transform] 🎬 YouTube search (name_jp 우선): "${youtubeSearchName}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
+    console.log(`[Transform] 🎬 YouTube search (name_jp 우선): "${youtubeSearchName}" (원본: "${rawSearchName}"), highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
     const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
       festivalName: youtubeSearchName,
