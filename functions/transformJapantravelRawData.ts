@@ -83,9 +83,11 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     if (byName[0]) existingFestivalRecord = byName[0];
   }
 
+  let shortsViewsTotal = 0;
   if (existingFestivalRecord) {
     existingVideoUrl = existingFestivalRecord.video_url || null;
     existingShorts = existingFestivalRecord.youtube_shorts_urls || [];
+    shortsViewsTotal = existingFestivalRecord.shorts_views_5_total || 0;
     if (existingVideoUrl) videoChannelName = existingFestivalRecord.video_channel_name || '';
   }
 
