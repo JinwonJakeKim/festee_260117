@@ -337,7 +337,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
     console.log(`[Transform] 🎬 YouTube search (name_jp 우선): "${youtubeSearchName}" (원본: "${rawSearchName}"), highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
-    const youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+    let youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
       festivalName: youtubeSearchName,
       searchHighlightVideo: shouldSearchHighlight,
       searchShorts: shouldSearchShorts
@@ -345,6 +345,25 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
       return { data: { success: false } };
     });
+
+    // 결과가 없으면 영어 원본명으로 폴백 검색
+    const noHighlight = !youtubeResult.data?.highlightVideoUrl;
+    const noShorts = !(youtubeResult.data?.shortsUrls?.length > 0);
+    const originalNameDiffersFromJp = festivalData.name_original && festivalData.name_original !== youtubeSearchName;
+
+    if (youtubeResult.data?.success && noHighlight && noShorts && originalNameDiffersFromJp) {
+      const fallbackName = festivalData.name_original.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      console.log(`[Transform] 🔄 No YouTube results (JP), retrying with original: "${fallbackName}"`);
+      youtubeResult = await base44.functions.invoke('fetchYoutubeVideos', {
+        festivalName: fallbackName,
+        searchHighlightVideo: shouldSearchHighlight,
+        searchShorts: shouldSearchShorts
+      }).catch(e => {
+        if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
+        return { data: { success: false } };
+      });
+    }
+
     if (youtubeResult.data?.success) {
       if (shouldSearchHighlight && youtubeResult.data.highlightVideoUrl) {
         videoUrl = youtubeResult.data.highlightVideoUrl;
