@@ -28,7 +28,12 @@ Deno.serve(async (req) => {
     let festivalNameForSearch = festivalName.replace(/\s*20\d{2}\s*/g, ' ').trim();
     
     // 축제 관련 키워드가 없으면 '축제' 추가
-    const festivalKeywords = ['축제', 'festival', 'festa', 'fest', '페스티벌', 'fes', 'carnival', '카니발', 'fair', '페어'];
+    const festivalKeywords = [
+      // 한국어
+      '축제', '페스티벌', '퍼레이드', '의식', '박람회', '마라톤', '쇼', '전시회', '페스타',
+      // 영어
+      'festival', 'festivals', 'parades', 'ceremonies', 'fairs', 'marathons', 'shows', 'exhibitions', 'festa'
+    ];
     const hasFestivalKeyword = festivalKeywords.some(keyword => festivalNameForSearch.toLowerCase().includes(keyword.toLowerCase()));
     if (!hasFestivalKeyword) {
       festivalNameForSearch = `${festivalNameForSearch} 축제`;
