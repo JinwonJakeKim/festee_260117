@@ -594,8 +594,7 @@ export default function Community() {
           </div>
         </TabsContent>
 
-        {/* 피드백 탭 */}
-        <TabsContent value="피드백" className="mt-4">
+
           <div className="mb-4 bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4">
             <h3 className="text-white font-bold mb-2 flex items-center gap-2">
               💡 Festee 피드백
