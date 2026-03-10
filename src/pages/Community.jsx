@@ -262,14 +262,6 @@ export default function Community() {
   const locations = [...new Set(allPossiblePostsForFilters.map(p => p.festival_location).filter(Boolean))];
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제"];
 
-  // 피드백 필터링
-  const filteredFeedbacks = feedbacks.filter(feedback => {
-    const searchMatch = !searchQuery ||
-      feedback.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      feedback.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return searchMatch;
-  });
-
   let showNoPostsMessage = false;
   if (activeTab === "전체" && allTabFilteredPosts.length === 0 && !isLoading) {
     showNoPostsMessage = true;
