@@ -25,7 +25,15 @@ Deno.serve(async (req) => {
 
     // 축제 이름에서 연도 제거 (YouTube 검색 시 더 많은 결과를 얻기 위함)
     // 예: "Shizukuishi Winter Festa 2026" -> "Shizukuishi Winter Festa"
-    const festivalNameForSearch = festivalName.replace(/\s*20\d{2}\s*/g, ' ').trim();
+    let festivalNameForSearch = festivalName.replace(/\s*20\d{2}\s*/g, ' ').trim();
+    
+    // 축제 관련 키워드가 없으면 '축제' 추가
+    const festivalKeywords = ['축제', 'festival', 'festa', 'fest', '페스티벌', 'fes', 'carnival', '카니발', 'fair', '페어'];
+    const hasFestivalKeyword = festivalKeywords.some(keyword => festivalNameForSearch.toLowerCase().includes(keyword.toLowerCase()));
+    if (!hasFestivalKeyword) {
+      festivalNameForSearch = `${festivalNameForSearch} 축제`;
+      console.log(`[FetchYoutubeVideos] Added '축제' keyword: "${festivalNameForSearch}"`);
+    }
     
     console.log(`[FetchYoutubeVideos] Starting search for: "${festivalName}"`);
     if (festivalNameForSearch !== festivalName) {
