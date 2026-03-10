@@ -218,10 +218,11 @@ Deno.serve(async (req) => {
               }
               
               // 3단계: 우선순위 부여 및 정렬
-              // 임베드 가능한 영상이 없으면 필터링된 영상(뉴스 제외)을 사용
-              const videosToUse = embeddableVideos.length > 0 
-                ? embeddableVideos 
-                : filteredVideos.map((item, idx) => ({ item, originalIndex: idx }));
+              // 임베드 가능한 영상이 없으면 채택하지 않음
+              if (embeddableVideos.length === 0) {
+                console.log(`[FetchYoutubeVideos] ⚠️ No embeddable videos found, skipping highlight video`);
+              }
+              const videosToUse = embeddableVideos;
               
               if (videosToUse.length === 0) {
                 console.log(`[FetchYoutubeVideos] ⚠️ No videos available after filtering`);
