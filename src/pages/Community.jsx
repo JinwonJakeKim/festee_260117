@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -332,21 +331,15 @@ export default function Community() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="px-4">
-        <TabsList className="w-full bg-gray-900 grid grid-cols-5 mt-4">
+        <TabsList className="w-full bg-gray-900 grid grid-cols-3 mt-4">
           <TabsTrigger value="전체" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
             전체
           </TabsTrigger>
           <TabsTrigger value="축제 같이가기" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs text-white">
             같이가기
           </TabsTrigger>
-          <TabsTrigger value="피드백" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
-            피드백
-          </TabsTrigger>
           <TabsTrigger value="팔로우" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
             팔로우
-          </TabsTrigger>
-          <TabsTrigger value="Shorts" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
-            Shorts
           </TabsTrigger>
         </TabsList>
 
