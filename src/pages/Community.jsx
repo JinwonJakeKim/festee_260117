@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Heart, MessageCircle, TrendingUp, Eye, Globe, Tag, Calendar as CalendarIcon, Send } from "lucide-react";
+import { Plus, Heart, MessageCircle, TrendingUp, Eye, Globe, Tag, Calendar as CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
