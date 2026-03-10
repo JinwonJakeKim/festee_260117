@@ -321,7 +321,7 @@ export default function Community() {
           <TabsTrigger value="전체" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
             전체
           </TabsTrigger>
-          <TabsTrigger value="축제 같이가기" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs text-white">
+          <TabsTrigger value="축제 같이가기" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
             같이가기
           </TabsTrigger>
           <TabsTrigger value="팔로우" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-white">
