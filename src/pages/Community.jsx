@@ -168,12 +168,6 @@ export default function Community() {
     initialData: [],
   });
 
-  const { data: feedbacks } = useQuery({
-    queryKey: ['feedbacks'],
-    queryFn: () => base44.entities.Feedback.filter({ is_public: true }, '-created_date'),
-    initialData: [],
-  });
-
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
