@@ -540,9 +540,22 @@ export default function Home() {
       .slice(0, 10);
   }, [festivals]);
 
-  const koreaWinterFestivals = useMemo(() => {
+  const koreaPopularFestivals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const koreaVariations = ['대한민국', '한국', 'Korea', 'South Korea'];
     return festivals
-      .filter(f => f.country === '대한민국')
+      .filter(f => koreaVariations.includes(f.country) && f.end_date && new Date(f.end_date) >= today)
+      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .slice(0, 10);
+  }, [festivals]);
+
+  const japanPopularFestivals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return festivals
+      .filter(f => f.country === 'Japan' && f.end_date && new Date(f.end_date) >= today)
+      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
       .slice(0, 10);
   }, [festivals]);
 
