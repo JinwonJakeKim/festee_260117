@@ -594,99 +594,10 @@ export default function Community() {
           </div>
         </TabsContent>
 
-
-          <div className="mb-4 bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4">
-            <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-              💡 Festee 피드백
-            </h3>
-            <p className="text-gray-300 text-sm mb-3">
-              Festee를 더 좋게 만드는 여러분의 의견을 공유해주세요!
-            </p>
-            <Link to={createPageUrl("FeedbackForm")}>
-              <Button className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 rounded-full h-11 font-bold">
-                <Send className="w-4 h-4 mr-2" />
-                피드백 작성하기
-              </Button>
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {filteredFeedbacks.map((feedback) => (
-              <Link key={feedback.id} to={createPageUrl(`FeedbackDetail?id=${feedback.id}`)}>
-                <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                      {feedback.user_name?.[0] || 'U'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-white font-bold truncate">{feedback.user_name}</span>
-                        <Badge className="bg-cyan-500 text-white text-xs">
-                          {feedback.category}
-                        </Badge>
-                        {feedback.status && feedback.status !== "접수" && (
-                          <Badge
-                            className={`text-xs ${
-                              feedback.status === "완료" ? "bg-green-500" :
-                              feedback.status === "처리 중" ? "bg-yellow-500 text-black" :
-                              "bg-gray-600"
-                            } text-white`}
-                          >
-                            {feedback.status}
-                          </Badge>
-                        )}
-                      </div>
-                      <h4 className="text-white font-medium mb-1 line-clamp-1">{feedback.subject}</h4>
-                      <p className="text-gray-400 text-sm line-clamp-2 mb-2">{feedback.content}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Heart className="w-3 h-3" />
-                          {feedback.likes_count || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="w-3 h-3" />
-                          {feedback.comments_count || 0}
-                        </span>
-                        <span>{safeFormatDate(feedback.created_date, 'M월 d일')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          {filteredFeedbacks.length === 0 && (
-            <Card className="bg-gray-900 border-gray-800 p-12 text-center mt-4">
-              <p className="text-gray-400 mb-4">아직 피드백이 없습니다</p>
-              <Link to={createPageUrl("FeedbackForm")}>
-                <Button className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 rounded-full">
-                  첫 피드백 작성하기
-                </Button>
-              </Link>
-            </Card>
-          )}
-        </TabsContent>
-
         {/* 팔로우 탭 */}
         <TabsContent value="팔로우" className="mt-4">
           <div className="text-center py-12">
             <p className="text-gray-500 mb-3">팔로우한 사용자의 게시물이 표시됩니다</p>
-          </div>
-        </TabsContent>
-
-        {/* Shorts 탭 */}
-        <TabsContent value="Shorts" className="mt-4">
-          <div className="grid grid-cols-3 gap-2">
-            {[...Array(9)].map((_, idx) => (
-              <div key={idx} className="aspect-[9/16] bg-gray-900 rounded-lg overflow-hidden">
-                <img
-                  src={`https://images.unsplash.com/photo-${1500000000000 + idx * 100000}?w=400&h=700&fit=crop`}
-                  alt="Short"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
           </div>
         </TabsContent>
       </Tabs>
