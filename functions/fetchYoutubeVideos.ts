@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
     let highlightVideoChannelName = '';
     let shortsUrls = [];
     let shortsViewsTotal = 0;
+    let shortsViewsList = []; // 각 숏츠별 개별 조회수
 
     // ========== 하이라이트 영상 검색 ==========
     if (searchHighlightVideo) {
