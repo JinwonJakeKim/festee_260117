@@ -320,7 +320,18 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     // 영어 원본명 쿼리 보정: 년도 제거
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
-      return name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      const festivalKeywords = [
+        '축제', '페스티벌', '퍼레이드', '의식', '박람회', '마라톤', '쇼', '전시회', '페스타',
+        'festival', 'festivals', 'parade', 'parades', 'fair', 'fairs',
+        'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'festa'
+      ];
+      const hasFestivalKeyword = festivalKeywords.some(kw => cleaned.toLowerCase().includes(kw.toLowerCase()));
+      if (!hasFestivalKeyword) {
+        const hasKorean = /[\uAC00-\uD7A3]/.test(cleaned);
+        cleaned = `${cleaned} ${hasKorean ? '축제' : 'festival'}`;
+      }
+      return cleaned;
     };
 
     // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가
