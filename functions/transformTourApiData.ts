@@ -1534,7 +1534,7 @@ ${context}
         });
 
         // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만)
-        if (youtubeShorts && youtubeShorts.length > 0 && koreanShortsViewsList.length > 0) {
+        if (youtubeShorts && youtubeShorts.length > 0) {
           try {
             const nowIsoStat = new Date().toISOString();
             const statPayload = {
