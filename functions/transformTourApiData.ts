@@ -1531,7 +1531,39 @@ ${context}
           festival_id: festivalResult.id,
           error_message: ''
         });
-        
+
+        // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만)
+        if (youtubeShorts && youtubeShorts.length > 0 && koreanShortsViewsList.length > 0) {
+          try {
+            const nowIsoStat = new Date().toISOString();
+            const statPayload = {
+              festival_id: festivalResult.id,
+              name_ko: festivalData.name_ko || festivalData.name_original,
+              name_en: festivalData.name_en || festivalData.name_original,
+              name_jp: festivalData.name_jp || '',
+              update_time: nowIsoStat,
+              query_ko: youtubeQuery || '',
+              query_en: '',
+              query_jp: '',
+              shorts1_url: youtubeShorts[0] || '',
+              shorts1_views: koreanShortsViewsList[0] || 0,
+              shorts2_url: youtubeShorts[1] || '',
+              shorts2_views: koreanShortsViewsList[1] || 0,
+              shorts3_url: youtubeShorts[2] || '',
+              shorts3_views: koreanShortsViewsList[2] || 0,
+              shorts4_url: youtubeShorts[3] || '',
+              shorts4_views: koreanShortsViewsList[3] || 0,
+              shorts5_url: youtubeShorts[4] || '',
+              shorts5_views: koreanShortsViewsList[4] || 0,
+              total_views: shortsViewsTotal || 0
+            };
+            await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
+            console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalResult.id}`);
+          } catch (statError) {
+            console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
+          }
+        }
+
         console.log(`[Transform] ✓ SUCCESS: ${festivalData.name} ${isUpdate ? '(업데이트 완료)' : '(신규 생성 완료)'}`);
         
       } catch (error) {
