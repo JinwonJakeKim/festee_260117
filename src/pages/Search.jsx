@@ -249,14 +249,18 @@ export default function Search() {
           return festivalIncludesMonth(festival, monthFilter);
         }
         return safeStringIncludes(festival.name, searchQuery) ||
+          safeStringIncludes(festival.name_original, searchQuery) ||
           safeStringIncludes(festival.name_ko, searchQuery) ||
           safeStringIncludes(festival.name_en, searchQuery) ||
           safeStringIncludes(festival.name_jp, searchQuery) ||
           safeStringIncludes(festival.name_zh, searchQuery) ||
           safeStringIncludes(festival.city, searchQuery) ||
           safeStringIncludes(festival.city_ko, searchQuery) ||
+          safeStringIncludes(festival.city_en, searchQuery) ||
           safeStringIncludes(festival.country, searchQuery) ||
-          (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery)));
+          safeStringIncludes(festival.country_en, searchQuery) ||
+          (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery))) ||
+          (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, searchQuery)));
       } catch (e) {
         return false;
       }
