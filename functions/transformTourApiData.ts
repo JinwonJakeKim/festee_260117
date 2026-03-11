@@ -1124,7 +1124,7 @@ ${context}
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
           shortsViewsTotal = youtubeResult.shortsViewsTotal || 0;
-          koreanShortsViewsList = youtubeResult.shortsViewsList || [];
+          koreanShortsViewsList = youtubeResult.shortsViewsList || youtubeResult.shortsUrls?.map(() => 0) || [];
           console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         }
         
