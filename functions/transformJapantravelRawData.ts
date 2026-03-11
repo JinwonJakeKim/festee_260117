@@ -491,6 +491,38 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     error_message: null
   });
 
+  // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만)
+  if (youtubeShortUrls && youtubeShortUrls.length > 0) {
+    try {
+      const viewsList = firstResultViewsList || [];
+      const statPayload = {
+        festival_id: festivalId,
+        name_ko: festivalPayload.name_ko || festivalPayload.name_original,
+        name_en: festivalPayload.name_en || festivalPayload.name_original,
+        name_jp: festivalPayload.name_jp || festivalPayload.name_original,
+        update_time: now,
+        query_en: enSearchNameUsed || '',
+        query_jp: jpSearchNameUsed || '',
+        query_ko: '',
+        shorts1_url: youtubeShortUrls[0] || '',
+        shorts1_views: viewsList[0] || 0,
+        shorts2_url: youtubeShortUrls[1] || '',
+        shorts2_views: viewsList[1] || 0,
+        shorts3_url: youtubeShortUrls[2] || '',
+        shorts3_views: viewsList[2] || 0,
+        shorts4_url: youtubeShortUrls[3] || '',
+        shorts4_views: viewsList[3] || 0,
+        shorts5_url: youtubeShortUrls[4] || '',
+        shorts5_views: viewsList[4] || 0,
+        total_views: shortsViewsTotal || 0
+      };
+      await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
+      console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalId}`);
+    } catch (statError) {
+      console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
+    }
+  }
+
   return { rawDataId, festivalId, success: true, festivalName: festivalPayload.name_original };
 }
 
