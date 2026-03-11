@@ -36,8 +36,10 @@ Deno.serve(async (req) => {
     ];
     const hasFestivalKeyword = festivalKeywords.some(keyword => festivalNameForSearch.toLowerCase().includes(keyword.toLowerCase()));
     if (!hasFestivalKeyword) {
-      festivalNameForSearch = `${festivalNameForSearch} 축제`;
-      console.log(`[FetchYoutubeVideos] Added '축제' keyword: "${festivalNameForSearch}"`);
+      const hasKorean = /[\uAC00-\uD7A3]/.test(festivalNameForSearch);
+      const addKeyword = hasKorean ? '축제' : 'festival';
+      festivalNameForSearch = `${festivalNameForSearch} ${addKeyword}`;
+      console.log(`[FetchYoutubeVideos] Added '${addKeyword}' keyword: "${festivalNameForSearch}"`);
     }
     
     console.log(`[FetchYoutubeVideos] Starting search for: "${festivalName}"`);
