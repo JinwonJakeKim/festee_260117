@@ -283,14 +283,18 @@ export default function Search() {
           // 일반 검색어 매칭 - 안전한 문자열 비교 (다국어 필드 포함)
           const matchesQuery =
             safeStringIncludes(festival.name, searchQuery) ||
+            safeStringIncludes(festival.name_original, searchQuery) ||
             safeStringIncludes(festival.name_ko, searchQuery) ||
             safeStringIncludes(festival.name_en, searchQuery) ||
             safeStringIncludes(festival.name_jp, searchQuery) ||
             safeStringIncludes(festival.name_zh, searchQuery) ||
             safeStringIncludes(festival.city, searchQuery) ||
             safeStringIncludes(festival.city_ko, searchQuery) ||
+            safeStringIncludes(festival.city_en, searchQuery) ||
             safeStringIncludes(festival.country, searchQuery) ||
-            (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery)));
+            safeStringIncludes(festival.country_en, searchQuery) ||
+            (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery))) ||
+            (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, searchQuery)));
 
           if (!matchesQuery) return false;
         }
