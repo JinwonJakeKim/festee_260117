@@ -127,11 +127,11 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
       date: today
     }).catch(() => []);
     const ytCount = ytLogs[0]?.count || 0;
-    if (ytCount >= 90) {
-      console.warn(`[Transform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/90) - 처리 중단`);
+    if (ytCount >= 95) {
+      console.warn(`[Transform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/95) - 처리 중단`);
       await base44.asServiceRole.entities.JapantravelRawData.update(rawDataId, {
         processing_status: 'failed',
-        error_message: `YouTube API 일일 한도 초과 (${ytCount}/90). 날짜가 바뀌어 초기화되면 다시 시도하세요.`
+        error_message: `YouTube API 일일 한도 초과 (${ytCount}/95). 날짜가 바뀌어 초기화되면 다시 시도하세요.`
       });
       return { rawDataId, success: false, error: `YouTube API 일일 한도 초과 (${ytCount}/90)` };
     }
