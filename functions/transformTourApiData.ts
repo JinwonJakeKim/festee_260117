@@ -407,7 +407,7 @@ Deno.serve(async (req) => {
           };
         } else {
           console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
-          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0 };
+          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [] };
         }
         
       } catch (error) {
@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
         if (error.message.includes('YOUTUBE_API_LIMIT_REACHED') || error.message.includes('API_LIMIT_REACHED')) {
           throw error;
         }
-        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0 };
+        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [] };
         }
         };
     
