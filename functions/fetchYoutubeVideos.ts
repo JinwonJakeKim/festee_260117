@@ -350,10 +350,12 @@ Deno.serve(async (req) => {
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
                   shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                  shortsViewsList = shortsUrls.map(() => 0);
                   console.log(`[FetchYoutubeVideos] ⚠️ Could not check embeddable status, using all shorts: ${shortsUrls.length}`);
                 }
               } catch (embedError) {
                 shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                shortsViewsList = shortsUrls.map(() => 0);
                 console.log(`[FetchYoutubeVideos] ⚠️ Embed check failed, using all shorts: ${shortsUrls.length}`);
               }
             }
