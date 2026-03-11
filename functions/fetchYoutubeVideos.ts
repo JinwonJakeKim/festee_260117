@@ -213,9 +213,12 @@ Deno.serve(async (req) => {
               }
               
               // 3단계: 우선순위 부여 및 정렬
-              // 임베드 가능한 영상이 없으면 채택하지 않음
+              // 임베드 가능한 영상이 없으면 필터링된 전체 영상을 fallback으로 사용
               if (embeddableVideos.length === 0) {
-                console.log(`[FetchYoutubeVideos] ⚠️ No embeddable videos found, skipping highlight video`);
+                console.log(`[FetchYoutubeVideos] ⚠️ No embeddable videos found, falling back to all filtered videos`);
+                filteredVideos.forEach((item, idx) => {
+                  embeddableVideos.push({ item, originalIndex: idx });
+                });
               }
               const videosToUse = embeddableVideos;
               
