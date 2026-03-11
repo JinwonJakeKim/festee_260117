@@ -318,9 +318,12 @@ Deno.serve(async (req) => {
                   const videosData = await videosResponse.json();
                   const embeddableItems = videosData.items?.filter(video => video.contentDetails?.embeddable === true) || [];
                   
-                  // 조회수 합산
+                  // 조회수 합산 + 개별 조회수 맵
+                  const shortsViewsMap = {};
                   shortsViewsTotal = embeddableItems.reduce((sum, video) => {
-                    return sum + parseInt(video.statistics?.viewCount || '0', 10);
+                    const views = parseInt(video.statistics?.viewCount || '0', 10);
+                    shortsViewsMap[`https://www.youtube.com/shorts/${video.id}`] = views;
+                    return sum + views;
                   }, 0);
                   
                   const embeddableShorts = embeddableItems
@@ -330,11 +333,17 @@ Deno.serve(async (req) => {
                   // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 5개)
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
+                    shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
                     // 조회수 없는 경우도 합산 시도
-                    shortsViewsTotal = (videosData.items || []).reduce((sum, video) => sum + parseInt(video.statistics?.viewCount || '0', 10), 0);
+                    const allViewsMap = {};
+                    (videosData.items || []).forEach(video => {
+                      allViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
+                    });
+                    shortsViewsTotal = Object.values(allViewsMap).reduce((s, v) => s + v, 0);
+                    shortsViewsList = shortsUrls.map(url => allViewsMap[url] || 0);
                     console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
                   }
                 } else {
