@@ -27,20 +27,7 @@ Deno.serve(async (req) => {
     // 예: "Shizukuishi Winter Festa 2026" -> "Shizukuishi Winter Festa"
     let festivalNameForSearch = festivalName.replace(/\s*20\d{2}\s*/g, ' ').trim();
     
-    // 축제 관련 키워드가 없으면 '축제' 추가
-    const festivalKeywords = [
-      // 한국어
-      '축제', '페스티벌', '퍼레이드', '의식', '박람회', '마라톤', '쇼', '전시회', '페스타',
-      // 영어
-      'festival', 'festivals', 'parades', 'ceremonies', 'fairs', 'marathons', 'shows', 'exhibitions', 'festa'
-    ];
-    const hasFestivalKeyword = festivalKeywords.some(keyword => festivalNameForSearch.toLowerCase().includes(keyword.toLowerCase()));
-    if (!hasFestivalKeyword) {
-      const hasKorean = /[\uAC00-\uD7A3]/.test(festivalNameForSearch);
-      const addKeyword = hasKorean ? '축제' : 'festival';
-      festivalNameForSearch = `${festivalNameForSearch} ${addKeyword}`;
-      console.log(`[FetchYoutubeVideos] Added '${addKeyword}' keyword: "${festivalNameForSearch}"`);
-    }
+    // 축제 키워드 추가는 호출 측(transformJapantravelRawData 등)에서 처리됨
     
     console.log(`[FetchYoutubeVideos] Starting search for: "${festivalName}"`);
     if (festivalNameForSearch !== festivalName) {
