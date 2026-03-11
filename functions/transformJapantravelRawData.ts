@@ -312,6 +312,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   console.log(`[Transform] Translation done for: ${festivalData.name_original}`);
 
   // YouTube 검색 (번역 완료 후 순차 실행)
+  let enSearchNameUsed = '';
+  let jpSearchNameUsed = '';
+  let firstResultViewsList = [];
+
   if (shouldSearchHighlight || shouldSearchShorts) {
     // 영어 원본명 쿼리 보정: 년도 제거
     const buildEnglishYoutubeQuery = (name) => {
@@ -337,6 +341,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
     // 1차: 영어 원본명으로 검색
     const enSearchName = buildEnglishYoutubeQuery(festivalData.name_original);
+    enSearchNameUsed = enSearchName;
     console.log(`[Transform] 🎬 YouTube search (영어 원본): "${enSearchName}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
     const firstResult = await base44.functions.invoke('fetchYoutubeVideos', {
@@ -356,6 +361,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (shouldSearchShorts) {
         youtubeShortUrls = firstResult.data.shortsUrls || [];
         shortsViewsTotal = firstResult.data.shortsViewsTotal || 0;
+        firstResultViewsList = firstResult.data.shortsViewsList || [];
       }
     }
 
@@ -364,6 +370,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     const jpName = translatedData.name_jp;
     if (needMoreShorts && jpName) {
       const jpSearchName = buildJapaneseYoutubeQuery(jpName);
+      jpSearchNameUsed = jpSearchName;
       console.log(`[Transform] 🔄 Shorts < 5 (${youtubeShortUrls.length}개), retrying with JP: "${jpSearchName}"`);
 
       const secondResult = await base44.functions.invoke('fetchYoutubeVideos', {
@@ -379,7 +386,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         // 기존 숏츠와 합쳐서 중복 제거 후 최대 5개
         const existingIds = new Set(youtubeShortUrls.map(u => u.split('/').pop()));
         const newShorts = secondResult.data.shortsUrls.filter(u => !existingIds.has(u.split('/').pop()));
-        youtubeShortUrls = [...youtubeShortUrls, ...newShorts].slice(0, 5);
+        const newViewsList = secondResult.data.shortsViewsList || [];
+        const addedShorts = [];
+        const addedViews = [];
+        newShorts.forEach((url, idx) => {
+          addedShorts.push(url);
+          addedViews.push(newViewsList[idx] || 0);
+        });
+        const prevLen = youtubeShortUrls.length;
+        youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 5);
+        firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 5);
         shortsViewsTotal = (shortsViewsTotal || 0) + (secondResult.data.shortsViewsTotal || 0);
         console.log(`[Transform] ✓ Shorts after JP search: ${youtubeShortUrls.length}개`);
       }
