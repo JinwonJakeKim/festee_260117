@@ -1115,6 +1115,7 @@ ${context}
         topVideoChannelName = youtubeResult.topVideoChannelName || '';
         
         // YouTube Shorts: retransform이면 항상 재쿼리, 아니면 기존값 5개 이상이면 유지
+        let koreanShortsViewsList = [];
         if (!retransform && preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
           shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
@@ -1122,6 +1123,7 @@ ${context}
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
           shortsViewsTotal = youtubeResult.shortsViewsTotal || 0;
+          koreanShortsViewsList = youtubeResult.shortsViewsList || [];
           console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         }
         
