@@ -1108,7 +1108,7 @@ ${context}
         let topVideoChannelName = '';
         let shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
         
-        const youtubeQuery = buildKoreanYoutubeQuery(nameTranslations?.ko || rawData.title);
+        const youtubeQuery = buildKoreanYoutubeQuery(rawData.title);
         console.log(`[Transform] 🎬 Searching YouTube for: "${youtubeQuery}" (원본: "${rawData.title}")`);
         const youtubeResult = await searchYouTubeVideos(youtubeQuery);
         topVideoUrl = youtubeResult.topVideoUrl;
