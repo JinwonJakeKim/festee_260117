@@ -1187,7 +1187,7 @@ export default function Home() {
                 <Info className="w-3 h-3" />
               </button>
               {showRankerTooltip && (
-                <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg z-10" style={{width: '190px'}}>
+                <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg z-10" style={{width: '209px'}}>
                   <button
                     onClick={() => setShowRankerTooltip(false)}
                     className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
