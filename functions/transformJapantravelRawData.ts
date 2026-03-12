@@ -289,10 +289,11 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     console.log(`[Transform] ✅ Using Google Translate results (name${skipDescSummaryTranslation ? ' only - summary/description skipped' : '/summary/description'})`);
     translatedData = {
       ...llmTranslatedData,
-      name_ko: gt.name?.ko || llmTranslatedData.name_ko,
-      name_en: gt.name?.en || llmTranslatedData.name_en,
-      name_jp: gt.name?.jp || llmTranslatedData.name_jp,
-      name_zh: gt.name?.zh || llmTranslatedData.name_zh,
+      // name은 LLM 우선 사용 (음역/음차 품질이 더 높음), LLM 실패 시만 Google Translate 폴백
+      name_ko: llmTranslatedData.name_ko || gt.name?.ko,
+      name_en: llmTranslatedData.name_en || gt.name?.en,
+      name_jp: llmTranslatedData.name_jp || gt.name?.jp,
+      name_zh: llmTranslatedData.name_zh || gt.name?.zh,
       // summary/description: retransform+이미번역이면 기존값 유지
       summary_ko: skipDescSummaryTranslation ? llmTranslatedData.summary_ko : (gt.summary?.ko || llmTranslatedData.summary_ko),
       summary_en: skipDescSummaryTranslation ? llmTranslatedData.summary_en : (gt.summary?.en || llmTranslatedData.summary_en),
