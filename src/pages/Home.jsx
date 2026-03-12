@@ -1419,7 +1419,7 @@ export default function Home() {
       </div>
 
       {foodFestivals.length > 0 && (
-        <div className="mb-8">
+        <div className="px-4 mb-8">
           <h2 className="text-white text-2xl font-bold mb-4">
             이런 음식축제는 어때요? 🍜
           </h2>
