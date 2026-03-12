@@ -1107,32 +1107,7 @@ export default function Home() {
           )}
           </div>
 
-          {/* Popularity Ranking Info */}
-          <div className="flex justify-end mb-3 -mr-4 pr-4">
-          <div className="relative">
-           <button
-             onClick={() => setShowPopularityTooltip(!showPopularityTooltip)}
-             className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
-             title="인기도 순위의 기준은 무엇인가요?"
-           >
-             <span className="text-xs">인기도 순위의 기준은 무엇인가요?</span>
-             <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center hover:border-cyan-400">
-               <Info className="w-3 h-3" />
-             </div>
-           </button>
-           {showPopularityTooltip && (
-             <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg w-56">
-               <button
-                 onClick={() => setShowPopularityTooltip(false)}
-                 className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
-               >
-                 <X className="w-3 h-3" />
-               </button>
-               <p className="pr-4">축제마다 관련성 기준으로 선정된<br/>TOP5 영상의 각 조회수를 합산합니다</p>
-             </div>
-           )}
-          </div>
-          </div>
+
 
           {showFeedbackCard && user && (
           <Card className="bg-gradient-to-r from-cyan-900/20 via-purple-900/20 to-pink-900/20 border-2 border-cyan-400/30 p-6 relative overflow-hidden mb-8">
