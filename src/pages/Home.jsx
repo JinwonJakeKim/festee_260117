@@ -900,7 +900,27 @@ export default function Home() {
         {/* Top Festival Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-2xl font-bold">축제 차트</h2>
+            <div className="flex items-center gap-2 relative">
+              <h2 className="text-white text-2xl font-bold">축제 차트</h2>
+              <button
+                onClick={() => setShowPopularityTooltip(!showPopularityTooltip)}
+                className="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 text-gray-400 transition-colors flex-shrink-0"
+              >
+                <Info className="w-3 h-3" />
+              </button>
+              {showPopularityTooltip && (
+                <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg w-56 z-10">
+                  <button
+                    onClick={() => setShowPopularityTooltip(false)}
+                    className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <p className="font-bold text-cyan-400 mb-1 pr-4">인기도 순위의 기준은 무엇인가요?</p>
+                  <p className="text-gray-300">축제마다 관련성 기준으로 선정된<br/>TOP5 영상의 각 조회수를 합산합니다</p>
+                </div>
+              )}
+            </div>
             <Link to={createPageUrl("FestivalMore")}>
               <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
                 더보기 →
