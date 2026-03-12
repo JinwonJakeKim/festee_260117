@@ -1964,7 +1964,7 @@ export default function AdminUrlExtraction() {
                 <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
                 <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
                 <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
-                <li>✓ 재변환 시 기존 데이터를 업데이트합니다</li>
+                <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
               </ul>
             </Card>
 
