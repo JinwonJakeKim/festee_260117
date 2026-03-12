@@ -192,6 +192,7 @@ export default function Home() {
   const [showBetaBanner, setShowBetaBanner] = useState(true);
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
   const [showPopularityTooltip, setShowPopularityTooltip] = useState(false);
+  const [showRankerTooltip, setShowRankerTooltip] = useState(false);
   const { getLocalizedContent } = useFestivalLocalizedContent();
 
   // URL 업데이트 함수
