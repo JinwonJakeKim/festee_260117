@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
                   // Rate limiting 방지를 위한 지연 (300ms)
                   await new Promise(resolve => setTimeout(resolve, 300));
                   
-                  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${videoIds.join(',')}&key=${youtubeApiKey}`;
+                  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoIds.join(',')}&key=${youtubeApiKey}`;
                   console.log(`[FetchYoutubeVideos] 🔍 Checking embeddable status for ${videoIds.length} videos...`);
                   const videosResponse = await fetch(videosUrl);
                   
