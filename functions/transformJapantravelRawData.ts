@@ -290,21 +290,22 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let translatedData = llmTranslatedData;
   if (googleTranslateResult?.data?.success) {
     const gt = googleTranslateResult.data.results;
-    console.log(`[Transform] ✅ Using Google Translate results (name/summary/description only)`);
+    console.log(`[Transform] ✅ Using Google Translate results (name${skipDescSummaryTranslation ? ' only - summary/description skipped' : '/summary/description'})`);
     translatedData = {
       ...llmTranslatedData,
       name_ko: gt.name?.ko || llmTranslatedData.name_ko,
       name_en: gt.name?.en || llmTranslatedData.name_en,
       name_jp: gt.name?.jp || llmTranslatedData.name_jp,
       name_zh: gt.name?.zh || llmTranslatedData.name_zh,
-      summary_ko: gt.summary?.ko || llmTranslatedData.summary_ko,
-      summary_en: gt.summary?.en || llmTranslatedData.summary_en,
-      summary_jp: gt.summary?.jp || llmTranslatedData.summary_jp,
-      summary_zh: gt.summary?.zh || llmTranslatedData.summary_zh,
-      description_ko: gt.description?.ko || llmTranslatedData.description_ko,
-      description_en: gt.description?.en || llmTranslatedData.description_en,
-      description_jp: gt.description?.jp || llmTranslatedData.description_jp,
-      description_zh: gt.description?.zh || llmTranslatedData.description_zh,
+      // summary/description: retransform+이미번역이면 기존값 유지
+      summary_ko: skipDescSummaryTranslation ? llmTranslatedData.summary_ko : (gt.summary?.ko || llmTranslatedData.summary_ko),
+      summary_en: skipDescSummaryTranslation ? llmTranslatedData.summary_en : (gt.summary?.en || llmTranslatedData.summary_en),
+      summary_jp: skipDescSummaryTranslation ? llmTranslatedData.summary_jp : (gt.summary?.jp || llmTranslatedData.summary_jp),
+      summary_zh: skipDescSummaryTranslation ? llmTranslatedData.summary_zh : (gt.summary?.zh || llmTranslatedData.summary_zh),
+      description_ko: skipDescSummaryTranslation ? llmTranslatedData.description_ko : (gt.description?.ko || llmTranslatedData.description_ko),
+      description_en: skipDescSummaryTranslation ? llmTranslatedData.description_en : (gt.description?.en || llmTranslatedData.description_en),
+      description_jp: skipDescSummaryTranslation ? llmTranslatedData.description_jp : (gt.description?.jp || llmTranslatedData.description_jp),
+      description_zh: skipDescSummaryTranslation ? llmTranslatedData.description_zh : (gt.description?.zh || llmTranslatedData.description_zh),
       // city/country는 항상 LLM 결과 사용 (고유명사 정확성)
       city_ko: llmTranslatedData.city_ko,
       city_en: llmTranslatedData.city_en,
