@@ -1460,7 +1460,7 @@ export default function Home() {
       )}
 
       {cherryBlossomFestivals.length > 0 && (
-        <div className="mb-8">
+        <div className="px-4 mb-8">
           <h2 className="text-white text-2xl font-bold mb-4">
             벚꽃의 계절이 다가오고있어요 🌸
           </h2>
