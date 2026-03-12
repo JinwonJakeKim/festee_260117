@@ -149,14 +149,10 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     ? Promise.resolve({ data: { success: false, skipped: true } })
     : (() => {
         // 원본 언어와 동일한 언어는 번역 대상에서 제외
-        const originalLang = festivalData.original_language || 'en';
-        const langCodeMap = { 'ja': 'ja', 'ko': 'ko', 'en': 'en', 'zh': 'zh-CN' };
-        const allTargets = ['ko', 'en', 'ja', 'zh-CN'];
-        const googleOriginalCode = langCodeMap[originalLang] || null;
-        const filteredTargets = googleOriginalCode
-          ? allTargets.filter(l => l !== googleOriginalCode)
-          : allTargets;
-        console.log(`[Transform] Google Translate targets (excl. source ${originalLang}): ${filteredTargets.join(', ')}`);
+        // 항상 4개 언어 모두 요청 - googleTranslate 내부에서 원본 언어 자동 감지 후 스킵 처리
+        // (name이 로마자 표기인 경우 original_language와 무관하게 모든 언어 번역 필요)
+        const filteredTargets = ['ko', 'en', 'ja', 'zh-CN'];
+        console.log(`[Transform] Google Translate targets: ${filteredTargets.join(', ')}`);
         // retransform + 이미 번역됨 → name/city/country만 번역 (summary/description 스킵)
         const textsToTranslate = {
           name: festivalData.name_original || '',
