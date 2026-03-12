@@ -183,7 +183,8 @@ Deno.serve(async (req) => {
                     const embeddableMap = {};
                     
                     videosData.items?.forEach(video => {
-                      const isEmbeddable = video.contentDetails?.embeddable === true;
+                      // embeddable 필드는 contentDetails가 아닌 status 파트에 있음
+                      const isEmbeddable = video.status?.embeddable !== false;
                       embeddableMap[video.id] = isEmbeddable;
                       if (!isEmbeddable) {
                         console.log(`[FetchYoutubeVideos] 🚫 Filtered out non-embeddable: ${video.id}`);
@@ -192,7 +193,7 @@ Deno.serve(async (req) => {
                     
                     // 임베드 가능한 영상만 필터링
                     filteredVideos.forEach((item, idx) => {
-                      if (embeddableMap[item.id.videoId] === true) {
+                      if (embeddableMap[item.id.videoId] !== false) {
                         embeddableVideos.push({ item, originalIndex: idx });
                       }
                     });
