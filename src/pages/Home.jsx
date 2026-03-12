@@ -1164,7 +1164,27 @@ export default function Home() {
 
         {topUsers.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-white text-2xl font-bold mb-4">페스티 랭커</h2>
+            <div className="flex items-center gap-2 relative mb-4">
+              <h2 className="text-white text-2xl font-bold">페스티 랭커</h2>
+              <button
+                onClick={() => setShowRankerTooltip(!showRankerTooltip)}
+                className="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 text-gray-400 transition-colors flex-shrink-0"
+              >
+                <Info className="w-3 h-3" />
+              </button>
+              {showRankerTooltip && (
+                <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded-lg p-3 border border-gray-700 shadow-lg z-10" style={{width: '190px'}}>
+                  <button
+                    onClick={() => setShowRankerTooltip(false)}
+                    className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-white"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <p className="font-bold text-cyan-400 mb-1 pr-4">페스티 랭커는 무엇인가요?</p>
+                  <p className="text-gray-300">축제 현장에 가서 캐치(축제 위치인증)을<br/>가장 많이한 유저입니다.</p>
+                </div>
+              )}
+            </div>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
                 {topUsers.map((user) => (
