@@ -2392,29 +2392,13 @@ export default function AdminUrlExtraction() {
             )}
           </TabsContent>
 
-          {/* automation tab removed */}
+          {/* automation tab removed - dead code below intentionally deleted */}
           <TabsContent value="__automation_removed__" className="mt-4 space-y-4">
             <Card className="bg-gray-900 border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-white font-bold">1. 소스 URL 링크 추출</h3>
-                  <p className="text-gray-400 text-sm mt-1">
-                    저장된 소스 URL에서 축제 링크를 탐색하고 대기열에 추가
-                  </p>
+                  <h3 className="text-white font-bold">자동화 (비활성)</h3>
                 </div>
-                {automationsList.find(a => a.name === 'URL 링크 추출 자동화') && (
-                  <Button
-                    onClick={() => {
-                      const automation = automationsList.find(a => a.name === 'URL 링크 추출 자동화');
-                      toggleAutomationMutation.mutate(automation.id);
-                    }}
-                    className={automationsList.find(a => a.name === 'URL 링크 추출 자동화')?.is_active 
-                      ? 'bg-green-500 hover:bg-green-600' 
-                      : 'bg-gray-600 hover:bg-gray-700'}
-                  >
-                    {automationsList.find(a => a.name === 'URL 링크 추출 자동화')?.is_active ? '활성화됨' : '비활성화됨'}
-                  </Button>
-                )}
               </div>
 
               <div className="space-y-3">
