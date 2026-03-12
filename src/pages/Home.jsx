@@ -551,6 +551,20 @@ export default function Home() {
       .slice(0, 10);
   }, [festivals]);
 
+  const foodFestivals = useMemo(() => {
+    return festivals
+      .filter(f => f.category === '음식')
+      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .slice(0, 10);
+  }, [festivals]);
+
+  const cherryBlossomFestivals = useMemo(() => {
+    return festivals
+      .filter(f => (f.name_ko || f.name_original || '').includes('벚꽃'))
+      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .slice(0, 10);
+  }, [festivals]);
+
   const japanPopularFestivals = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
