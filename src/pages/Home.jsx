@@ -1418,6 +1418,88 @@ export default function Home() {
         )}
       </div>
 
+      {foodFestivals.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-white text-xl font-bold mb-4">
+            이런 음식축제는 어때요? 🍜
+          </h2>
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 pb-4">
+              {foodFestivals.map((festival) => {
+                const localizedName = getLocalizedContent(festival, 'name');
+                return (
+                  <Link
+                    key={festival.id}
+                    to={createPageUrl(`FestivalDetail?id=${festival.id}`)}
+                    className="flex-shrink-0 w-36"
+                  >
+                    <div className="relative rounded-xl overflow-hidden group">
+                      <div className="relative aspect-[3/4]">
+                        <img
+                          src={festival.thumbnail_url}
+                          alt={localizedName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <h3 className="text-white text-base font-bold mb-1 line-clamp-2">
+                            {localizedName}
+                          </h3>
+                          <p className="text-gray-300 text-xs">
+                            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cherryBlossomFestivals.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-white text-xl font-bold mb-4">
+            벚꽃의 계절이 다가오고있어요 🌸
+          </h2>
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 pb-4">
+              {cherryBlossomFestivals.map((festival) => {
+                const localizedName = getLocalizedContent(festival, 'name');
+                return (
+                  <Link
+                    key={festival.id}
+                    to={createPageUrl(`FestivalDetail?id=${festival.id}`)}
+                    className="flex-shrink-0 w-36"
+                  >
+                    <div className="relative rounded-xl overflow-hidden group">
+                      <div className="relative aspect-[3/4]">
+                        <img
+                          src={festival.thumbnail_url}
+                          alt={localizedName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <h3 className="text-white text-base font-bold mb-1 line-clamp-2">
+                            {localizedName}
+                          </h3>
+                          <p className="text-gray-300 text-xs">
+                            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <HomeChatbot festivals={festivals} />
     </div>
   );
