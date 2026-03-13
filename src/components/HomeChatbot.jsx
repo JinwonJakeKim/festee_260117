@@ -41,6 +41,12 @@ export default function HomeChatbot({ festivals = [] }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
+
   const handleSend = async (text) => {
     const userMessage = (text || input).trim();
     if (!userMessage || isLoading) return;
