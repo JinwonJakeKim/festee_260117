@@ -50,7 +50,8 @@ ${festivalContext}
     
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: prompt,
-      add_context_from_internet: false, // 비용 절감을 위해 인터넷 검색 비활성화
+      model: "gemini_3_flash",
+      add_context_from_internet: false,
     });
     
     return Response.json({ 

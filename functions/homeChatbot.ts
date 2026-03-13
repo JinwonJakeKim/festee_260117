@@ -144,6 +144,7 @@ ${question}
 
     const result = await base44.integrations.Core.InvokeLLM({
       prompt,
+      model: "gemini_3_flash",
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
