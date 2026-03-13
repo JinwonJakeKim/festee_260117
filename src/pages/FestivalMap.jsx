@@ -195,13 +195,38 @@ export default function FestivalMap() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleSearchInArea}
-            size="sm"
-            className="bg-cyan-500 hover:bg-cyan-600 rounded-full"
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
+              <div className="flex items-center gap-1.5 text-xs">
+                <Tag className="w-4 h-4 text-purple-400" />
+                <span>{categoryFilter !== "all" ? categoryFilter : "분류"}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-800 text-white">
+              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
+              {categories.map(category => (
+                <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <button
+            onClick={() => setIsDatePickerOpen(true)}
+            className={`px-4 h-9 rounded-full whitespace-nowrap flex items-center gap-2 text-xs hover:bg-gray-800 transition-colors border ${dateRange.from && dateRange.to ? "bg-pink-500/20 border-pink-400 text-pink-400" : "bg-gray-900 border-gray-800 text-white"}`}
           >
-            이 지역 검색
-          </Button>
+            <Calendar className="w-4 h-4 text-pink-500" />
+            <span>{dateRange.from && dateRange.to ? `${safeFormatDate(dateRange.from, 'M/d')}~${safeFormatDate(dateRange.to, 'M/d')}` : "날짜"}</span>
+          </button>
+
+          <DateRangeBottomSheet
+            isOpen={isDatePickerOpen}
+            onClose={() => setIsDatePickerOpen(false)}
+            dateRange={dateRange}
+            onApply={(range) => setDateRange(range)}
+          />
+
           <Button
             onClick={handleMyLocation}
             size="sm"
