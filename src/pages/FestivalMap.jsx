@@ -104,7 +104,9 @@ export default function FestivalMap() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState([20, 0]);
   const [userLocation, setUserLocation] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
