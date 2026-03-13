@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -148,8 +147,8 @@ export default function Catch() {
             festival.longitude
           );
           
-          // 100km 이내만
-          if (distance <= 100000) {
+          // 5km 이내만
+          if (distance <= 5000) {
             const existingFestival = festivalMap.get(festival.name);
             
             // 같은 이름의 축제가 없거나, 기존 축제보다 더 가까우면 업데이트
