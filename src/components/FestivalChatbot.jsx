@@ -50,6 +50,15 @@ export default function FestivalChatbot({ festival }) {
     } catch {}
   }, [messages]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   const handleSend = async (text) => {
     const userMessage = (text || input).trim();
     if (!userMessage || isLoading) return;
