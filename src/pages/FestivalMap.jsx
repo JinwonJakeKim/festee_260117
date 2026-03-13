@@ -167,10 +167,6 @@ export default function FestivalMap() {
     }
   };
 
-  const handleSearchInArea = () => {
-    alert("이 지역의 축제를 검색합니다");
-  };
-
   const handleMyLocation = () => {
     if (userLocation) {
       setMapCenter(userLocation);
