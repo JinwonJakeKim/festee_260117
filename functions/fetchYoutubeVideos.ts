@@ -328,13 +328,12 @@ Deno.serve(async (req) => {
                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
-                    // 조회수 없는 경우도 합산 시도
                     const allViewsMap = {};
                     (videosData.items || []).forEach(video => {
                       allViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
                     });
-                    shortsViewsTotal = Object.values(allViewsMap).reduce((s, v) => s + v, 0);
                     shortsViewsList = shortsUrls.map(url => allViewsMap[url] || 0);
+                    shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
                     console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
                   }
                 } else {
