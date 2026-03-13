@@ -121,7 +121,20 @@ export default function FestivalMap() {
     initialData: [],
   });
 
-  const festivalsWithLocation = festivals.filter(f => f.latitude && f.longitude);
+  const categories = [...new Set(festivals.map(f => f.category).filter(Boolean))];
+
+  const festivalsWithLocation = festivals.filter(f => {
+    if (!f.latitude || !f.longitude) return false;
+    if (categoryFilter !== "all" && f.category !== categoryFilter) return false;
+    if (dateRange.from && dateRange.to) {
+      const start = new Date(f.start_date);
+      const end = new Date(f.end_date);
+      const filterFrom = new Date(dateRange.from);
+      const filterTo = new Date(dateRange.to);
+      if (end < filterFrom || start > filterTo) return false;
+    }
+    return true;
+  });
 
   React.useEffect(() => {
     if (navigator.geolocation) {
