@@ -15,16 +15,26 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function HomeChatbot({ festivals = [] }) {
+  const STORAGE_KEY = "festee_home_chatbot_messages";
+  const DEFAULT_MESSAGE = {
+    role: "assistant",
+    content: "안녕하세요! Festee AI 도우미입니다 🎉\n\nFestee에 있는 모든 축제 정보를 알고 있고, 날짜·위치·카테고리 기반으로 딱 맞는 축제를 추천해드려요.\n\n어떤 축제가 궁금하신가요?",
+  };
+
+  const loadMessages = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [DEFAULT_MESSAGE];
+    } catch {
+      return [DEFAULT_MESSAGE];
+    }
+  };
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: "안녕하세요! Festee AI 도우미입니다 🎉\n\nFestee에 있는 모든 축제 정보를 알고 있고, 날짜·위치·카테고리 기반으로 딱 맞는 축제를 추천해드려요.\n\n어떤 축제가 궁금하신가요?",
-    },
-  ]);
+  const [messages, setMessages] = useState(loadMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [usageInfo, setUsageInfo] = useState(null); // { usedCount, dailyLimit, isAdmin }
+  const [usageInfo, setUsageInfo] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {

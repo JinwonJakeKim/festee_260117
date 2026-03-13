@@ -18,13 +18,23 @@ export default function FestivalChatbot({ festival }) {
     "주변 추천 장소는?",
   ];
 
+  const STORAGE_KEY = `festee_festival_chatbot_${festival.id}`;
+  const DEFAULT_MESSAGE = {
+    role: "assistant",
+    content: `안녕하세요! Festee AI 도우미입니다 🎉\n\n${festivalName}에 대해 날짜, 위치, 가격, 볼거리 등 무엇이든 질문해보세요!`,
+  };
+
+  const loadMessages = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [DEFAULT_MESSAGE];
+    } catch {
+      return [DEFAULT_MESSAGE];
+    }
+  };
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: `안녕하세요! Festee AI 도우미입니다 🎉\n\n${festivalName}에 대해 날짜, 위치, 가격, 볼거리 등 무엇이든 질문해보세요!`,
-    },
-  ]);
+  const [messages, setMessages] = useState(loadMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [usageInfo, setUsageInfo] = useState(null);
