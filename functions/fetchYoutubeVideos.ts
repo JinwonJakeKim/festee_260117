@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
                 
                 if (videosResponse.ok) {
                   const videosData = await videosResponse.json();
-                  const embeddableItems = videosData.items?.filter(video => video.contentDetails?.embeddable === true) || [];
+                  const embeddableItems = videosData.items?.filter(video => video.status?.embeddable !== false) || [];
                   
                   // 조회수 합산 + 개별 조회수 맵
                   const shortsViewsMap = {};
