@@ -403,7 +403,7 @@ export default function Catch() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-xl font-bold flex items-center gap-2">
             <MapPin className="w-5 h-5 text-pink-500" />
-            근처 축제 (100km 이내)
+            근처 축제 (5km 이내)
           </h2>
           {hasMoreFestivals && (
             <Link to={createPageUrl("NearbyCatch")}>
@@ -422,7 +422,7 @@ export default function Catch() {
         ) : displayedFestivals.length === 0 ? (
           <Card className="bg-gray-900 border-gray-800 p-8 text-center">
             <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">100km 이내에 축제가 없습니다</p>
+            <p className="text-gray-500">5km 이내에 축제가 없습니다</p>
           </Card>
         ) : (
           <div className="space-y-3">
