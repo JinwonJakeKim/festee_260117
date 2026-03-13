@@ -236,14 +236,11 @@ Deno.serve(async (req) => {
                   relevanceIndex: originalIndex
                 }));
                 
-                // 정렬: 공공기관 최우선 > 관련성 순서 > 4K (최후순위)
+                // 정렬: 공공기관 최우선 > 관련성 순서
                 videosWithPriority.sort((a, b) => {
                   if (a.isOfficial && !b.isOfficial) return -1;
                   if (!a.isOfficial && b.isOfficial) return 1;
-                  if (a.relevanceIndex !== b.relevanceIndex) return a.relevanceIndex - b.relevanceIndex;
-                  if (a.is4K && !b.is4K) return -1;
-                  if (!a.is4K && b.is4K) return 1;
-                  return 0;
+                  return a.relevanceIndex - b.relevanceIndex;
                 });
                 
                 const topVideo = videosWithPriority[0];
