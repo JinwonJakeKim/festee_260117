@@ -2365,20 +2365,7 @@ export default function AdminUrlExtraction() {
                 ) : (
                   <p className="text-gray-500 text-sm text-center py-8">실패한 데이터가 없습니다.</p>
                 )}
-                </TabsContent>
                 </Tabs>
-
-            {rawDataList.length === 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                <Database className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500">추출된 데이터가 없습니다</p>
-                <p className="text-gray-600 text-sm mt-2">"URL 추출" 탭에서 시작하세요</p>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* automation tab removed - dead code below intentionally deleted */}
-        </Tabs>
       </div>
     </div>
   );
