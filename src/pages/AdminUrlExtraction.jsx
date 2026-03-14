@@ -1969,54 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// C3
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <button onClick={() => handleSelectItem(item.id)} className="flex-shrink-0 mt-1">
-                            {selectedRawIds.has(item.id) ? <CheckSquare className="w-6 h-6 text-cyan-400" /> : <Square className="w-6 h-6 text-gray-600" />}
-                          </button>
-                          {item.thumbnail_url && (
-                            <img src={item.thumbnail_url} alt={item.name_original} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
-                              {getStatusBadge(item.processing_status)}
-                              {item.festival_id && <Badge variant="outline" className="text-green-400 border-green-400 text-xs">✓ Festival ID: {item.festival_id}</Badge>}
-                            </div>
-                            <div className="space-y-1 text-sm text-gray-400">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-green-400 flex-shrink-0" />
-                                <span>{item.start_date || '날짜 미정'} ~ {item.end_date || '날짜 미정'}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                                <span>{item.address || item.city || '주소 없음'}{item.city && item.address ? `, ${item.city}` : ''}</span>
-                              </div>
-                              <p className="text-xs text-gray-500">수집: {new Date(item.updated_date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <Button onClick={() => { setSelectedRawIds(new Set([item.id])); handleRetransform(); }} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" title="재변환">
-                              <RefreshCw className="w-4 h-4" />
-                            </Button>
-                            <Button onClick={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate([item.id]); }} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm text-center py-8">완료된 데이터가 없습니다.</p>
-                )}
-              </TabsContent>
-
-                {/* 실패 탭 */}
-                <TabsContent value="failed" className="mt-4 space-y-3">
-                {filteredRawDataList.filter(r => r.processing_status === 'failed').length > 0 && (
-                  <Card className="bg-gray-900 border-gray-800 p-4">
+// C4
                     <div className="flex items-center justify-between mb-3">
                       <button
                         onClick={() => {
