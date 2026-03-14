@@ -1969,18 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// x {selectedRawIds.size > 0 && (
-//                         <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
-//                       )
-                    </div>
-
-                    {selectedRawIds.size > 0 && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleTransform}
-                          disabled={transformMutation.isPending}
-                          className="flex-1 bg-cyan-500 hover:bg-cyan-600"
-                        >
+// end_of_file
                           {transformMutation.isPending ? (
                             <><Loader2 className="w-4 h-4 mr-2 animate-spin" />변환 중...</>
                           ) : (
