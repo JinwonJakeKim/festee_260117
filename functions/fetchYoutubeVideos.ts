@@ -125,6 +125,13 @@ Deno.serve(async (req) => {
           if (data.items && data.items.length > 0) {
             console.log(`[FetchYoutubeVideos] 📋 Raw API response - ${data.items.length} videos returned`);
             
+            // 블랙리스트 키워드 판별 (영상 제목에 포함된 경우 제외)
+            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤'];
+            const isBlacklistedVideo = (item) => {
+              const title = (item.snippet.title || '').toLowerCase();
+              return BLACKLIST_KEYWORDS.some(kw => title.includes(kw.toLowerCase()));
+            };
+
             // 뉴스 영상 판별
             const isNewsVideo = (item) => {
               const title = (item.snippet.title || '').toLowerCase();

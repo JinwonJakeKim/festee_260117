@@ -499,6 +499,11 @@ export default function AdminTourAPI() {
                 <li>✓ 대기중인 RawData를 5분마다 최대 10개씩 자동 변환</li>
                 <li>✓ 실패한 데이터는 재시도 가능</li>
               </ul>
+              <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
+                <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
+                <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
+                <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
+              </div>
             </Card>
 
             {/* 검색 및 필터 */}
