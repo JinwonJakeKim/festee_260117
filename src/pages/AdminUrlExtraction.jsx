@@ -1969,20 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// EOF
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <button onClick={() => handleSelectItem(item.id)} className="flex-shrink-0 mt-1">
-                            {selectedRawIds.has(item.id) ? <CheckSquare className="w-6 h-6 text-cyan-400" /> : <Square className="w-6 h-6 text-gray-600" />}
-                          </button>
-                          {item.thumbnail_url && (
-                            <img src={item.thumbnail_url} alt={item.name_original} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <h3 className="text-white font-bold">{item.name_original || '이름 없음'}</h3>
-                              {getStatusBadge(item.processing_status)}
-                              {!item.festival_id && <Badge className="bg-purple-900/50 text-purple-400 border border-purple-400/50">신규</Badge>}
+// EOF_CLEAN
                             </div>
                             <div className="space-y-1 text-sm text-gray-400">
                               <div className="flex items-center gap-2">
