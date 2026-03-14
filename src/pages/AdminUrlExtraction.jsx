@@ -1969,36 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// EOF_CLEAN
-                            </div>
-                            <div className="space-y-1 text-sm text-gray-400">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-green-400 flex-shrink-0" />
-                                <span>{item.start_date || '날짜 미정'} ~ {item.end_date || '날짜 미정'}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                                <span>{item.address || item.city || '주소 없음'}{item.city ? `, ${item.city}` : ''}</span>
-                              </div>
-                              <p className="text-xs text-gray-500">수집: {new Date(item.created_date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                            </div>
-                            {item.error_message && <p className="text-yellow-400 text-xs mt-2">⚠️ {item.error_message}</p>}
-                          </div>
-                          <Button onClick={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate([item.id]); }} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm text-center py-8">대기중인 데이터가 없습니다.</p>
-                )}
-              </TabsContent>
-
-
-              {/* 완료 탭 */}
-              <TabsContent value="processed" className="mt-4 space-y-3">
+// CONTINUE
                 {filteredRawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
                     <div className="flex items-center justify-between mb-3">
