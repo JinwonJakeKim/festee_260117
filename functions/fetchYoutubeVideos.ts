@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
             
             // 블랙리스트 키워드 판별 (영상 제목에 포함된 경우 제외)
             // 언더스코어, 슬래시 등 구분자를 공백으로 정규화하여 붙어있는 키워드도 감지
-            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤'];
+            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス'];
             const isBlacklistedVideo = (item) => {
               const rawTitle = (item.snippet.title || '').toLowerCase();
               const normalizedTitle = rawTitle.replace(/[_\/\-\.]/g, ' ');
