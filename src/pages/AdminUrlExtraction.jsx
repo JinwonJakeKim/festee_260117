@@ -1965,14 +1965,7 @@ export default function AdminUrlExtraction() {
             />
           </TabsContent>
           <TabsContent value="__removed__">
-            {/* removed - content is now in JapantravelRawDataTab component */}
-            <div style={{display:'none'}}><div className="flex gap-2"><div className="relative flex-1"><input
-                  type="text"
-                  placeholder="축제명, 주소, 도시로 검색..."
-                  value={rawDataSearchQuery}
-                  onChange={(e) => setRawDataSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded-md border border-gray-800 bg-gray-900 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-600 px-3"
-                />
+            <div style={{display:'none'}}><div />
               </div>
               <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
                 <SelectTrigger className="w-28 bg-gray-900 border-gray-800 text-white">
