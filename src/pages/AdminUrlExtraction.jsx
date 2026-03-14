@@ -1965,74 +1965,7 @@ export default function AdminUrlExtraction() {
             />
           </TabsContent>
           <TabsContent value="__removed__"><div style={{display:'none'}}>
-            {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
-              <Card className="bg-purple-900/20 border-purple-400/30 p-4">
-                <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
-                <p className="text-gray-400 text-sm mb-3">
-                  대기중인 RawData를 1개씩 자동 변환합니다 (5분 간격)
-                </p>
-                <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
-                  <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
-                  <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 첫 1개 즉시 변환 시작</li>
-                    <li>• 남은 RawData는 5분마다 1개씩 자동 변환</li>
-                    <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
-                    <li>• 페이지를 새로고침하여 진행 상황 확인</li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={handleAutoTransform}
-                  disabled={autoTransformMutation.isPending}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
-                >
-                  {autoTransformMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      자동화 시작 중...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-5 h-5 mr-2" />
-                      자동 일괄 변환 시작
-                    </>
-                  )}
-                </Button>
-              </Card>
-            )}
-
-
-
-            {/* 통계 카드 - 3개 (대기중, 완료, 실패) */}
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="bg-yellow-900/20 border-yellow-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-400">
-                    {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length}
-                  </div>
-                  <div className="text-xs text-gray-400">대기중</div>
-                </div>
-              </Card>
-              <Card className="bg-green-900/20 border-green-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">
-                    {filteredRawDataList.filter(r => r.processing_status === 'processed').length}
-                  </div>
-                  <div className="text-xs text-gray-400">완료</div>
-                </div>
-              </Card>
-              <Card className="bg-red-900/20 border-red-400/30 p-3">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-400">
-                    {filteredRawDataList.filter(r => r.processing_status === 'failed').length}
-                  </div>
-                  <div className="text-xs text-gray-400">실패</div>
-                </div>
-              </Card>
-            </div>
-
-
-
-            {/* 상태별 탭 섹션 */}
+            {/* hidden removed content */}
             <Tabs defaultValue="pending" className="w-full">
               <TabsList className="w-full bg-gray-900 grid grid-cols-3">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
