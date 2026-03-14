@@ -320,13 +320,12 @@ Deno.serve(async (req) => {
                   const videosData = await videosResponse.json();
                   const embeddableItems = videosData.items?.filter(video => video.status?.embeddable !== false) || [];
                   
-                  // 조회수 합산 + 개별 조회수 맵
+                  // 조회수 맵 + 상위 5개만 선택 후 합산
                   const shortsViewsMap = {};
-                  shortsViewsTotal = embeddableItems.reduce((sum, video) => {
+                  embeddableItems.forEach(video => {
                     const views = parseInt(video.statistics?.viewCount || '0', 10);
                     shortsViewsMap[`https://www.youtube.com/shorts/${video.id}`] = views;
-                    return sum + views;
-                  }, 0);
+                  });
                   
                   const embeddableShorts = embeddableItems
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
@@ -336,6 +335,7 @@ Deno.serve(async (req) => {
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
                     shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
+                    shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
