@@ -1964,9 +1964,7 @@ export default function AdminUrlExtraction() {
               queryClient={queryClient}
             />
           </TabsContent>
-          <TabsContent value="__removed__">
-            {/* removed */}
-            <div style={{display:'none'}}><Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
+          <TabsContent value="__removed__"><div style={{display:'none'}}><Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
                 <SelectTrigger className="w-28 bg-gray-900 border-gray-800 text-white">
                   <SelectValue placeholder="전체 월" />
                 </SelectTrigger>
