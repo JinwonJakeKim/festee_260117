@@ -59,7 +59,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   let latitude = festivalData.latitude;
   let longitude = festivalData.longitude;
   let geocodingStatus = latitude && longitude ? 'success' : 'failed';
-  let videoUrl = festivalData.video_url;
+  // retransform 시에는 기존 video_url 초기화 (블랙리스트 영상이 유지되지 않도록)
+  let videoUrl = retransform ? null : festivalData.video_url;
   let videoChannelName = '';
   let youtubeShortUrls = [];
 
