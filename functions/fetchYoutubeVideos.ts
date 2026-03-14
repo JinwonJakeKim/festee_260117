@@ -106,7 +106,6 @@ Deno.serve(async (req) => {
           type: 'video',
           order: 'relevance',
           maxResults: '20',
-          videoDuration: 'medium', // 숏츠(60초 이하) 제외
           key: youtubeApiKey
         });
         
