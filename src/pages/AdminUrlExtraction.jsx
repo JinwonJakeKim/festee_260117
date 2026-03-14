@@ -1969,24 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// end_of_file
-                          {transformMutation.isPending ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />변환 중...</>
-                          ) : (
-                            <><RefreshCw className="w-4 h-4 mr-2" />변환</>
-                          )}
-                        </Button>
-                        <Button onClick={handleDelete} disabled={deleteRawDataMutation.isPending} className="bg-red-500 hover:bg-red-600">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </Card>
-                )}
-
-                {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 ? (
-                  filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").map((item) => (
-                    <Card key={item.id} className={`border-2 ${selectedRawIds.has(item.id) ? 'bg-yellow-900/30 border-yellow-400' : 'bg-gray-900 border-gray-800'}`}>
+// EOF
                       <div className="p-4">
                         <div className="flex items-start gap-3">
                           <button onClick={() => handleSelectItem(item.id)} className="flex-shrink-0 mt-1">
