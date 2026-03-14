@@ -199,12 +199,23 @@ Deno.serve(async (req) => {
                     const videosData = await videosResponse.json();
                     const embeddableMap = {};
                     
+                    // ISO 8601 duration을 초로 변환 (예: PT1M30S → 90)
+                    const parseDuration = (iso) => {
+                      const m = iso?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+                      if (!m) return 0;
+                      return (parseInt(m[1] || 0) * 3600) + (parseInt(m[2] || 0) * 60) + parseInt(m[3] || 0);
+                    };
+
                     videosData.items?.forEach(video => {
-                      // embeddable 필드는 contentDetails가 아닌 status 파트에 있음
                       const isEmbeddable = video.status?.embeddable !== false;
-                      embeddableMap[video.id] = isEmbeddable;
+                      const duration = parseDuration(video.contentDetails?.duration);
+                      const isTooShort = duration > 0 && duration < 60; // 60초(1분) 미만 제외
+                      embeddableMap[video.id] = isEmbeddable && !isTooShort;
                       if (!isEmbeddable) {
                         console.log(`[FetchYoutubeVideos] 🚫 Filtered out non-embeddable: ${video.id}`);
+                      }
+                      if (isTooShort) {
+                        console.log(`[FetchYoutubeVideos] 🚫 Filtered out too short (${duration}s): ${video.id}`);
                       }
                     });
                     
