@@ -1964,52 +1964,14 @@ export default function AdminUrlExtraction() {
               queryClient={queryClient}
             />
           </TabsContent>
-          {/* __removed__ tab cleaned */}
-          <TabsContent value="__removed__x"><div style={{display:'none'}}><Tabs defaultValue="pending" className="w-full">
-              <TabsList className="w-full bg-gray-900 grid grid-cols-3">
-                <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
-                  대기중 ({filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
-                </TabsTrigger>
-                <TabsTrigger value="processed" className="data-[state=active]:bg-green-500">
-                  완료 ({filteredRawDataList.filter(r => r.processing_status === 'processed').length})
-                </TabsTrigger>
-                <TabsTrigger value="failed" className="data-[state=active]:bg-red-500">
-                  실패 ({filteredRawDataList.filter(r => r.processing_status === 'failed').length})
-                </TabsTrigger>
-              </TabsList>
-
-              {/* 대기중 탭 */}
-              <TabsContent value="pending" className="mt-4 space-y-3">
-                {filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length > 0 && (
-                  <Card className="bg-gray-900 border-gray-800 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <button
-                        onClick={() => {
-                          const pendingItems = filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "");
-                          const pendingIds = new Set(pendingItems.map(r => r.id));
-                          const allSelected = pendingItems.every(item => selectedRawIds.has(item.id));
-                          if (allSelected) {
-                            setSelectedRawIds(new Set([...selectedRawIds].filter(id => !pendingIds.has(id))));
-                          } else {
-                            setSelectedRawIds(new Set([...selectedRawIds, ...pendingIds]));
-                          }
-                        }}
-                        className="flex items-center gap-2 text-white hover:text-cyan-400"
-                      >
-                        {(() => {
-                          const pendingItems = filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "");
-                          const allSelected = pendingItems.every(item => selectedRawIds.has(item.id));
-                          return allSelected ? (
-                            <CheckSquare className="w-5 h-5 text-cyan-400" />
-                          ) : (
-                            <Square className="w-5 h-5" />
-                          );
-                        })()}
-                        <span className="font-medium">전체 선택</span>
-                      </button>
-                      {selectedRawIds.size > 0 && (
-                        <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
-                      )}
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+// x {selectedRawIds.size > 0 && (
+//                         <span className="text-cyan-400 text-sm">{selectedRawIds.size}개 선택됨</span>
+//                       )
                     </div>
 
                     {selectedRawIds.size > 0 && (
