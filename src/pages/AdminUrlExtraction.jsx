@@ -1965,10 +1965,8 @@ export default function AdminUrlExtraction() {
             />
           </TabsContent>
           <TabsContent value="__removed__">
-            {/* removed */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
+            {/* removed - content is now in JapantravelRawDataTab component */}
+            <div style={{display:'none'}}><div className="flex gap-2"><div className="relative flex-1"><input
                   type="text"
                   placeholder="축제명, 주소, 도시로 검색..."
                   value={rawDataSearchQuery}
