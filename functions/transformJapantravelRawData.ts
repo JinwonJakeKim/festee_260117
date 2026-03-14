@@ -424,7 +424,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   // 주소 처리: rawAddress 그대로 사용
   const accessInfo = festivalData.address || '';
 
-  const now = new Date().toISOString();
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
 
   const festivalPayload = {
     name_original: festivalData.name_original,

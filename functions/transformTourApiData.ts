@@ -1502,7 +1502,7 @@ ${context}
         
         // 업데이트 또는 생성
         let festivalResult;
-        const nowIso = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const nowIso = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
         
         if (isUpdate && existingFestival) {
           // 기존 Festival 업데이트 (ID 유지) - update_time만 갱신, create_time은 기존값 유지
