@@ -1965,9 +1965,8 @@ export default function AdminUrlExtraction() {
             />
           </TabsContent>
           <TabsContent value="__removed__">
-            <div style={{display:'none'}}><div />
-              </div>
-              <Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
+            {/* removed */}
+            <div style={{display:'none'}}><Select value={rawDataFilterMonth} onValueChange={setRawDataFilterMonth}>
                 <SelectTrigger className="w-28 bg-gray-900 border-gray-800 text-white">
                   <SelectValue placeholder="전체 월" />
                 </SelectTrigger>
