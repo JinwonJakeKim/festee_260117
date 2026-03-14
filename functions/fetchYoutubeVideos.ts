@@ -126,10 +126,12 @@ Deno.serve(async (req) => {
             console.log(`[FetchYoutubeVideos] 📋 Raw API response - ${data.items.length} videos returned`);
             
             // 블랙리스트 키워드 판별 (영상 제목에 포함된 경우 제외)
+            // 언더스코어, 슬래시 등 구분자를 공백으로 정규화하여 붙어있는 키워드도 감지
             const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤'];
             const isBlacklistedVideo = (item) => {
-              const title = (item.snippet.title || '').toLowerCase();
-              return BLACKLIST_KEYWORDS.some(kw => title.includes(kw.toLowerCase()));
+              const rawTitle = (item.snippet.title || '').toLowerCase();
+              const normalizedTitle = rawTitle.replace(/[_\/\-\.]/g, ' ');
+              return BLACKLIST_KEYWORDS.some(kw => normalizedTitle.includes(kw.toLowerCase()));
             };
 
             // 뉴스 영상 판별
