@@ -1965,8 +1965,7 @@ export default function AdminUrlExtraction() {
             />
           </TabsContent>
           <TabsContent value="__removed__">
-
-            {/* 검색 및 월 필터 */}
+            {/* removed */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
