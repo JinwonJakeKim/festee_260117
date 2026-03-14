@@ -1964,9 +1964,8 @@ export default function AdminUrlExtraction() {
               queryClient={queryClient}
             />
           </TabsContent>
-          <TabsContent value="__removed__"><div style={{display:'none'}}>
-            {/* hidden removed content */}
-            <Tabs defaultValue="pending" className="w-full">
+          {/* __removed__ tab cleaned */}
+          <TabsContent value="__removed__x"><div style={{display:'none'}}><Tabs defaultValue="pending" className="w-full">
               <TabsList className="w-full bg-gray-900 grid grid-cols-3">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500">
                   대기중 ({filteredRawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length})
