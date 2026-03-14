@@ -1969,9 +1969,7 @@ export default function AdminUrlExtraction() {
     </div>
   );
 }
-// CONTINUE
-                {filteredRawDataList.filter(r => r.processing_status === 'processed').length > 0 && (
-                  <Card className="bg-gray-900 border-gray-800 p-4">
+// C2
                     <div className="flex items-center justify-between mb-3">
                       <button
                         onClick={() => {
