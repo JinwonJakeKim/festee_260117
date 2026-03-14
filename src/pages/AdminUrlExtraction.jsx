@@ -1944,29 +1944,27 @@ export default function AdminUrlExtraction() {
           </TabsContent>
 
           <TabsContent value="rawdataTransform" className="mt-4 space-y-4">
-            <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-400/30 p-4">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="text-white font-bold flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-purple-400" />
-                  RawData를 Festival로 변환
-                </h3>
-                <Button
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['japantravelRawData'] })}
-                  size="sm"
-                  variant="outline"
-                  className="border-purple-400 text-purple-400 hover:bg-purple-900/20"
-                >
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  새로고침
-                </Button>
-              </div>
-              <ul className="text-gray-300 text-sm space-y-1">
-                <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
-                <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
-                <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
-                <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
-              </ul>
-            </Card>
+            <JapantravelRawDataTab
+              filteredRawDataList={filteredRawDataList}
+              rawDataList={rawDataList}
+              selectedRawIds={selectedRawIds}
+              setSelectedRawIds={setSelectedRawIds}
+              transformMutation={transformMutation}
+              deleteRawDataMutation={deleteRawDataMutation}
+              autoTransformMutation={autoTransformMutation}
+              handleTransform={handleTransform}
+              handleRetransform={handleRetransform}
+              handleDelete={handleDelete}
+              handleAutoTransform={handleAutoTransform}
+              handleSelectItem={handleSelectItem}
+              rawDataSearchQuery={rawDataSearchQuery}
+              setRawDataSearchQuery={setRawDataSearchQuery}
+              rawDataFilterMonth={rawDataFilterMonth}
+              setRawDataFilterMonth={setRawDataFilterMonth}
+              queryClient={queryClient}
+            />
+          </TabsContent>
+          <TabsContent value="__removed__">
 
             {/* 검색 및 월 필터 */}
             <div className="flex gap-2">
