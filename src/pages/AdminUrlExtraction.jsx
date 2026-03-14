@@ -2381,16 +2381,6 @@ export default function AdminUrlExtraction() {
           </TabsContent>
 
           {/* automation tab removed - dead code below intentionally deleted */}
-          <TabsContent value="__automation_removed__" className="mt-4 space-y-4">
-            <Card className="bg-gray-900 border-gray-800 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-white font-bold">자동화 (비활성)</h3>
-                </div>
-              </div>
-
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
