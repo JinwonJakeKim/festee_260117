@@ -167,8 +167,12 @@ Deno.serve(async (req) => {
               return /4K|UHD|2160|4096/.test(title + description);
             };
             
-            // 1단계: 뉴스 영상 필터링
-            const filteredVideos = data.items.filter(item => !isNewsVideo(item));
+            // 1단계: 뉴스 및 블랙리스트 영상 필터링
+            const filteredVideos = data.items.filter(item => !isNewsVideo(item) && !isBlacklistedVideo(item));
+            const blacklistedCount = data.items.filter(item => isBlacklistedVideo(item)).length;
+            if (blacklistedCount > 0) {
+              console.log(`[FetchYoutubeVideos] 🚫 Filtered out ${blacklistedCount} blacklisted videos (idol/dance/아이돌/공연/춤)`);
+            }
             console.log(`[FetchYoutubeVideos] 🗑️ Filtered out ${data.items.length - filteredVideos.length} news videos`);
             
             if (filteredVideos.length > 0) {
