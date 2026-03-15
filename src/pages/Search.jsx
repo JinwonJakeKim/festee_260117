@@ -297,14 +297,33 @@ export default function Search() {
     if (!searchQuery) return [];
 
     const monthFilter = extractMonthFromQuery(searchQuery);
+    const nonMonthQuery = extractNonMonthQuery(searchQuery);
 
     return festivals.filter(festival => {
       try {
-        // 월 검색인 경우 (예: "3월 축제", "5월")
         if (monthFilter !== null) {
+          // 월 필터 적용
           if (!festivalIncludesMonth(festival, monthFilter)) return false;
+          // 월 외 추가 텍스트(도시명 등)도 매칭
+          if (nonMonthQuery) {
+            const matchesRest =
+              safeStringIncludes(festival.name, nonMonthQuery) ||
+              safeStringIncludes(festival.name_original, nonMonthQuery) ||
+              safeStringIncludes(festival.name_ko, nonMonthQuery) ||
+              safeStringIncludes(festival.name_en, nonMonthQuery) ||
+              safeStringIncludes(festival.name_jp, nonMonthQuery) ||
+              safeStringIncludes(festival.name_zh, nonMonthQuery) ||
+              safeStringIncludes(festival.city, nonMonthQuery) ||
+              safeStringIncludes(festival.city_ko, nonMonthQuery) ||
+              safeStringIncludes(festival.city_en, nonMonthQuery) ||
+              safeStringIncludes(festival.country, nonMonthQuery) ||
+              safeStringIncludes(festival.country_en, nonMonthQuery) ||
+              (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, nonMonthQuery))) ||
+              (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, nonMonthQuery)));
+            if (!matchesRest) return false;
+          }
         } else {
-          // 일반 검색어 매칭 - 안전한 문자열 비교 (다국어 필드 포함)
+          // 일반 검색어 매칭
           const matchesQuery =
             safeStringIncludes(festival.name, searchQuery) ||
             safeStringIncludes(festival.name_original, searchQuery) ||
