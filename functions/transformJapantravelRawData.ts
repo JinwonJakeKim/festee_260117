@@ -527,10 +527,25 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     error_message: null
   });
 
-  // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만)
+  // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만, upsert)
   if (youtubeShortUrls && youtubeShortUrls.length > 0) {
     try {
-      const viewsList = firstResultViewsList || [];
+      // firstResultViewsList가 비어있으면 기존 Festival 조회수 데이터 활용
+      let viewsList = firstResultViewsList || [];
+      if (viewsList.length === 0 && existingFestivalRecord) {
+        // 기존 YoutubeShortsStat에서 조회수 복원 시도
+        const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalId }).catch(() => []);
+        if (existingStats[0]) {
+          viewsList = [
+            existingStats[0].shorts1_views || 0,
+            existingStats[0].shorts2_views || 0,
+            existingStats[0].shorts3_views || 0,
+            existingStats[0].shorts4_views || 0,
+            existingStats[0].shorts5_views || 0,
+          ];
+        }
+      }
+
       const statPayload = {
         festival_id: festivalId,
         name_ko: festivalPayload.name_ko || festivalPayload.name_original,
@@ -552,8 +567,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         shorts5_views: viewsList[4] || 0,
         total_views: shortsViewsTotal || 0
       };
-      await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-      console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalId}`);
+
+      // upsert: 기존 레코드 있으면 업데이트, 없으면 생성
+      const existingStatRecords = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalId }).catch(() => []);
+      if (existingStatRecords[0]) {
+        await base44.asServiceRole.entities.YoutubeShortsStat.update(existingStatRecords[0].id, statPayload);
+        console.log(`[Transform] ✓ YoutubeShortsStat updated for festival: ${festivalId}`);
+      } else {
+        await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
+        console.log(`[Transform] ✓ YoutubeShortsStat created for festival: ${festivalId}`);
+      }
     } catch (statError) {
       console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
     }
