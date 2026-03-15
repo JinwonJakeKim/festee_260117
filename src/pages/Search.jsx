@@ -249,29 +249,47 @@ export default function Search() {
   const searchOnlyFestivals = useMemo(() => {
     if (!searchQuery) return [];
     const monthFilter = extractMonthFromQuery(searchQuery);
+    const nonMonthQuery = extractNonMonthQuery(searchQuery);
     return festivals.filter(festival => {
-      try {
-        if (monthFilter !== null) {
-          return festivalIncludesMonth(festival, monthFilter);
+    try {
+      if (monthFilter !== null) {
+        if (!festivalIncludesMonth(festival, monthFilter)) return false;
+        // 월 외에 추가 텍스트가 있으면 그것도 매칭
+        if (nonMonthQuery) {
+          return safeStringIncludes(festival.name, nonMonthQuery) ||
+            safeStringIncludes(festival.name_original, nonMonthQuery) ||
+            safeStringIncludes(festival.name_ko, nonMonthQuery) ||
+            safeStringIncludes(festival.name_en, nonMonthQuery) ||
+            safeStringIncludes(festival.name_jp, nonMonthQuery) ||
+            safeStringIncludes(festival.name_zh, nonMonthQuery) ||
+            safeStringIncludes(festival.city, nonMonthQuery) ||
+            safeStringIncludes(festival.city_ko, nonMonthQuery) ||
+            safeStringIncludes(festival.city_en, nonMonthQuery) ||
+            safeStringIncludes(festival.country, nonMonthQuery) ||
+            safeStringIncludes(festival.country_en, nonMonthQuery) ||
+            (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, nonMonthQuery))) ||
+            (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, nonMonthQuery)));
         }
-        return safeStringIncludes(festival.name, searchQuery) ||
-          safeStringIncludes(festival.name_original, searchQuery) ||
-          safeStringIncludes(festival.name_ko, searchQuery) ||
-          safeStringIncludes(festival.name_en, searchQuery) ||
-          safeStringIncludes(festival.name_jp, searchQuery) ||
-          safeStringIncludes(festival.name_zh, searchQuery) ||
-          safeStringIncludes(festival.city, searchQuery) ||
-          safeStringIncludes(festival.city_ko, searchQuery) ||
-          safeStringIncludes(festival.city_en, searchQuery) ||
-          safeStringIncludes(festival.country, searchQuery) ||
-          safeStringIncludes(festival.country_en, searchQuery) ||
-          (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery))) ||
-          (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, searchQuery)));
-      } catch (e) {
-        return false;
+        return true;
       }
+      return safeStringIncludes(festival.name, searchQuery) ||
+        safeStringIncludes(festival.name_original, searchQuery) ||
+        safeStringIncludes(festival.name_ko, searchQuery) ||
+        safeStringIncludes(festival.name_en, searchQuery) ||
+        safeStringIncludes(festival.name_jp, searchQuery) ||
+        safeStringIncludes(festival.name_zh, searchQuery) ||
+        safeStringIncludes(festival.city, searchQuery) ||
+        safeStringIncludes(festival.city_ko, searchQuery) ||
+        safeStringIncludes(festival.city_en, searchQuery) ||
+        safeStringIncludes(festival.country, searchQuery) ||
+        safeStringIncludes(festival.country_en, searchQuery) ||
+        (festival.tags_ko && festival.tags_ko.some(tag => safeStringIncludes(tag, searchQuery))) ||
+        (festival.tags_en && festival.tags_en.some(tag => safeStringIncludes(tag, searchQuery)));
+    } catch (e) {
+      return false;
+    }
     });
-  }, [festivals, searchQuery]);
+    }, [festivals, searchQuery]);
 
   // 안전한 필터링 로직
   const filteredFestivals = useMemo(() => {
