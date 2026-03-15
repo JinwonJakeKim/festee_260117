@@ -79,6 +79,12 @@ const extractMonthFromQuery = (query) => {
   return null;
 };
 
+// 검색어에서 월 표현을 제거한 나머지 텍스트 추출 (도시명 등)
+const extractNonMonthQuery = (query) => {
+  if (!query) return '';
+  return query.replace(/\d{1,2}월/, '').trim();
+};
+
 // 축제가 해당 월에 포함되는지 확인
 const festivalIncludesMonth = (festival, month) => {
   if (!festival.start_date || !festival.end_date) return false;
