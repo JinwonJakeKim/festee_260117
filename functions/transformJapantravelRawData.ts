@@ -416,7 +416,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         const prevLen = youtubeShortUrls.length;
         youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 20);
         firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 20);
-        shortsViewsTotal = (shortsViewsTotal || 0) + (secondResult.data.shortsViewsTotal || 0);
+        shortsViewsTotal = firstResultViewsList.reduce((s, v) => s + v, 0);
         console.log(`[Transform] ✓ Shorts after JP search: ${youtubeShortUrls.length}개`);
       }
     }
