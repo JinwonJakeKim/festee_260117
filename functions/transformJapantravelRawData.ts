@@ -380,7 +380,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       }
       if (shouldSearchShorts) {
         youtubeShortUrls = firstResult.data.shortsUrls || [];
-        shortsViewsTotal = firstResult.data.shortsViewsTotal || 0;
+        shortsViewsTotal = (firstResult.data.shortsViewsList || []).reduce((s, v) => s + v, 0);
         firstResultViewsList = firstResult.data.shortsViewsList || [];
       }
     }
