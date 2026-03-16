@@ -1572,8 +1572,15 @@ ${context}
               shorts5_views: koreanShortsViewsList[4] || 0,
               total_views: shortsViewsTotal || 0
             };
-            await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-            console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalResult.id}`);
+            // upsert: 기존 레코드 있으면 업데이트, 없으면 생성
+            const existingStatRecords = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalResult.id }).catch(() => []);
+            if (existingStatRecords[0]) {
+              await base44.asServiceRole.entities.YoutubeShortsStat.update(existingStatRecords[0].id, statPayload);
+              console.log(`[Transform] ✓ YoutubeShortsStat updated for festival: ${festivalResult.id}`);
+            } else {
+              await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
+              console.log(`[Transform] ✓ YoutubeShortsStat created for festival: ${festivalResult.id}`);
+            }
           } catch (statError) {
             console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
           }
