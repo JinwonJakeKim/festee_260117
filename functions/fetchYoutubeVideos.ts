@@ -334,16 +334,16 @@ Deno.serve(async (req) => {
                   
                   const embeddableShorts = embeddableItems
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
-                    .slice(0, 5);
+                    .slice(0, 20);
                   
-                  // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 5개)
+                  // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 20개)
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
                     shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
                     shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
-                    shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                    shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
                     const allViewsMap = {};
                     (videosData.items || []).forEach(video => {
                       allViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
@@ -354,12 +354,12 @@ Deno.serve(async (req) => {
                   }
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
-                  shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                  shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
                   shortsViewsList = shortsUrls.map(() => 0);
                   console.log(`[FetchYoutubeVideos] ⚠️ Could not check embeddable status, using all shorts: ${shortsUrls.length}`);
                 }
               } catch (embedError) {
-                shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 5);
+                shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
                 shortsViewsList = shortsUrls.map(() => 0);
                 console.log(`[FetchYoutubeVideos] ⚠️ Embed check failed, using all shorts: ${shortsUrls.length}`);
               }
