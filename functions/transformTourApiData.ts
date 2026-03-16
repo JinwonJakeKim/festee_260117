@@ -1107,7 +1107,7 @@ ${context}
         let youtubeShorts = [];
         let topVideoUrl = '';
         let topVideoChannelName = '';
-        let shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
+        let shortsViewsTotal = 0;
         
         const youtubeQuery = buildKoreanYoutubeQuery(rawData.title);
         console.log(`[Transform] 🎬 Searching YouTube for: "${youtubeQuery}" (원본: "${rawData.title}")`);
@@ -1119,13 +1119,27 @@ ${context}
         let koreanShortsViewsList = [];
         if (!retransform && preservedYoutubeShorts.length >= 5) {
           youtubeShorts = preservedYoutubeShorts;
-          shortsViewsTotal = isUpdate ? (existingFestival?.shorts_views_5_total || 0) : 0;
-          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos`);
+          // 기존 YoutubeShortsStat에서 top5 조회수 합산 복원
+          try {
+            const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: existingFestival.id }).catch(() => []);
+            if (existingStats[0]) {
+              koreanShortsViewsList = [
+                existingStats[0].shorts1_views || 0,
+                existingStats[0].shorts2_views || 0,
+                existingStats[0].shorts3_views || 0,
+                existingStats[0].shorts4_views || 0,
+                existingStats[0].shorts5_views || 0,
+              ];
+              shortsViewsTotal = koreanShortsViewsList.slice(0, youtubeShorts.length).reduce((s, v) => s + v, 0);
+            }
+          } catch (e) {}
+          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         } else {
           youtubeShorts = youtubeResult.shortsUrls;
-          shortsViewsTotal = youtubeResult.shortsViewsTotal || 0;
           koreanShortsViewsList = youtubeResult.shortsViewsList || youtubeResult.shortsUrls?.map(() => 0) || [];
-          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
+          // top5 조회수만 합산
+          shortsViewsTotal = koreanShortsViewsList.slice(0, 5).reduce((s, v) => s + v, 0);
+          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, top5 views total: ${shortsViewsTotal}`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
