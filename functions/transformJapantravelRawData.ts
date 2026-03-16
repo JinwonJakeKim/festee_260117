@@ -385,13 +385,13 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       }
     }
 
-    // 2차: 숏츠가 5개 미만이면 일본어명으로 추가 검색하여 보충
-    const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 5;
+    // 2차: 숏츠가 20개 미만이면 일본어명으로 추가 검색하여 보충
+    const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 20;
     const jpName = translatedData.name_jp;
     if (needMoreShorts && jpName) {
       const jpSearchName = buildJapaneseYoutubeQuery(jpName);
       jpSearchNameUsed = jpSearchName;
-      console.log(`[Transform] 🔄 Shorts < 5 (${youtubeShortUrls.length}개), retrying with JP: "${jpSearchName}"`);
+      console.log(`[Transform] 🔄 Shorts < 20 (${youtubeShortUrls.length}개), retrying with JP: "${jpSearchName}"`);
 
       const secondResult = await base44.functions.invoke('fetchYoutubeVideos', {
         festivalName: jpSearchName,
@@ -403,7 +403,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       });
 
       if (secondResult.data?.success && secondResult.data.shortsUrls?.length > 0) {
-        // 기존 숏츠와 합쳐서 중복 제거 후 최대 5개
+        // 기존 숏츠와 합쳐서 중복 제거 후 최대 20개
         const existingIds = new Set(youtubeShortUrls.map(u => u.split('/').pop()));
         const newShorts = secondResult.data.shortsUrls.filter(u => !existingIds.has(u.split('/').pop()));
         const newViewsList = secondResult.data.shortsViewsList || [];
@@ -414,8 +414,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
           addedViews.push(newViewsList[idx] || 0);
         });
         const prevLen = youtubeShortUrls.length;
-        youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 5);
-        firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 5);
+        youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 20);
+        firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 20);
         shortsViewsTotal = (shortsViewsTotal || 0) + (secondResult.data.shortsViewsTotal || 0);
         console.log(`[Transform] ✓ Shorts after JP search: ${youtubeShortUrls.length}개`);
       }
