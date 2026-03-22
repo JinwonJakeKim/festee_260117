@@ -359,13 +359,14 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return cleaned;
     };
 
-    // 1차: 영어 원본명으로 검색
-    const enSearchName = buildEnglishYoutubeQuery(festivalData.name_original);
-    enSearchNameUsed = enSearchName;
-    console.log(`[Transform] 🎬 YouTube search (영어 원본): "${enSearchName}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
+    // 1차: 일본어명으로 검색
+    const jpName = translatedData.name_jp;
+    const jpSearchName = buildJapaneseYoutubeQuery(jpName || festivalData.name_original);
+    jpSearchNameUsed = jpSearchName;
+    console.log(`[Transform] 🎬 YouTube search (일본어): "${jpSearchName}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
     const firstResult = await base44.functions.invoke('fetchYoutubeVideos', {
-      festivalName: enSearchName,
+      festivalName: jpSearchName,
       searchHighlightVideo: shouldSearchHighlight,
       searchShorts: shouldSearchShorts
     }).catch(e => {
@@ -385,16 +386,15 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       }
     }
 
-    // 2차: 숏츠가 20개 미만이면 일본어명으로 추가 검색하여 보충
+    // 2차: 숏츠가 20개 미만이면 영어 원본명으로 추가 검색하여 보충
     const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 20;
-    const jpName = translatedData.name_jp;
-    if (needMoreShorts && jpName) {
-      const jpSearchName = buildJapaneseYoutubeQuery(jpName);
-      jpSearchNameUsed = jpSearchName;
-      console.log(`[Transform] 🔄 Shorts < 20 (${youtubeShortUrls.length}개), retrying with JP: "${jpSearchName}"`);
+    if (needMoreShorts) {
+      const enSearchName = buildEnglishYoutubeQuery(festivalData.name_original);
+      enSearchNameUsed = enSearchName;
+      console.log(`[Transform] 🔄 Shorts < 20 (${youtubeShortUrls.length}개), retrying with EN: "${enSearchName}"`);
 
       const secondResult = await base44.functions.invoke('fetchYoutubeVideos', {
-        festivalName: jpSearchName,
+        festivalName: enSearchName,
         searchHighlightVideo: false,
         searchShorts: true
       }).catch(e => {
@@ -413,11 +413,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
           addedShorts.push(url);
           addedViews.push(newViewsList[idx] || 0);
         });
-        const prevLen = youtubeShortUrls.length;
         youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 20);
         firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 20);
         shortsViewsTotal = firstResultViewsList.reduce((s, v) => s + v, 0);
-        console.log(`[Transform] ✓ Shorts after JP search: ${youtubeShortUrls.length}개`);
+        console.log(`[Transform] ✓ Shorts after EN search: ${youtubeShortUrls.length}개`);
       }
     }
   }
