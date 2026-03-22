@@ -63,7 +63,17 @@ export default function JapantravelRawDataTab({
           <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
           <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
         </ul>
-        <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
+        <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
+          <p className="text-blue-400 font-bold text-xs mb-2">🎬 YouTube 검색 쿼리 로직</p>
+          <ul className="text-gray-300 text-xs space-y-1">
+            <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 영어명</span></li>
+            <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 일본어명</span></li>
+            <li>• 연도(20XX) 제거 후 검색, 축제 관련 키워드 없으면 자동 추가 (festival / 祭り)</li>
+            <li>• <span className="text-green-300">축제명에 도시명이 없으면 쿼리 끝에 도시명 자동 추가</span> <span className="text-gray-400">(예: "THE MEAT festival Kanagawa")</span></li>
+            <li>• 숏츠는 최대 20개 수집, 1차+2차 합산하여 중복 제거</li>
+          </ul>
+        </div>
+        <div className="mt-2 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
           <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
           <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
           <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
