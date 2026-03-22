@@ -38,6 +38,8 @@ export default function JapantravelRawDataTab({
   setRawDataFilterMonth,
   queryClient,
 }) {
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <div className="space-y-4">
       {/* 설명 카드 */}
@@ -63,38 +65,52 @@ export default function JapantravelRawDataTab({
           <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
           <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
         </ul>
-        <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
-          <p className="text-blue-400 font-bold text-xs mb-2">🎬 YouTube 검색 쿼리 로직</p>
-          <ul className="text-gray-300 text-xs space-y-1">
-            <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 영어명</span></li>
-            <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 일본어명</span></li>
-            <li>• 연도(20XX) 제거 후 검색, 축제 관련 키워드 없으면 자동 추가 (festival / 祭り)</li>
-            <li>• <span className="text-green-300">축제명에 도시명이 없으면 쿼리 끝에 도시명 자동 추가</span> <span className="text-gray-400">(예: "THE MEAT festival Kanagawa")</span></li>
-            <li>• 숏츠는 최대 20개 수집, 1차+2차 합산하여 중복 제거</li>
-          </ul>
-        </div>
-        <div className="mt-2 bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-3">
-          <p className="text-yellow-400 font-bold text-xs mb-2">🎯 하이라이트 영상 관련성 점수 로직</p>
-          <ul className="text-gray-300 text-xs space-y-1">
-            <li>• 축제명에서 <span className="text-red-300">festival, matsuri, 연도(20XX), 일반 도시명</span> 등을 제거한 고유명사를 <span className="text-yellow-300">핵심 키워드</span>로 추출</li>
-            <li>• 예: <span className="text-gray-400">"Shinagawa Kids Family Terrace festival Tokyo 2026"</span> → 핵심키워드: <span className="text-cyan-300">shinagawa, kids, family, terrace</span></li>
-            <li>• 각 핵심 키워드가 영상 <span className="text-green-300">제목(title) 또는 설명(description)</span>에 포함되면 1점씩 부여</li>
-            <li>• <span className="text-yellow-300">점수 2점 이상</span>인 영상만 하이라이트 후보로 채택 — 미달 시 하이라이트 영상 없음으로 처리</li>
-            <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
-          </ul>
-        </div>
-        <div className="mt-2 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
-          <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
-          <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
-          <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
-        </div>
-        <div className="mt-2 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
-          <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
-          <ul className="text-gray-300 text-xs space-y-1">
-            <li>• 숏츠 검색 쿼리에 <span className="text-green-300">#Shorts</span> 해시태그를 자동 추가하여 실제 Shorts 콘텐츠 위주로 수집</li>
-            <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
-          </ul>
-        </div>
+
+        {/* 더보기 버튼 */}
+        <button
+          onClick={() => setShowDetails(prev => !prev)}
+          className="mt-3 flex items-center gap-1 text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors"
+        >
+          {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {showDetails ? '접기' : '상세 로직 더보기'}
+        </button>
+
+        {showDetails && (
+          <>
+            <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
+              <p className="text-blue-400 font-bold text-xs mb-2">🎬 YouTube 검색 쿼리 로직</p>
+              <ul className="text-gray-300 text-xs space-y-1">
+                <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 영어명</span></li>
+                <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 일본어명</span></li>
+                <li>• 연도(20XX) 제거 후 검색, 축제 관련 키워드 없으면 자동 추가 (festival / 祭り)</li>
+                <li>• <span className="text-green-300">축제명에 도시명이 없으면 쿼리 끝에 도시명 자동 추가</span> <span className="text-gray-400">(예: "THE MEAT festival Kanagawa")</span></li>
+                <li>• 숏츠는 최대 20개 수집, 1차+2차 합산하여 중복 제거</li>
+              </ul>
+            </div>
+            <div className="mt-2 bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-3">
+              <p className="text-yellow-400 font-bold text-xs mb-2">🎯 하이라이트 영상 관련성 점수 로직</p>
+              <ul className="text-gray-300 text-xs space-y-1">
+                <li>• 축제명에서 <span className="text-red-300">festival, matsuri, 연도(20XX), 일반 도시명</span> 등을 제거한 고유명사를 <span className="text-yellow-300">핵심 키워드</span>로 추출</li>
+                <li>• 예: <span className="text-gray-400">"Shinagawa Kids Family Terrace festival Tokyo 2026"</span> → 핵심키워드: <span className="text-cyan-300">shinagawa, kids, family, terrace</span></li>
+                <li>• 각 핵심 키워드가 영상 <span className="text-green-300">제목(title) 또는 설명(description)</span>에 포함되면 1점씩 부여</li>
+                <li>• <span className="text-yellow-300">점수 2점 이상</span>인 영상만 하이라이트 후보로 채택 — 미달 시 하이라이트 영상 없음으로 처리</li>
+                <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
+              </ul>
+            </div>
+            <div className="mt-2 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
+              <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
+              <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
+              <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
+            </div>
+            <div className="mt-2 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
+              <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
+              <ul className="text-gray-300 text-xs space-y-1">
+                <li>• 핵심 키워드 점수 2점 이상인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
+                <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
+              </ul>
+            </div>
+          </>
+        )}
       </Card>
 
       {/* 검색 및 월 필터 */}
