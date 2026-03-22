@@ -78,6 +78,13 @@ export default function JapantravelRawDataTab({
           <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
           <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
         </div>
+        <div className="mt-2 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
+          <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
+          <ul className="text-gray-300 text-xs space-y-1">
+            <li>• 숏츠 검색 쿼리에 <span className="text-green-300">#Shorts</span> 해시태그를 자동 추가하여 실제 Shorts 콘텐츠 위주로 수집</li>
+            <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
+          </ul>
+        </div>
       </Card>
 
       {/* 검색 및 월 필터 */}
