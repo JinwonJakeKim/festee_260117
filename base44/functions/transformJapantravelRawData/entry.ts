@@ -558,82 +558,73 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     error_message: null
   });
 
-  // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만, upsert)
-  if (youtubeShortUrls && youtubeShortUrls.length > 0) {
-    try {
-      // firstResultViewsList가 비어있으면 기존 Festival 조회수 데이터 활용
-      let viewsList = firstResultViewsList || [];
-      if (viewsList.length === 0 && existingFestivalRecord) {
-        // 기존 YoutubeShortsStat에서 조회수 복원 시도
-        const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalId }).catch(() => []);
-        if (existingStats[0]) {
-          viewsList = [
-            existingStats[0].shorts1_views || 0,
-            existingStats[0].shorts2_views || 0,
-            existingStats[0].shorts3_views || 0,
-            existingStats[0].shorts4_views || 0,
-            existingStats[0].shorts5_views || 0,
-          ];
-        }
-      }
+  // YoutubeShortsStat 스냅샷 저장 (upsert: 기존 레코드 있으면 update, 없으면 create)
+  try {
+    const viewsList = firstResultViewsList || [];
 
-      const statPayload = {
-        festival_id: festivalId,
-        name_ko: festivalPayload.name_ko || festivalPayload.name_original,
-        name_en: festivalPayload.name_en || festivalPayload.name_original,
-        name_jp: festivalPayload.name_jp || festivalPayload.name_original,
-        update_time: now,
-        query_en: enSearchNameUsed || '',
-        query_jp: jpSearchNameUsed || '',
-        query_ko: '',
-        shorts1_url: youtubeShortUrls[0] || '',
-        shorts1_views: viewsList[0] || 0,
-        shorts2_url: youtubeShortUrls[1] || '',
-        shorts2_views: viewsList[1] || 0,
-        shorts3_url: youtubeShortUrls[2] || '',
-        shorts3_views: viewsList[2] || 0,
-        shorts4_url: youtubeShortUrls[3] || '',
-        shorts4_views: viewsList[3] || 0,
-        shorts5_url: youtubeShortUrls[4] || '',
-        shorts5_views: viewsList[4] || 0,
-        shorts6_url: youtubeShortUrls[5] || '',
-        shorts6_views: viewsList[5] || 0,
-        shorts7_url: youtubeShortUrls[6] || '',
-        shorts7_views: viewsList[6] || 0,
-        shorts8_url: youtubeShortUrls[7] || '',
-        shorts8_views: viewsList[7] || 0,
-        shorts9_url: youtubeShortUrls[8] || '',
-        shorts9_views: viewsList[8] || 0,
-        shorts10_url: youtubeShortUrls[9] || '',
-        shorts10_views: viewsList[9] || 0,
-        shorts11_url: youtubeShortUrls[10] || '',
-        shorts11_views: viewsList[10] || 0,
-        shorts12_url: youtubeShortUrls[11] || '',
-        shorts12_views: viewsList[11] || 0,
-        shorts13_url: youtubeShortUrls[12] || '',
-        shorts13_views: viewsList[12] || 0,
-        shorts14_url: youtubeShortUrls[13] || '',
-        shorts14_views: viewsList[13] || 0,
-        shorts15_url: youtubeShortUrls[14] || '',
-        shorts15_views: viewsList[14] || 0,
-        shorts16_url: youtubeShortUrls[15] || '',
-        shorts16_views: viewsList[15] || 0,
-        shorts17_url: youtubeShortUrls[16] || '',
-        shorts17_views: viewsList[16] || 0,
-        shorts18_url: youtubeShortUrls[17] || '',
-        shorts18_views: viewsList[17] || 0,
-        shorts19_url: youtubeShortUrls[18] || '',
-        shorts19_views: viewsList[18] || 0,
-        shorts20_url: youtubeShortUrls[19] || '',
-        shorts20_views: viewsList[19] || 0,
-        total_views: shortsViewsTotal || 0
-      };
+    const statPayload = {
+      festival_id: festivalId,
+      name_ko: festivalPayload.name_ko || festivalPayload.name_original,
+      name_en: festivalPayload.name_en || festivalPayload.name_original,
+      name_jp: festivalPayload.name_jp || festivalPayload.name_original,
+      update_time: now,
+      query_en: enSearchNameUsed || '',
+      query_jp: jpSearchNameUsed || '',
+      query_ko: '',
+      shorts1_url: youtubeShortUrls[0] || '',
+      shorts1_views: viewsList[0] || 0,
+      shorts2_url: youtubeShortUrls[1] || '',
+      shorts2_views: viewsList[1] || 0,
+      shorts3_url: youtubeShortUrls[2] || '',
+      shorts3_views: viewsList[2] || 0,
+      shorts4_url: youtubeShortUrls[3] || '',
+      shorts4_views: viewsList[3] || 0,
+      shorts5_url: youtubeShortUrls[4] || '',
+      shorts5_views: viewsList[4] || 0,
+      shorts6_url: youtubeShortUrls[5] || '',
+      shorts6_views: viewsList[5] || 0,
+      shorts7_url: youtubeShortUrls[6] || '',
+      shorts7_views: viewsList[6] || 0,
+      shorts8_url: youtubeShortUrls[7] || '',
+      shorts8_views: viewsList[7] || 0,
+      shorts9_url: youtubeShortUrls[8] || '',
+      shorts9_views: viewsList[8] || 0,
+      shorts10_url: youtubeShortUrls[9] || '',
+      shorts10_views: viewsList[9] || 0,
+      shorts11_url: youtubeShortUrls[10] || '',
+      shorts11_views: viewsList[10] || 0,
+      shorts12_url: youtubeShortUrls[11] || '',
+      shorts12_views: viewsList[11] || 0,
+      shorts13_url: youtubeShortUrls[12] || '',
+      shorts13_views: viewsList[12] || 0,
+      shorts14_url: youtubeShortUrls[13] || '',
+      shorts14_views: viewsList[13] || 0,
+      shorts15_url: youtubeShortUrls[14] || '',
+      shorts15_views: viewsList[14] || 0,
+      shorts16_url: youtubeShortUrls[15] || '',
+      shorts16_views: viewsList[15] || 0,
+      shorts17_url: youtubeShortUrls[16] || '',
+      shorts17_views: viewsList[16] || 0,
+      shorts18_url: youtubeShortUrls[17] || '',
+      shorts18_views: viewsList[17] || 0,
+      shorts19_url: youtubeShortUrls[18] || '',
+      shorts19_views: viewsList[18] || 0,
+      shorts20_url: youtubeShortUrls[19] || '',
+      shorts20_views: viewsList[19] || 0,
+      total_views: shortsViewsTotal || 0
+    };
 
+    // upsert: 기존 레코드 있으면 update, 없으면 create
+    const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalId }).catch(() => []);
+    if (existingStats[0]) {
+      await base44.asServiceRole.entities.YoutubeShortsStat.update(existingStats[0].id, statPayload);
+      console.log(`[Transform] ✓ YoutubeShortsStat updated for festival: ${festivalId}`);
+    } else {
       await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-      console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalId}`);
-    } catch (statError) {
-      console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
+      console.log(`[Transform] ✓ YoutubeShortsStat created for festival: ${festivalId}`);
     }
+  } catch (statError) {
+    console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
   }
 
   return { rawDataId, festivalId, success: true, festivalName: festivalPayload.name_original };
