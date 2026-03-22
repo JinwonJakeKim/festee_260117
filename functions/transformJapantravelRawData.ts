@@ -324,7 +324,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let firstResultViewsList = [];
 
   if (shouldSearchHighlight || shouldSearchShorts) {
-    // 영어 원본명 쿼리 보정: 년도 제거
+    // 도시명이 쿼리에 포함되어있는지 확인하는 헬퍼
+    const cityIncludedInQuery = (query, cityEn, cityJp) => {
+      if (!query) return false;
+      const q = query.toLowerCase();
+      if (cityEn && q.includes(cityEn.toLowerCase())) return true;
+      if (cityJp && q.includes(cityJp)) return true;
+      return false;
+    };
+
+    // 영어 원본명 쿼리 보정: 년도 제거 + 도시명 없으면 추가
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
       let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
@@ -338,10 +347,15 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         const hasKorean = /[\uAC00-\uD7A3]/.test(cleaned);
         cleaned = `${cleaned} ${hasKorean ? '축제' : 'festival'}`;
       }
+      // 도시명이 포함되어 있지 않으면 영어 도시명 추가
+      const cityEn = festivalData.city || '';
+      if (cityEn && !cityIncludedInQuery(cleaned, cityEn, null)) {
+        cleaned = `${cleaned} ${cityEn}`;
+      }
       return cleaned;
     };
 
-    // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가
+    // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가 + 도시명 없으면 추가
     const buildJapaneseYoutubeQuery = (nameJp) => {
       if (!nameJp) return nameJp;
       let cleaned = nameJp.replace(/\d{4}[年년]?/g, '').replace(/\s{2,}/g, ' ').trim();
@@ -353,6 +367,12 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       const hasKeyword = festivalKeywords.some(kw => cleaned.includes(kw));
       if (!hasKeyword) {
         cleaned = cleaned + ' 祭り';
+      }
+      // 도시명이 포함되어 있지 않으면 일본어 도시명(없으면 영어) 추가
+      const cityJp = translatedData.city_jp || '';
+      const cityEn = festivalData.city || '';
+      if (!cityIncludedInQuery(cleaned, cityEn, cityJp)) {
+        cleaned = `${cleaned} ${cityJp || cityEn}`;
       }
       return cleaned;
     };
