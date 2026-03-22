@@ -259,7 +259,28 @@ Deno.serve(async (req) => {
                   return a.relevanceIndex - b.relevanceIndex;
                 });
                 
-                const topVideo = videosWithPriority[0];
+                // 관련성 검증: 축제명의 핵심 단어 중 하나 이상이 제목/채널명에 있어야 채택
+                const queryWords = festivalNameForSearch
+                  .toLowerCase()
+                  .replace(/[#\-_\.]/g, ' ')
+                  .split(/\s+/)
+                  .filter(w => w.length >= 3 && !['the', 'and', 'for', 'festival', 'matsuri', 'japan', 'tokyo'].includes(w));
+
+                const isRelevantVideo = (v) => {
+                  const combined = (v.title + ' ' + v.channelTitle).toLowerCase();
+                  return queryWords.some(w => combined.includes(w));
+                };
+
+                const relevantVideos = videosWithPriority.filter(isRelevantVideo);
+                const finalVideos = relevantVideos.length > 0 ? relevantVideos : videosWithPriority;
+
+                if (relevantVideos.length === 0) {
+                  console.log(`[FetchYoutubeVideos] ⚠️ No relevant videos found for query words: [${queryWords.join(', ')}]. Using best available.`);
+                } else {
+                  console.log(`[FetchYoutubeVideos] ✅ Relevant videos: ${relevantVideos.length}/${videosWithPriority.length}`);
+                }
+
+                const topVideo = finalVideos[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   highlightVideoChannelName = topVideo.channelTitle || '';
