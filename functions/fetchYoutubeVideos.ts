@@ -307,8 +307,11 @@ Deno.serve(async (req) => {
         if (shortsResponse.ok) {
           const shortsData = await shortsResponse.json();
           if (shortsData.items && shortsData.items.length > 0) {
+            // 하이라이트 영상 videoId 추출 (숏츠 중복 방지용)
+            const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
+
             const shortsVideoIds = shortsData.items
-              .filter(item => item.id?.videoId)
+              .filter(item => item.id?.videoId && item.id.videoId !== highlightVideoId)
               .map(item => item.id.videoId);
             
             // Shorts도 임베드 가능 여부 확인
