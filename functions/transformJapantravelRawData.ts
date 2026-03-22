@@ -94,18 +94,16 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
   const hasHighlight = !!(existingVideoUrl && existingVideoUrl.trim());
   const hasShorts = existingShorts.length > 0;
-  // 재변환(retransform=true)이면 항상 재쿼리, 아니면 기존 영상이 없을 때만 쿼리
-  const shouldSearchHighlight = retransform ? true : (!hasHighlight && (!videoUrl || videoUrl.trim() === ''));
-  const shouldSearchShorts = retransform ? true : !hasShorts;
+  // 항상 재쿼리 (retransform 여부와 무관하게 YouTube는 항상 검색)
+  const shouldSearchHighlight = true;
+  const shouldSearchShorts = true;
 
-  // 재변환이 아닐 때만 기존 영상 유지
-  if (!retransform) {
-    if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
-      videoUrl = existingVideoUrl;
-    }
-    if (hasShorts) {
-      youtubeShortUrls = existingShorts;
-    }
+  // 기존 영상은 재쿼리 결과가 없을 때 폴백으로만 사용
+  if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
+    videoUrl = existingVideoUrl; // 폴백: 재쿼리 결과가 있으면 덮어씌워짐
+  }
+  if (hasShorts) {
+    youtubeShortUrls = existingShorts; // 폴백: 재쿼리 결과가 있으면 덮어씌워짐
   }
 
   // 이미 번역된 Festival이 있으면 번역 스킵
