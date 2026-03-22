@@ -345,9 +345,34 @@ Deno.serve(async (req) => {
             // 하이라이트 영상 videoId 추출 (숏츠 중복 방지용)
             const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
 
-            const shortsVideoIds = shortsData.items
-              .filter(item => item.id?.videoId && item.id.videoId !== highlightVideoId)
-              .map(item => item.id.videoId);
+            // 핵심 키워드 점수 기반 관련성 필터링 (하이라이트와 동일 로직)
+            const GENERIC_WORDS = [
+              'festival', 'matsuri', 'japan', 'tokyo', 'osaka', 'kyoto', 'the', 'and', 'for', 'of',
+              'in', 'at', 'by', '祭り', '祭', 'フェスティバル', 'フェス', '2024', '2025', '2026', '2027'
+            ];
+            const coreKeywordsForShorts = festivalNameForSearch
+              .toLowerCase()
+              .replace(/[#\-_\.]/g, ' ')
+              .replace(/\b20\d{2}\b/g, '')
+              .split(/\s+/)
+              .filter(w => w.length >= 2 && !GENERIC_WORDS.includes(w));
+
+            const MIN_SHORTS_RELEVANCE_SCORE = 2;
+
+            const relevantShortsItems = shortsData.items.filter(item => {
+              if (!item.id?.videoId || item.id.videoId === highlightVideoId) return false;
+              const combined = ((item.snippet.title || '') + ' ' + (item.snippet.channelTitle || '') + ' ' + (item.snippet.description || '')).toLowerCase();
+              const score = coreKeywordsForShorts.filter(w => combined.includes(w)).length;
+              return score >= MIN_SHORTS_RELEVANCE_SCORE;
+            });
+
+            if (relevantShortsItems.length === 0) {
+              console.log(`[FetchYoutubeVideos] ⚠️ No relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}) for core keywords: [${coreKeywordsForShorts.join(', ')}]. Skipping shorts.`);
+            } else {
+              console.log(`[FetchYoutubeVideos] ✅ Relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}): ${relevantShortsItems.length}/${shortsData.items.length}`);
+            }
+
+            const shortsVideoIds = relevantShortsItems.map(item => item.id.videoId);
             
             // Shorts도 임베드 가능 여부 확인
             if (shortsVideoIds.length > 0) {
