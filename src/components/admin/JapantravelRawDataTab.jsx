@@ -1,5 +1,5 @@
-import React from "react";
-import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database } from "lucide-react";
+import React, { useState } from "react";
+import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
