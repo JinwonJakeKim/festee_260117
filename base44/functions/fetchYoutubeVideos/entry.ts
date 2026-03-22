@@ -247,40 +247,55 @@ Deno.serve(async (req) => {
                   videoId: item.id.videoId,
                   title: item.snippet.title || '',
                   channelTitle: item.snippet.channelTitle || '',
+                  description: item.snippet.description || '',
                   isOfficial: isOfficialChannel(item),
                   is4K: is4KVideo(item),
                   relevanceIndex: originalIndex
                 }));
                 
-                // 정렬: 공공기관 최우선 > 관련성 순서
-                videosWithPriority.sort((a, b) => {
-                  if (a.isOfficial && !b.isOfficial) return -1;
-                  if (!a.isOfficial && b.isOfficial) return 1;
-                  return a.relevanceIndex - b.relevanceIndex;
-                });
-                
-                // 관련성 검증: 축제명의 핵심 단어 중 하나 이상이 제목/채널명에 있어야 채택
-                const queryWords = festivalNameForSearch
+                // 관련성 검증: 핵심 키워드 점수 기반 필터링
+                // festival, matsuri, 숫자(연도), 일반 도시명, 조사 등을 제거한 후 남은 고유명사가 핵심 키워드
+                const GENERIC_WORDS = [
+                  'festival', 'matsuri', 'japan', 'tokyo', 'osaka', 'kyoto', 'the', 'and', 'for', 'of',
+                  'in', 'at', 'by', '祭り', '祭', 'フェスティバル', 'フェス', '2024', '2025', '2026', '2027'
+                ];
+                const coreKeywords = festivalNameForSearch
                   .toLowerCase()
                   .replace(/[#\-_\.]/g, ' ')
+                  .replace(/\b20\d{2}\b/g, '') // 연도 제거
                   .split(/\s+/)
-                  .filter(w => w.length >= 3 && !['the', 'and', 'for', 'festival', 'matsuri', 'japan', 'tokyo'].includes(w));
+                  .filter(w => w.length >= 2 && !GENERIC_WORDS.includes(w));
 
-                const isRelevantVideo = (v) => {
-                  const combined = (v.title + ' ' + v.channelTitle).toLowerCase();
-                  return queryWords.some(w => combined.includes(w));
+                // 영상의 제목 + description 에서 핵심 키워드 점수 계산
+                const calcRelevanceScore = (v) => {
+                  const combined = (v.title + ' ' + v.channelTitle + ' ' + (v.description || '')).toLowerCase();
+                  return coreKeywords.filter(w => combined.includes(w)).length;
                 };
 
-                const relevantVideos = videosWithPriority.filter(isRelevantVideo);
-                const finalVideos = relevantVideos.length > 0 ? relevantVideos : videosWithPriority;
+                // 각 영상에 관련성 점수 추가
+                const videosWithScore = videosWithPriority.map(v => ({
+                  ...v,
+                  relevanceScore: calcRelevanceScore(v)
+                }));
+
+                // 점수 2 이상인 영상만 채택, 없으면 하이라이트 영상 없음
+                const MIN_RELEVANCE_SCORE = 2;
+                const relevantVideos = videosWithScore.filter(v => v.relevanceScore >= MIN_RELEVANCE_SCORE);
 
                 if (relevantVideos.length === 0) {
-                  console.log(`[FetchYoutubeVideos] ⚠️ No relevant videos found for query words: [${queryWords.join(', ')}]. Using best available.`);
+                  console.log(`[FetchYoutubeVideos] ⚠️ No relevant videos (score >= ${MIN_RELEVANCE_SCORE}) for core keywords: [${coreKeywords.join(', ')}]. Skipping highlight video.`);
                 } else {
-                  console.log(`[FetchYoutubeVideos] ✅ Relevant videos: ${relevantVideos.length}/${videosWithPriority.length}`);
+                  console.log(`[FetchYoutubeVideos] ✅ Relevant videos (score >= ${MIN_RELEVANCE_SCORE}): ${relevantVideos.length}/${videosWithPriority.length}`);
+                  // 점수 높은 순 → 공공기관 우선 → 관련성 순서로 정렬
+                  relevantVideos.sort((a, b) => {
+                    if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
+                    if (a.isOfficial && !b.isOfficial) return -1;
+                    if (!a.isOfficial && b.isOfficial) return 1;
+                    return a.relevanceIndex - b.relevanceIndex;
+                  });
                 }
 
-                const topVideo = finalVideos[0];
+                const topVideo = relevantVideos[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   highlightVideoChannelName = topVideo.channelTitle || '';
