@@ -450,9 +450,17 @@ Deno.serve(async (req) => {
       success: true,
       highlightVideoUrl,
       highlightVideoChannelName,
+      highlightRelevanceRank: highlightRelevanceRank,
+      highlightScore: highlightScore,
+      highlightMatchedKeywords: highlightMatchedKeywords,
+      highlightViews: highlightViews,
+      coreKeywords: coreKeywords,
       shortsUrls,
       shortsViewsTotal,
       shortsViewsList,
+      shortsRelevanceRanks: shortsRelevanceRanks,
+      shortsScores: shortsScores,
+      shortsMatchedKeywords: shortsMatchedKeywords,
       message: `YouTube 검색 완료: 하이라이트 ${highlightVideoUrl ? '✓' : '✗'}, 쇼츠 ${shortsUrls.length}개, 조회수합산 ${shortsViewsTotal}`
     });
 
