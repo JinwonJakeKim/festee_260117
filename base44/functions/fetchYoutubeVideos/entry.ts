@@ -376,8 +376,21 @@ Deno.serve(async (req) => {
 
             // 핵심 키워드 점수 기반 관련성 필터링 (하이라이트와 동일 로직)
             const GENERIC_WORDS_SHORTS = [
-              'festival', 'matsuri', 'japan', 'tokyo', 'osaka', 'kyoto', 'the', 'and', 'for', 'of',
-              'in', 'at', 'by', '祭り', '祭', 'フェスティバル', 'フェス', '2024', '2025', '2026', '2027'
+              // 일반 단어
+              'festival', 'matsuri', 'the', 'and', 'for', 'of', 'in', 'at', 'by', 'a', 'an',
+              // 일반 공연/행사 단어
+              'stage', 'production', 'show', 'event', 'live', 'concert', 'music', 'dance',
+              'perform', 'performance', 'tour', 'special',
+              // 일본어 일반 단어
+              '祭り', '祭', 'フェスティバル', 'フェス', 'ステージ', '公演',
+              // 국가/대륙
+              'japan', 'japanese', '日本', 'asia', 'asian',
+              // 일본 주요 도시
+              'tokyo', 'osaka', 'kyoto', 'fukuoka', 'sapporo', 'nagoya', 'yokohama',
+              'hiroshima', 'kobe', 'sendai', 'nara', 'okinawa',
+              '東京', '大阪', '京都', '福岡', '札幌', '名古屋', '横浜',
+              // 연도
+              '2022', '2023', '2024', '2025', '2026', '2027'
             ];
             // coreKeywords가 이미 계산되어있으면 재사용, 아니면 새로 계산
             if (coreKeywords.length === 0) {
