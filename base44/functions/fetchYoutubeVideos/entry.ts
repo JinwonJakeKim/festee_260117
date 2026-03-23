@@ -396,7 +396,12 @@ Deno.serve(async (req) => {
             const relevantShortsItems = relevantShortsMeta;
 
             if (relevantShortsItems.length === 0) {
-              console.log(`[FetchYoutubeVideos] ⚠️ No relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}) for core keywords: [${coreKeywordsForShorts.join(', ')}]. Skipping shorts.`);
+              console.log(`[FetchYoutubeVideos] ⚠️ No relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}) for core keywords: [${coreKeywordsForShorts.join(', ')}]. Using all shorts with score=0 for inspection.`);
+              // score 기준 미달이더라도 URL은 저장 (확인용)
+              shortsData.items.forEach((item, idx) => {
+                if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
+                relevantShortsItems.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score: 0, matchedKeywords: [] });
+              });
             } else {
               console.log(`[FetchYoutubeVideos] ✅ Relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}): ${relevantShortsItems.length}/${shortsData.items.length}`);
             }
