@@ -382,12 +382,18 @@ Deno.serve(async (req) => {
 
             const MIN_SHORTS_RELEVANCE_SCORE = 2;
 
-            const relevantShortsItems = shortsData.items.filter(item => {
-              if (!item.id?.videoId || item.id.videoId === highlightVideoId) return false;
+            // rank/score/keywords 포함한 숏츠 메타 정보 수집
+            const relevantShortsMeta = [];
+            shortsData.items.forEach((item, idx) => {
+              if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
               const combined = ((item.snippet.title || '') + ' ' + (item.snippet.channelTitle || '') + ' ' + (item.snippet.description || '')).toLowerCase();
-              const score = coreKeywordsForShorts.filter(w => combined.includes(w)).length;
-              return score >= MIN_SHORTS_RELEVANCE_SCORE;
+              const matched = coreKeywordsForShorts.filter(w => combined.includes(w));
+              const score = matched.length;
+              if (score >= MIN_SHORTS_RELEVANCE_SCORE) {
+                relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords: matched });
+              }
             });
+            const relevantShortsItems = relevantShortsMeta;
 
             if (relevantShortsItems.length === 0) {
               console.log(`[FetchYoutubeVideos] ⚠️ No relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}) for core keywords: [${coreKeywordsForShorts.join(', ')}]. Skipping shorts.`);
@@ -395,7 +401,7 @@ Deno.serve(async (req) => {
               console.log(`[FetchYoutubeVideos] ✅ Relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}): ${relevantShortsItems.length}/${shortsData.items.length}`);
             }
 
-            const shortsVideoIds = relevantShortsItems.map(item => item.id.videoId);
+            const shortsVideoIds = relevantShortsItems.map(item => item.videoId);
             
             // Shorts도 임베드 가능 여부 확인
             if (shortsVideoIds.length > 0) {
