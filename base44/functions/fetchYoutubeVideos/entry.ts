@@ -409,7 +409,7 @@ Deno.serve(async (req) => {
               .split(/\s+/)
               .filter(w => w.length >= 2 && !GENERIC_WORDS.includes(w));
 
-            const MIN_SHORTS_RELEVANCE_SCORE = 2;
+            const MIN_SHORTS_RELEVANCE_SCORE = coreKeywordsForShorts.length <= 1 ? 1 : 2;
 
             // rank/score/keywords 포함한 숏츠 메타 정보 수집
             const relevantShortsMeta = [];
