@@ -417,15 +417,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return { data: { success: false } };
     });
 
-    let firstResultRelevanceRanks = [];
-    let firstResultScores = [];
-    let firstResultMatchedKeywords = [];
-    let extractedCoreKeywords = [];
-    let highlightRelevanceRank = 0;
-    let highlightScore = 0;
-    let highlightMatchedKeywords = [];
-    let highlightViews = 0;
-
     if (firstResult.data?.success) {
       if (shouldSearchHighlight && firstResult.data.highlightVideoUrl) {
         videoUrl = firstResult.data.highlightVideoUrl;
