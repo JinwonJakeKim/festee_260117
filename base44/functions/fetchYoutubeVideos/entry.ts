@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
                   'festival', 'matsuri', 'japan', 'tokyo', 'osaka', 'kyoto', 'the', 'and', 'for', 'of',
                   'in', 'at', 'by', '祭り', '祭', 'フェスティバル', 'フェス', '2024', '2025', '2026', '2027'
                 ];
-                const coreKeywords = festivalNameForSearch
+                coreKeywords = festivalNameForSearch
                   .toLowerCase()
                   .replace(/[#\-_\.]/g, ' ')
                   .replace(/\b20\d{2}\b/g, '') // 연도 제거
