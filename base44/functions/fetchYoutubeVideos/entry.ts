@@ -299,8 +299,9 @@ Deno.serve(async (req) => {
                   relevanceScore: calcRelevanceScore(v)
                 }));
 
-                // 점수 2 이상인 영상만 채택, 없으면 하이라이트 영상 없음
-                const MIN_RELEVANCE_SCORE = 2;
+                // coreKeywords 수에 따라 최소 점수 동적 조정
+                // keywords가 1개뿐이면 score >= 1, 2개 이상이면 score >= 2
+                const MIN_RELEVANCE_SCORE = coreKeywords.length <= 1 ? 1 : 2;
                 const relevantVideos = videosWithScore.filter(v => v.relevanceScore >= MIN_RELEVANCE_SCORE);
 
                 if (relevantVideos.length === 0) {
