@@ -360,11 +360,20 @@ Deno.serve(async (req) => {
             const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
 
             // 핵심 키워드 점수 기반 관련성 필터링 (하이라이트와 동일 로직)
-            const GENERIC_WORDS = [
+            const GENERIC_WORDS_SHORTS = [
               'festival', 'matsuri', 'japan', 'tokyo', 'osaka', 'kyoto', 'the', 'and', 'for', 'of',
               'in', 'at', 'by', '祭り', '祭', 'フェスティバル', 'フェス', '2024', '2025', '2026', '2027'
             ];
-            const coreKeywordsForShorts = festivalNameForSearch
+            // coreKeywords가 이미 계산되어있으면 재사용, 아니면 새로 계산
+            if (coreKeywords.length === 0) {
+              coreKeywords = festivalNameForSearch
+                .toLowerCase()
+                .replace(/[#\-_\.]/g, ' ')
+                .replace(/\b20\d{2}\b/g, '')
+                .split(/\s+/)
+                .filter(w => w.length >= 2 && !GENERIC_WORDS_SHORTS.includes(w));
+            }
+            const coreKeywordsForShorts = coreKeywords.length > 0 ? coreKeywords : festivalNameForSearch
               .toLowerCase()
               .replace(/[#\-_\.]/g, ' ')
               .replace(/\b20\d{2}\b/g, '')
