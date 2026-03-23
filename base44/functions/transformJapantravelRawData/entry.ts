@@ -409,16 +409,33 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return { data: { success: false } };
     });
 
+    let firstResultRelevanceRanks = [];
+    let firstResultScores = [];
+    let firstResultMatchedKeywords = [];
+    let extractedCoreKeywords = [];
+    let highlightRelevanceRank = 0;
+    let highlightScore = 0;
+    let highlightMatchedKeywords = [];
+    let highlightViews = 0;
+
     if (firstResult.data?.success) {
       if (shouldSearchHighlight && firstResult.data.highlightVideoUrl) {
         videoUrl = firstResult.data.highlightVideoUrl;
         videoChannelName = firstResult.data.highlightVideoChannelName || '';
+        highlightRelevanceRank = firstResult.data.highlightRelevanceRank || 0;
+        highlightScore = firstResult.data.highlightScore || 0;
+        highlightMatchedKeywords = firstResult.data.highlightMatchedKeywords || [];
+        highlightViews = firstResult.data.highlightViews || 0;
       }
       if (shouldSearchShorts) {
         youtubeShortUrls = firstResult.data.shortsUrls || [];
         shortsViewsTotal = (firstResult.data.shortsViewsList || []).reduce((s, v) => s + v, 0);
         firstResultViewsList = firstResult.data.shortsViewsList || [];
+        firstResultRelevanceRanks = firstResult.data.shortsRelevanceRanks || [];
+        firstResultScores = firstResult.data.shortsScores || [];
+        firstResultMatchedKeywords = firstResult.data.shortsMatchedKeywords || [];
       }
+      extractedCoreKeywords = firstResult.data.coreKeywords || [];
     }
 
     // 2차: 숏츠가 20개 미만이면 반대 언어로 추가 검색하여 보충
