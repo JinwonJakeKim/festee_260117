@@ -708,8 +708,15 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       total_views: shortsViewsTotal || 0
     };
 
-    await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-    console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalId}`);
+    // upsert: 기존 레코드 있으면 update, 없으면 create
+    const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: festivalId });
+    if (existingStats && existingStats.length > 0) {
+      await base44.asServiceRole.entities.YoutubeShortsStat.update(existingStats[0].id, statPayload);
+      console.log(`[Transform] ✓ YoutubeShortsStat updated for festival: ${festivalId}`);
+    } else {
+      await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
+      console.log(`[Transform] ✓ YoutubeShortsStat created for festival: ${festivalId}`);
+    }
   } catch (statError) {
     console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
   }
