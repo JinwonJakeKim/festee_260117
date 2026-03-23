@@ -86,9 +86,17 @@ Deno.serve(async (req) => {
 
     let highlightVideoUrl = '';
     let highlightVideoChannelName = '';
+    let highlightRelevanceRank = 0;
+    let highlightScore = 0;
+    let highlightMatchedKeywords = [];
+    let highlightViews = 0;
+    let coreKeywords = [];
     let shortsUrls = [];
     let shortsViewsTotal = 0;
     let shortsViewsList = []; // 각 숏츠별 개별 조회수
+    let shortsRelevanceRanks = []; // 각 숏츠의 원본 API 결과 순위
+    let shortsScores = []; // 각 숏츠의 키워드 점수
+    let shortsMatchedKeywords = []; // 각 숏츠의 매핑된 키워드
 
     // ========== 하이라이트 영상 검색 ==========
     if (searchHighlightVideo) {
