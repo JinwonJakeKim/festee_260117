@@ -322,6 +322,14 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let enSearchNameUsed = '';
   let jpSearchNameUsed = '';
   let firstResultViewsList = [];
+  let firstResultRelevanceRanks = [];
+  let firstResultScores = [];
+  let firstResultMatchedKeywords = [];
+  let extractedCoreKeywords = [];
+  let highlightRelevanceRank = 0;
+  let highlightScore = 0;
+  let highlightMatchedKeywords = [];
+  let highlightViews = 0;
 
   if (shouldSearchHighlight || shouldSearchShorts) {
     // 도시명이 쿼리에 포함되어있는지 확인하는 헬퍼
