@@ -307,10 +307,16 @@ Deno.serve(async (req) => {
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   highlightVideoChannelName = topVideo.channelTitle || '';
+                  highlightRelevanceRank = topVideo.relevanceIndex + 1;
+                  highlightScore = topVideo.relevanceScore;
+                  highlightMatchedKeywords = coreKeywords.filter(w => {
+                    const combined = (topVideo.title + ' ' + topVideo.channelTitle + ' ' + topVideo.description).toLowerCase();
+                    return combined.includes(w);
+                  });
                   const embeddableStatus = embeddableVideos.length > 0 ? '✅ 임베드 가능' : '⚠️ 임베드 불가 (YouTube 링크)';
                   console.log(`[FetchYoutubeVideos] ✅ Top video selected (${embeddableStatus}):`);
                   console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : '일반'} ${topVideo.is4K ? '(4K)' : ''}`);
-                  console.log(`[FetchYoutubeVideos]    Relevance: #${topVideo.relevanceIndex + 1}`);
+                  console.log(`[FetchYoutubeVideos]    Relevance: #${topVideo.relevanceIndex + 1}, Score: ${topVideo.relevanceScore}, Keywords: [${highlightMatchedKeywords.join(', ')}]`);
                   console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
                   console.log(`[FetchYoutubeVideos]    Channel: ${highlightVideoChannelName}`);
                   console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
