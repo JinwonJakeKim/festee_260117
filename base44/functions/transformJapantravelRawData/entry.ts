@@ -456,14 +456,22 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         const existingIds = new Set(youtubeShortUrls.map(u => u.split('/').pop()));
         const newShorts = secondResult.data.shortsUrls.filter(u => !existingIds.has(u.split('/').pop()));
         const newViewsList = secondResult.data.shortsViewsList || [];
-        const addedShorts = [];
-        const addedViews = [];
+        const newRanks = secondResult.data.shortsRelevanceRanks || [];
+        const newScores = secondResult.data.shortsScores || [];
+        const newKeywords = secondResult.data.shortsMatchedKeywords || [];
+        const addedShorts = [], addedViews = [], addedRanks = [], addedScores = [], addedKeywords = [];
         newShorts.forEach((url, idx) => {
           addedShorts.push(url);
           addedViews.push(newViewsList[idx] || 0);
+          addedRanks.push(newRanks[idx] || 0);
+          addedScores.push(newScores[idx] || 0);
+          addedKeywords.push(newKeywords[idx] || []);
         });
         youtubeShortUrls = [...youtubeShortUrls, ...addedShorts].slice(0, 20);
         firstResultViewsList = [...firstResultViewsList, ...addedViews].slice(0, 20);
+        firstResultRelevanceRanks = [...firstResultRelevanceRanks, ...addedRanks].slice(0, 20);
+        firstResultScores = [...firstResultScores, ...addedScores].slice(0, 20);
+        firstResultMatchedKeywords = [...firstResultMatchedKeywords, ...addedKeywords].slice(0, 20);
         shortsViewsTotal = firstResultViewsList.reduce((s, v) => s + v, 0);
         console.log(`[Transform] ✓ Shorts after ${secondaryLang} search: ${youtubeShortUrls.length}개`);
       }
