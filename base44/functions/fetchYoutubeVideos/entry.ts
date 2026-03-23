@@ -428,11 +428,18 @@ Deno.serve(async (req) => {
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
                     .slice(0, 20);
                   
+                  // relevantShortsMeta를 videoId → meta 맵으로 변환
+                  const shortsMetaMap = {};
+                  relevantShortsMeta.forEach(m => { shortsMetaMap[m.videoId] = m; });
+
                   // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 20개)
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
                     shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
                     shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
+                    shortsRelevanceRanks = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
+                    shortsScores = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
+                    shortsMatchedKeywords = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
@@ -442,6 +449,9 @@ Deno.serve(async (req) => {
                     });
                     shortsViewsList = shortsUrls.map(url => allViewsMap[url] || 0);
                     shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
+                    shortsRelevanceRanks = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
+                    shortsScores = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
+                    shortsMatchedKeywords = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
                     console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
                   }
                 } else {
