@@ -274,14 +274,7 @@ export default function Home() {
 
   const festivals = useMemo(() => {
     if (!rawFestivals) return [];
-    
-    const deduplicated = removeDuplicateFestivals(rawFestivals);
-    
-    return deduplicated.sort((a, b) => {
-      const aLikes = a.likes_count || 0;
-      const bLikes = b.likes_count || 0;
-      return bLikes - aLikes;
-    });
+    return removeDuplicateFestivals(rawFestivals);
   }, [rawFestivals]);
 
   const { data: flightTimes = [] } = useQuery({
