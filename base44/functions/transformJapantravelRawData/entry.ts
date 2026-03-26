@@ -99,8 +99,9 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   const shouldSearchShorts = true;
 
   // 기존 영상은 재쿼리 결과가 없을 때 폴백으로만 사용
-  if (hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
-    videoUrl = existingVideoUrl; // 폴백: 재쿼리 결과가 있으면 덮어씌워짐
+  // retransform=true 시에는 하이라이트 폴백 사용 안 함 (블랙리스트 영상이 복원되는 것 방지)
+  if (!retransform && hasHighlight && (!videoUrl || videoUrl.trim() === '')) {
+    videoUrl = existingVideoUrl;
   }
   if (hasShorts) {
     youtubeShortUrls = existingShorts; // 폴백: 재쿼리 결과가 있으면 덮어씌워짐
