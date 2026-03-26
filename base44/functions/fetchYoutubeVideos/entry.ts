@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
             
             // 블랙리스트 키워드 판별 (영상 제목에 포함된 경우 제외)
             // 언더스코어, 슬래시 등 구분자를 공백으로 정규화하여 붙어있는 키워드도 감지
-            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス'];
+            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス', '교차편집'];
             // 세로영상(Shorts) 판별 키워드 - 하이라이트는 가로영상만 채택
             const VERTICAL_KEYWORDS = ['縦動画', '縦型動画', '縦', 'vertical video', '#shorts', '#short', '세로', '세로영상'];
             const isBlacklistedVideo = (item) => {
