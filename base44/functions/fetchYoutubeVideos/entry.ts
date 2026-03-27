@@ -261,63 +261,14 @@ Deno.serve(async (req) => {
                   relevanceIndex: originalIndex
                 }));
                 
-                // 관련성 검증: 핵심 키워드 점수 기반 필터링
-                // festival, matsuri, 숫자(연도), 일반 도시명, 조사 등을 제거한 후 남은 고유명사가 핵심 키워드
-                const GENERIC_WORDS = [
-                  // 일반 단어
-                  'festival', 'matsuri', 'the', 'and', 'for', 'of', 'in', 'at', 'by', 'a', 'an',
-                  // 일반 공연/행사 단어 (너무 흔해서 관련성 판단에 부적합)
-                  'stage', 'production', 'show', 'event', 'live', 'concert', 'music', 'dance',
-                  'perform', 'performance', 'tour', 'special',
-                  // 일본어 일반 단어
-                  '祭り', '祭', 'フェスティバル', 'フェス', 'ステージ', '公演',
-                  // 국가/대륙
-                  'japan', 'japanese', '日本', 'asia', 'asian',
-                  // 일본 주요 도시 (너무 흔한 지명은 관련성 판단에 부적합)
-                  'tokyo', 'osaka', 'kyoto', 'fukuoka', 'sapporo', 'nagoya', 'yokohama',
-                  'hiroshima', 'kobe', 'sendai', 'nara', 'okinawa',
-                  '東京', '大阪', '京都', '福岡', '札幌', '名古屋', '横浜',
-                  // 연도
-                  '2022', '2023', '2024', '2025', '2026', '2027'
-                ];
-                coreKeywords = festivalNameForSearch
-                  .toLowerCase()
-                  .replace(/[#\-_\.]/g, ' ')
-                  .replace(/\b20\d{2}\b/g, '') // 연도 제거
-                  .split(/\s+/)
-                  .filter(w => w.length >= 2 && !GENERIC_WORDS.includes(w));
+                // 공공기관 우선 → API 관련성 순서로 정렬
+                videosWithPriority.sort((a, b) => {
+                  if (a.isOfficial && !b.isOfficial) return -1;
+                  if (!a.isOfficial && b.isOfficial) return 1;
+                  return a.relevanceIndex - b.relevanceIndex;
+                });
 
-                // 영상의 제목 + description 에서 핵심 키워드 점수 계산
-                const calcRelevanceScore = (v) => {
-                  const combined = (v.title + ' ' + v.channelTitle + ' ' + (v.description || '')).toLowerCase();
-                  return coreKeywords.filter(w => combined.includes(w)).length;
-                };
-
-                // 각 영상에 관련성 점수 추가
-                const videosWithScore = videosWithPriority.map(v => ({
-                  ...v,
-                  relevanceScore: calcRelevanceScore(v)
-                }));
-
-                // coreKeywords 수에 따라 최소 점수 동적 조정
-                // keywords가 1개뿐이면 score >= 1, 2개 이상이면 score >= 2
-                const MIN_RELEVANCE_SCORE = coreKeywords.length <= 1 ? 1 : 2;
-                const relevantVideos = videosWithScore.filter(v => v.relevanceScore >= MIN_RELEVANCE_SCORE);
-
-                if (relevantVideos.length === 0) {
-                  console.log(`[FetchYoutubeVideos] ⚠️ No relevant videos (score >= ${MIN_RELEVANCE_SCORE}) for core keywords: [${coreKeywords.join(', ')}]. Skipping highlight video.`);
-                } else {
-                  console.log(`[FetchYoutubeVideos] ✅ Relevant videos (score >= ${MIN_RELEVANCE_SCORE}): ${relevantVideos.length}/${videosWithPriority.length}`);
-                  // 점수 높은 순 → 공공기관 우선 → 관련성 순서로 정렬
-                  relevantVideos.sort((a, b) => {
-                    if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
-                    if (a.isOfficial && !b.isOfficial) return -1;
-                    if (!a.isOfficial && b.isOfficial) return 1;
-                    return a.relevanceIndex - b.relevanceIndex;
-                  });
-                }
-
-                const topVideo = relevantVideos[0];
+                const topVideo = videosWithPriority[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   highlightVideoChannelName = topVideo.channelTitle || '';
@@ -375,65 +326,14 @@ Deno.serve(async (req) => {
             // 하이라이트 영상 videoId 추출 (숏츠 중복 방지용)
             const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
 
-            // 핵심 키워드 점수 기반 관련성 필터링 (하이라이트와 동일 로직)
-            const GENERIC_WORDS_SHORTS = [
-              // 일반 단어
-              'festival', 'matsuri', 'the', 'and', 'for', 'of', 'in', 'at', 'by', 'a', 'an',
-              // 일반 공연/행사 단어
-              'stage', 'production', 'show', 'event', 'live', 'concert', 'music', 'dance',
-              'perform', 'performance', 'tour', 'special',
-              // 일본어 일반 단어
-              '祭り', '祭', 'フェスティバル', 'フェス', 'ステージ', '公演',
-              // 국가/대륙
-              'japan', 'japanese', '日本', 'asia', 'asian',
-              // 일본 주요 도시
-              'tokyo', 'osaka', 'kyoto', 'fukuoka', 'sapporo', 'nagoya', 'yokohama',
-              'hiroshima', 'kobe', 'sendai', 'nara', 'okinawa',
-              '東京', '大阪', '京都', '福岡', '札幌', '名古屋', '横浜',
-              // 연도
-              '2022', '2023', '2024', '2025', '2026', '2027'
-            ];
-            // coreKeywords가 이미 계산되어있으면 재사용, 아니면 새로 계산
-            if (coreKeywords.length === 0) {
-              coreKeywords = festivalNameForSearch
-                .toLowerCase()
-                .replace(/[#\-_\.]/g, ' ')
-                .replace(/\b20\d{2}\b/g, '')
-                .split(/\s+/)
-                .filter(w => w.length >= 2 && !GENERIC_WORDS_SHORTS.includes(w));
-            }
-            const coreKeywordsForShorts = coreKeywords.length > 0 ? coreKeywords : festivalNameForSearch
-              .toLowerCase()
-              .replace(/[#\-_\.]/g, ' ')
-              .replace(/\b20\d{2}\b/g, '')
-              .split(/\s+/)
-              .filter(w => w.length >= 2 && !GENERIC_WORDS.includes(w));
-
-            const MIN_SHORTS_RELEVANCE_SCORE = coreKeywordsForShorts.length <= 1 ? 1 : 2;
-
-            // rank/score/keywords 포함한 숏츠 메타 정보 수집
+            // API 결과 순서 그대로 숏츠 메타 정보 수집 (관련성 필터링 없음)
             const relevantShortsMeta = [];
             shortsData.items.forEach((item, idx) => {
               if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
-              const combined = ((item.snippet.title || '') + ' ' + (item.snippet.channelTitle || '') + ' ' + (item.snippet.description || '')).toLowerCase();
-              const matched = coreKeywordsForShorts.filter(w => combined.includes(w));
-              const score = matched.length;
-              if (score >= MIN_SHORTS_RELEVANCE_SCORE) {
-                relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords: matched });
-              }
+              relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score: 0, matchedKeywords: [] });
             });
             const relevantShortsItems = relevantShortsMeta;
-
-            if (relevantShortsItems.length === 0) {
-              console.log(`[FetchYoutubeVideos] ⚠️ No relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}) for core keywords: [${coreKeywordsForShorts.join(', ')}]. Using all shorts with score=0 for inspection.`);
-              // score 기준 미달이더라도 URL은 저장 (확인용)
-              shortsData.items.forEach((item, idx) => {
-                if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
-                relevantShortsItems.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score: 0, matchedKeywords: [] });
-              });
-            } else {
-              console.log(`[FetchYoutubeVideos] ✅ Relevant shorts (score >= ${MIN_SHORTS_RELEVANCE_SCORE}): ${relevantShortsItems.length}/${shortsData.items.length}`);
-            }
+            console.log(`[FetchYoutubeVideos] ✅ Shorts collected: ${relevantShortsItems.length}/${shortsData.items.length}`);
 
             const shortsVideoIds = relevantShortsItems.map(item => item.videoId);
             
