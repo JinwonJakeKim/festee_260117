@@ -265,7 +265,7 @@ export default function Home() {
   const { data: rawFestivals, isLoading } = useQuery({
     queryKey: ['rawFestivals'],
     queryFn: async () => {
-      const allFestivals = await base44.entities.Festival.list('-likes_count', 200);
+      const allFestivals = await base44.entities.Festival.list('-shorts_views_5_total', 500);
       return allFestivals;
     },
     staleTime: 0,
