@@ -331,6 +331,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let highlightScore = 0;
   let highlightMatchedKeywords = [];
   let highlightViews = 0;
+  // 블록 밖에서도 접근 가능하도록 미리 선언
+  const isOriginalJapanese = festivalData.original_language === 'ja';
 
   if (shouldSearchHighlight || shouldSearchShorts) {
     // 도시명이 쿼리에 포함되어있는지 확인하는 헬퍼
@@ -388,7 +390,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
     // 원본 언어가 일본어(ja)인 경우 → 1차 일본어, 2차 영어
     // 원본 언어가 영어(en) 등인 경우 → 1차 영어 원본명, 2차 일본어
-    const isOriginalJapanese = festivalData.original_language === 'ja';
 
     const jpName = translatedData.name_jp;
     const jpSearchName = buildJapaneseYoutubeQuery(jpName || festivalData.name_original);
@@ -583,135 +584,76 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     error_message: null
   });
 
-  // YoutubeShortsStat 스냅샷 저장 (upsert: 기존 레코드 있으면 update, 없으면 create)
+  // YoutubeRawdata 스냅샷 저장 - 영어/일본어 쿼리 각각 별도 레코드로 저장
   try {
-    const viewsList = firstResultViewsList || [];
-
-    const ranks = firstResultRelevanceRanks || [];
-    const scores = firstResultScores || [];
-    const keywords = firstResultMatchedKeywords || [];
-
-    const statPayload = {
+    const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal) => ({
       festival_id: festivalId,
       name_ko: festivalPayload.name_ko || festivalPayload.name_original,
       name_en: festivalPayload.name_en || festivalPayload.name_original,
       name_jp: festivalPayload.name_jp || festivalPayload.name_original,
       update_time: now,
-      query_en: enSearchNameUsed || '',
-      query_jp: jpSearchNameUsed || '',
+      query_en: queryLang === 'en' ? queryText : '',
+      query_jp: queryLang === 'jp' ? queryText : '',
       query_ko: '',
       keywords: extractedCoreKeywords || [],
-      highlights_url: videoUrl || '',
-      highlights_views: highlightViews || 0,
-      highlights_keywords: highlightMatchedKeywords || [],
-      highlights_relevance_rank: highlightRelevanceRank || 0,
-      highlights_score: highlightScore || 0,
-      shorts1_url: youtubeShortUrls[0] || '',
-      shorts1_views: viewsList[0] || 0,
-      shorts1_relevance_rank: ranks[0] || 0,
-      shorts1_keywords: keywords[0] || [],
-      shorts1_score: scores[0] || 0,
-      shorts2_url: youtubeShortUrls[1] || '',
-      shorts2_views: viewsList[1] || 0,
-      shorts2_relevance_rank: ranks[1] || 0,
-      shorts2_keywords: keywords[1] || [],
-      shorts2_score: scores[1] || 0,
-      shorts3_url: youtubeShortUrls[2] || '',
-      shorts3_views: viewsList[2] || 0,
-      shorts3_relevance_rank: ranks[2] || 0,
-      shorts3_keywords: keywords[2] || [],
-      shorts3_score: scores[2] || 0,
-      shorts4_url: youtubeShortUrls[3] || '',
-      shorts4_views: viewsList[3] || 0,
-      shorts4_relevance_rank: ranks[3] || 0,
-      shorts4_keywords: keywords[3] || [],
-      shorts4_score: scores[3] || 0,
-      shorts5_url: youtubeShortUrls[4] || '',
-      shorts5_views: viewsList[4] || 0,
-      shorts5_relevance_rank: ranks[4] || 0,
-      shorts5_keywords: keywords[4] || [],
-      shorts5_score: scores[4] || 0,
-      shorts6_url: youtubeShortUrls[5] || '',
-      shorts6_views: viewsList[5] || 0,
-      shorts6_relevance_rank: ranks[5] || 0,
-      shorts6_keywords: keywords[5] || [],
-      shorts6_score: scores[5] || 0,
-      shorts7_url: youtubeShortUrls[6] || '',
-      shorts7_views: viewsList[6] || 0,
-      shorts7_relevance_rank: ranks[6] || 0,
-      shorts7_keywords: keywords[6] || [],
-      shorts7_score: scores[6] || 0,
-      shorts8_url: youtubeShortUrls[7] || '',
-      shorts8_views: viewsList[7] || 0,
-      shorts8_relevance_rank: ranks[7] || 0,
-      shorts8_keywords: keywords[7] || [],
-      shorts8_score: scores[7] || 0,
-      shorts9_url: youtubeShortUrls[8] || '',
-      shorts9_views: viewsList[8] || 0,
-      shorts9_relevance_rank: ranks[8] || 0,
-      shorts9_keywords: keywords[8] || [],
-      shorts9_score: scores[8] || 0,
-      shorts10_url: youtubeShortUrls[9] || '',
-      shorts10_views: viewsList[9] || 0,
-      shorts10_relevance_rank: ranks[9] || 0,
-      shorts10_keywords: keywords[9] || [],
-      shorts10_score: scores[9] || 0,
-      shorts11_url: youtubeShortUrls[10] || '',
-      shorts11_views: viewsList[10] || 0,
-      shorts11_relevance_rank: ranks[10] || 0,
-      shorts11_keywords: keywords[10] || [],
-      shorts11_score: scores[10] || 0,
-      shorts12_url: youtubeShortUrls[11] || '',
-      shorts12_views: viewsList[11] || 0,
-      shorts12_relevance_rank: ranks[11] || 0,
-      shorts12_keywords: keywords[11] || [],
-      shorts12_score: scores[11] || 0,
-      shorts13_url: youtubeShortUrls[12] || '',
-      shorts13_views: viewsList[12] || 0,
-      shorts13_relevance_rank: ranks[12] || 0,
-      shorts13_keywords: keywords[12] || [],
-      shorts13_score: scores[12] || 0,
-      shorts14_url: youtubeShortUrls[13] || '',
-      shorts14_views: viewsList[13] || 0,
-      shorts14_relevance_rank: ranks[13] || 0,
-      shorts14_keywords: keywords[13] || [],
-      shorts14_score: scores[13] || 0,
-      shorts15_url: youtubeShortUrls[14] || '',
-      shorts15_views: viewsList[14] || 0,
-      shorts15_relevance_rank: ranks[14] || 0,
-      shorts15_keywords: keywords[14] || [],
-      shorts15_score: scores[14] || 0,
-      shorts16_url: youtubeShortUrls[15] || '',
-      shorts16_views: viewsList[15] || 0,
-      shorts16_relevance_rank: ranks[15] || 0,
-      shorts16_keywords: keywords[15] || [],
-      shorts16_score: scores[15] || 0,
-      shorts17_url: youtubeShortUrls[16] || '',
-      shorts17_views: viewsList[16] || 0,
-      shorts17_relevance_rank: ranks[16] || 0,
-      shorts17_keywords: keywords[16] || [],
-      shorts17_score: scores[16] || 0,
-      shorts18_url: youtubeShortUrls[17] || '',
-      shorts18_views: viewsList[17] || 0,
-      shorts18_relevance_rank: ranks[17] || 0,
-      shorts18_keywords: keywords[17] || [],
-      shorts18_score: scores[17] || 0,
-      shorts19_url: youtubeShortUrls[18] || '',
-      shorts19_views: viewsList[18] || 0,
-      shorts19_relevance_rank: ranks[18] || 0,
-      shorts19_keywords: keywords[18] || [],
-      shorts19_score: scores[18] || 0,
-      shorts20_url: youtubeShortUrls[19] || '',
-      shorts20_views: viewsList[19] || 0,
-      shorts20_relevance_rank: ranks[19] || 0,
-      shorts20_keywords: keywords[19] || [],
-      shorts20_score: scores[19] || 0,
-      total_views: shortsViewsTotal || 0
-    };
+      highlights_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (videoUrl || '') : '',
+      highlights_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightViews || 0) : 0,
+      highlights_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightMatchedKeywords || []) : [],
+      highlights_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightRelevanceRank || 0) : 0,
+      highlights_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightScore || 0) : 0,
+      shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0,
+      shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0,
+      shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0,
+      shorts4_url: shortsUrls[3] || '', shorts4_views: viewsList[3] || 0, shorts4_relevance_rank: ranks[3] || 0, shorts4_keywords: keywords[3] || [], shorts4_score: scores[3] || 0,
+      shorts5_url: shortsUrls[4] || '', shorts5_views: viewsList[4] || 0, shorts5_relevance_rank: ranks[4] || 0, shorts5_keywords: keywords[4] || [], shorts5_score: scores[4] || 0,
+      shorts6_url: shortsUrls[5] || '', shorts6_views: viewsList[5] || 0, shorts6_relevance_rank: ranks[5] || 0, shorts6_keywords: keywords[5] || [], shorts6_score: scores[5] || 0,
+      shorts7_url: shortsUrls[6] || '', shorts7_views: viewsList[6] || 0, shorts7_relevance_rank: ranks[6] || 0, shorts7_keywords: keywords[6] || [], shorts7_score: scores[6] || 0,
+      shorts8_url: shortsUrls[7] || '', shorts8_views: viewsList[7] || 0, shorts8_relevance_rank: ranks[7] || 0, shorts8_keywords: keywords[7] || [], shorts8_score: scores[7] || 0,
+      shorts9_url: shortsUrls[8] || '', shorts9_views: viewsList[8] || 0, shorts9_relevance_rank: ranks[8] || 0, shorts9_keywords: keywords[8] || [], shorts9_score: scores[8] || 0,
+      shorts10_url: shortsUrls[9] || '', shorts10_views: viewsList[9] || 0, shorts10_relevance_rank: ranks[9] || 0, shorts10_keywords: keywords[9] || [], shorts10_score: scores[9] || 0,
+      shorts11_url: shortsUrls[10] || '', shorts11_views: viewsList[10] || 0, shorts11_relevance_rank: ranks[10] || 0, shorts11_keywords: keywords[10] || [], shorts11_score: scores[10] || 0,
+      shorts12_url: shortsUrls[11] || '', shorts12_views: viewsList[11] || 0, shorts12_relevance_rank: ranks[11] || 0, shorts12_keywords: keywords[11] || [], shorts12_score: scores[11] || 0,
+      shorts13_url: shortsUrls[12] || '', shorts13_views: viewsList[12] || 0, shorts13_relevance_rank: ranks[12] || 0, shorts13_keywords: keywords[12] || [], shorts13_score: scores[12] || 0,
+      shorts14_url: shortsUrls[13] || '', shorts14_views: viewsList[13] || 0, shorts14_relevance_rank: ranks[13] || 0, shorts14_keywords: keywords[13] || [], shorts14_score: scores[13] || 0,
+      shorts15_url: shortsUrls[14] || '', shorts15_views: viewsList[14] || 0, shorts15_relevance_rank: ranks[14] || 0, shorts15_keywords: keywords[14] || [], shorts15_score: scores[14] || 0,
+      shorts16_url: shortsUrls[15] || '', shorts16_views: viewsList[15] || 0, shorts16_relevance_rank: ranks[15] || 0, shorts16_keywords: keywords[15] || [], shorts16_score: scores[15] || 0,
+      shorts17_url: shortsUrls[16] || '', shorts17_views: viewsList[16] || 0, shorts17_relevance_rank: ranks[16] || 0, shorts17_keywords: keywords[16] || [], shorts17_score: scores[16] || 0,
+      shorts18_url: shortsUrls[17] || '', shorts18_views: viewsList[17] || 0, shorts18_relevance_rank: ranks[17] || 0, shorts18_keywords: keywords[17] || [], shorts18_score: scores[17] || 0,
+      shorts19_url: shortsUrls[18] || '', shorts19_views: viewsList[18] || 0, shorts19_relevance_rank: ranks[18] || 0, shorts19_keywords: keywords[18] || [], shorts19_score: scores[18] || 0,
+      shorts20_url: shortsUrls[19] || '', shorts20_views: viewsList[19] || 0, shorts20_relevance_rank: ranks[19] || 0, shorts20_keywords: keywords[19] || [], shorts20_score: scores[19] || 0,
+      total_views: shortsTotal || 0
+    });
 
-    // 항상 create - 변환/재변환 이력을 스냅샷으로 누적 저장
-    await base44.asServiceRole.entities.YoutubeRawdata.create(statPayload);
-    console.log(`[Transform] ✓ YoutubeRawdata snapshot saved for festival: ${festivalId}`);
+    // 1차 쿼리 결과 저장 (영어 원본 → query_en, 일본어 원본 → query_jp)
+    const primaryLangCode = isOriginalJapanese ? 'jp' : 'en';
+    const primaryQueryText = isOriginalJapanese ? jpSearchNameUsed : enSearchNameUsed;
+    if (primaryQueryText) {
+      const primaryPayload = buildStatPayload(
+        primaryLangCode, primaryQueryText,
+        firstResultViewsList, firstResultRelevanceRanks, firstResultScores, firstResultMatchedKeywords,
+        youtubeShortUrls, shortsViewsTotal
+      );
+      await base44.asServiceRole.entities.YoutubeRawdata.create(primaryPayload);
+      console.log(`[Transform] ✓ YoutubeRawdata saved (primary/${primaryLangCode}): "${primaryQueryText}"`);
+    }
+
+    // 2차 쿼리 결과 저장 (2차 쿼리가 실제로 실행된 경우에만)
+    const secondaryLangCode = isOriginalJapanese ? 'en' : 'jp';
+    const secondaryQueryText = isOriginalJapanese ? enSearchNameUsed : jpSearchNameUsed;
+    const secondaryExecuted = youtubeShortUrls.length > 0 && secondaryQueryText; // 2차 실행 여부
+    if (secondaryExecuted && secondaryQueryText) {
+      // 2차 쿼리로 추가된 shorts만 별도 payload로 저장 (전체 합산 결과가 아닌 2차 단독 결과)
+      // 2차 쿼리 단독 결과는 분리 불가능하므로, 2차 레코드는 쿼리 텍스트와 기본 메타만 저장
+      const secondaryPayload = buildStatPayload(
+        secondaryLangCode, secondaryQueryText,
+        [], [], [], [], [], 0
+      );
+      // 2차 쿼리는 highlights 없음 (1차에서만 highlight 검색)
+      secondaryPayload.highlights_url = '';
+      secondaryPayload.highlights_views = 0;
+      await base44.asServiceRole.entities.YoutubeRawdata.create(secondaryPayload);
+      console.log(`[Transform] ✓ YoutubeRawdata saved (secondary/${secondaryLangCode}): "${secondaryQueryText}"`);
+    }
   } catch (statError) {
     console.error(`[Transform] ⚠️ Failed to save YoutubeRawdata:`, statError.message);
   }
