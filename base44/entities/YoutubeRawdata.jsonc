@@ -2,6 +2,10 @@
   "name": "YoutubeRawdata",
   "type": "object",
   "properties": {
+    "query_id": {
+      "type": "string",
+      "description": "\ucffc\ub9ac \uace0\uc720 ID (\uaddc\uce59: query + YYYYMMDDHHMMSS + \uad6d\uac00\ucf54\ub4dc. \uc608: query20260328174913jp)"
+    },
     "festival_id": {
       "type": "string",
       "description": "\uc5f0\uacb0\ub41c Festival \uc5d4\ud2f0\ud2f0 ID"
@@ -33,14 +37,14 @@
     },
     "query_jp": {
       "type": "string",
-      "description": "\uc720\ud29c\ube0c \uac80\uc0c9 \uc2dc \uc0ac\uc6a9\ub41c \uc77c\ubcf8\uc5b4 \ucffc\ub9ac (2\ucc28 \uac80\uc0c9)"
+      "description": "\uc720\ud29c\ube0c \uac80\uc0c9 \uc2dc \uc0ac\uc6a9\ub41c \uc77c\ubcf8\uc5b4 \ucffc\ub9ac"
     },
     "keywords": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "\ucd95\uc81c \uc81c\ubaa9\uc5d0\uc11c \ucd94\ucd9c\ud55c \ud575\uc2ec \ud0a4\uc6cc\ub4dc \ubaa9\ub85d (\ubd88\uc6a9\uc5b4\u00b7\uc5f0\ub3c4 \uc81c\uac70 \ud6c4 \ub0a8\uc740 \uace0\uc720\uba85\uc0ac)"
+      "description": "\ucd95\uc81c \uc81c\ubaa9\uc5d0\uc11c \ucd94\ucd9c\ud55c \ud575\uc2ec \ud0a4\uc6cc\ub4dc \ubaa9\ub85d"
     },
     "highlights_url": {
       "type": "string",
@@ -56,7 +60,7 @@
       "items": {
         "type": "string"
       },
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1 \uc81c\ubaa9\u00b7\uc124\uba85\u00b7\ucc44\ub110\uba85\uacfc \ub9e4\ud551\ub41c \ucd95\uc81c \ud0a4\uc6cc\ub4dc"
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1\uacfc \ub9e4\ud551\ub41c \ucd95\uc81c \ud0a4\uc6cc\ub4dc"
     },
     "highlights_relevance_rank": {
       "type": "number",
@@ -66,7 +70,7 @@
     "highlights_score": {
       "type": "number",
       "default": 0,
-      "description": "\ud575\uc2ec \ud0a4\uc6cc\ub4dc \uae30\ubc18 \uc810\uc218 (\uac01 \ud0a4\uc6cc\ub4dc\uac00 \uc81c\ubaa9/\uc124\uba85\uc5d0 \ud3ec\ud568\ub418\uba74 1\uc810)"
+      "description": "\ud575\uc2ec \ud0a4\uc6cc\ub4dc \uae30\ubc18 \uc810\uc218"
     },
     "shorts1_url": {
       "type": "string",

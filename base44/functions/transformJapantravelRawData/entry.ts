@@ -586,7 +586,19 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
   // YoutubeRawdata 스냅샷 저장 - 영어/일본어 쿼리 각각 별도 레코드로 저장
   try {
+    // query_id 생성: query + YYYYMMDDHHMMSS + 국가코드
+    const langToCountryCode = (lang) => {
+      if (lang === 'jp') return 'jp';
+      if (lang === 'ko') return 'ko';
+      return 'en';
+    };
+    const nowDate = new Date(Date.now() + 9 * 60 * 60 * 1000); // KST
+    const pad = (n) => String(n).padStart(2, '0');
+    const tsBase = `${nowDate.getUTCFullYear()}${pad(nowDate.getUTCMonth() + 1)}${pad(nowDate.getUTCDate())}${pad(nowDate.getUTCHours())}${pad(nowDate.getUTCMinutes())}${pad(nowDate.getUTCSeconds())}`;
+    const makeQueryId = (lang) => `query${tsBase}${langToCountryCode(lang)}`;
+
     const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal) => ({
+      query_id: makeQueryId(queryLang),
       festival_id: festivalId,
       name_ko: festivalPayload.name_ko || festivalPayload.name_original,
       name_en: festivalPayload.name_en || festivalPayload.name_original,
