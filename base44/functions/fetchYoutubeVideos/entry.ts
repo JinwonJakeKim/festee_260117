@@ -84,13 +84,58 @@ Deno.serve(async (req) => {
       }
     };
 
+    // ========== 핵심 키워드 추출 ==========
+    // 축제 이름에서 불용어를 제거하고 핵심 명사 키워드를 추출
+    const GENERIC_STOP_WORDS = [
+      // 영어 불용어
+      'festival', 'fest', 'event', 'show', 'the', 'and', 'or', 'of', 'in', 'at', 'on', 'for',
+      'a', 'an', 'to', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+      'international', 'national', 'annual', 'edition', 'season', 'world', 'grand', 'open',
+      // 한국어 불용어
+      '축제', '페스티벌', '페스트', '행사', '이벤트', '국제', '전국', '지역', '대한민국',
+      // 일본어 불용어
+      'フェスティバル', 'フェス', 'まつり', '祭り', '祭', 'イベント',
+    ];
+
+    const extractCoreKeywords = (name) => {
+      // 연도 제거
+      const withoutYear = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      // 특수문자를 공백으로 변환
+      const normalized = withoutYear.replace(/[_\/\-\.&]/g, ' ');
+      // 단어로 분리
+      const words = normalized.split(/\s+/).filter(w => w.length > 1);
+      // 불용어 제거
+      const keywords = words.filter(word => {
+        const lower = word.toLowerCase();
+        return !GENERIC_STOP_WORDS.some(stop => stop.toLowerCase() === lower);
+      });
+      return keywords.map(w => w.toLowerCase());
+    };
+
+    // festivalName (원본)과 festivalNameForSearch (연도제거) 모두에서 키워드 추출
+    const coreKeywords = [...new Set([
+      ...extractCoreKeywords(festivalName),
+      ...extractCoreKeywords(festivalNameForSearch)
+    ])];
+
+    console.log(`[FetchYoutubeVideos] 🔑 Core keywords extracted: [${coreKeywords.join(', ')}]`);
+
+    // 영상의 관련성 점수 계산 함수 (키워드가 제목/설명/채널명에 몇 개 포함되는지)
+    const calcRelevanceScore = (item) => {
+      const combined = [
+        item.snippet?.title || '',
+        item.snippet?.description || '',
+        item.snippet?.channelTitle || ''
+      ].join(' ').toLowerCase();
+      return coreKeywords.filter(kw => combined.includes(kw)).length;
+    };
+
     let highlightVideoUrl = '';
     let highlightVideoChannelName = '';
     let highlightRelevanceRank = 0;
     let highlightScore = 0;
     let highlightMatchedKeywords = [];
     let highlightViews = 0;
-    let coreKeywords = [];
     let shortsUrls = [];
     let shortsViewsTotal = 0;
     let shortsViewsList = []; // 각 숏츠별 개별 조회수
@@ -250,22 +295,37 @@ Deno.serve(async (req) => {
               if (videosToUse.length === 0) {
                 console.log(`[FetchYoutubeVideos] ⚠️ No videos available after filtering`);
               } else {
-                const videosWithPriority = videosToUse.map(({ item, originalIndex }) => ({
-                  item,
-                  videoId: item.id.videoId,
-                  title: item.snippet.title || '',
-                  channelTitle: item.snippet.channelTitle || '',
-                  description: item.snippet.description || '',
-                  isOfficial: isOfficialChannel(item),
-                  is4K: is4KVideo(item),
-                  relevanceIndex: originalIndex
-                }));
-                
-                // 공공기관 우선 → API 관련성 순서로 정렬
+                const videosWithPriority = videosToUse.map(({ item, originalIndex }) => {
+                  const score = calcRelevanceScore(item);
+                  const matched = coreKeywords.filter(kw => {
+                    const combined = [item.snippet.title, item.snippet.description, item.snippet.channelTitle].join(' ').toLowerCase();
+                    return combined.includes(kw);
+                  });
+                  return {
+                    item,
+                    videoId: item.id.videoId,
+                    title: item.snippet.title || '',
+                    channelTitle: item.snippet.channelTitle || '',
+                    description: item.snippet.description || '',
+                    isOfficial: isOfficialChannel(item),
+                    is4K: is4KVideo(item),
+                    relevanceIndex: originalIndex,
+                    relevanceScore: score,
+                    matchedKeywords: matched
+                  };
+                });
+
+                // 키워드 점수 > 공공기관 우선 > API 관련성 순서로 정렬
                 videosWithPriority.sort((a, b) => {
+                  if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
                   if (a.isOfficial && !b.isOfficial) return -1;
                   if (!a.isOfficial && b.isOfficial) return 1;
                   return a.relevanceIndex - b.relevanceIndex;
+                });
+
+                console.log(`[FetchYoutubeVideos] 📊 Top 5 candidates by relevance score:`);
+                videosWithPriority.slice(0, 5).forEach((v, i) => {
+                  console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} ${v.isOfficial?'🏛️':''} "${v.title}"`);
                 });
 
                 const topVideo = videosWithPriority[0];
@@ -274,16 +334,27 @@ Deno.serve(async (req) => {
                   highlightVideoChannelName = topVideo.channelTitle || '';
                   highlightRelevanceRank = topVideo.relevanceIndex + 1;
                   highlightScore = topVideo.relevanceScore;
-                  highlightMatchedKeywords = coreKeywords.filter(w => {
-                    const combined = (topVideo.title + ' ' + topVideo.channelTitle + ' ' + topVideo.description).toLowerCase();
-                    return combined.includes(w);
-                  });
-                  const embeddableStatus = embeddableVideos.length > 0 ? '✅ 임베드 가능' : '⚠️ 임베드 불가 (YouTube 링크)';
-                  console.log(`[FetchYoutubeVideos] ✅ Top video selected (${embeddableStatus}):`);
+                  highlightMatchedKeywords = topVideo.matchedKeywords;
+
+                  // highlightViews: 조회수 가져오기
+                  try {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    const viewsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${topVideo.videoId}&key=${youtubeApiKey}`;
+                    const viewsResponse = await fetch(viewsUrl);
+                    if (viewsResponse.ok) {
+                      const viewsData = await viewsResponse.json();
+                      highlightViews = parseInt(viewsData.items?.[0]?.statistics?.viewCount || '0', 10);
+                    }
+                  } catch (viewsError) {
+                    console.error(`[FetchYoutubeVideos] ⚠️ Failed to fetch highlight views:`, viewsError.message);
+                  }
+
+                  console.log(`[FetchYoutubeVideos] ✅ Top video selected:`);
+                  console.log(`[FetchYoutubeVideos]    Score: ${topVideo.relevanceScore}, Keywords: [${highlightMatchedKeywords.join(', ')}]`);
                   console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : '일반'} ${topVideo.is4K ? '(4K)' : ''}`);
-                  console.log(`[FetchYoutubeVideos]    Relevance: #${topVideo.relevanceIndex + 1}, Score: ${topVideo.relevanceScore}, Keywords: [${highlightMatchedKeywords.join(', ')}]`);
                   console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
                   console.log(`[FetchYoutubeVideos]    Channel: ${highlightVideoChannelName}`);
+                  console.log(`[FetchYoutubeVideos]    Views: ${highlightViews}`);
                   console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
                 }
               }
