@@ -710,10 +710,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
 
     // 항상 create - 변환/재변환 이력을 스냅샷으로 누적 저장
-    await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-    console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalId}`);
+    await base44.asServiceRole.entities.YoutubeRawdata.create(statPayload);
+    console.log(`[Transform] ✓ YoutubeRawdata snapshot saved for festival: ${festivalId}`);
   } catch (statError) {
-    console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
+    console.error(`[Transform] ⚠️ Failed to save YoutubeRawdata:`, statError.message);
   }
 
   return { rawDataId, festivalId, success: true, festivalName: festivalPayload.name_original };

@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
-    const all = await base44.asServiceRole.entities.YoutubeShortsStat.list('-created_date', 1000);
+    const all = await base44.asServiceRole.entities.YoutubeRawdata.list('-created_date', 1000);
     console.log(`[fixShortsTotalViews] Total records: ${all.length}`);
 
     let updated = 0;
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
                       (stat.shorts5_views || 0);
 
       if (stat.total_views !== correct) {
-        await base44.asServiceRole.entities.YoutubeShortsStat.update(stat.id, { total_views: correct });
+        await base44.asServiceRole.entities.YoutubeRawdata.update(stat.id, { total_views: correct });
         console.log(`Updated ${stat.id}: ${stat.total_views} → ${correct}`);
         updated++;
       } else {
