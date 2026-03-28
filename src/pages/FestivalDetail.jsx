@@ -198,13 +198,6 @@ export default function FestivalDetail() {
     initialData: [],
   });
 
-  const { data: youtubeRawdata } = useQuery({
-    queryKey: ['youtubeRawdata', festivalId],
-    queryFn: () => base44.entities.YoutubeRawdata.filter({ festival_id: festivalId }),
-    enabled: !!festivalId,
-    initialData: [],
-  });
-
   const { data: myLikes } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
@@ -1058,45 +1051,15 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* Shorts 섹션 - 관련성 점수 상위 5개 */}
-            {(() => {
-              // YoutubeRawdata에서 score 기준 상위 5개 URL 추출
-              const allShortsWithScore = [];
-              (youtubeRawdata || []).forEach(record => {
-                for (let i = 1; i <= 20; i++) {
-                  const url = record[`shorts${i}_url`];
-                  const score = record[`shorts${i}_score`] || 0;
-                  if (url) allShortsWithScore.push({ url, score });
-                }
-              });
-
-              let top5Urls;
-              if (allShortsWithScore.length > 0) {
-                // score 내림차순 정렬 후 중복 제거, 상위 5개
-                const seen = new Set();
-                top5Urls = allShortsWithScore
-                  .sort((a, b) => b.score - a.score)
-                  .filter(({ url }) => {
-                    if (seen.has(url)) return false;
-                    seen.add(url);
-                    return true;
-                  })
-                  .slice(0, 5)
-                  .map(({ url }) => url);
-              } else {
-                // YoutubeRawdata 없으면 기존 배열 앞 5개 폴백
-                top5Urls = (festival.youtube_shorts_urls || []).slice(0, 5);
-              }
-
-              return top5Urls.length > 0 ? (
-                <ShortsSection
-                  youtubeShortUrls={top5Urls}
-                  getYoutubeVideoId={getYoutubeVideoId}
-                  festivalName={localizedName}
-                  festival={festival}
-                />
-              ) : null;
-            })()}
+            {/* Shorts 섹션 */}
+            {festival.youtube_shorts_urls && festival.youtube_shorts_urls.length > 0 && (
+              <ShortsSection
+                    youtubeShortUrls={festival.youtube_shorts_urls}
+                    getYoutubeVideoId={getYoutubeVideoId}
+                    festivalName={localizedName}
+                    festival={festival}
+                  />
+            )}
           {/* 라인업 */}
           {festival.lineup && festival.lineup.length > 0 && (
             <div className="mt-6">
