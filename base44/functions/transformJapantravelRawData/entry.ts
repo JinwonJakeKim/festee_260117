@@ -345,11 +345,22 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return false;
     };
 
-    // 영어 원본명 쿼리 보정: 년도만 제거, 원본명 그대로 사용
-    // (festival/도시명 추가는 검색 노이즈를 유발하므로 제거)
+    // 영어 원본명 쿼리 보정: 년도 제거 + festival 없으면 추가 + 도시명 없으면 추가 (대소문자 무시)
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
-      return name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      const festivalKeywords = ['festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades', 'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'expo', 'carnival'];
+      const lowerCleaned = cleaned.toLowerCase();
+      const hasFestivalKeyword = festivalKeywords.some(kw => lowerCleaned.includes(kw));
+      if (!hasFestivalKeyword) {
+        cleaned = `${cleaned} festival`;
+      }
+      // 도시명이 포함되어 있지 않으면 영어 도시명 추가 (대소문자 무시)
+      const cityEn = (festivalData.city || '').toLowerCase();
+      if (cityEn && !cleaned.toLowerCase().includes(cityEn)) {
+        cleaned = `${cleaned} ${festivalData.city}`;
+      }
+      return cleaned;
     };
 
     // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가 + 도시명 없으면 추가
