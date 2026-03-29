@@ -610,7 +610,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       keywords: extractedCoreKeywords || [],
       highlights_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (videoUrl || '') : '',
       highlights_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightViews || 0) : 0,
-      highlights_channel_name: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (videoChannelName || '') : '',
       highlights_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightMatchedKeywords || []) : [],
       highlights_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightRelevanceRank || 0) : 0,
       highlights_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightScore || 0) : 0,
