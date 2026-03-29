@@ -345,26 +345,11 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return false;
     };
 
-    // 영어 원본명 쿼리 보정: 년도 제거 + 도시명 없으면 추가
+    // 영어 원본명 쿼리 보정: 년도만 제거, 원본명 그대로 사용
+    // (festival/도시명 추가는 검색 노이즈를 유발하므로 제거)
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
-      let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
-      const festivalKeywords = [
-        '축제', '페스티벌', '퍼레이드', '의식', '박람회', '마라톤', '쇼', '전시회', '페스타',
-        'festival', 'festivals', 'parade', 'parades', 'fair', 'fairs',
-        'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'festa'
-      ];
-      const hasFestivalKeyword = festivalKeywords.some(kw => cleaned.toLowerCase().includes(kw.toLowerCase()));
-      if (!hasFestivalKeyword) {
-        const hasKorean = /[\uAC00-\uD7A3]/.test(cleaned);
-        cleaned = `${cleaned} ${hasKorean ? '축제' : 'festival'}`;
-      }
-      // 도시명이 포함되어 있지 않으면 영어 도시명 추가
-      const cityEn = festivalData.city || '';
-      if (cityEn && !cityIncludedInQuery(cleaned, cityEn, null)) {
-        cleaned = `${cleaned} ${cityEn}`;
-      }
-      return cleaned;
+      return name.replace(/\s*20\d{2}\s*/g, ' ').trim();
     };
 
     // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가 + 도시명 없으면 추가
@@ -389,24 +374,28 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return cleaned;
     };
 
-    // 원본 언어가 일본어(ja)인 경우 → 1차 일본어, 2차 영어
-    // 원본 언어가 영어(en) 등인 경우 → 1차 영어 원본명, 2차 일본어
+    // 원본명이 로마자(라틴 알파벳)로 구성된 경우 → 무조건 영어 원본명을 1차 쿼리로 사용
+    // 원본 언어가 일본어(ja)이고 원본명에 일본어 문자가 포함된 경우 → 1차 일본어, 2차 영어
+    // 그 외(en 등) → 1차 영어 원본명
+    const isRomanScript = (str) => /^[A-Za-z0-9\s\-_&'.,:!?()『』「」【】\/]+$/.test((str || '').trim());
+    const nameIsRoman = isRomanScript(festivalData.name_original);
+    const useEnglishFirst = nameIsRoman || !isOriginalJapanese;
 
     const jpName = translatedData.name_jp;
     const jpSearchName = buildJapaneseYoutubeQuery(jpName || festivalData.name_original);
     const enSearchName = buildEnglishYoutubeQuery(festivalData.name_original);
 
-    const primaryQuery = isOriginalJapanese ? jpSearchName : enSearchName;
-    const secondaryQuery = isOriginalJapanese ? enSearchName : jpSearchName;
-    const primaryLang = isOriginalJapanese ? '일본어' : '영어';
-    const secondaryLang = isOriginalJapanese ? '영어' : '일본어';
+    const primaryQuery = useEnglishFirst ? enSearchName : jpSearchName;
+    const secondaryQuery = useEnglishFirst ? jpSearchName : enSearchName;
+    const primaryLang = useEnglishFirst ? '영어' : '일본어';
+    const secondaryLang = useEnglishFirst ? '일본어' : '영어';
 
-    if (isOriginalJapanese) {
-      jpSearchNameUsed = primaryQuery;
-      enSearchNameUsed = secondaryQuery;
-    } else {
+    if (useEnglishFirst) {
       enSearchNameUsed = primaryQuery;
       jpSearchNameUsed = secondaryQuery;
+    } else {
+      jpSearchNameUsed = primaryQuery;
+      enSearchNameUsed = secondaryQuery;
     }
 
     console.log(`[Transform] 🎬 YouTube 1차 search (${primaryLang}): "${primaryQuery}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
