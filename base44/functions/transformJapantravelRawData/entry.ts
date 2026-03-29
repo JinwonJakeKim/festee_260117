@@ -672,23 +672,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       console.log(`[Transform] ✓ YoutubeRawdata saved (primary/${primaryLangCode}): "${primaryQueryText}"`);
     }
 
-    // 2차 쿼리 결과 저장 (2차 쿼리가 실제로 실행된 경우에만)
-    const secondaryLangCode = isOriginalJapanese ? 'en' : 'jp';
-    const secondaryQueryText = isOriginalJapanese ? enSearchNameUsed : jpSearchNameUsed;
-    const secondaryExecuted = youtubeShortUrls.length > 0 && secondaryQueryText; // 2차 실행 여부
-    if (secondaryExecuted && secondaryQueryText) {
-      // 2차 쿼리로 추가된 shorts만 별도 payload로 저장 (전체 합산 결과가 아닌 2차 단독 결과)
-      // 2차 쿼리 단독 결과는 분리 불가능하므로, 2차 레코드는 쿼리 텍스트와 기본 메타만 저장
-      const secondaryPayload = buildStatPayload(
-        secondaryLangCode, secondaryQueryText,
-        [], [], [], [], [], 0
-      );
-      // 2차 쿼리는 highlights 없음 (1차에서만 highlight 검색)
-      secondaryPayload.highlights_url = '';
-      secondaryPayload.highlights_views = 0;
-      await base44.asServiceRole.entities.YoutubeRawdata.create(secondaryPayload);
-      console.log(`[Transform] ✓ YoutubeRawdata saved (secondary/${secondaryLangCode}): "${secondaryQueryText}"`);
-    }
+    // 2차 쿼리 결과 저장 - needMoreShorts가 true이고 실제 API 호출이 발생한 경우에만 저장
+    // (현재 needMoreShorts=false이므로 이 블록은 실행되지 않음)
   } catch (statError) {
     console.error(`[Transform] ⚠️ Failed to save YoutubeRawdata:`, statError.message);
   }
