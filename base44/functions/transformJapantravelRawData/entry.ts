@@ -440,7 +440,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     }
 
     // 2차: 숏츠가 20개 미만이면 반대 언어로 추가 검색하여 보충
-    const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 20;
+    const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 5;
     if (needMoreShorts) {
       console.log(`[Transform] 🔄 Shorts < 20 (${youtubeShortUrls.length}개), retrying with ${secondaryLang}: "${secondaryQuery}"`);
 
