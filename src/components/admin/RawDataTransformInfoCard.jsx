@@ -27,6 +27,27 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
         <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
         <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
       </ul>
+      <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
+        <p className="text-blue-400 font-bold text-xs mb-1">🔍 YouTube 쿼리 자동 보정 로직 (explicitEventKeywords)</p>
+        <p className="text-gray-400 text-xs mb-2">
+          축제명에 <span className="text-white">이벤트 성격을 명확히 나타내는 단어</span>가 포함되어 있으면 <code className="bg-gray-800 px-1 rounded">festival</code>을 추가하지 않습니다.
+          없으면 자동으로 <code className="bg-gray-800 px-1 rounded">festival</code> (영어) 또는 <code className="bg-gray-800 px-1 rounded">祭り</code> (일본어)를 추가합니다.
+        </p>
+        <p className="text-gray-500 text-xs mb-1 italic">
+          예) "Raw Wine Tokyo" → wine 포함 → festival 추가 안 함 ✅<br/>
+          예) "The Meat" → 해당 없음 → "The Meat festival" 로 검색 ✅
+        </p>
+        <p className="text-blue-300 text-xs font-bold mb-1">현재 설정된 explicitEventKeywords:</p>
+        <div className="text-blue-200 text-xs font-mono space-y-1">
+          <p><span className="text-gray-400">축제/이벤트:</span> festival, fest, fete, fair, parade, marathon, show, exhibition, expo, carnival</p>
+          <p><span className="text-gray-400">음식/음료:</span> wine, beer, sake, whisky, whiskey, rum, spirits, cocktail, food, ramen, sushi, bbq, coffee, tea, chocolate, cheese</p>
+          <p><span className="text-gray-400">음악 장르:</span> jazz, blues, rock, classical, opera, electronic, techno, reggae</p>
+          <p><span className="text-gray-400">예술/문화:</span> art, arts, film, cinema, theater, dance, design, anime, comic, manga, gaming, esports</p>
+          <p><span className="text-gray-400">자연/계절:</span> sakura, cherry blossom, autumn, lantern, fireworks, hanabi</p>
+          <p><span className="text-gray-400">스포츠:</span> triathlon, cycling, surf, ski, snowboard</p>
+          <p><span className="text-gray-400">일본어 추가:</span> 祭り, まつり, パレード, イベント, フェア, マラソン, ワイン, ビール, アート, ジャズ 등</p>
+        </div>
+      </div>
       <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
         <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
         <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>

@@ -346,13 +346,33 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
 
     // 영어 원본명 쿼리 보정: 년도 제거 + festival 없으면 추가 + 도시명 없으면 추가 (대소문자 무시)
+    // explicitEventKeywords: 축제/이벤트의 성격을 이미 명확히 나타내는 단어 목록.
+    // 이 단어들이 축제명에 포함되어 있으면 'festival'을 추가하지 않음 (추가하면 오히려 검색 정확도 하락).
+    // 예) "Raw Wine Tokyo" → wine이 포함되어 있으므로 festival 추가 안 함 → 올바른 이벤트 영상 검색됨
+    // 예) "The Meat 2026" → 해당하는 단어 없음 → 'festival' 추가 → "The Meat festival" 로 검색
+    const explicitEventKeywords = [
+      // 축제/이벤트 명시 단어
+      'festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades',
+      'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'expo', 'carnival',
+      // 음식/음료 전문 이벤트 (이미 충분히 구체적)
+      'wine', 'beer', 'sake', 'whisky', 'whiskey', 'rum', 'spirits', 'cocktail',
+      'food', 'ramen', 'sushi', 'bbq', 'barbecue', 'coffee', 'tea', 'chocolate', 'cheese',
+      // 음악 장르 (구체적인 이벤트 성격 명시)
+      'jazz', 'blues', 'rock', 'classical', 'opera', 'electronic', 'techno', 'reggae',
+      // 예술/문화 (구체적)
+      'art', 'arts', 'film', 'cinema', 'theater', 'theatre', 'dance', 'design',
+      'anime', 'comic', 'manga', 'gaming', 'esports',
+      // 자연/계절 이벤트
+      'sakura', 'cherry blossom', 'autumn', 'lantern', 'fireworks', 'hanabi',
+      // 스포츠 이벤트
+      'triathlon', 'cycling', 'surf', 'ski', 'snowboard',
+    ];
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
       let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
-      const festivalKeywords = ['festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades', 'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'expo', 'carnival'];
       const lowerCleaned = cleaned.toLowerCase();
-      const hasFestivalKeyword = festivalKeywords.some(kw => lowerCleaned.includes(kw));
-      if (!hasFestivalKeyword) {
+      const hasExplicitKeyword = explicitEventKeywords.some(kw => lowerCleaned.includes(kw));
+      if (!hasExplicitKeyword) {
         cleaned = `${cleaned} festival`;
       }
       // 도시명이 포함되어 있지 않으면 영어 도시명 추가 (대소문자 무시)
@@ -364,15 +384,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
 
     // 일본어 쿼리 보정: 년도/年 제거 + 祭り 없으면 추가 + 도시명 없으면 추가
+    // 영어와 동일한 explicitEventKeywords 로직 적용 (일본어 키워드 포함)
+    const explicitEventKeywordsJp = [
+      ...explicitEventKeywords,
+      '祭り', 'まつり', 'パレード', 'イベント', 'フェア', 'マラソン', 'ショー', '展示会', 'フェスタ',
+      'ワイン', 'ビール', 'ウイスキー', 'フード', 'アート', 'ジャズ', 'フィルム', 'アニメ',
+    ];
     const buildJapaneseYoutubeQuery = (nameJp) => {
       if (!nameJp) return nameJp;
       let cleaned = nameJp.replace(/\d{4}[年년]?/g, '').replace(/\s{2,}/g, ' ').trim();
-      const festivalKeywords = [
-        '祭り', 'まつり', 'パレード', 'イベント', 'フェア', 'マラソン', 'ショー', '展示会', 'フェスタ',
-        'festival', 'festivals', 'parade', 'parades', 'fair', 'fairs',
-        'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'festa'
-      ];
-      const hasKeyword = festivalKeywords.some(kw => cleaned.includes(kw));
+      const hasKeyword = explicitEventKeywordsJp.some(kw => cleaned.includes(kw));
       if (!hasKeyword) {
         cleaned = cleaned + ' 祭り';
       }
