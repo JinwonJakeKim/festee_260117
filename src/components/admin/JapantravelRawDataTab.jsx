@@ -80,8 +80,9 @@ export default function JapantravelRawDataTab({
             <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
               <p className="text-blue-400 font-bold text-xs mb-2">🎬 YouTube 검색 쿼리 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
-                <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 영어명</span></li>
-                <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span> → 숏츠 부족 시 <span className="text-cyan-300">2차 일본어명</span></li>
+                <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span>으로만 검색</li>
+                <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span>으로만 검색</li>
+                <li>• <span className="text-red-400 font-bold">⚠️ 2차 언어 쿼리 현재 비활성화됨</span> <span className="text-gray-400">(숏츠 부족 시 반대 언어 재검색 기능 — 별도 지시 전까지 off)</span></li>
                 <li>• 연도(20XX) 제거 후 검색, 축제 관련 키워드 없으면 자동 추가 (festival / 祭り)</li>
                 <li>• <span className="text-green-300">축제명에 도시명이 없으면 쿼리 끝에 도시명 자동 추가</span> <span className="text-gray-400">(예: "THE MEAT festival Kanagawa")</span></li>
                 <li>• 숏츠는 최대 20개 수집, 1차+2차 합산하여 중복 제거</li>

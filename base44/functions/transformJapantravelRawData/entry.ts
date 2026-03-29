@@ -441,8 +441,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       extractedCoreKeywords = firstResult.data.coreKeywords || [];
     }
 
-    // 2차: 숏츠가 20개 미만이면 반대 언어로 추가 검색하여 보충
-    const needMoreShorts = shouldSearchShorts && youtubeShortUrls.length < 5;
+    // 2차 일본어 쿼리 비활성화 (별도 지시 전까지)
+    const needMoreShorts = false; // shouldSearchShorts && youtubeShortUrls.length < 5;
     if (needMoreShorts) {
       console.log(`[Transform] 🔄 Shorts < 20 (${youtubeShortUrls.length}개), retrying with ${secondaryLang}: "${secondaryQuery}"`);
 
