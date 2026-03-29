@@ -331,6 +331,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let highlightScore = 0;
   let highlightMatchedKeywords = [];
   let highlightViews = 0;
+  let highlightVideos = [];
   // 블록 밖에서도 접근 가능하도록 미리 선언
   const isOriginalJapanese = festivalData.original_language === 'ja';
 
@@ -420,14 +421,15 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     });
 
     if (firstResult.data?.success) {
-      if (shouldSearchHighlight && firstResult.data.highlightVideoUrl) {
-        videoUrl = firstResult.data.highlightVideoUrl;
-        videoChannelName = firstResult.data.highlightVideoChannelName || '';
-        highlightRelevanceRank = firstResult.data.highlightRelevanceRank || 0;
-        highlightScore = firstResult.data.highlightScore || 0;
-        highlightMatchedKeywords = firstResult.data.highlightMatchedKeywords || [];
-        highlightViews = firstResult.data.highlightViews || 0;
-      }
+    if (shouldSearchHighlight && firstResult.data.highlightVideoUrl) {
+      videoUrl = firstResult.data.highlightVideoUrl;
+      videoChannelName = firstResult.data.highlightVideoChannelName || '';
+      highlightRelevanceRank = firstResult.data.highlightRelevanceRank || 0;
+      highlightScore = firstResult.data.highlightScore || 0;
+      highlightMatchedKeywords = firstResult.data.highlightMatchedKeywords || [];
+      highlightViews = firstResult.data.highlightViews || 0;
+      highlightVideos = firstResult.data.highlightVideos || [];
+    }
       if (shouldSearchShorts) {
         youtubeShortUrls = firstResult.data.shortsUrls || [];
         shortsViewsTotal = (firstResult.data.shortsViewsList || []).reduce((s, v) => s + v, 0);
@@ -608,11 +610,31 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       query_jp: queryLang === 'jp' ? queryText : '',
       query_ko: '',
       keywords: extractedCoreKeywords || [],
-      highlights_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (videoUrl || '') : '',
-      highlights_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightViews || 0) : 0,
-      highlights_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightMatchedKeywords || []) : [],
-      highlights_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightRelevanceRank || 0) : 0,
-      highlights_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightScore || 0) : 0,
+      highlights1_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.url || videoUrl || '') : '',
+      highlights1_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.views || highlightViews || 0) : 0,
+      highlights1_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.matchedKeywords || highlightMatchedKeywords || []) : [],
+      highlights1_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.relevanceRank || highlightRelevanceRank || 0) : 0,
+      highlights1_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.score || highlightScore || 0) : 0,
+      highlights2_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.url || '') : '',
+      highlights2_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.views || 0) : 0,
+      highlights2_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.matchedKeywords || []) : [],
+      highlights2_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.relevanceRank || 0) : 0,
+      highlights2_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.score || 0) : 0,
+      highlights3_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.url || '') : '',
+      highlights3_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.views || 0) : 0,
+      highlights3_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.matchedKeywords || []) : [],
+      highlights3_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.relevanceRank || 0) : 0,
+      highlights3_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.score || 0) : 0,
+      highlights4_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.url || '') : '',
+      highlights4_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.views || 0) : 0,
+      highlights4_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.matchedKeywords || []) : [],
+      highlights4_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.relevanceRank || 0) : 0,
+      highlights4_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.score || 0) : 0,
+      highlights5_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.url || '') : '',
+      highlights5_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.views || 0) : 0,
+      highlights5_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.matchedKeywords || []) : [],
+      highlights5_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.relevanceRank || 0) : 0,
+      highlights5_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.score || 0) : 0,
       raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v) => s + v, 0),
       shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0,
       shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0,

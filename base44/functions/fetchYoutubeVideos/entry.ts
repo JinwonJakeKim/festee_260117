@@ -136,6 +136,7 @@ Deno.serve(async (req) => {
     let highlightScore = 0;
     let highlightMatchedKeywords = [];
     let highlightViews = 0;
+    let highlightVideos = []; // 상위 5개 하이라이트 영상 정보
     let shortsUrls = [];
     let shortsViewsTotal = 0;
     let shortsViewsList = []; // 각 숏츠별 개별 조회수
@@ -328,34 +329,47 @@ Deno.serve(async (req) => {
                   console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} ${v.isOfficial?'🏛️':''} "${v.title}"`);
                 });
 
-                const topVideo = videosWithPriority[0];
+                // 상위 5개 하이라이트 영상 정보 수집
+                const top5Videos = videosWithPriority.slice(0, 5);
+                
+                // 상위 5개 영상 조회수 일괄 조회
+                const top5VideoIds = top5Videos.map(v => v.videoId);
+                let top5ViewsMap = {};
+                try {
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                  const viewsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${top5VideoIds.join(',')}&key=${youtubeApiKey}`;
+                  const viewsResponse = await fetch(viewsUrl);
+                  if (viewsResponse.ok) {
+                    const viewsData = await viewsResponse.json();
+                    viewsData.items?.forEach(v => {
+                      top5ViewsMap[v.id] = parseInt(v.statistics?.viewCount || '0', 10);
+                    });
+                  }
+                } catch (viewsError) {
+                  console.error(`[FetchYoutubeVideos] ⚠️ Failed to fetch highlight views:`, viewsError.message);
+                }
+
+                highlightVideos = top5Videos.map(v => ({
+                  url: `https://www.youtube.com/watch?v=${v.videoId}`,
+                  views: top5ViewsMap[v.videoId] || 0,
+                  relevanceRank: v.relevanceIndex + 1,
+                  score: v.relevanceScore,
+                  matchedKeywords: v.matchedKeywords
+                }));
+
+                const topVideo = top5Videos[0];
                 if (topVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
                   highlightVideoChannelName = topVideo.channelTitle || '';
                   highlightRelevanceRank = topVideo.relevanceIndex + 1;
                   highlightScore = topVideo.relevanceScore;
                   highlightMatchedKeywords = topVideo.matchedKeywords;
+                  highlightViews = top5ViewsMap[topVideo.videoId] || 0;
 
-                  // highlightViews: 조회수 가져오기
-                  try {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    const viewsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${topVideo.videoId}&key=${youtubeApiKey}`;
-                    const viewsResponse = await fetch(viewsUrl);
-                    if (viewsResponse.ok) {
-                      const viewsData = await viewsResponse.json();
-                      highlightViews = parseInt(viewsData.items?.[0]?.statistics?.viewCount || '0', 10);
-                    }
-                  } catch (viewsError) {
-                    console.error(`[FetchYoutubeVideos] ⚠️ Failed to fetch highlight views:`, viewsError.message);
-                  }
-
-                  console.log(`[FetchYoutubeVideos] ✅ Top video selected:`);
-                  console.log(`[FetchYoutubeVideos]    Score: ${topVideo.relevanceScore}, Keywords: [${highlightMatchedKeywords.join(', ')}]`);
-                  console.log(`[FetchYoutubeVideos]    ${topVideo.isOfficial ? '🏛️ 공공기관' : '일반'} ${topVideo.is4K ? '(4K)' : ''}`);
-                  console.log(`[FetchYoutubeVideos]    Title: ${topVideo.title}`);
-                  console.log(`[FetchYoutubeVideos]    Channel: ${highlightVideoChannelName}`);
-                  console.log(`[FetchYoutubeVideos]    Views: ${highlightViews}`);
-                  console.log(`[FetchYoutubeVideos]    URL: ${highlightVideoUrl}`);
+                  console.log(`[FetchYoutubeVideos] ✅ Top 5 highlight videos selected:`);
+                  top5Videos.forEach((v, i) => {
+                    console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
+                  });
                 }
               }
             } else {
@@ -494,11 +508,12 @@ Deno.serve(async (req) => {
       success: true,
       highlightVideoUrl,
       highlightVideoChannelName,
-      highlightRelevanceRank: highlightRelevanceRank,
-      highlightScore: highlightScore,
-      highlightMatchedKeywords: highlightMatchedKeywords,
-      highlightViews: highlightViews,
-      coreKeywords: coreKeywords,
+      highlightRelevanceRank,
+      highlightScore,
+      highlightMatchedKeywords,
+      highlightViews,
+      highlightVideos,
+      coreKeywords,
       shortsUrls,
       shortsViewsTotal,
       shortsViewsList,
