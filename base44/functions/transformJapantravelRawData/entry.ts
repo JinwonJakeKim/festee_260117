@@ -350,6 +350,37 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     // 이 단어들이 축제명에 포함되어 있으면 'festival'을 추가하지 않음 (추가하면 오히려 검색 정확도 하락).
     // 예) "Raw Wine Tokyo" → wine이 포함되어 있으므로 festival 추가 안 함 → 올바른 이벤트 영상 검색됨
     // 예) "The Meat 2026" → 해당하는 단어 없음 → 'festival' 추가 → "The Meat festival" 로 검색
+    // 광역도시(city 필드) → 해당 광역도시에 속하는 주요 하위 도시 매핑
+    // 축제명에 하위 도시가 포함되어 있으면 city(광역도시)를 쿼리에 추가하지 않음
+    const majorCitiesInRegions = {
+      // 일본 - 주요 광역도시/현 및 하위 도시
+      'aichi': ['nagoya', 'toyota', 'okazaki', 'ichinomiya', 'kasugai', 'toyohashi'],
+      'osaka': ['osaka', 'sakai', 'higashiosaka', 'hirakata', 'toyonaka', 'suita'],
+      'tokyo': ['tokyo', 'shinjuku', 'shibuya', 'asakusa', 'harajuku', 'akihabara', 'ginza', 'roppongi', 'ueno', 'ikebukuro'],
+      'kanagawa': ['yokohama', 'kawasaki', 'sagamihara', 'kamakura', 'hakone', 'odawara'],
+      'kyoto': ['kyoto', 'uji', 'maizuru', 'fushimi', 'arashiyama'],
+      'hyogo': ['kobe', 'himeji', 'nishinomiya', 'amagasaki', 'akashi'],
+      'fukuoka': ['fukuoka', 'kitakyushu', 'kurume', 'hakata', 'tenjin'],
+      'hokkaido': ['sapporo', 'hakodate', 'asahikawa', 'obihiro', 'otaru'],
+      'miyagi': ['sendai', 'ishinomaki', 'osaki'],
+      'hiroshima': ['hiroshima', 'fukuyama', 'onomichi', 'miyajima'],
+      'shizuoka': ['shizuoka', 'hamamatsu', 'numazu', 'atami', 'shimizu'],
+      'chiba': ['chiba', 'narita', 'funabashi', 'matsudo', 'urayasu'],
+      'saitama': ['saitama', 'kawagoe', 'kawaguchi', 'urawa', 'omiya'],
+      'nara': ['nara', 'kashihara', 'sakurai', 'yoshino'],
+      'mie': ['ise', 'tsu', 'yokkaichi', 'matsusaka'],
+      'nagano': ['nagano', 'matsumoto', 'karuizawa', 'suwa', 'hakuba'],
+      'niigata': ['niigata', 'nagaoka', 'joetsu'],
+      'okinawa': ['naha', 'okinawa', 'nago', 'ishigaki', 'miyako'],
+      'gifu': ['gifu', 'ogaki', 'takayama', 'gero'],
+      'tochigi': ['nikko', 'utsunomiya', 'ashikaga', 'nasu'],
+      'ibaraki': ['mito', 'tsukuba', 'hitachi'],
+      'ishikawa': ['kanazawa', 'komatsu', 'wajima'],
+      'ehime': ['matsuyama', 'imabari', 'uwajima'],
+      'kumamoto': ['kumamoto', 'yatsushiro', 'aso'],
+      'kagoshima': ['kagoshima', 'kirishima', 'yakushima'],
+    };
+
     const explicitEventKeywords = [
       // 축제/이벤트 명시 단어
       'festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades',
@@ -367,6 +398,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       // 스포츠 이벤트
       'triathlon', 'cycling', 'surf', 'ski', 'snowboard',
     ];
+
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
       let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
@@ -375,9 +407,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (!hasExplicitKeyword) {
         cleaned = `${cleaned} festival`;
       }
-      // 도시명이 포함되어 있지 않으면 영어 도시명 추가 (대소문자 무시)
+      // 스마트 지역 키워드 결정:
+      // city 필드(광역도시)에 속하는 하위 도시가 축제명에 이미 포함되어 있으면 city를 추가하지 않음
       const cityEn = (festivalData.city || '').toLowerCase();
-      if (cityEn && !cleaned.toLowerCase().includes(cityEn)) {
+      const subCities = majorCitiesInRegions[cityEn] || [];
+      const festivalNameHasSubCity = subCities.some(sc => lowerCleaned.includes(sc));
+      if (festivalNameHasSubCity) {
+        // 축제명에 하위 도시(예: nagoya)가 이미 포함 → city(예: aichi) 추가 불필요
+        console.log(`[Transform] 🗺️ EN query: sub-city already in name, skipping city "${festivalData.city}"`);
+      } else if (cityEn && !lowerCleaned.includes(cityEn)) {
+        // 하위 도시도 없고 city도 없으면 city 추가
         cleaned = `${cleaned} ${festivalData.city}`;
       }
       return cleaned;
@@ -397,10 +436,17 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (!hasKeyword) {
         cleaned = cleaned + ' 祭り';
       }
-      // 도시명이 포함되어 있지 않으면 일본어 도시명(없으면 영어) 추가
+      // 스마트 지역 키워드 결정 (일본어):
+      // 영어 축제명(name_original) 기준으로 하위 도시 포함 여부 체크
+      const cityEn = (festivalData.city || '').toLowerCase();
+      const subCities = majorCitiesInRegions[cityEn] || [];
+      const originalNameLower = (festivalData.name_original || '').toLowerCase();
+      const festivalNameHasSubCity = subCities.some(sc => originalNameLower.includes(sc));
       const cityJp = translatedData.city_jp || '';
-      const cityEn = festivalData.city || '';
-      if (!cityIncludedInQuery(cleaned, cityEn, cityJp)) {
+      if (festivalNameHasSubCity) {
+        // 축제 원본명에 하위 도시가 포함 → 일본어 도시명 추가 불필요
+        console.log(`[Transform] 🗺️ JP query: sub-city already in name, skipping city "${cityJp || cityEn}"`);
+      } else if (!cityIncludedInQuery(cleaned, cityEn, cityJp)) {
         cleaned = `${cleaned} ${cityJp || cityEn}`;
       }
       return cleaned;
