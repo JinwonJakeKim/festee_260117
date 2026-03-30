@@ -1,0 +1,454 @@
+{
+  "name": "Festival",
+  "type": "object",
+  "properties": {
+    "tour_api_raw_data_id": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 TourApiRawData \uc5d4\ud2f0\ud2f0 ID (\uc911\ubcf5 \ubc29\uc9c0\uc6a9)"
+    },
+    "name_ko": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\ud55c\uad6d\uc5b4)"
+    },
+    "name_en": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\uc601\uc5b4)"
+    },
+    "name_jp": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\uc77c\ubcf8\uc5b4)"
+    },
+    "name_zh": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\uc911\uad6d\uc5b4)"
+    },
+    "name_original": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\uc6d0\ubcf8 \uc5b8\uc5b4)"
+    },
+    "original_language": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \uc5b8\uc5b4 \ucf54\ub4dc (ja, ko, en, zh, th \ub4f1)"
+    },
+    "summary_ko": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc694\uc57d (\ud55c\uad6d\uc5b4)"
+    },
+    "summary_en": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc694\uc57d (\uc601\uc5b4)"
+    },
+    "summary_jp": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc694\uc57d (\uc77c\ubcf8\uc5b4)"
+    },
+    "summary_zh": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc694\uc57d (\uc911\uad6d\uc5b4)"
+    },
+    "description_ko": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \uc124\uba85 (\ud55c\uad6d\uc5b4)"
+    },
+    "description_en": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \uc124\uba85 (\uc601\uc5b4)"
+    },
+    "description_jp": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \uc124\uba85 (\uc77c\ubcf8\uc5b4)"
+    },
+    "description_zh": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \uc124\uba85 (\uc911\uad6d\uc5b4)"
+    },
+    "description_original": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \uc124\uba85 (\uc6d0\ubcf8 \uc5b8\uc5b4 \uc6d0\ubb38)"
+    },
+    "country": {
+      "type": "string",
+      "description": "\uad6d\uac00"
+    },
+    "country_ko": {
+      "type": "string",
+      "description": "\uad6d\uac00 (\ud55c\uad6d\uc5b4)"
+    },
+    "country_en": {
+      "type": "string",
+      "description": "\uad6d\uac00 (\uc601\uc5b4)"
+    },
+    "country_jp": {
+      "type": "string",
+      "description": "\uad6d\uac00 (\uc77c\ubcf8\uc5b4)"
+    },
+    "country_zh": {
+      "type": "string",
+      "description": "\uad6d\uac00 (\uc911\uad6d\uc5b4)"
+    },
+    "city": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc"
+    },
+    "city_ko": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc (\ud55c\uad6d\uc5b4)"
+    },
+    "city_en": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc (\uc601\uc5b4)"
+    },
+    "city_jp": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc (\uc77c\ubcf8\uc5b4)"
+    },
+    "city_zh": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc (\uc911\uad6d\uc5b4)"
+    },
+    "major_region": {
+      "type": "string",
+      "description": "\uad11\uc5ed \ub3c4\uc2dc/\uc9c0\uc5ed\uba85 (\uc6d0\ubcf8)"
+    },
+    "major_region_ko": {
+      "type": "string",
+      "description": "\uad11\uc5ed \ub3c4\uc2dc/\uc9c0\uc5ed\uba85 (\ud55c\uad6d\uc5b4)"
+    },
+    "major_region_en": {
+      "type": "string",
+      "description": "\uad11\uc5ed \ub3c4\uc2dc/\uc9c0\uc5ed\uba85 (\uc601\uc5b4)"
+    },
+    "major_region_jp": {
+      "type": "string",
+      "description": "\uad11\uc5ed \ub3c4\uc2dc/\uc9c0\uc5ed\uba85 (\uc77c\ubcf8\uc5b4)"
+    },
+    "major_region_zh": {
+      "type": "string",
+      "description": "\uad11\uc5ed \ub3c4\uc2dc/\uc9c0\uc5ed\uba85 (\uc911\uad6d\uc5b4)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "\uc74c\uc545",
+        "\ubb38\ud654",
+        "\uc608\uc220",
+        "\uc74c\uc2dd",
+        "\uc2a4\ud3ec\uce20",
+        "\uc9c0\uc5ed\ucd95\uc81c",
+        "\uae30\ud0c0"
+      ],
+      "description": "\ucd95\uc81c \uce74\ud14c\uace0\ub9ac"
+    },
+    "category_en": {
+      "type": "string",
+      "description": "\uce74\ud14c\uace0\ub9ac (\uc601\uc5b4)"
+    },
+    "category_jp": {
+      "type": "string",
+      "description": "\uce74\ud14c\uace0\ub9ac (\uc77c\ubcf8\uc5b4)"
+    },
+    "category_zh": {
+      "type": "string",
+      "description": "\uce74\ud14c\uace0\ub9ac (\uc911\uad6d\uc5b4)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc2dc\uc791 \ub0a0\uc9dc"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc885\ub8cc \ub0a0\uc9dc"
+    },
+    "date_status": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "tentative",
+        "estimated"
+      ],
+      "default": "confirmed",
+      "description": "\ub0a0\uc9dc \uc0c1\ud0dc: confirmed(\ud655\uc815), tentative(\ubbf8\ud655\uc815), estimated(\ucd94\uc815)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "\uc704\ub3c4"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "\uacbd\ub3c4"
+    },
+    "geocoding_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "success",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Geocoding \ucc98\ub9ac \uc0c1\ud0dc"
+    },
+    "geocoding_error_message": {
+      "type": "string",
+      "description": "Geocoding \uc2e4\ud328 \uc2dc \uc624\ub958 \uba54\uc2dc\uc9c0"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\uc378\ub124\uc77c \uc774\ubbf8\uc9c0"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1"
+    },
+    "video_channel_name": {
+      "type": "string",
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1 \ucc44\ub110\uba85"
+    },
+    "youtube_shorts_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5,
+      "description": "\uc720\ud29c\ube0c Shorts URL (\ucd5c\ub300 5\uac1c)"
+    },
+    "shorts_views_5_total": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc720\ud29c\ube0c Shorts 5\uac1c \uc870\ud68c\uc218 \ud569\uc0b0 (\uc778\uae30\ub3c4 \uc9c0\ud45c)"
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "youtube"
+            ],
+            "description": "\ubbf8\ub514\uc5b4 \ud0c0\uc785"
+          },
+          "url": {
+            "type": "string",
+            "description": "\ubbf8\ub514\uc5b4 URL"
+          },
+          "caption": {
+            "type": "string",
+            "description": "\ucea1\uc158 (\uc120\ud0dd)"
+          }
+        }
+      },
+      "description": "\ucd94\uac00 \ubbf8\ub514\uc5b4 (\uc774\ubbf8\uc9c0/\uc601\uc0c1) \ubaa9\ub85d"
+    },
+    "image_gallery_urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "originimgurl": {
+            "type": "string",
+            "description": "\uc6d0\ubcf8 \uc774\ubbf8\uc9c0 URL"
+          },
+          "smallimageurl": {
+            "type": "string",
+            "description": "\uc378\ub124\uc77c \uc774\ubbf8\uc9c0 URL"
+          },
+          "imgname": {
+            "type": "string",
+            "description": "\uc774\ubbf8\uc9c0 \uc124\uba85"
+          }
+        }
+      },
+      "description": "\ucd95\uc81c \uac24\ub7ec\ub9ac \uc774\ubbf8\uc9c0\ub4e4 (detailImage1\uc5d0\uc11c \uac00\uc838\uc628 \uc774\ubbf8\uc9c0)"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc88b\uc544\uc694 \uc218"
+    },
+    "catches_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc778\uc99d \uc218"
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ub313\uae00 \uc218"
+    },
+    "website": {
+      "type": "string",
+      "description": "\uacf5\uc2dd \uc6f9\uc0ac\uc774\ud2b8"
+    },
+    "highlights_ko": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \ud3ec\uc778\ud2b8 (\ud55c\uad6d\uc5b4)"
+    },
+    "highlights_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \ud3ec\uc778\ud2b8 (\uc601\uc5b4)"
+    },
+    "highlights_jp": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \ud3ec\uc778\ud2b8 (\uc77c\ubcf8\uc5b4)"
+    },
+    "highlights_zh": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud558\uc774\ub77c\uc774\ud2b8 \ud3ec\uc778\ud2b8 (\uc911\uad6d\uc5b4)"
+    },
+    "lineup": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "artists": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "\ub77c\uc778\uc5c5 \uc815\ubcf4"
+    },
+    "price": {
+      "type": "number",
+      "description": "\uac00\uaca9 (\uc6d0)"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\uac00\uaca9 (\uc5d4\ud654, japantravel \ucd94\ucd9c \ucd95\uc81c\uc6a9)"
+    },
+    "price_details": {
+      "type": "string",
+      "description": "\uac00\uaca9 \uc0c1\uc138 \uc815\ubcf4 (\ubaa8\ub4e0 \ud2f0\ucf13 \uc885\ub958)"
+    },
+    "tags_ko": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud0dc\uadf8 (\ud55c\uad6d\uc5b4)"
+    },
+    "tags_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud0dc\uadf8 (\uc601\uc5b4)"
+    },
+    "tags_jp": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud0dc\uadf8 (\uc77c\ubcf8\uc5b4)"
+    },
+    "tags_zh": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud0dc\uadf8 (\uc911\uad6d\uc5b4)"
+    },
+    "star_rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "FesteeStar \ub4f1\uae09 (1-5)"
+    },
+    "opening_hours": {
+      "type": "string",
+      "description": "\uc6b4\uc601 \uc2dc\uac04"
+    },
+    "opening_hours_ko": {
+      "type": "string",
+      "description": "\uc6b4\uc601 \uc2dc\uac04 (\ud55c\uad6d\uc5b4)"
+    },
+    "opening_hours_en": {
+      "type": "string",
+      "description": "\uc6b4\uc601 \uc2dc\uac04 (\uc601\uc5b4)"
+    },
+    "access_info": {
+      "type": "string",
+      "description": "\uc8fc\uc18c \uc815\ubcf4"
+    },
+    "access_info_ko": {
+      "type": "string",
+      "description": "\uc8fc\uc18c \uc815\ubcf4 (\ud55c\uad6d\uc5b4)"
+    },
+    "access_info_en": {
+      "type": "string",
+      "description": "\uc8fc\uc18c \uc815\ubcf4 (\uc601\uc5b4)"
+    },
+    "organizer": {
+      "type": "string",
+      "description": "\uc8fc\ucd5c/\uc8fc\uad00 \uae30\uad00"
+    },
+    "contact": {
+      "type": "object",
+      "description": "\uc5f0\ub77d\ucc98 \uc815\ubcf4",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "social_media": {
+      "type": "object",
+      "description": "SNS \ub9c1\ud06c",
+      "properties": {
+        "facebook": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        }
+      }
+    },
+    "create_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Festival \uc5d4\ud2f0\ud2f0 \ucd5c\ucd08 \uc0dd\uc131 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    },
+    "update_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Festival \uc5d4\ud2f0\ud2f0 \ub9c8\uc9c0\ub9c9 \uc5c5\ub370\uc774\ud2b8 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    }
+  },
+  "required": [
+    "country",
+    "city",
+    "start_date",
+    "end_date"
+  ]
+}

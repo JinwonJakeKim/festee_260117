@@ -375,10 +375,24 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (!hasExplicitKeyword) {
         cleaned = `${cleaned} festival`;
       }
-      // 도시명이 포함되어 있지 않으면 영어 도시명 추가 (대소문자 무시)
+      // 도시명/광역도시명 중복 추가 방지:
+      // 1) 축제명에 이미 도시명(city)이 포함되어 있으면 광역도시(major_region)도 추가하지 않음
+      // 2) 축제명에 도시명은 없지만 광역도시명이 이미 포함되어 있어도 추가하지 않음
+      // 3) 둘 다 없을 때만 광역도시명 우선, 없으면 도시명 추가
       const cityEn = (festivalData.city || '').toLowerCase();
-      if (cityEn && !cleaned.toLowerCase().includes(cityEn)) {
-        cleaned = `${cleaned} ${festivalData.city}`;
+      const majorRegionEn = (existingFestivalRecord?.major_region_en || '').toLowerCase();
+      const lowerResult = cleaned.toLowerCase();
+      if (cityEn && lowerResult.includes(cityEn)) {
+        // 도시명이 이미 축제명에 포함됨 → 아무것도 추가하지 않음
+      } else if (majorRegionEn && lowerResult.includes(majorRegionEn)) {
+        // 광역도시명이 이미 축제명에 포함됨 → 아무것도 추가하지 않음
+      } else {
+        // 둘 다 없으면 광역도시명 우선, 없으면 도시명 추가
+        if (majorRegionEn) {
+          cleaned = `${cleaned} ${existingFestivalRecord.major_region_en}`;
+        } else if (cityEn) {
+          cleaned = `${cleaned} ${festivalData.city}`;
+        }
       }
       return cleaned;
     };
@@ -397,11 +411,27 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       if (!hasKeyword) {
         cleaned = cleaned + ' 祭り';
       }
-      // 도시명이 포함되어 있지 않으면 일본어 도시명(없으면 영어) 추가
+      // 도시명/광역도시명 중복 추가 방지 (일본어 버전):
+      // 1) 축제명에 이미 도시명(city_jp 또는 city)이 포함되어 있으면 추가하지 않음
+      // 2) 광역도시명(major_region_jp)이 이미 포함되어 있어도 추가하지 않음
+      // 3) 둘 다 없을 때만 광역도시명 우선, 없으면 도시명 추가
       const cityJp = translatedData.city_jp || '';
       const cityEn = festivalData.city || '';
-      if (!cityIncludedInQuery(cleaned, cityEn, cityJp)) {
-        cleaned = `${cleaned} ${cityJp || cityEn}`;
+      const majorRegionJp = existingFestivalRecord?.major_region_jp || '';
+      const majorRegionEn = existingFestivalRecord?.major_region_en || '';
+      if (cityIncludedInQuery(cleaned, cityEn, cityJp)) {
+        // 도시명이 이미 포함됨 → 아무것도 추가하지 않음
+      } else if ((majorRegionJp && cleaned.includes(majorRegionJp)) || (majorRegionEn && cleaned.toLowerCase().includes(majorRegionEn.toLowerCase()))) {
+        // 광역도시명이 이미 포함됨 → 아무것도 추가하지 않음
+      } else {
+        // 둘 다 없으면 광역도시명 우선, 없으면 도시명 추가
+        if (majorRegionJp) {
+          cleaned = `${cleaned} ${majorRegionJp}`;
+        } else if (majorRegionEn) {
+          cleaned = `${cleaned} ${majorRegionEn}`;
+        } else {
+          cleaned = `${cleaned} ${cityJp || cityEn}`;
+        }
       }
       return cleaned;
     };
@@ -559,6 +589,12 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     city_en: translatedData.city_en || festivalData.city,
     city_jp: translatedData.city_jp || festivalData.city,
     city_zh: translatedData.city_zh || festivalData.city,
+    // 광역도시: 기존 Festival에 저장된 값 보존 (transform 과정에서 덮어쓰지 않음)
+    major_region: existingFestivalRecord?.major_region || '',
+    major_region_ko: existingFestivalRecord?.major_region_ko || '',
+    major_region_en: existingFestivalRecord?.major_region_en || '',
+    major_region_jp: existingFestivalRecord?.major_region_jp || '',
+    major_region_zh: existingFestivalRecord?.major_region_zh || '',
     start_date: festivalData.start_date,
     end_date: festivalData.end_date,
     date_status: festivalData.date_status,
