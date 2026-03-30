@@ -400,8 +400,9 @@ Deno.serve(async (req) => {
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Shorts 검색: 쿼리에 #Shorts 태그 포함 + order=relevance 명시
-        const shortsQuery = `${festivalNameForSearch} #Shorts`;
+        // Shorts 검색: 일반 영상과 동일한 보정된 쿼리 사용 + #Shorts 태그 추가
+        // festivalName은 이미 buildEnglishYoutubeQuery/buildJapaneseYoutubeQuery를 거친 보정된 쿼리
+        const shortsQuery = `${festivalName} #Shorts`;
         const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(shortsQuery)}&type=video&videoDuration=short&order=relevance&maxResults=20&key=${youtubeApiKey}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
