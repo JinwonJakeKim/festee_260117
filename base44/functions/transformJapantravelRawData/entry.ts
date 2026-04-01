@@ -616,8 +616,27 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     video_channel_name: videoChannelName,
     image_gallery_urls: festivalData.image_gallery_urls,
     media_urls: mediaUrls,
-    youtube_shorts_urls: youtubeShortUrls.slice(0, 5),
-    shorts_views_5_total: firstResultViewsList.slice(0, 5).reduce((s, v) => s + v, 0),
+    youtube_shorts_urls: (() => {
+      // YouTube 관련성 순위 순서대로 score >= 1인 숏츠만 채택 (최대 5개)
+      const result = [];
+      for (let i = 0; i < youtubeShortUrls.length && result.length < 5; i++) {
+        if ((firstResultScores[i] || 0) >= 1) {
+          result.push(youtubeShortUrls[i]);
+        }
+      }
+      return result;
+    })(),
+    shorts_views_5_total: (() => {
+      // youtube_shorts_urls와 동일한 필터링 적용 후 조회수 합산
+      let views = 0, count = 0;
+      for (let i = 0; i < youtubeShortUrls.length && count < 5; i++) {
+        if ((firstResultScores[i] || 0) >= 1) {
+          views += firstResultViewsList[i] || 0;
+          count++;
+        }
+      }
+      return views;
+    })(),
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
     price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
     price_yen: festivalData.price_yen || null,
