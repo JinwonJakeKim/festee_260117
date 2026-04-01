@@ -412,11 +412,20 @@ Deno.serve(async (req) => {
             // 하이라이트 영상 videoId 추출 (숏츠 중복 방지용)
             const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
 
-            // API 결과 순서 그대로 숏츠 메타 정보 수집 (관련성 필터링 없음)
+            // API 결과 순서 그대로 숏츠 메타 정보 수집 + 키워드 점수 계산
             const relevantShortsMeta = [];
             shortsData.items.forEach((item, idx) => {
               if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
-              relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score: 0, matchedKeywords: [] });
+              const score = calcRelevanceScore(item);
+              const matchedKeywords = coreKeywords.filter(kw => {
+                const combined = [
+                  item.snippet?.title || '',
+                  item.snippet?.description || '',
+                  item.snippet?.channelTitle || ''
+                ].join(' ').toLowerCase();
+                return combined.includes(kw);
+              });
+              relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords });
             });
             const relevantShortsItems = relevantShortsMeta;
             console.log(`[FetchYoutubeVideos] ✅ Shorts collected: ${relevantShortsItems.length}/${shortsData.items.length}`);
