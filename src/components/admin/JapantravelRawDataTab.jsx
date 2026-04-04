@@ -62,7 +62,7 @@ export default function JapantravelRawDataTab({
         <ul className="text-gray-300 text-sm space-y-1">
           <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
           <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
-          <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색</li>
+          <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 (매 변환마다 항상 재검색)</li>
           <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
         </ul>
 
@@ -80,35 +80,37 @@ export default function JapantravelRawDataTab({
             <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
               <p className="text-blue-400 font-bold text-xs mb-2">🎬 YouTube 검색 쿼리 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
-                <li>• <span className="text-yellow-300">원본 언어가 일본어(ja)</span>인 경우: <span className="text-cyan-300">1차 일본어명</span>으로만 검색</li>
-                <li>• <span className="text-yellow-300">원본 언어가 영어 등(en)</span>인 경우: <span className="text-cyan-300">1차 영어 원본명</span>으로만 검색</li>
-                <li>• <span className="text-red-400 font-bold">⚠️ 2차 언어 쿼리 현재 비활성화됨</span> <span className="text-gray-400">(숏츠 부족 시 반대 언어 재검색 기능 — 별도 지시 전까지 off)</span></li>
-                <li>• 연도(20XX) 제거 후 검색, 축제 관련 키워드 없으면 자동 추가 (festival / 祭り)</li>
-                <li>• <span className="text-green-300">축제명에 도시명이 없으면 쿼리 끝에 도시명 자동 추가</span> <span className="text-gray-400">(예: "THE MEAT festival Kanagawa")</span></li>
-                <li>• 숏츠는 최대 20개 수집, 1차+2차 합산하여 중복 제거</li>
+                <li>• <span className="text-yellow-300">원본 축제명이 로마자(라틴 알파벳)</span>인 경우: <span className="text-cyan-300">영어 원본명</span>으로 1차 검색</li>
+                <li>• <span className="text-yellow-300">원본 축제명에 일본어 문자가 포함</span>된 경우: <span className="text-cyan-300">일본어명</span>으로 1차 검색</li>
+                <li>• 연도(20XX) 제거 후 검색. <span className="text-green-300">축제/이벤트 성격 키워드(festival, wine, jazz, art 등)가 없으면 자동 추가</span> (영어: festival / 일본어: 祭り)</li>
+                <li>• <span className="text-green-300">스마트 도시명 추가:</span> 축제명에 도시/하위지역명이 없으면 쿼리 끝에 도시명 자동 추가. 단, 광역도시(예: aichi) 내 하위 도시(예: nagoya)가 축제명에 이미 있으면 중복 추가 방지</li>
+                <li>• <span className="text-gray-400">예: "THE MEAT festival Kanagawa" / "くらやみ祭り 東京"</span></li>
+                <li>• <span className="text-red-400 font-bold">⚠️ 2차 언어 쿼리 현재 비활성화됨</span> <span className="text-gray-400">(별도 지시 전까지 off)</span></li>
               </ul>
             </div>
             <div className="mt-2 bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-3">
-              <p className="text-yellow-400 font-bold text-xs mb-2">🎯 하이라이트 영상 관련성 점수 로직</p>
+              <p className="text-yellow-400 font-bold text-xs mb-2">🎯 하이라이트 & Shorts 관련성 점수(score) 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
                 <li>• 축제명에서 <span className="text-red-300">festival, matsuri, 연도(20XX), 일반 도시명</span> 등을 제거한 고유명사를 <span className="text-yellow-300">핵심 키워드</span>로 추출</li>
                 <li>• 예: <span className="text-gray-400">"Shinagawa Kids Family Terrace festival Tokyo 2026"</span> → 핵심키워드: <span className="text-cyan-300">shinagawa, kids, family, terrace</span></li>
                 <li>• 각 핵심 키워드가 영상 <span className="text-green-300">제목(title) 또는 설명(description)</span>에 포함되면 1점씩 부여</li>
-                <li>• <span className="text-yellow-300">score ≥ 1인 영상만 하이라이트 후보로 채택</span> — 미달 시 하이라이트 영상 없음으로 처리 (기존 영상도 삭제)</li>
-                <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
+                <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 영상만 채택</span> — 하이라이트/숏츠 모두 동일 기준 적용. 미달 시 해당 영상 없음으로 처리 (기존 영상도 삭제)</li>
+                <li>• 하이라이트: 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 1개 선택</li>
+                <li>• 숏츠: score ≥ 1인 것을 최대 5개 채택, 그 조회수 합산 → <code className="bg-gray-800 px-1 rounded">YoutubeRawdata.raw_shorts_views_5_total</code> 및 <code className="bg-gray-800 px-1 rounded">Festival.shorts_views_5_total</code>에 동일하게 저장</li>
               </ul>
             </div>
             <div className="mt-2 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
               <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
               <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
-              <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
+              <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤, stage</p>
             </div>
             <div className="mt-2 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
               <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
-                <li>• <span className="text-yellow-300">score ≥ 1</span>인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
-                <li>• 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
+                <li>• score ≥ 1인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
+                <li>• 최대 5개 채택, 조회수 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
                 <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
+                <li>• <span className="text-cyan-300">YoutubeRawdata 스냅샷</span>에 쿼리별 상위 20개 숏츠 원본 데이터 저장 (scores, views, relevance_rank, matched_keywords 포함)</li>
               </ul>
             </div>
           </>
