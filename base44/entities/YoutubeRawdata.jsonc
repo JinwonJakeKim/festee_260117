@@ -163,7 +163,7 @@
     "raw_shorts_views_5_total": {
       "type": "number",
       "default": 0,
-      "description": "\uc20f\uce20 \uc0c1\uc704 5\uac1c \uc870\ud68c\uc218 \ud569\uc0b0 (shorts1~5_views \ud569\uacc4)"
+      "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 1\uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
     },
     "shorts1_url": {
       "type": "string",
