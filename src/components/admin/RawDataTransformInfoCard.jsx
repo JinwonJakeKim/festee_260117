@@ -56,6 +56,7 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
           <li>• 각 핵심 키워드가 영상 제목(title) 또는 설명(description)에 포함될 때마다 1점씩 부여</li>
           <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 영상만 하이라이트 후보로 채택</span> — 미달 시 하이라이트 영상 없음으로 처리 (기존 영상도 삭제)</li>
           <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
+          <li>• <span className="text-yellow-300 font-bold">Shorts:</span> 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → Festival <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 필드에 저장</li>
         </ul>
       </div>
       <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
