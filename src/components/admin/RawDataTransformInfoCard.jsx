@@ -64,6 +64,14 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
         <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
         <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤, stage</p>
       </div>
+      <div className="mt-3 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
+        <p className="text-green-400 font-bold text-xs mb-2">📱 YouTube Shorts 수집 로직</p>
+        <ul className="text-gray-400 text-xs space-y-1">
+          <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 숏츠만 채택</span> (하이라이트와 동일한 관련성 필터링)</li>
+          <li>• 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
+          <li>• 하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외 (중복 방지)</li>
+        </ul>
+      </div>
     </Card>
   );
 }
