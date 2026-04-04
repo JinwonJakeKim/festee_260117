@@ -94,7 +94,7 @@ export default function JapantravelRawDataTab({
                 <li>• 축제명에서 <span className="text-red-300">festival, matsuri, 연도(20XX), 일반 도시명</span> 등을 제거한 고유명사를 <span className="text-yellow-300">핵심 키워드</span>로 추출</li>
                 <li>• 예: <span className="text-gray-400">"Shinagawa Kids Family Terrace festival Tokyo 2026"</span> → 핵심키워드: <span className="text-cyan-300">shinagawa, kids, family, terrace</span></li>
                 <li>• 각 핵심 키워드가 영상 <span className="text-green-300">제목(title) 또는 설명(description)</span>에 포함되면 1점씩 부여</li>
-                <li>• <span className="text-yellow-300">점수 2점 이상</span>인 영상만 하이라이트 후보로 채택 — 미달 시 하이라이트 영상 없음으로 처리</li>
+                <li>• <span className="text-yellow-300">score ≥ 1인 영상만 하이라이트 후보로 채택</span> — 미달 시 하이라이트 영상 없음으로 처리 (기존 영상도 삭제)</li>
                 <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
               </ul>
             </div>
@@ -106,7 +106,7 @@ export default function JapantravelRawDataTab({
             <div className="mt-2 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
               <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
-                <li>• 핵심 키워드 점수 2점 이상인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
+                <li>• <span className="text-yellow-300">score ≥ 1</span>인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
                 <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
               </ul>
             </div>
