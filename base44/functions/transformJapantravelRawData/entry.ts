@@ -115,8 +115,8 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     existingFestivalRecord.description_ko
   );
 
-  if (alreadyTranslated && !retransform) {
-    console.log(`[Transform] ⏭️ Translation skipped - already translated (retransform=false)`);
+  if (alreadyTranslated) {
+    console.log(`[Transform] ⏭️ Translation skipped - already translated`);
   }
 
   // YouTube API 일일 한도(90회) 초과 여부 사전 체크
@@ -145,7 +145,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   const skipDescSummaryTranslation = retransform && alreadyTranslated;
 
   // 번역이 이미 완료된 경우 Google Translate, LLM 모두 스킵
-  const googleTranslatePromise = (alreadyTranslated && !retransform)
+  const googleTranslatePromise = (alreadyTranslated)
     ? Promise.resolve({ data: { success: false, skipped: true } })
     : (() => {
         // 원본 언어와 동일한 언어는 번역 대상에서 제외
@@ -172,7 +172,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
       })();
 
   // LLM translation promise (description 길이 제한 적용) - 폴백용
-  const llmPromise = (alreadyTranslated && !retransform)
+  const llmPromise = (alreadyTranslated)
     ? Promise.resolve({
         name_ko: existingFestivalRecord.name_ko, name_en: existingFestivalRecord.name_en,
         name_jp: existingFestivalRecord.name_jp, name_zh: existingFestivalRecord.name_zh,
