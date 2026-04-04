@@ -107,6 +107,7 @@ export default function JapantravelRawDataTab({
               <p className="text-green-400 font-bold text-xs mb-1">📱 YouTube Shorts 수집 로직</p>
               <ul className="text-gray-300 text-xs space-y-1">
                 <li>• <span className="text-yellow-300">score ≥ 1</span>인 숏츠만 채택 (하이라이트와 동일한 관련성 필터링)</li>
+                <li>• 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
                 <li>• <span className="text-green-300">하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외</span> (중복 방지)</li>
               </ul>
             </div>
