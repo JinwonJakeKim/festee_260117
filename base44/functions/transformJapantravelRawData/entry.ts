@@ -488,14 +488,18 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     });
 
     if (firstResult.data?.success) {
-    if (shouldSearchHighlight && firstResult.data.highlightVideoUrl) {
-      videoUrl = firstResult.data.highlightVideoUrl;
-      videoChannelName = firstResult.data.highlightVideoChannelName || '';
+    if (shouldSearchHighlight) {
+      // score >= 1인 영상이 없으면 fetchYoutubeVideos가 '' 반환 → 기존 영상도 지움 (정확도 우선 기조)
+      videoUrl = firstResult.data.highlightVideoUrl ?? '';
+      videoChannelName = firstResult.data.highlightVideoUrl ? (firstResult.data.highlightVideoChannelName || '') : '';
       highlightRelevanceRank = firstResult.data.highlightRelevanceRank || 0;
       highlightScore = firstResult.data.highlightScore || 0;
       highlightMatchedKeywords = firstResult.data.highlightMatchedKeywords || [];
       highlightViews = firstResult.data.highlightViews || 0;
       highlightVideos = firstResult.data.highlightVideos || [];
+      if (!firstResult.data.highlightVideoUrl) {
+        console.log(`[Transform] ⚠️ No valid highlight video (score >= 1). Clearing existing video_url.`);
+      }
     }
       if (shouldSearchShorts) {
         youtubeShortUrls = firstResult.data.shortsUrls || [];

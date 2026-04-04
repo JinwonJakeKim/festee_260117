@@ -24,7 +24,7 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
       <ul className="text-gray-300 text-sm space-y-1">
         <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
         <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
-        <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 <span className="text-yellow-300">(Shorts는 YouTube 관련성 순위 순으로, 키워드 점수 score ≥ 1인 영상만 채택하여 최대 5개 노출)</span></li>
+        <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 <span className="text-yellow-300">(하이라이트·Shorts 공통: 관련성 순위 1위부터 순차 확인 → score ≥ 1인 첫 번째 영상 채택. score ≥ 1인 영상이 없으면 기존 영상도 삭제하여 빈 값으로 업데이트 — "정확하지 않은 영상 지양" 기조)</span></li>
         <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
       </ul>
       <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">

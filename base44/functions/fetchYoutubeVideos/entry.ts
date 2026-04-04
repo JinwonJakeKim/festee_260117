@@ -357,19 +357,25 @@ Deno.serve(async (req) => {
                   matchedKeywords: v.matchedKeywords
                 }));
 
-                const topVideo = top5Videos[0];
-                if (topVideo) {
-                  highlightVideoUrl = `https://www.youtube.com/watch?v=${topVideo.videoId}`;
-                  highlightVideoChannelName = topVideo.channelTitle || '';
-                  highlightRelevanceRank = topVideo.relevanceIndex + 1;
-                  highlightScore = topVideo.relevanceScore;
-                  highlightMatchedKeywords = topVideo.matchedKeywords;
-                  highlightViews = top5ViewsMap[topVideo.videoId] || 0;
+                console.log(`[FetchYoutubeVideos] ✅ Top 5 highlight videos selected:`);
+                top5Videos.forEach((v, i) => {
+                  console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
+                });
 
-                  console.log(`[FetchYoutubeVideos] ✅ Top 5 highlight videos selected:`);
-                  top5Videos.forEach((v, i) => {
-                    console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
-                  });
+                // 관련성 순위 순서대로 score >= 1인 첫 번째 영상 채택 (Shorts 로직과 동일)
+                const adoptedVideo = top5Videos.find(v => v.relevanceScore >= 1);
+                if (adoptedVideo) {
+                  highlightVideoUrl = `https://www.youtube.com/watch?v=${adoptedVideo.videoId}`;
+                  highlightVideoChannelName = adoptedVideo.channelTitle || '';
+                  highlightRelevanceRank = adoptedVideo.relevanceIndex + 1;
+                  highlightScore = adoptedVideo.relevanceScore;
+                  highlightMatchedKeywords = adoptedVideo.matchedKeywords;
+                  highlightViews = top5ViewsMap[adoptedVideo.videoId] || 0;
+                  console.log(`[FetchYoutubeVideos] ✅ Highlight adopted: score=${adoptedVideo.relevanceScore} "${adoptedVideo.title}"`);
+                } else {
+                  // score >= 1인 영상 없음 → 하이라이트 영상 없음으로 처리
+                  highlightVideoUrl = '';
+                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video with score >= 1 found. Setting highlight to empty.`);
                 }
               }
             } else {
