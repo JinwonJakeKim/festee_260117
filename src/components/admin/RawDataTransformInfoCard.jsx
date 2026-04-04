@@ -24,7 +24,7 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
       <ul className="text-gray-300 text-sm space-y-1">
         <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
         <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
-        <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 <span className="text-yellow-300">(하이라이트·Shorts 공통: 관련성 순위 1위부터 순차 확인 → score ≥ 1인 첫 번째 영상 채택. score ≥ 1인 영상이 없으면 기존 영상도 삭제하여 빈 값으로 업데이트 — "정확하지 않은 영상 지양" 기조)</span></li>
+        <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 <span className="text-yellow-300">(하이라이트·Shorts 공통: 관련성 순위 1위부터 순차 확인 → <strong>score ≥ 1</strong>인 첫 번째 영상 채택. score ≥ 1인 영상이 없으면 기존 영상도 삭제하여 빈 값으로 업데이트 — "정확하지 않은 영상 지양" 기조)</span></li>
         <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵하여 API 비용 절약 — name/city/country만 재번역)</span></li>
       </ul>
       <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
@@ -47,6 +47,16 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
           <p><span className="text-gray-400">스포츠:</span> triathlon, cycling, surf, ski, snowboard</p>
           <p><span className="text-gray-400">일본어 추가:</span> 祭り, まつり, パレード, イベント, フェア, マラソン, ワイン, ビール, アート, ジャズ 등</p>
         </div>
+      </div>
+      <div className="mt-3 bg-orange-900/20 border border-orange-400/30 rounded-lg p-3">
+        <p className="text-orange-400 font-bold text-xs mb-2">🎯 하이라이트 영상 관련성 점수 로직</p>
+        <ul className="text-gray-400 text-xs space-y-1">
+          <li>• 축제명에서 festival, matsuri, 연도(20XX), 일반 도시명 등을 제거한 고유명사를 핵심 키워드로 추출</li>
+          <li>• 예: "Shinagawa Kids Family Terrace festival Tokyo 2026" → 핵심키워드: shinagawa, kids, family, terrace</li>
+          <li>• 각 핵심 키워드가 영상 제목(title) 또는 설명(description)에 포함될 때마다 1점씩 부여</li>
+          <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 영상만 하이라이트 후보로 채택</span> — 미달 시 하이라이트 영상 없음으로 처리 (기존 영상도 삭제)</li>
+          <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
+        </ul>
       </div>
       <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
         <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
