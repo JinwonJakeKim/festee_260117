@@ -459,6 +459,7 @@ Deno.serve(async (req) => {
                     shortsViewsMap[`https://www.youtube.com/shorts/${video.id}`] = views;
                   });
                   
+                  // 임베드 가능한 숏츠를 최대 20개로 수집 (저장용)
                   const embeddableShorts = embeddableItems
                     .map(video => `https://www.youtube.com/shorts/${video.id}`)
                     .slice(0, 20);
@@ -471,11 +472,18 @@ Deno.serve(async (req) => {
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
                     shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
-                    shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
                     shortsRelevanceRanks = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
                     shortsScores = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
                     shortsMatchedKeywords = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, total views: ${shortsViewsTotal}`);
+                    // ★ 상위 5개 중 score >= 1인 숏츠 조회수만 합산
+                    const top5Shorts = embeddableShorts.slice(0, 5);
+                    shortsViewsTotal = top5Shorts.reduce((sum, url) => {
+                      const id = url.split('/').pop();
+                      const score = shortsMetaMap[id]?.score || 0;
+                      const views = shortsViewsMap[url] || 0;
+                      return sum + (score >= 1 ? views : 0);
+                    }, 0);
+                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, top5 score>=1 views total: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
                     const allViewsMap = {};
@@ -483,11 +491,18 @@ Deno.serve(async (req) => {
                       allViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
                     });
                     shortsViewsList = shortsUrls.map(url => allViewsMap[url] || 0);
-                    shortsViewsTotal = shortsViewsList.reduce((s, v) => s + v, 0);
                     shortsRelevanceRanks = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
                     shortsScores = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
                     shortsMatchedKeywords = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}`);
+                    // ★ 상위 5개 중 score >= 1인 숏츠 조회수만 합산
+                    const top5Shorts = shortsUrls.slice(0, 5);
+                    shortsViewsTotal = top5Shorts.reduce((sum, url) => {
+                      const id = url.split('/').pop();
+                      const score = shortsMetaMap[id]?.score || 0;
+                      const views = allViewsMap[url] || 0;
+                      return sum + (score >= 1 ? views : 0);
+                    }, 0);
+                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}, top5 score>=1 views total: ${shortsViewsTotal}`);
                   }
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
