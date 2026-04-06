@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info } from "lucide-react";
+import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -993,6 +993,7 @@ export default function Home() {
                 <div className="flex items-center gap-1.5 text-xs">
                   <ArrowUpDown className="w-4 h-4 text-yellow-400" />
                   <span>{sortOrder === "popularity" ? "인기도순" : sortOrder === "likes" ? "좋아요순" : "날짜순"}</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
