@@ -181,6 +181,11 @@
       "type": "string",
       "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1"
     },
+    "is_video_url_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "video_url\uc774 \uad00\ub9ac\uc790\uc5d0 \uc758\ud574 \uc218\ub3d9\uc73c\ub85c \uc785\ub825\ub41c \uacbd\uc6b0 true. false\uc774\uba74 YouTube API \uc790\ub3d9 \uac80\uc0c9\uc73c\ub85c \ucc44\uc6cc\uc9c4 \uac12."
+    },
     "video_channel_name": {
       "type": "string",
       "description": "\ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1 \ucc44\ub110\uba85"
