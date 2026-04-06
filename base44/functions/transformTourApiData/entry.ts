@@ -401,13 +401,22 @@ Deno.serve(async (req) => {
           return {
             topVideoUrl: result.data.highlightVideoUrl || '',
             topVideoChannelName: result.data.highlightVideoChannelName || '',
+            highlightVideos: result.data.highlightVideos || [],
+            highlightViews: result.data.highlightViews || 0,
+            highlightRelevanceRank: result.data.highlightRelevanceRank || 0,
+            highlightScore: result.data.highlightScore || 0,
+            highlightMatchedKeywords: result.data.highlightMatchedKeywords || [],
+            coreKeywords: result.data.coreKeywords || [],
             shortsUrls: result.data.shortsUrls || [],
             shortsViewsTotal: result.data.shortsViewsTotal || 0,
-            shortsViewsList: result.data.shortsViewsList || []
+            shortsViewsList: result.data.shortsViewsList || [],
+            shortsScores: result.data.shortsScores || [],
+            shortsRelevanceRanks: result.data.shortsRelevanceRanks || [],
+            shortsMatchedKeywords: result.data.shortsMatchedKeywords || []
           };
         } else {
           console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
-          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [] };
+          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], highlightVideos: [], coreKeywords: [] };
         }
         
       } catch (error) {
@@ -415,7 +424,7 @@ Deno.serve(async (req) => {
         if (error.message.includes('YOUTUBE_API_LIMIT_REACHED') || error.message.includes('API_LIMIT_REACHED')) {
           throw error;
         }
-        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [] };
+        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], highlightVideos: [], coreKeywords: [] };
         }
         };
     
@@ -817,25 +826,19 @@ ${context}
         
         // 관리자 수동 입력 필드 보존 (업데이트 모드일 때만)
         let preservedAdminFields = {};
-        let preservedYoutubeShorts = [];
         
         if (isUpdate && existingFestival) {
           preservedAdminFields = {
             video_url: existingFestival.video_url || '',
+            is_video_url_manual: existingFestival.is_video_url_manual || false,
             website: existingFestival.website || '',
             contact: existingFestival.contact || {},
             social_media: existingFestival.social_media || {},
             star_rating: existingFestival.star_rating || 0
           };
           
-          // YouTube Shorts 보존 (5개 이상이면)
-          if (existingFestival.youtube_shorts_urls && existingFestival.youtube_shorts_urls.length >= 5) {
-            preservedYoutubeShorts = existingFestival.youtube_shorts_urls;
-            console.log(`[Transform] ✓ YouTube Shorts preserved: ${preservedYoutubeShorts.length} videos (skipping API call)`);
-          }
-          
-          if (preservedAdminFields.video_url) {
-            console.log(`[Transform] ✓ video_url preserved (admin manual input)`);
+          if (preservedAdminFields.is_video_url_manual) {
+            console.log(`[Transform] ✓ video_url preserved (is_video_url_manual=true)`);
           }
           if (preservedAdminFields.website) {
             console.log(`[Transform] ✓ website preserved (admin manual input)`);
@@ -1115,46 +1118,52 @@ ${context}
         topVideoUrl = youtubeResult.topVideoUrl;
         topVideoChannelName = youtubeResult.topVideoChannelName || '';
         
-        // YouTube Shorts: retransform이면 항상 재쿼리, 아니면 기존값 20개 이상이면 유지
+        // D: retransform이면 항상 새 검색 결과 사용. 아니면 기존 숏츠 5개 이상이면 유지.
+        // C: score >= 1 필터링 후 최대 5개만 선정, 해당 조회수 합산
         let koreanShortsViewsList = [];
-        if (!retransform && preservedYoutubeShorts.length >= 20) {
-          youtubeShorts = preservedYoutubeShorts;
-          // 기존 YoutubeShortsStat에서 top20 조회수 합산 복원
-          try {
-            const existingStats = await base44.asServiceRole.entities.YoutubeShortsStat.filter({ festival_id: existingFestival.id }).catch(() => []);
-            if (existingStats[0]) {
-              koreanShortsViewsList = [
-                existingStats[0].shorts1_views || 0,
-                existingStats[0].shorts2_views || 0,
-                existingStats[0].shorts3_views || 0,
-                existingStats[0].shorts4_views || 0,
-                existingStats[0].shorts5_views || 0,
-                existingStats[0].shorts6_views || 0,
-                existingStats[0].shorts7_views || 0,
-                existingStats[0].shorts8_views || 0,
-                existingStats[0].shorts9_views || 0,
-                existingStats[0].shorts10_views || 0,
-                existingStats[0].shorts11_views || 0,
-                existingStats[0].shorts12_views || 0,
-                existingStats[0].shorts13_views || 0,
-                existingStats[0].shorts14_views || 0,
-                existingStats[0].shorts15_views || 0,
-                existingStats[0].shorts16_views || 0,
-                existingStats[0].shorts17_views || 0,
-                existingStats[0].shorts18_views || 0,
-                existingStats[0].shorts19_views || 0,
-                existingStats[0].shorts20_views || 0,
-              ];
-              shortsViewsTotal = koreanShortsViewsList.slice(0, youtubeShorts.length).reduce((s, v) => s + v, 0);
-            }
-          } catch (e) {}
-          console.log(`[Transform] 📌 Using preserved YouTube Shorts: ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
+        let shortsRelevanceRanksList = [];
+        let shortsScoresList = [];
+        let shortsMatchedKeywordsList = [];
+
+        const rawShortsUrls = youtubeResult.shortsUrls || [];
+        const rawShortsViewsList = youtubeResult.shortsViewsList || [];
+        const rawShortsScores = youtubeResult.shortsScores || [];
+        const rawShortsRelevanceRanks = youtubeResult.shortsRelevanceRanks || [];
+        const rawShortsMatchedKeywords = youtubeResult.shortsMatchedKeywords || [];
+
+        const preservedYoutubeShorts = isUpdate && existingFestival ? (existingFestival.youtube_shorts_urls || []) : [];
+
+        if (!retransform && preservedYoutubeShorts.length >= 5) {
+          // 기존 5개 이상 숏츠 보존 (retransform이 아닐 때만)
+          youtubeShorts = preservedYoutubeShorts.slice(0, 5);
+          koreanShortsViewsList = youtubeShorts.map(() => 0);
+          shortsRelevanceRanksList = youtubeShorts.map(() => 0);
+          shortsScoresList = youtubeShorts.map(() => 0);
+          shortsMatchedKeywordsList = youtubeShorts.map(() => []);
+          // 기존 shortsViewsTotal 유지
+          shortsViewsTotal = isUpdate && existingFestival ? (existingFestival.shorts_views_5_total || 0) : 0;
+          console.log(`[Transform] 📌 Using preserved YouTube Shorts (5개): ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         } else {
-          youtubeShorts = youtubeResult.shortsUrls;
-          koreanShortsViewsList = youtubeResult.shortsViewsList || youtubeResult.shortsUrls?.map(() => 0) || [];
-          // top20 조회수 합산
+          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 1 필터링 후 최대 5개 선정
+          const filteredShorts = rawShortsUrls
+            .map((url, idx) => ({
+              url,
+              views: rawShortsViewsList[idx] || 0,
+              score: rawShortsScores[idx] || 0,
+              relevanceRank: rawShortsRelevanceRanks[idx] || 0,
+              keywords: rawShortsMatchedKeywords[idx] || []
+            }))
+            .filter(s => s.score >= 1)
+            .slice(0, 5);
+
+          youtubeShorts = filteredShorts.map(s => s.url);
+          koreanShortsViewsList = filteredShorts.map(s => s.views);
+          shortsScoresList = filteredShorts.map(s => s.score);
+          shortsRelevanceRanksList = filteredShorts.map(s => s.relevanceRank);
+          shortsMatchedKeywordsList = filteredShorts.map(s => s.keywords);
+          // C: score >= 1인 최대 5개 조회수 합산
           shortsViewsTotal = koreanShortsViewsList.reduce((s, v) => s + v, 0);
-          console.log(`[Transform] 📌 New YouTube Shorts: ${youtubeShorts.length} videos, top20 views total: ${shortsViewsTotal}`);
+          console.log(`[Transform] 📌 New YouTube Shorts (score>=1, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
@@ -1300,7 +1309,7 @@ ${context}
 
         const cityKo = extractCity(detailData.addr1 || rawData.addr1);
 
-        // 이미 번역된 Festival이 있으면 번역 API 호출 스킵
+        // A: retransform이면 항상 재번역. 아니면 이미 번역된 값 재사용.
         const alreadyTranslated = !!(
           isUpdate && existingFestival &&
           existingFestival.name_en &&
@@ -1458,12 +1467,15 @@ ${context}
           longitude: longitude,
           thumbnail_url: thumbnailUrl,
           
-          // 영상 URL: 
-          // - 업데이트 모드에서 기존 video_url이 있고 비어있지 않으면 유지
-          // - 그 외에는 YouTube 검색 결과 사용
-          video_url: (isUpdate && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '') 
-            ? preservedAdminFields.video_url 
-            : topVideoUrl,
+          // B: video_url 보존 로직
+          // - is_video_url_manual=true이면 retransform 여부 관계없이 기존값 유지 (관리자 수동 입력)
+          // - is_video_url_manual=false이면 retransform시 새 검색 결과 사용, 아니면 기존값 유지
+          video_url: (isUpdate && preservedAdminFields.is_video_url_manual && preservedAdminFields.video_url)
+            ? preservedAdminFields.video_url
+            : (!retransform && isUpdate && preservedAdminFields.video_url && preservedAdminFields.video_url.trim() !== '')
+              ? preservedAdminFields.video_url
+              : topVideoUrl,
+          is_video_url_manual: isUpdate ? (preservedAdminFields.is_video_url_manual || false) : false,
           video_channel_name: topVideoChannelName || '',
           
           youtube_shorts_urls: youtubeShorts,
@@ -1562,66 +1574,81 @@ ${context}
           error_message: ''
         });
 
-        // YoutubeShortsStat 스냅샷 저장 (숏츠가 있을 때만)
-        if (youtubeShorts && youtubeShorts.length > 0) {
-          try {
-            const nowIsoStat = new Date().toISOString();
-            const statPayload = {
-              festival_id: festivalResult.id,
-              name_ko: festivalData.name_ko || festivalData.name_original,
-              name_en: festivalData.name_en || festivalData.name_original,
-              name_jp: festivalData.name_jp || '',
-              update_time: nowIsoStat,
-              query_ko: youtubeQuery || '',
-              query_en: '',
-              query_jp: '',
-              shorts1_url: youtubeShorts[0] || '',
-              shorts1_views: koreanShortsViewsList[0] || 0,
-              shorts2_url: youtubeShorts[1] || '',
-              shorts2_views: koreanShortsViewsList[1] || 0,
-              shorts3_url: youtubeShorts[2] || '',
-              shorts3_views: koreanShortsViewsList[2] || 0,
-              shorts4_url: youtubeShorts[3] || '',
-              shorts4_views: koreanShortsViewsList[3] || 0,
-              shorts5_url: youtubeShorts[4] || '',
-              shorts5_views: koreanShortsViewsList[4] || 0,
-              shorts6_url: youtubeShorts[5] || '',
-              shorts6_views: koreanShortsViewsList[5] || 0,
-              shorts7_url: youtubeShorts[6] || '',
-              shorts7_views: koreanShortsViewsList[6] || 0,
-              shorts8_url: youtubeShorts[7] || '',
-              shorts8_views: koreanShortsViewsList[7] || 0,
-              shorts9_url: youtubeShorts[8] || '',
-              shorts9_views: koreanShortsViewsList[8] || 0,
-              shorts10_url: youtubeShorts[9] || '',
-              shorts10_views: koreanShortsViewsList[9] || 0,
-              shorts11_url: youtubeShorts[10] || '',
-              shorts11_views: koreanShortsViewsList[10] || 0,
-              shorts12_url: youtubeShorts[11] || '',
-              shorts12_views: koreanShortsViewsList[11] || 0,
-              shorts13_url: youtubeShorts[12] || '',
-              shorts13_views: koreanShortsViewsList[12] || 0,
-              shorts14_url: youtubeShorts[13] || '',
-              shorts14_views: koreanShortsViewsList[13] || 0,
-              shorts15_url: youtubeShorts[14] || '',
-              shorts15_views: koreanShortsViewsList[14] || 0,
-              shorts16_url: youtubeShorts[15] || '',
-              shorts16_views: koreanShortsViewsList[15] || 0,
-              shorts17_url: youtubeShorts[16] || '',
-              shorts17_views: koreanShortsViewsList[16] || 0,
-              shorts18_url: youtubeShorts[17] || '',
-              shorts18_views: koreanShortsViewsList[17] || 0,
-              shorts19_url: youtubeShorts[18] || '',
-              shorts19_views: koreanShortsViewsList[18] || 0,
-              shorts20_url: youtubeShorts[19] || '',
-              shorts20_views: koreanShortsViewsList[19] || 0,
-              total_views: shortsViewsTotal || 0
-            };
-            await base44.asServiceRole.entities.YoutubeShortsStat.create(statPayload);
-            console.log(`[Transform] ✓ YoutubeShortsStat snapshot saved for festival: ${festivalResult.id}`);
-          } catch (statError) {
-            console.error(`[Transform] ⚠️ Failed to save YoutubeShortsStat:`, statError.message);
-          }
+        // E: YoutubeRawdata 엔티티에 상세 스냅샷 저장 (highlights + shorts 상세 메타 포함)
+        try {
+          const nowIsoStat = new Date().toISOString();
+          const highlightVideos = youtubeResult.highlightVideos || [];
+          const coreKeywords = youtubeResult.coreKeywords || [];
+
+          const rawdataPayload = {
+            festival_id: festivalResult.id,
+            name_ko: festivalData.name_ko || festivalData.name_original,
+            name_en: festivalData.name_en || festivalData.name_original,
+            name_jp: festivalData.name_jp || '',
+            update_time: nowIsoStat,
+            query_ko: youtubeQuery || '',
+            query_en: '',
+            query_jp: '',
+            keywords: coreKeywords,
+            // 하이라이트 영상 상세 (최대 5개)
+            highlights1_url: highlightVideos[0]?.url || (youtubeResult.highlightVideoUrl && highlightVideos.length === 0 ? youtubeResult.highlightVideoUrl : '') || '',
+            highlights1_views: highlightVideos[0]?.views || youtubeResult.highlightViews || 0,
+            highlights1_relevance_rank: highlightVideos[0]?.relevanceRank || youtubeResult.highlightRelevanceRank || 0,
+            highlights1_score: highlightVideos[0]?.score || youtubeResult.highlightScore || 0,
+            highlights1_keywords: highlightVideos[0]?.matchedKeywords || youtubeResult.highlightMatchedKeywords || [],
+            highlights2_url: highlightVideos[1]?.url || '',
+            highlights2_views: highlightVideos[1]?.views || 0,
+            highlights2_relevance_rank: highlightVideos[1]?.relevanceRank || 0,
+            highlights2_score: highlightVideos[1]?.score || 0,
+            highlights2_keywords: highlightVideos[1]?.matchedKeywords || [],
+            highlights3_url: highlightVideos[2]?.url || '',
+            highlights3_views: highlightVideos[2]?.views || 0,
+            highlights3_relevance_rank: highlightVideos[2]?.relevanceRank || 0,
+            highlights3_score: highlightVideos[2]?.score || 0,
+            highlights3_keywords: highlightVideos[2]?.matchedKeywords || [],
+            highlights4_url: highlightVideos[3]?.url || '',
+            highlights4_views: highlightVideos[3]?.views || 0,
+            highlights4_relevance_rank: highlightVideos[3]?.relevanceRank || 0,
+            highlights4_score: highlightVideos[3]?.score || 0,
+            highlights4_keywords: highlightVideos[3]?.matchedKeywords || [],
+            highlights5_url: highlightVideos[4]?.url || '',
+            highlights5_views: highlightVideos[4]?.views || 0,
+            highlights5_relevance_rank: highlightVideos[4]?.relevanceRank || 0,
+            highlights5_score: highlightVideos[4]?.score || 0,
+            highlights5_keywords: highlightVideos[4]?.matchedKeywords || [],
+            // 숏츠 영상 상세 (score>=1 필터링된 최대 5개)
+            raw_shorts_views_5_total: shortsViewsTotal || 0,
+            shorts1_url: youtubeShorts[0] || '',
+            shorts1_views: koreanShortsViewsList[0] || 0,
+            shorts1_relevance_rank: shortsRelevanceRanksList[0] || 0,
+            shorts1_score: shortsScoresList[0] || 0,
+            shorts1_keywords: shortsMatchedKeywordsList[0] || [],
+            shorts2_url: youtubeShorts[1] || '',
+            shorts2_views: koreanShortsViewsList[1] || 0,
+            shorts2_relevance_rank: shortsRelevanceRanksList[1] || 0,
+            shorts2_score: shortsScoresList[1] || 0,
+            shorts2_keywords: shortsMatchedKeywordsList[1] || [],
+            shorts3_url: youtubeShorts[2] || '',
+            shorts3_views: koreanShortsViewsList[2] || 0,
+            shorts3_relevance_rank: shortsRelevanceRanksList[2] || 0,
+            shorts3_score: shortsScoresList[2] || 0,
+            shorts3_keywords: shortsMatchedKeywordsList[2] || [],
+            shorts4_url: youtubeShorts[3] || '',
+            shorts4_views: koreanShortsViewsList[3] || 0,
+            shorts4_relevance_rank: shortsRelevanceRanksList[3] || 0,
+            shorts4_score: shortsScoresList[3] || 0,
+            shorts4_keywords: shortsMatchedKeywordsList[3] || [],
+            shorts5_url: youtubeShorts[4] || '',
+            shorts5_views: koreanShortsViewsList[4] || 0,
+            shorts5_relevance_rank: shortsRelevanceRanksList[4] || 0,
+            shorts5_score: shortsScoresList[4] || 0,
+            shorts5_keywords: shortsMatchedKeywordsList[4] || [],
+            total_views: shortsViewsTotal || 0
+          };
+          await base44.asServiceRole.entities.YoutubeRawdata.create(rawdataPayload);
+          console.log(`[Transform] ✓ YoutubeRawdata snapshot saved for festival: ${festivalResult.id}`);
+        } catch (statError) {
+          console.error(`[Transform] ⚠️ Failed to save YoutubeRawdata:`, statError.message);
         }
 
         console.log(`[Transform] ✓ SUCCESS: ${festivalData.name} ${isUpdate ? '(업데이트 완료)' : '(신규 생성 완료)'}`);
