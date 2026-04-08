@@ -992,7 +992,7 @@ export default function Home() {
               <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${sortOrder !== "popularity" ? "bg-yellow-500/20 border-yellow-400 text-yellow-400" : "bg-gray-900 border-gray-800 text-white"}`}>
                 <div className="flex items-center gap-1.5 text-xs">
                   <ArrowUpDown className="w-4 h-4 text-yellow-400" />
-                  <span>{sortOrder === "popularity" ? "인기도순" : sortOrder === "likes" ? "좋아요순" : "날짜순"}</span>
+                  <SelectValue placeholder="인기도순" />
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
