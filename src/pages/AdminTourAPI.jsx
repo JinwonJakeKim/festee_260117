@@ -134,7 +134,7 @@ export default function AdminTourAPI() {
 
   const { data: rawDataList = [], refetch: refetchRawData } = useQuery({
     queryKey: ['tourApiRawData'],
-    queryFn: () => base44.entities.TourApiRawData.list('-created_date', 100),
+    queryFn: () => base44.entities.TourApiRawData.list('-created_date', 9999),
     initialData: [],
   });
 
