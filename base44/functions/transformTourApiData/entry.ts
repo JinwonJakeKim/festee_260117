@@ -1576,14 +1576,13 @@ ${context}
 
         // E: YoutubeRawdata 엔티티에 상세 스냅샷 저장 (highlights + shorts 상세 메타 포함)
         try {
-          const nowIsoStat = new Date().toISOString();
+          const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
+          const padKST = (n) => String(n).padStart(2, '0');
+          const kstTimestamp = `${nowKST.getUTCFullYear()}${padKST(nowKST.getUTCMonth()+1)}${padKST(nowKST.getUTCDate())}${padKST(nowKST.getUTCHours())}${padKST(nowKST.getUTCMinutes())}${padKST(nowKST.getUTCSeconds())}`;
+          const nowIsoStat = `${nowKST.getUTCFullYear()}-${padKST(nowKST.getUTCMonth()+1)}-${padKST(nowKST.getUTCDate())} ${padKST(nowKST.getUTCHours())}:${padKST(nowKST.getUTCMinutes())}:${padKST(nowKST.getUTCSeconds())}`;
+          const generatedQueryId = `query${kstTimestamp}ko`;
           const highlightVideos = youtubeResult.highlightVideos || [];
           const coreKeywords = youtubeResult.coreKeywords || [];
-
-          const nowForQueryId = new Date();
-          const pad = (n) => String(n).padStart(2, '0');
-          const queryIdTimestamp = `${nowForQueryId.getFullYear()}${pad(nowForQueryId.getMonth()+1)}${pad(nowForQueryId.getDate())}${pad(nowForQueryId.getHours())}${pad(nowForQueryId.getMinutes())}${pad(nowForQueryId.getSeconds())}`;
-          const generatedQueryId = `query${queryIdTimestamp}ko`;
 
           const rawdataPayload = {
             festival_id: festivalResult.id,
