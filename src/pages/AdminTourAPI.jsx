@@ -176,31 +176,29 @@ export default function AdminTourAPI() {
 
     const confirmMessage = isRetransform
       ? `${rawDataIds.length}개의 데이터를 재변환하시겠습니까?\n\n기존 Festival 데이터에 새로운 정보가 덮어쓰기됩니다.`
-      : `${rawDataIds.length}개의 데이터를 변환 대기열에 추가하고 지금 바로 시작하시겠습니까?`;
+      : `${rawDataIds.length}개의 데이터를 변환하시겠습니까?`;
     
     if (!confirm(confirmMessage)) {
       return;
     }
     
     try {
-      // 선택된 레코드들의 processing_status를 pending으로 업데이트
-      for (const id of rawDataIds) {
-        await base44.entities.TourApiRawData.update(id, {
-          processing_status: 'pending',
-          error_message: ''
-        });
-      }
-      
+      // 선택된 항목만 직접 변환 함수 호출
+      const response = await base44.functions.invoke('transformTourApiData', {
+        rawDataIds,
+        retransform: isRetransform
+      });
+
       refetchRawData();
-      
-      // 대기열 추가 후 바로 변환 시작
-      setTimeout(() => {
-        startTransformNowMutation.mutate();
-      }, 500);
-      
+
+      if (response.data?.success) {
+        alert(`✅ ${response.data.festivals_created}개 변환 완료!`);
+      } else {
+        alert(`변환 중 오류가 발생했습니다:\n\n${response.data?.error || '알 수 없는 오류'}`);
+      }
     } catch (error) {
-      console.error('[AdminTourAPI] Status update error:', error);
-      alert(`상태 업데이트 중 오류가 발생했습니다:\n\n${error.message}`);
+      console.error('[AdminTourAPI] Transform error:', error);
+      alert(`변환 중 오류가 발생했습니다:\n\n${error.message}`);
     }
   };
 
