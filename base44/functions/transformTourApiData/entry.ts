@@ -1580,12 +1580,18 @@ ${context}
           const highlightVideos = youtubeResult.highlightVideos || [];
           const coreKeywords = youtubeResult.coreKeywords || [];
 
+          const nowForQueryId = new Date();
+          const pad = (n) => String(n).padStart(2, '0');
+          const queryIdTimestamp = `${nowForQueryId.getFullYear()}${pad(nowForQueryId.getMonth()+1)}${pad(nowForQueryId.getDate())}${pad(nowForQueryId.getHours())}${pad(nowForQueryId.getMinutes())}${pad(nowForQueryId.getSeconds())}`;
+          const generatedQueryId = `query${queryIdTimestamp}ko`;
+
           const rawdataPayload = {
             festival_id: festivalResult.id,
             name_ko: festivalData.name_ko || festivalData.name_original,
             name_en: festivalData.name_en || festivalData.name_original,
             name_jp: festivalData.name_jp || '',
             update_time: nowIsoStat,
+            query_id: generatedQueryId,
             query_ko: youtubeQuery || '',
             query_en: '',
             query_jp: '',
