@@ -382,21 +382,9 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
 
     const explicitEventKeywords = [
-      // 축제/이벤트 명시 단어
+      // 축제/이벤트 명시 단어만 남김 (나머지 제거하여 festival 키워드가 더 잘 추가되도록)
       'festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades',
       'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'expo', 'carnival',
-      // 음식/음료 전문 이벤트 (이미 충분히 구체적)
-      'wine', 'beer', 'sake', 'whisky', 'whiskey', 'rum', 'spirits', 'cocktail',
-      'food', 'ramen', 'sushi', 'bbq', 'barbecue', 'coffee', 'tea', 'chocolate', 'cheese',
-      // 음악 장르 (구체적인 이벤트 성격 명시)
-      'jazz', 'blues', 'rock', 'classical', 'opera', 'electronic', 'techno', 'reggae',
-      // 예술/문화 (구체적)
-      'art', 'arts', 'film', 'cinema', 'theater', 'theatre', 'dance', 'design',
-      'anime', 'comic', 'manga', 'gaming', 'esports',
-      // 자연/계절 이벤트
-      'sakura', 'cherry blossom', 'autumn', 'lantern', 'fireworks', 'hanabi',
-      // 스포츠 이벤트
-      'triathlon', 'cycling', 'surf', 'ski', 'snowboard',
     ];
 
     const buildEnglishYoutubeQuery = (name) => {
