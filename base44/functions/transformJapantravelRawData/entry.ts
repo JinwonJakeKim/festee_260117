@@ -667,17 +667,22 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     const tsBase = `${nowDate.getUTCFullYear()}${pad(nowDate.getUTCMonth() + 1)}${pad(nowDate.getUTCDate())}${pad(nowDate.getUTCHours())}${pad(nowDate.getUTCMinutes())}${pad(nowDate.getUTCSeconds())}`;
     const makeQueryId = (lang) => `query${tsBase}${langToCountryCode(lang)}`;
 
+    // 최종 채택된 하이라이트 영상의 조회수 계산
+    // highlights1~5 중 videoUrl(채택된 URL)과 매칭되는 것을 찾아 해당 조회수 반환
+    const computeSelectedHighlightViews = () => {
+      if (!videoUrl) return highlightViews || 0;
+      for (let i = 0; i < (highlightVideos || []).length; i++) {
+        if (highlightVideos[i]?.url === videoUrl) return highlightVideos[i]?.views || 0;
+      }
+      return highlightViews || 0;
+    };
+
     const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal) => ({
-      query_id: makeQueryId(queryLang),
-      festival_id: festivalId,
-      name_ko: festivalPayload.name_ko || festivalPayload.name_original,
-      name_en: festivalPayload.name_en || festivalPayload.name_original,
-      name_jp: festivalPayload.name_jp || festivalPayload.name_original,
-      update_time: now,
       query_en: queryLang === 'en' ? queryText : '',
       query_jp: queryLang === 'jp' ? queryText : '',
       query_ko: '',
       keywords: extractedCoreKeywords || [],
+      selected_highlight_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? computeSelectedHighlightViews() : 0,
       highlights1_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.url || videoUrl || '') : '',
       highlights1_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.views || highlightViews || 0) : 0,
       highlights1_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.matchedKeywords || highlightMatchedKeywords || []) : [],

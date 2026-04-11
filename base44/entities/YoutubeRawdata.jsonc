@@ -46,6 +46,11 @@
       },
       "description": "\ucd95\uc81c \uc81c\ubaa9\uc5d0\uc11c \ucd94\ucd9c\ud55c \ud575\uc2ec \ud0a4\uc6cc\ub4dc \ubaa9\ub85d"
     },
+    "selected_highlight_views": {
+      "type": "number",
+      "default": 0,
+      "description": "\ud0a4\uc6cc\ub4dc \uc2a4\ucf54\uc5b4\ub9c1\uc744 \ud1b5\ud574 \ucd5c\uc885 \ucc44\ud0dd\ub41c \ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1\uc758 \uc870\ud68c\uc218"
+    },
     "highlights1_url": {
       "type": "string",
       "description": "\ud558\uc774\ub77c\uc774\ud2b8 1\uc21c\uc704 \uc601\uc0c1 URL"
