@@ -389,7 +389,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
     const buildEnglishYoutubeQuery = (name) => {
       if (!name) return name;
-      let cleaned = name.replace(/\s*20\d{2}\s*/g, ' ').trim();
+      let cleaned = name.replace(/[:\-\/]/g, ' ').replace(/\s*20\d{2}\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
       const lowerCleaned = cleaned.toLowerCase();
       const hasExplicitKeyword = explicitEventKeywords.some(kw => lowerCleaned.includes(kw));
       if (!hasExplicitKeyword) {
@@ -419,7 +419,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     ];
     const buildJapaneseYoutubeQuery = (nameJp) => {
       if (!nameJp) return nameJp;
-      let cleaned = nameJp.replace(/\d{4}[年년]?/g, '').replace(/\s{2,}/g, ' ').trim();
+      let cleaned = nameJp.replace(/[:\-\/]/g, ' ').replace(/\d{4}[年년]?/g, '').replace(/\s{2,}/g, ' ').trim();
       const hasKeyword = explicitEventKeywordsJp.some(kw => cleaned.includes(kw));
       if (!hasKeyword) {
         cleaned = cleaned + ' 祭り';
