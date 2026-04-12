@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.YoutubeRawdata.update(record.id, { popularity });
         updatedCount++;
         console.log(`[UpdateYoutubePopularity] Updated ${record.id}: ${record.popularity} -> ${popularity} (shorts=${shortsViews}, highlight=${highlightViews})`);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 500));
       } else {
         skippedCount++;
       }
