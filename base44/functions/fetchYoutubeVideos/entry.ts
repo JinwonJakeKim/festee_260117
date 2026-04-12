@@ -184,7 +184,18 @@ Deno.serve(async (req) => {
             
             // 블랙리스트 키워드 판별 (영상 제목에 포함된 경우 제외)
             // 언더스코어, 슬래시 등 구분자를 공백으로 정규화하여 붙어있는 키워드도 감지
-            const BLACKLIST_KEYWORDS = ['idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス', '교차편집', 'stage'];
+            const BLACKLIST_KEYWORDS = [
+              // 기존
+              'idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス', '교차편집', 'stage',
+              // 챌린지/밈
+              '챌린지', '틱톡', '밈', '유행', 'shorts challenge', '댄스 챌린지', '충격', '레전드', '결말',
+              'challenge', 'tiktok', 'meme', 'trend', 'dance challenge', 'shocking', 'legend', 'ending',
+              'チャレンジ', 'ティックトック', 'ミーム', '流行',
+              // 엔터테인먼트/인물 중심
+              '연예인', '직캠', '팬캠', '덕질', '배우', '가수', '스트리머', '유튜버', '인플루언서', 'asmr', '먹방', '하울',
+              'celebrity', 'fancam', 'kpop', 'actor', 'singer', 'streamer', 'youtuber', 'influencer', 'mukbang', 'haul',
+              '芸能人', 'ファンカム', '俳優', '歌手', 'ユーチューバー', 'インフルエンサー'
+            ];
             // 세로영상(Shorts) 판별 키워드 - 하이라이트는 가로영상만 채택
             const VERTICAL_KEYWORDS = ['縦動画', '縦型動画', '縦', 'vertical video', '#shorts', '#short', '세로', '세로영상'];
             const isBlacklistedVideo = (item) => {
@@ -365,8 +376,8 @@ Deno.serve(async (req) => {
                   console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
                 });
 
-                // 관련성 순위 순서대로 score >= 1인 첫 번째 영상 채택 (Shorts 로직과 동일)
-                const adoptedVideo = top5Videos.find(v => v.relevanceScore >= 1);
+                // 관련성 순위 순서대로 score >= 2인 첫 번째 영상 채택
+                const adoptedVideo = top5Videos.find(v => v.relevanceScore >= 2);
                 if (adoptedVideo) {
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${adoptedVideo.videoId}`;
                   highlightVideoChannelName = adoptedVideo.channelTitle || '';
@@ -376,9 +387,9 @@ Deno.serve(async (req) => {
                   highlightViews = top5ViewsMap[adoptedVideo.videoId] || 0;
                   console.log(`[FetchYoutubeVideos] ✅ Highlight adopted: score=${adoptedVideo.relevanceScore} "${adoptedVideo.title}"`);
                 } else {
-                  // score >= 1인 영상 없음 → 하이라이트 영상 없음으로 처리
+                  // score >= 2인 영상 없음 → 하이라이트 영상 없음으로 처리
                   highlightVideoUrl = '';
-                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video with score >= 1 found. Setting highlight to empty.`);
+                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video with score >= 2 found. Setting highlight to empty.`);
                 }
               }
             } else {
@@ -421,10 +432,40 @@ Deno.serve(async (req) => {
             // 하이라이트 영상 videoId 추출 (숏츠 중복 방지용)
             const highlightVideoId = highlightVideoUrl ? highlightVideoUrl.split('v=')[1]?.split('&')[0] : null;
 
+            // Shorts 블랙리스트 (VERTICAL_KEYWORDS 제외)
+            const SHORTS_BLACKLIST = [
+              'idol', 'dance', '아이돌', '공연', '춤', 'アイドル', 'ダンス', '교차편집', 'stage',
+              '챌린지', '틱톡', '밈', '유행', 'shorts challenge', '댄스 챌린지', '충격', '레전드', '결말',
+              'challenge', 'tiktok', 'meme', 'trend', 'dance challenge', 'shocking', 'legend', 'ending',
+              'チャレンジ', 'ティックトック', 'ミーム', '流行',
+              '연예인', '직캠', '팬캠', '덕질', '배우', '가수', '스트리머', '유튜버', '인플루언서', 'asmr', '먹방', '하울',
+              'celebrity', 'fancam', 'kpop', 'actor', 'singer', 'streamer', 'youtuber', 'influencer', 'mukbang', 'haul',
+              '芸能人', 'ファンカム', '俳優', '歌手', 'ユーチューバー', 'インフルエンサー'
+            ];
+            const isBlacklistedShorts = (item) => {
+              const normalizedTitle = (item.snippet?.title || '').toLowerCase().replace(/[_\/\-\.]/g, ' ');
+              return SHORTS_BLACKLIST.some(kw => normalizedTitle.includes(kw.toLowerCase()));
+            };
+
+            // 뉴스 영상 판별 (Shorts용)
+            const isShortsNewsVideo = (item) => {
+              const title = (item.snippet?.title || '').toLowerCase();
+              const channelTitle = (item.snippet?.channelTitle || '').toLowerCase();
+              const newsOrgs = ['kbs', 'mbc', 'sbs', 'ytn', 'jtbc', '연합뉴스', 'channel a', 'tv조선', 'mbn'];
+              const newsKeywords = ['뉴스', '속보', '보도', '현장', '긴급', '취재', '기자회견', '방송', 'news', 'breaking', 'report', 'live coverage'];
+              return newsOrgs.some(org => channelTitle.includes(org) || title.includes(org)) ||
+                     newsKeywords.some(kw => title.includes(kw) || channelTitle.includes(kw));
+            };
+
             // API 결과 순서 그대로 숏츠 메타 정보 수집 + 키워드 점수 계산
             const relevantShortsMeta = [];
+            let shortsBlacklistedCount = 0;
             shortsData.items.forEach((item, idx) => {
               if (!item.id?.videoId || item.id.videoId === highlightVideoId) return;
+              if (isBlacklistedShorts(item) || isShortsNewsVideo(item)) {
+                shortsBlacklistedCount++;
+                return;
+              }
               const score = calcRelevanceScore(item);
               const matchedKeywords = coreKeywords.filter(kw => {
                 const combined = [
@@ -437,6 +478,9 @@ Deno.serve(async (req) => {
               relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords });
             });
             const relevantShortsItems = relevantShortsMeta;
+            if (shortsBlacklistedCount > 0) {
+              console.log(`[FetchYoutubeVideos] 🚫 Filtered out ${shortsBlacklistedCount} blacklisted/news shorts`);
+            }
             console.log(`[FetchYoutubeVideos] ✅ Shorts collected: ${relevantShortsItems.length}/${shortsData.items.length}`);
 
             const shortsVideoIds = relevantShortsItems.map(item => item.videoId);
@@ -478,15 +522,15 @@ Deno.serve(async (req) => {
                     shortsRelevanceRanks = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
                     shortsScores = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
                     shortsMatchedKeywords = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    // ★ 상위 5개 중 score >= 1인 숏츠 조회수만 합산
-                    const top5Shorts = embeddableShorts.slice(0, 5);
-                    shortsViewsTotal = top5Shorts.reduce((sum, url) => {
-                      const id = url.split('/').pop();
-                      const score = shortsMetaMap[id]?.score || 0;
-                      const views = shortsViewsMap[url] || 0;
-                      return sum + (score >= 1 ? views : 0);
-                    }, 0);
-                    console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, top5 score>=1 views total: ${shortsViewsTotal}`);
+                    // ★ 상위 5개 중 score >= 2인 숏츠 조회수만 합산
+                     const top5Shorts = embeddableShorts.slice(0, 5);
+                     shortsViewsTotal = top5Shorts.reduce((sum, url) => {
+                       const id = url.split('/').pop();
+                       const score = shortsMetaMap[id]?.score || 0;
+                       const views = shortsViewsMap[url] || 0;
+                       return sum + (score >= 2 ? views : 0);
+                     }, 0);
+                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, top5 score>=2 views total: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
                     const allViewsMap = {};
@@ -497,15 +541,15 @@ Deno.serve(async (req) => {
                     shortsRelevanceRanks = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
                     shortsScores = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
                     shortsMatchedKeywords = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    // ★ 상위 5개 중 score >= 1인 숏츠 조회수만 합산
+                    // ★ 상위 5개 중 score >= 2인 숏츠 조회수만 합산
                     const top5Shorts = shortsUrls.slice(0, 5);
                     shortsViewsTotal = top5Shorts.reduce((sum, url) => {
                       const id = url.split('/').pop();
                       const score = shortsMetaMap[id]?.score || 0;
                       const views = allViewsMap[url] || 0;
-                      return sum + (score >= 1 ? views : 0);
+                      return sum + (score >= 2 ? views : 0);
                     }, 0);
-                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}, top5 score>=1 views total: ${shortsViewsTotal}`);
+                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}, top5 score>=2 views total: ${shortsViewsTotal}`);
                   }
                 } else {
                   // 임베드 체크 실패 시 그냥 사용

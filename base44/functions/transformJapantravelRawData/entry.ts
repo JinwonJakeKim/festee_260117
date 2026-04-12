@@ -609,16 +609,16 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     image_gallery_urls: festivalData.image_gallery_urls,
     media_urls: mediaUrls,
     youtube_shorts_urls: (() => {
-      // YouTube 관련성 순위 순서대로 score >= 1인 숏츠만 채택 (최대 5개)
+      // YouTube 관련성 순위 순서대로 score >= 2인 숏츠만 채택 (최대 5개)
       const result = [];
       for (let i = 0; i < youtubeShortUrls.length && result.length < 5; i++) {
-        if ((firstResultScores[i] || 0) >= 1) {
+        if ((firstResultScores[i] || 0) >= 2) {
           result.push(youtubeShortUrls[i]);
         }
       }
       return result;
     })(),
-    shorts_views_5_total: firstResultViewsList.slice(0, 5).reduce((s, v, i) => s + ((firstResultScores[i] || 0) >= 1 ? v : 0), 0),
+    shorts_views_5_total: firstResultViewsList.slice(0, 5).reduce((s, v, i) => s + ((firstResultScores[i] || 0) >= 2 ? v : 0), 0),
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
     price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
     price_yen: festivalData.price_yen || null,
