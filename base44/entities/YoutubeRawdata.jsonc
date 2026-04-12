@@ -57,29 +57,24 @@
     },
     "highlights1_views": {
       "type": "number",
-      "default": 0,
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 1\uc21c\uc704 \uc601\uc0c1 \uc870\ud68c\uc218"
+      "default": 0
     },
     "highlights1_keywords": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 1\uc21c\uc704 \uc601\uc0c1 \ub9e4\ud551 \ud0a4\uc6cc\ub4dc"
+      }
     },
     "highlights1_relevance_rank": {
       "type": "number",
-      "default": 0,
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 1\uc21c\uc704 \uc601\uc0c1 API \uacb0\uacfc \uc21c\uc704"
+      "default": 0
     },
     "highlights1_score": {
       "type": "number",
-      "default": 0,
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 1\uc21c\uc704 \uc601\uc0c1 \ud0a4\uc6cc\ub4dc \uc810\uc218"
+      "default": 0
     },
     "highlights2_url": {
-      "type": "string",
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 2\uc21c\uc704 \uc601\uc0c1 URL"
+      "type": "string"
     },
     "highlights2_views": {
       "type": "number",
@@ -100,8 +95,7 @@
       "default": 0
     },
     "highlights3_url": {
-      "type": "string",
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 3\uc21c\uc704 \uc601\uc0c1 URL"
+      "type": "string"
     },
     "highlights3_views": {
       "type": "number",
@@ -122,8 +116,7 @@
       "default": 0
     },
     "highlights4_url": {
-      "type": "string",
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 4\uc21c\uc704 \uc601\uc0c1 URL"
+      "type": "string"
     },
     "highlights4_views": {
       "type": "number",
@@ -144,8 +137,7 @@
       "default": 0
     },
     "highlights5_url": {
-      "type": "string",
-      "description": "\ud558\uc774\ub77c\uc774\ud2b8 5\uc21c\uc704 \uc601\uc0c1 URL"
+      "type": "string"
     },
     "highlights5_views": {
       "type": "number",
@@ -168,11 +160,15 @@
     "raw_shorts_views_5_total": {
       "type": "number",
       "default": 0,
-      "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 1\uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
+      "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 2\uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
+    },
+    "popularity": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc778\uae30\ub3c4 \uc810\uc218: raw_shorts_views_5_total + selected_highlight_views \ud569\uc0b0"
     },
     "shorts1_url": {
-      "type": "string",
-      "description": "\uc20f\uce20 1\ubc88 URL"
+      "type": "string"
     },
     "shorts1_views": {
       "type": "number",
