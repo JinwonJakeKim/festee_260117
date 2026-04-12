@@ -741,7 +741,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         firstResultViewsList, firstResultRelevanceRanks, firstResultScores, firstResultMatchedKeywords,
         youtubeShortUrls, shortsViewsTotal
       );
-      await base44.asServiceRole.entities.YoutubeRawdata.create({ ...primaryPayload, festival_id: festivalId, name_ko: translatedData.name_ko || festivalData.name_original, name_en: translatedData.name_en || '', name_jp: translatedData.name_jp || '' });
+      await base44.asServiceRole.entities.YoutubeRawdata.create({ ...primaryPayload, festival_id: festivalId, query_id: makeQueryId(primaryLangCode), update_time: now, name_ko: translatedData.name_ko || festivalData.name_original, name_en: translatedData.name_en || '', name_jp: translatedData.name_jp || '' });
       console.log(`[Transform] ✓ YoutubeRawdata saved (primary/${primaryLangCode}): "${primaryQueryText}"`);
     }
 
