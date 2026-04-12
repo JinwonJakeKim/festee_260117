@@ -648,7 +648,6 @@ export default function AdminTourAPI() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* 대기중 탭 */}
               <TabsContent value="pending" className="mt-4 space-y-3">
                 {pendingData.length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
@@ -705,7 +704,6 @@ export default function AdminTourAPI() {
                 )}
               </TabsContent>
 
-              {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
                 {processedData.length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
