@@ -91,10 +91,13 @@ Deno.serve(async (req) => {
       'festival', 'fest', 'event', 'show', 'the', 'and', 'or', 'of', 'in', 'at', 'on', 'for',
       'a', 'an', 'to', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
       'international', 'national', 'annual', 'edition', 'season', 'world', 'grand', 'open',
+      // 국가명 (너무 광범위하여 관련성 점수 오염 방지)
+      'japan', 'korea', 'china', 'taiwan', 'thailand', 'vietnam', 'singapore', 'indonesia',
+      'usa', 'us', 'uk', 'france', 'germany', 'italy', 'spain', 'australia',
       // 한국어 불용어
-      '축제', '페스티벌', '페스트', '행사', '이벤트', '국제', '전국', '지역', '대한민국',
+      '축제', '페스티벌', '페스트', '행사', '이벤트', '국제', '전국', '지역', '대한민국', '한국', '일본', '중국',
       // 일본어 불용어
-      'フェスティバル', 'フェス', 'まつり', '祭り', '祭', 'イベント',
+      'フェスティバル', 'フェス', 'まつり', '祭り', '祭', 'イベント', '日本',
     ];
 
     const extractCoreKeywords = (name) => {
