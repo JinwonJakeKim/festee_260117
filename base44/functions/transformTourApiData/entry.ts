@@ -1595,7 +1595,13 @@ ${context}
           })();
 
           const rawdataPayload = {
+            query_id: generatedQueryId,
             festival_id: festivalResult.id,
+            name_ko: nameTranslations.ko || rawData.title,
+            name_en: nameTranslations.en || '',
+            name_jp: nameTranslations.jp || '',
+            update_time: nowIsoStat,
+            query_ko: youtubeQuery,
             selected_highlight_views: computedSelectedHighlightViews,
             keywords: coreKeywords,
             // 하이라이트 영상 상세 (최대 5개)
