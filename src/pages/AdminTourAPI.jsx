@@ -705,7 +705,7 @@ export default function AdminTourAPI() {
                 )}
               </TabsContent>
 
-              {/* 완료 탭 */
+              {/* 완료 탭 */}
               <TabsContent value="processed" className="mt-4 space-y-3">
                 {processedData.length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
