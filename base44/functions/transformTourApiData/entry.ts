@@ -1584,16 +1584,19 @@ ${context}
           const highlightVideos = youtubeResult.highlightVideos || [];
           const coreKeywords = youtubeResult.coreKeywords || [];
 
+          // 채택된 하이라이트 영상의 조회수 계산
+          const finalVideoUrl = festivalData.video_url || '';
+          const computedSelectedHighlightViews = (() => {
+            if (!finalVideoUrl) return youtubeResult.highlightViews || 0;
+            for (const hv of highlightVideos) {
+              if (hv?.url === finalVideoUrl) return hv.views || 0;
+            }
+            return youtubeResult.highlightViews || 0;
+          })();
+
           const rawdataPayload = {
             festival_id: festivalResult.id,
-            name_ko: festivalData.name_ko || festivalData.name_original,
-            name_en: festivalData.name_en || festivalData.name_original,
-            name_jp: festivalData.name_jp || '',
-            update_time: nowIsoStat,
-            query_id: generatedQueryId,
-            query_ko: youtubeQuery || '',
-            query_en: '',
-            query_jp: '',
+            selected_highlight_views: computedSelectedHighlightViews,
             keywords: coreKeywords,
             // 하이라이트 영상 상세 (최대 5개)
             highlights1_url: highlightVideos[0]?.url || (youtubeResult.highlightVideoUrl && highlightVideos.length === 0 ? youtubeResult.highlightVideoUrl : '') || '',
