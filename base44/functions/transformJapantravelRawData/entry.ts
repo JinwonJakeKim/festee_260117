@@ -708,7 +708,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       highlights5_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.matchedKeywords || []) : [],
       highlights5_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.relevanceRank || 0) : 0,
       highlights5_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.score || 0) : 0,
-      raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 1 ? v : 0), 0),
+      raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 ? v : 0), 0),
       shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0,
       shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0,
       shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0,
