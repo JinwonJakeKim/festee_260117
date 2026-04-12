@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
 // 공통 RawData 카드 컴포넌트
-function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect }) {
+function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect, isTransforming }) {
   const isNew = !raw.festival_id;
   const statusColors = {
     pending: 'bg-yellow-900/20 border-yellow-500/50',
@@ -73,8 +73,8 @@ function RawDataCard({ raw, onDelete, onTransform, selected, onToggleSelect }) {
             </div>
           </div>
           <div className="flex flex-col gap-2 flex-shrink-0">
-            <Button onClick={onTransform} size="sm" className={`${isNew ? 'bg-purple-500 hover:bg-purple-600' : 'bg-orange-500 hover:bg-orange-600'} text-white`} title="변환">
-              <RefreshCw className="w-4 h-4" />
+            <Button onClick={onTransform} disabled={isTransforming} size="sm" className={`${isNew ? 'bg-purple-500 hover:bg-purple-600' : 'bg-orange-500 hover:bg-orange-600'} text-white`} title={isTransforming ? '변환 중...' : (isNew ? '변환' : '재변환')}>
+              {isTransforming ? <Loader className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             </Button>
             <Button onClick={onDelete} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
               <Trash2 className="w-4 h-4" />
@@ -111,6 +111,7 @@ export default function AdminTourAPI() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
   const [selectedRawData, setSelectedRawData] = useState([]);
+  const [transformingIds, setTransformingIds] = useState(new Set());
 
   // 최대 변환 개수 제한 제거 (자동화 모드)
   const MAX_TRANSFORM_COUNT = 999;
@@ -181,9 +182,10 @@ export default function AdminTourAPI() {
     if (!confirm(confirmMessage)) {
       return;
     }
+
+    setTransformingIds(prev => new Set([...prev, ...rawDataIds]));
     
     try {
-      // 선택된 항목만 직접 변환 함수 호출
       const response = await base44.functions.invoke('transformTourApiData', {
         rawDataIds,
         retransform: isRetransform
@@ -199,6 +201,12 @@ export default function AdminTourAPI() {
     } catch (error) {
       console.error('[AdminTourAPI] Transform error:', error);
       alert(`변환 중 오류가 발생했습니다:\n\n${error.message}`);
+    } finally {
+      setTransformingIds(prev => {
+        const next = new Set(prev);
+        rawDataIds.forEach(id => next.delete(id));
+        return next;
+      });
     }
   };
 
@@ -666,8 +674,8 @@ export default function AdminTourAPI() {
                     </div>
                     {selectedRawData.filter(id => pendingData.find(r => r.id === id)).length > 0 && (
                       <div className="flex gap-2">
-                        <Button onClick={() => handleTransform(selectedRawData.filter(id => pendingData.find(r => r.id === id)), false)} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
-                          <RefreshCw className="w-4 h-4 mr-2" />변환
+                        <Button onClick={() => handleTransform(selectedRawData.filter(id => pendingData.find(r => r.id === id)), false)} disabled={transformingIds.size > 0} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
+                          {transformingIds.size > 0 ? <><Loader className="w-4 h-4 mr-2 animate-spin" />변환 중...</> : <><RefreshCw className="w-4 h-4 mr-2" />변환</>}
                         </Button>
                         <Button onClick={() => {
                           const ids = selectedRawData.filter(id => pendingData.find(r => r.id === id));
@@ -691,12 +699,13 @@ export default function AdminTourAPI() {
                       onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
+                      isTransforming={transformingIds.has(raw.id)}
                     />
                   ))
                 )}
               </TabsContent>
 
-              {/* 완료 탭 */}
+              {/* 완료 탭 */
               <TabsContent value="processed" className="mt-4 space-y-3">
                 {processedData.length > 0 && (
                   <Card className="bg-gray-900 border-gray-800 p-4">
@@ -722,8 +731,8 @@ export default function AdminTourAPI() {
                     </div>
                     {selectedRawData.filter(id => processedData.find(r => r.id === id)).length > 0 && (
                       <div className="flex gap-2">
-                        <Button onClick={() => handleTransform(selectedRawData.filter(id => processedData.find(r => r.id === id)), true)} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white">
-                          <RefreshCw className="w-4 h-4 mr-2" />재변환
+                        <Button onClick={() => handleTransform(selectedRawData.filter(id => processedData.find(r => r.id === id)), true)} disabled={transformingIds.size > 0} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white">
+                          {transformingIds.size > 0 ? <><Loader className="w-4 h-4 mr-2 animate-spin" />재변환 중...</> : <><RefreshCw className="w-4 h-4 mr-2" />재변환</>}
                         </Button>
                         <Button onClick={() => {
                           const ids = selectedRawData.filter(id => processedData.find(r => r.id === id));
@@ -747,6 +756,7 @@ export default function AdminTourAPI() {
                       onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], true)}
+                      isTransforming={transformingIds.has(raw.id)}
                     />
                   ))
                 )}
@@ -778,8 +788,8 @@ export default function AdminTourAPI() {
                     </div>
                     {selectedRawData.filter(id => failedData.find(r => r.id === id)).length > 0 && (
                       <div className="flex gap-2">
-                        <Button onClick={() => handleTransform(selectedRawData.filter(id => failedData.find(r => r.id === id)), false)} className="flex-1 bg-purple-500 hover:bg-purple-600">
-                          <RefreshCw className="w-4 h-4 mr-2" />선택 재시도
+                        <Button onClick={() => handleTransform(selectedRawData.filter(id => failedData.find(r => r.id === id)), false)} disabled={transformingIds.size > 0} className="flex-1 bg-purple-500 hover:bg-purple-600">
+                          {transformingIds.size > 0 ? <><Loader className="w-4 h-4 mr-2 animate-spin" />변환 중...</> : <><RefreshCw className="w-4 h-4 mr-2" />선택 재시도</>}
                         </Button>
                         <Button onClick={() => {
                           const ids = selectedRawData.filter(id => failedData.find(r => r.id === id));
@@ -803,6 +813,7 @@ export default function AdminTourAPI() {
                       onToggleSelect={() => setSelectedRawData(prev => prev.includes(raw.id) ? prev.filter(i => i !== raw.id) : [...prev, raw.id])}
                       onDelete={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate(raw.id); }}
                       onTransform={() => handleTransform([raw.id], !!raw.festival_id)}
+                      isTransforming={transformingIds.has(raw.id)}
                     />
                   ))
                 )}
