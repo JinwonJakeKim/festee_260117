@@ -1,5 +1,40 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// LLM으로 영상이 해당 축제와 관련있는지 판단 (Y/N/UNKNOWN)
+async function checkVideoRelevanceWithLLM(base44, festivalName, videoTitle, channelTitle, videoDescription) {
+  try {
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: `다음 유튜브 영상이 "${festivalName}" 축제와 직접적으로 관련이 있는지 판단해줘.
+
+영상 제목: ${videoTitle}
+채널명: ${channelTitle}
+영상 설명: ${videoDescription ? videoDescription.slice(0, 500) : '(없음)'}
+
+판단 기준:
+1. 이 영상이 해당 축제의 현장 영상인가?
+2. 이 영상이 해당 축제를 직접 소개하거나 홍보하는가?
+3. 이 영상이 해당 축제와 직접적인 연관이 있는가?
+
+판단이 불가능할 정도로 정보가 부족한 경우(제목이 매우 짧거나, 설명이 없고, 채널명이 축제와 무관한 경우)에는 UNKNOWN으로 응답해.
+
+반드시 아래 JSON 형식으로만 응답해:
+{"relevance": "Y" | "N" | "UNKNOWN"}`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          relevance: { type: "string" }
+        }
+      }
+    });
+    const val = (result?.relevance || 'UNKNOWN').toUpperCase();
+    if (val === 'Y' || val === 'N') return val;
+    return 'UNKNOWN';
+  } catch (e) {
+    console.error(`[FetchYoutubeVideos] LLM check failed:`, e.message);
+    return 'UNKNOWN';
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -140,12 +175,14 @@ Deno.serve(async (req) => {
     let highlightMatchedKeywords = [];
     let highlightViews = 0;
     let highlightVideos = []; // 상위 5개 하이라이트 영상 정보
+    let highlightLLMRelevances = []; // 상위 5개 하이라이트 LLM 판단 결과
     let shortsUrls = [];
     let shortsViewsTotal = 0;
     let shortsViewsList = []; // 각 숏츠별 개별 조회수
     let shortsRelevanceRanks = []; // 각 숏츠의 원본 API 결과 순위
     let shortsScores = []; // 각 숏츠의 키워드 점수
     let shortsMatchedKeywords = []; // 각 숏츠의 매핑된 키워드
+    let shortsLLMRelevances = []; // 각 숏츠의 LLM 판단 결과
 
     // ========== 하이라이트 영상 검색 ==========
     if (searchHighlightVideo) {
@@ -368,7 +405,10 @@ Deno.serve(async (req) => {
                   views: top5ViewsMap[v.videoId] || 0,
                   relevanceRank: v.relevanceIndex + 1,
                   score: v.relevanceScore,
-                  matchedKeywords: v.matchedKeywords
+                  matchedKeywords: v.matchedKeywords,
+                  title: v.title,
+                  channelTitle: v.channelTitle,
+                  description: v.item?.snippet?.description || ''
                 }));
 
                 console.log(`[FetchYoutubeVideos] ✅ Top 5 highlight videos selected:`);
@@ -376,20 +416,36 @@ Deno.serve(async (req) => {
                   console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
                 });
 
-                // 관련성 순위 순서대로 score >= 2인 첫 번째 영상 채택
-                const adoptedVideo = top5Videos.find(v => v.relevanceScore >= 2);
+                // ========== LLM 검증: score >= 2인 하이라이트 영상만 ==========
+                console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for highlights with score >= 2...`);
+                highlightLLMRelevances = [];
+                for (const hv of highlightVideos) {
+                  if (hv.score >= 2) {
+                    const llmResult = await checkVideoRelevanceWithLLM(base44, festivalName, hv.title, hv.channelTitle, hv.description);
+                    console.log(`[FetchYoutubeVideos]   LLM highlight: score=${hv.score} → ${llmResult} "${hv.title}"`);
+                    highlightLLMRelevances.push(llmResult);
+                  } else {
+                    highlightLLMRelevances.push('SKIP');
+                  }
+                }
+
+                // score >= 2 AND LLM = Y인 첫 번째 영상 채택, 없으면 score >= 2인 영상 채택(LLM=N/UNKNOWN이어도)
+                const adoptedVideo = top5Videos.find((v, i) => v.relevanceScore >= 2 && highlightLLMRelevances[i] === 'Y')
+                  || top5Videos.find((v, i) => v.relevanceScore >= 2 && highlightLLMRelevances[i] === 'UNKNOWN')
+                  || null;
+
                 if (adoptedVideo) {
+                  const adoptedIdx = top5Videos.indexOf(adoptedVideo);
                   highlightVideoUrl = `https://www.youtube.com/watch?v=${adoptedVideo.videoId}`;
                   highlightVideoChannelName = adoptedVideo.channelTitle || '';
                   highlightRelevanceRank = adoptedVideo.relevanceIndex + 1;
                   highlightScore = adoptedVideo.relevanceScore;
                   highlightMatchedKeywords = adoptedVideo.matchedKeywords;
                   highlightViews = top5ViewsMap[adoptedVideo.videoId] || 0;
-                  console.log(`[FetchYoutubeVideos] ✅ Highlight adopted: score=${adoptedVideo.relevanceScore} "${adoptedVideo.title}"`);
+                  console.log(`[FetchYoutubeVideos] ✅ Highlight adopted: score=${adoptedVideo.relevanceScore} LLM=${highlightLLMRelevances[adoptedIdx]} "${adoptedVideo.title}"`);
                 } else {
-                  // score >= 2인 영상 없음 → 하이라이트 영상 없음으로 처리
                   highlightVideoUrl = '';
-                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video with score >= 2 found. Setting highlight to empty.`);
+                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video passed LLM check (all N or score<2). Setting highlight to empty.`);
                 }
               }
             } else {
@@ -475,7 +531,7 @@ Deno.serve(async (req) => {
                 ].join(' ').toLowerCase();
                 return combined.includes(kw);
               });
-              relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords });
+              relevantShortsMeta.push({ videoId: item.id.videoId, relevanceRank: idx + 1, score, matchedKeywords, snippet: item.snippet });
             });
             const relevantShortsItems = relevantShortsMeta;
             if (shortsBlacklistedCount > 0) {
@@ -516,41 +572,66 @@ Deno.serve(async (req) => {
                   relevantShortsMeta.forEach(m => { shortsMetaMap[m.videoId] = m; });
 
                   // 임베드 가능한 쇼츠가 없으면 원본 URL 그대로 사용 (최대 20개)
+                  const buildShortsData = (urls, viewsMap) => {
+                    return {
+                      urls,
+                      viewsList: urls.map(url => viewsMap[url] || 0),
+                      ranks: urls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; }),
+                      scores: urls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; }),
+                      keywords: urls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; }),
+                      snippets: urls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.snippet || {}; })
+                    };
+                  };
+
+                  let finalViewsMap = shortsViewsMap;
                   if (embeddableShorts && embeddableShorts.length > 0) {
                     shortsUrls = embeddableShorts;
-                    shortsViewsList = embeddableShorts.map(url => shortsViewsMap[url] || 0);
-                    shortsRelevanceRanks = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
-                    shortsScores = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
-                    shortsMatchedKeywords = embeddableShorts.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    // ★ 상위 5개 중 score >= 2인 숏츠 조회수만 합산
-                     const top5Shorts = embeddableShorts.slice(0, 5);
-                     shortsViewsTotal = top5Shorts.reduce((sum, url) => {
-                       const id = url.split('/').pop();
-                       const score = shortsMetaMap[id]?.score || 0;
-                       const views = shortsViewsMap[url] || 0;
-                       return sum + (score >= 2 ? views : 0);
-                     }, 0);
-                     console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} embeddable YouTube Shorts, top5 score>=2 views total: ${shortsViewsTotal}`);
                   } else {
                     shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
-                    const allViewsMap = {};
+                    finalViewsMap = {};
                     (videosData.items || []).forEach(video => {
-                      allViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
+                      finalViewsMap[`https://www.youtube.com/shorts/${video.id}`] = parseInt(video.statistics?.viewCount || '0', 10);
                     });
-                    shortsViewsList = shortsUrls.map(url => allViewsMap[url] || 0);
-                    shortsRelevanceRanks = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.relevanceRank || 0; });
-                    shortsScores = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.score || 0; });
-                    shortsMatchedKeywords = shortsUrls.map(url => { const id = url.split('/').pop(); return shortsMetaMap[id]?.matchedKeywords || []; });
-                    // ★ 상위 5개 중 score >= 2인 숏츠 조회수만 합산
-                    const top5Shorts = shortsUrls.slice(0, 5);
-                    shortsViewsTotal = top5Shorts.reduce((sum, url) => {
-                      const id = url.split('/').pop();
-                      const score = shortsMetaMap[id]?.score || 0;
-                      const views = allViewsMap[url] || 0;
-                      return sum + (score >= 2 ? views : 0);
-                    }, 0);
-                    console.log(`[FetchYoutubeVideos] ⚠️ No embeddable shorts, using all shorts as links: ${shortsUrls.length}, top5 score>=2 views total: ${shortsViewsTotal}`);
                   }
+
+                  const sd = buildShortsData(shortsUrls, finalViewsMap);
+                  shortsViewsList = sd.viewsList;
+                  shortsRelevanceRanks = sd.ranks;
+                  shortsScores = sd.scores;
+                  shortsMatchedKeywords = sd.keywords;
+
+                  // ========== LLM 검증: score >= 2인 숏츠만 ==========
+                  console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for shorts with score >= 2...`);
+                  shortsLLMRelevances = [];
+                  for (let si = 0; si < shortsUrls.length; si++) {
+                    const sScore = shortsScores[si] || 0;
+                    if (sScore >= 2) {
+                      const sId = shortsUrls[si].split('/').pop();
+                      const sMeta = shortsMetaMap[sId];
+                      const sSnippet = sMeta?.snippet || {};
+                      const llmResult = await checkVideoRelevanceWithLLM(
+                        base44, festivalName,
+                        sSnippet.title || sId,
+                        sSnippet.channelTitle || '',
+                        sSnippet.description || ''
+                      );
+                      console.log(`[FetchYoutubeVideos]   LLM shorts #${si+1}: score=${sScore} → ${llmResult} "${sSnippet.title || sId}"`);
+                      shortsLLMRelevances.push(llmResult);
+                    } else {
+                      shortsLLMRelevances.push('SKIP');
+                    }
+                  }
+
+                  // 상위 5개 중 score >= 2 AND LLM != N인 숏츠 조회수만 합산
+                  const top5Shorts = shortsUrls.slice(0, 5);
+                  shortsViewsTotal = top5Shorts.reduce((sum, url, idx) => {
+                    const id = url.split('/').pop();
+                    const score = shortsMetaMap[id]?.score || 0;
+                    const views = finalViewsMap[url] || 0;
+                    const llm = shortsLLMRelevances[idx] || 'SKIP';
+                    return sum + (score >= 2 && llm !== 'N' ? views : 0);
+                  }, 0);
+                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} shorts, top5 score>=2 LLM!=N views total: ${shortsViewsTotal}`);
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
                   shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
@@ -598,6 +679,8 @@ Deno.serve(async (req) => {
       shortsRelevanceRanks: shortsRelevanceRanks,
       shortsScores: shortsScores,
       shortsMatchedKeywords: shortsMatchedKeywords,
+      shortsLLMRelevances: shortsLLMRelevances,
+      highlightLLMRelevances: highlightLLMRelevances,
       message: `YouTube 검색 완료: 하이라이트 ${highlightVideoUrl ? '✓' : '✗'}, 쇼츠 ${shortsUrls.length}개, 조회수합산 ${shortsViewsTotal}`
     });
 

@@ -326,6 +326,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
   let firstResultRelevanceRanks = [];
   let firstResultScores = [];
   let firstResultMatchedKeywords = [];
+  let firstResultShortsLLMRelevances = [];
+  let firstResultHighlightLLMRelevances = [];
   let extractedCoreKeywords = [];
   let highlightRelevanceRank = 0;
   let highlightScore = 0;
@@ -485,6 +487,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       highlightMatchedKeywords = firstResult.data.highlightMatchedKeywords || [];
       highlightViews = firstResult.data.highlightViews || 0;
       highlightVideos = firstResult.data.highlightVideos || [];
+      firstResultHighlightLLMRelevances = firstResult.data.highlightLLMRelevances || [];
       if (!firstResult.data.highlightVideoUrl) {
         console.log(`[Transform] ⚠️ No valid highlight video (score >= 1). Clearing existing video_url.`);
       }
@@ -496,6 +499,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
         firstResultRelevanceRanks = firstResult.data.shortsRelevanceRanks || [];
         firstResultScores = firstResult.data.shortsScores || [];
         firstResultMatchedKeywords = firstResult.data.shortsMatchedKeywords || [];
+        firstResultShortsLLMRelevances = firstResult.data.shortsLLMRelevances || [];
       }
       extractedCoreKeywords = firstResult.data.coreKeywords || [];
     }
@@ -677,58 +681,64 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return highlightViews || 0;
     };
 
-    const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal) => ({
+    const isPrimaryLang = (queryLang) => queryLang === (isOriginalJapanese ? 'jp' : 'en');
+    const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal, hlLLM, shortsLLM) => ({
       query_en: queryLang === 'en' ? queryText : '',
       query_jp: queryLang === 'jp' ? queryText : '',
       query_ko: '',
       keywords: extractedCoreKeywords || [],
-      selected_highlight_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? computeSelectedHighlightViews() : 0,
-      highlights1_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.url || videoUrl || '') : '',
-      highlights1_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.views || highlightViews || 0) : 0,
-      highlights1_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.matchedKeywords || highlightMatchedKeywords || []) : [],
-      highlights1_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.relevanceRank || highlightRelevanceRank || 0) : 0,
-      highlights1_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[0]?.score || highlightScore || 0) : 0,
-      highlights2_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.url || '') : '',
-      highlights2_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.views || 0) : 0,
-      highlights2_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.matchedKeywords || []) : [],
-      highlights2_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.relevanceRank || 0) : 0,
-      highlights2_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[1]?.score || 0) : 0,
-      highlights3_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.url || '') : '',
-      highlights3_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.views || 0) : 0,
-      highlights3_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.matchedKeywords || []) : [],
-      highlights3_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.relevanceRank || 0) : 0,
-      highlights3_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[2]?.score || 0) : 0,
-      highlights4_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.url || '') : '',
-      highlights4_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.views || 0) : 0,
-      highlights4_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.matchedKeywords || []) : [],
-      highlights4_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.relevanceRank || 0) : 0,
-      highlights4_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[3]?.score || 0) : 0,
-      highlights5_url: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.url || '') : '',
-      highlights5_views: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.views || 0) : 0,
-      highlights5_keywords: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.matchedKeywords || []) : [],
-      highlights5_relevance_rank: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.relevanceRank || 0) : 0,
-      highlights5_score: queryLang === (isOriginalJapanese ? 'jp' : 'en') ? (highlightVideos[4]?.score || 0) : 0,
-      raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 ? v : 0), 0),
-      shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0,
-      shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0,
-      shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0,
-      shorts4_url: shortsUrls[3] || '', shorts4_views: viewsList[3] || 0, shorts4_relevance_rank: ranks[3] || 0, shorts4_keywords: keywords[3] || [], shorts4_score: scores[3] || 0,
-      shorts5_url: shortsUrls[4] || '', shorts5_views: viewsList[4] || 0, shorts5_relevance_rank: ranks[4] || 0, shorts5_keywords: keywords[4] || [], shorts5_score: scores[4] || 0,
-      shorts6_url: shortsUrls[5] || '', shorts6_views: viewsList[5] || 0, shorts6_relevance_rank: ranks[5] || 0, shorts6_keywords: keywords[5] || [], shorts6_score: scores[5] || 0,
-      shorts7_url: shortsUrls[6] || '', shorts7_views: viewsList[6] || 0, shorts7_relevance_rank: ranks[6] || 0, shorts7_keywords: keywords[6] || [], shorts7_score: scores[6] || 0,
-      shorts8_url: shortsUrls[7] || '', shorts8_views: viewsList[7] || 0, shorts8_relevance_rank: ranks[7] || 0, shorts8_keywords: keywords[7] || [], shorts8_score: scores[7] || 0,
-      shorts9_url: shortsUrls[8] || '', shorts9_views: viewsList[8] || 0, shorts9_relevance_rank: ranks[8] || 0, shorts9_keywords: keywords[8] || [], shorts9_score: scores[8] || 0,
-      shorts10_url: shortsUrls[9] || '', shorts10_views: viewsList[9] || 0, shorts10_relevance_rank: ranks[9] || 0, shorts10_keywords: keywords[9] || [], shorts10_score: scores[9] || 0,
-      shorts11_url: shortsUrls[10] || '', shorts11_views: viewsList[10] || 0, shorts11_relevance_rank: ranks[10] || 0, shorts11_keywords: keywords[10] || [], shorts11_score: scores[10] || 0,
-      shorts12_url: shortsUrls[11] || '', shorts12_views: viewsList[11] || 0, shorts12_relevance_rank: ranks[11] || 0, shorts12_keywords: keywords[11] || [], shorts12_score: scores[11] || 0,
-      shorts13_url: shortsUrls[12] || '', shorts13_views: viewsList[12] || 0, shorts13_relevance_rank: ranks[12] || 0, shorts13_keywords: keywords[12] || [], shorts13_score: scores[12] || 0,
-      shorts14_url: shortsUrls[13] || '', shorts14_views: viewsList[13] || 0, shorts14_relevance_rank: ranks[13] || 0, shorts14_keywords: keywords[13] || [], shorts14_score: scores[13] || 0,
-      shorts15_url: shortsUrls[14] || '', shorts15_views: viewsList[14] || 0, shorts15_relevance_rank: ranks[14] || 0, shorts15_keywords: keywords[14] || [], shorts15_score: scores[14] || 0,
-      shorts16_url: shortsUrls[15] || '', shorts16_views: viewsList[15] || 0, shorts16_relevance_rank: ranks[15] || 0, shorts16_keywords: keywords[15] || [], shorts16_score: scores[15] || 0,
-      shorts17_url: shortsUrls[16] || '', shorts17_views: viewsList[16] || 0, shorts17_relevance_rank: ranks[16] || 0, shorts17_keywords: keywords[16] || [], shorts17_score: scores[16] || 0,
-      shorts18_url: shortsUrls[17] || '', shorts18_views: viewsList[17] || 0, shorts18_relevance_rank: ranks[17] || 0, shorts18_keywords: keywords[17] || [], shorts18_score: scores[17] || 0,
-      shorts19_url: shortsUrls[18] || '', shorts19_views: viewsList[18] || 0, shorts19_relevance_rank: ranks[18] || 0, shorts19_keywords: keywords[18] || [], shorts19_score: scores[18] || 0,
-      shorts20_url: shortsUrls[19] || '', shorts20_views: viewsList[19] || 0, shorts20_relevance_rank: ranks[19] || 0, shorts20_keywords: keywords[19] || [], shorts20_score: scores[19] || 0,
+      selected_highlight_views: isPrimaryLang(queryLang) ? computeSelectedHighlightViews() : 0,
+      highlights1_url: isPrimaryLang(queryLang) ? (highlightVideos[0]?.url || videoUrl || '') : '',
+      highlights1_views: isPrimaryLang(queryLang) ? (highlightVideos[0]?.views || highlightViews || 0) : 0,
+      highlights1_keywords: isPrimaryLang(queryLang) ? (highlightVideos[0]?.matchedKeywords || highlightMatchedKeywords || []) : [],
+      highlights1_relevance_rank: isPrimaryLang(queryLang) ? (highlightVideos[0]?.relevanceRank || highlightRelevanceRank || 0) : 0,
+      highlights1_score: isPrimaryLang(queryLang) ? (highlightVideos[0]?.score || highlightScore || 0) : 0,
+      highlights1_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[0] || '') : '',
+      highlights2_url: isPrimaryLang(queryLang) ? (highlightVideos[1]?.url || '') : '',
+      highlights2_views: isPrimaryLang(queryLang) ? (highlightVideos[1]?.views || 0) : 0,
+      highlights2_keywords: isPrimaryLang(queryLang) ? (highlightVideos[1]?.matchedKeywords || []) : [],
+      highlights2_relevance_rank: isPrimaryLang(queryLang) ? (highlightVideos[1]?.relevanceRank || 0) : 0,
+      highlights2_score: isPrimaryLang(queryLang) ? (highlightVideos[1]?.score || 0) : 0,
+      highlights2_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[1] || '') : '',
+      highlights3_url: isPrimaryLang(queryLang) ? (highlightVideos[2]?.url || '') : '',
+      highlights3_views: isPrimaryLang(queryLang) ? (highlightVideos[2]?.views || 0) : 0,
+      highlights3_keywords: isPrimaryLang(queryLang) ? (highlightVideos[2]?.matchedKeywords || []) : [],
+      highlights3_relevance_rank: isPrimaryLang(queryLang) ? (highlightVideos[2]?.relevanceRank || 0) : 0,
+      highlights3_score: isPrimaryLang(queryLang) ? (highlightVideos[2]?.score || 0) : 0,
+      highlights3_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[2] || '') : '',
+      highlights4_url: isPrimaryLang(queryLang) ? (highlightVideos[3]?.url || '') : '',
+      highlights4_views: isPrimaryLang(queryLang) ? (highlightVideos[3]?.views || 0) : 0,
+      highlights4_keywords: isPrimaryLang(queryLang) ? (highlightVideos[3]?.matchedKeywords || []) : [],
+      highlights4_relevance_rank: isPrimaryLang(queryLang) ? (highlightVideos[3]?.relevanceRank || 0) : 0,
+      highlights4_score: isPrimaryLang(queryLang) ? (highlightVideos[3]?.score || 0) : 0,
+      highlights4_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[3] || '') : '',
+      highlights5_url: isPrimaryLang(queryLang) ? (highlightVideos[4]?.url || '') : '',
+      highlights5_views: isPrimaryLang(queryLang) ? (highlightVideos[4]?.views || 0) : 0,
+      highlights5_keywords: isPrimaryLang(queryLang) ? (highlightVideos[4]?.matchedKeywords || []) : [],
+      highlights5_relevance_rank: isPrimaryLang(queryLang) ? (highlightVideos[4]?.relevanceRank || 0) : 0,
+      highlights5_score: isPrimaryLang(queryLang) ? (highlightVideos[4]?.score || 0) : 0,
+      highlights5_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[4] || '') : '',
+      raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
+      shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0, shorts1_LLM_relevance: shortsLLM[0] || '',
+      shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0, shorts2_LLM_relevance: shortsLLM[1] || '',
+      shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0, shorts3_LLM_relevance: shortsLLM[2] || '',
+      shorts4_url: shortsUrls[3] || '', shorts4_views: viewsList[3] || 0, shorts4_relevance_rank: ranks[3] || 0, shorts4_keywords: keywords[3] || [], shorts4_score: scores[3] || 0, shorts4_LLM_relevance: shortsLLM[3] || '',
+      shorts5_url: shortsUrls[4] || '', shorts5_views: viewsList[4] || 0, shorts5_relevance_rank: ranks[4] || 0, shorts5_keywords: keywords[4] || [], shorts5_score: scores[4] || 0, shorts5_LLM_relevance: shortsLLM[4] || '',
+      shorts6_url: shortsUrls[5] || '', shorts6_views: viewsList[5] || 0, shorts6_relevance_rank: ranks[5] || 0, shorts6_keywords: keywords[5] || [], shorts6_score: scores[5] || 0, shorts6_LLM_relevance: shortsLLM[5] || '',
+      shorts7_url: shortsUrls[6] || '', shorts7_views: viewsList[6] || 0, shorts7_relevance_rank: ranks[6] || 0, shorts7_keywords: keywords[6] || [], shorts7_score: scores[6] || 0, shorts7_LLM_relevance: shortsLLM[6] || '',
+      shorts8_url: shortsUrls[7] || '', shorts8_views: viewsList[7] || 0, shorts8_relevance_rank: ranks[7] || 0, shorts8_keywords: keywords[7] || [], shorts8_score: scores[7] || 0, shorts8_LLM_relevance: shortsLLM[7] || '',
+      shorts9_url: shortsUrls[8] || '', shorts9_views: viewsList[8] || 0, shorts9_relevance_rank: ranks[8] || 0, shorts9_keywords: keywords[8] || [], shorts9_score: scores[8] || 0, shorts9_LLM_relevance: shortsLLM[8] || '',
+      shorts10_url: shortsUrls[9] || '', shorts10_views: viewsList[9] || 0, shorts10_relevance_rank: ranks[9] || 0, shorts10_keywords: keywords[9] || [], shorts10_score: scores[9] || 0, shorts10_LLM_relevance: shortsLLM[9] || '',
+      shorts11_url: shortsUrls[10] || '', shorts11_views: viewsList[10] || 0, shorts11_relevance_rank: ranks[10] || 0, shorts11_keywords: keywords[10] || [], shorts11_score: scores[10] || 0, shorts11_LLM_relevance: shortsLLM[10] || '',
+      shorts12_url: shortsUrls[11] || '', shorts12_views: viewsList[11] || 0, shorts12_relevance_rank: ranks[11] || 0, shorts12_keywords: keywords[11] || [], shorts12_score: scores[11] || 0, shorts12_LLM_relevance: shortsLLM[11] || '',
+      shorts13_url: shortsUrls[12] || '', shorts13_views: viewsList[12] || 0, shorts13_relevance_rank: ranks[12] || 0, shorts13_keywords: keywords[12] || [], shorts13_score: scores[12] || 0, shorts13_LLM_relevance: shortsLLM[12] || '',
+      shorts14_url: shortsUrls[13] || '', shorts14_views: viewsList[13] || 0, shorts14_relevance_rank: ranks[13] || 0, shorts14_keywords: keywords[13] || [], shorts14_score: scores[13] || 0, shorts14_LLM_relevance: shortsLLM[13] || '',
+      shorts15_url: shortsUrls[14] || '', shorts15_views: viewsList[14] || 0, shorts15_relevance_rank: ranks[14] || 0, shorts15_keywords: keywords[14] || [], shorts15_score: scores[14] || 0, shorts15_LLM_relevance: shortsLLM[14] || '',
+      shorts16_url: shortsUrls[15] || '', shorts16_views: viewsList[15] || 0, shorts16_relevance_rank: ranks[15] || 0, shorts16_keywords: keywords[15] || [], shorts16_score: scores[15] || 0, shorts16_LLM_relevance: shortsLLM[15] || '',
+      shorts17_url: shortsUrls[16] || '', shorts17_views: viewsList[16] || 0, shorts17_relevance_rank: ranks[16] || 0, shorts17_keywords: keywords[16] || [], shorts17_score: scores[16] || 0, shorts17_LLM_relevance: shortsLLM[16] || '',
+      shorts18_url: shortsUrls[17] || '', shorts18_views: viewsList[17] || 0, shorts18_relevance_rank: ranks[17] || 0, shorts18_keywords: keywords[17] || [], shorts18_score: scores[17] || 0, shorts18_LLM_relevance: shortsLLM[17] || '',
+      shorts19_url: shortsUrls[18] || '', shorts19_views: viewsList[18] || 0, shorts19_relevance_rank: ranks[18] || 0, shorts19_keywords: keywords[18] || [], shorts19_score: scores[18] || 0, shorts19_LLM_relevance: shortsLLM[18] || '',
+      shorts20_url: shortsUrls[19] || '', shorts20_views: viewsList[19] || 0, shorts20_relevance_rank: ranks[19] || 0, shorts20_keywords: keywords[19] || [], shorts20_score: scores[19] || 0, shorts20_LLM_relevance: shortsLLM[19] || '',
       total_views: shortsTotal || 0
     });
 
