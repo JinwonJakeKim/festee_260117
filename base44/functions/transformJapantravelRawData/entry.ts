@@ -723,6 +723,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       highlights5_score: isPrimaryLang(queryLang) ? (highlightVideos[4]?.score || 0) : 0,
       highlights5_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[4] || '') : '',
       raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
+      popularity: (isPrimaryLang(queryLang) ? computeSelectedHighlightViews() : 0) + viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
       shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0, shorts1_LLM_relevance: shortsLLM[0] || '',
       shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0, shorts2_LLM_relevance: shortsLLM[1] || '',
       shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0, shorts3_LLM_relevance: shortsLLM[2] || '',
