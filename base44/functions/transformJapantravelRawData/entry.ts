@@ -627,6 +627,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       const llm = firstResultShortsLLMRelevances[i] || 'SKIP';
       return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
     }, 0),
+    popularity: (highlightViews || 0) + firstResultViewsList.slice(0, 5).reduce((s, v, i) => {
+      const llm = firstResultShortsLLMRelevances[i] || 'SKIP';
+      return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
+    }, 0),
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
     price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
     price_yen: festivalData.price_yen || null,

@@ -203,6 +203,11 @@
       "default": 0,
       "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 1\uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
     },
+    "popularity": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc778\uae30\ub3c4 \uc810\uc218: shorts_views_5_total + \ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1 \uc870\ud68c\uc218 \ud569\uc0b0"
+    },
     "media_urls": {
       "type": "array",
       "items": {
@@ -435,5 +440,23 @@
     "city",
     "start_date",
     "end_date"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
