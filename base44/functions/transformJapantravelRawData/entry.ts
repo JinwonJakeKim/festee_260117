@@ -627,10 +627,6 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       const llm = firstResultShortsLLMRelevances[i] || 'SKIP';
       return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
     }, 0),
-    popularity: (highlightViews || 0) + firstResultViewsList.slice(0, 5).reduce((s, v, i) => {
-      const llm = firstResultShortsLLMRelevances[i] || 'SKIP';
-      return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
-    }, 0),
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
     price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
     price_yen: festivalData.price_yen || null,
@@ -690,12 +686,21 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     };
 
     const isPrimaryLang = (queryLang) => queryLang === (isOriginalJapanese ? 'jp' : 'en');
+
+    // Festival.popularity와 YoutubeRawdata.popularity에 동일하게 사용할 값 미리 계산
+    const finalSelectedHighlightViews = computeSelectedHighlightViews();
+    const finalShortsViewsTotal = firstResultViewsList.slice(0, 5).reduce((s, v, i) => {
+      const llm = firstResultShortsLLMRelevances[i] || 'SKIP';
+      return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
+    }, 0);
+    const finalPopularity = finalSelectedHighlightViews + finalShortsViewsTotal;
+
     const buildStatPayload = (queryLang, queryText, viewsList, ranks, scores, keywords, shortsUrls, shortsTotal, hlLLM, shortsLLM) => ({
       query_en: queryLang === 'en' ? queryText : '',
       query_jp: queryLang === 'jp' ? queryText : '',
       query_ko: '',
       keywords: extractedCoreKeywords || [],
-      selected_highlight_views: isPrimaryLang(queryLang) ? computeSelectedHighlightViews() : 0,
+      selected_highlight_views: isPrimaryLang(queryLang) ? finalSelectedHighlightViews : 0,
       highlights1_url: isPrimaryLang(queryLang) ? (highlightVideos[0]?.url || videoUrl || '') : '',
       highlights1_views: isPrimaryLang(queryLang) ? (highlightVideos[0]?.views || highlightViews || 0) : 0,
       highlights1_keywords: isPrimaryLang(queryLang) ? (highlightVideos[0]?.matchedKeywords || highlightMatchedKeywords || []) : [],
@@ -727,7 +732,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       highlights5_score: isPrimaryLang(queryLang) ? (highlightVideos[4]?.score || 0) : 0,
       highlights5_LLM_relevance: isPrimaryLang(queryLang) ? (hlLLM[4] || '') : '',
       raw_shorts_views_5_total: viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
-      popularity: (isPrimaryLang(queryLang) ? computeSelectedHighlightViews() : 0) + viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
+      popularity: (isPrimaryLang(queryLang) ? finalSelectedHighlightViews : 0) + viewsList.slice(0, 5).reduce((s, v, i) => s + ((scores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0),
       shorts1_url: shortsUrls[0] || '', shorts1_views: viewsList[0] || 0, shorts1_relevance_rank: ranks[0] || 0, shorts1_keywords: keywords[0] || [], shorts1_score: scores[0] || 0, shorts1_LLM_relevance: shortsLLM[0] || '',
       shorts2_url: shortsUrls[1] || '', shorts2_views: viewsList[1] || 0, shorts2_relevance_rank: ranks[1] || 0, shorts2_keywords: keywords[1] || [], shorts2_score: scores[1] || 0, shorts2_LLM_relevance: shortsLLM[1] || '',
       shorts3_url: shortsUrls[2] || '', shorts3_views: viewsList[2] || 0, shorts3_relevance_rank: ranks[2] || 0, shorts3_keywords: keywords[2] || [], shorts3_score: scores[2] || 0, shorts3_LLM_relevance: shortsLLM[2] || '',
@@ -763,6 +768,10 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       );
       await base44.asServiceRole.entities.YoutubeRawdata.create({ ...primaryPayload, festival_id: festivalId, query_id: makeQueryId(primaryLangCode), update_time: now, name_ko: translatedData.name_ko || festivalData.name_original, name_en: translatedData.name_en || '', name_jp: translatedData.name_jp || '' });
       console.log(`[Transform] ✓ YoutubeRawdata saved (primary/${primaryLangCode}): "${primaryQueryText}"`);
+
+      // Festival.popularity = YoutubeRawdata.popularity (동일 값으로 동기화)
+      await base44.asServiceRole.entities.Festival.update(festivalId, { popularity: finalPopularity });
+      console.log(`[Transform] ✓ Festival.popularity updated: ${finalPopularity}`);
     }
 
     // 2차 쿼리 결과 저장 - needMoreShorts가 true이고 실제 API 호출이 발생한 경우에만 저장
