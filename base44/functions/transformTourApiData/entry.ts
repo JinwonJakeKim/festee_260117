@@ -393,7 +393,8 @@ Deno.serve(async (req) => {
         const result = await base44.functions.invoke('fetchYoutubeVideos', {
           festivalName,
           searchHighlightVideo: true,
-          searchShorts: true
+          searchShorts: true,
+          llmScoreThreshold: 1  // 한국 축제: score >= 1인 영상에 대해 LLM 관련성 판단 (일본은 2)
         });
         
         if (result.data.success) {
@@ -1150,7 +1151,8 @@ ${context}
           shortsViewsTotal = isUpdate && existingFestival ? (existingFestival.shorts_views_5_total || 0) : 0;
           console.log(`[Transform] 📌 Using preserved YouTube Shorts (5개): ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         } else {
-          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 2 AND LLM != N 필터링 후 최대 5개 선정
+          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 1 AND LLM != N 필터링 후 최대 5개 선정
+          // 한국 축제는 공백 없이 붙여쓰는 경우가 많아 키워드 1개 매칭도 유효한 것으로 판단 (일본은 score >= 2)
           const filteredShorts = rawShortsUrls
             .map((url, idx) => ({
               url,
@@ -1160,7 +1162,7 @@ ${context}
               keywords: rawShortsMatchedKeywords[idx] || [],
               llmRelevance: rawShortsLLMRelevances[idx] || ''
             }))
-            .filter(s => s.score >= 2 && s.llmRelevance !== 'N')
+            .filter(s => s.score >= 1 && s.llmRelevance !== 'N')
             .slice(0, 5);
 
           youtubeShorts = filteredShorts.map(s => s.url);
@@ -1170,7 +1172,7 @@ ${context}
           shortsMatchedKeywordsList = filteredShorts.map(s => s.keywords);
           shortsLLMRelevancesList = filteredShorts.map(s => s.llmRelevance);
           shortsViewsTotal = koreanShortsViewsList.reduce((s, v) => s + v, 0);
-          console.log(`[Transform] 📌 New YouTube Shorts (score>=2, LLM!=N, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
+          console.log(`[Transform] 📌 New YouTube Shorts (score>=1, LLM!=N, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);

@@ -75,7 +75,7 @@
     },
     "highlights1_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "highlights2_url": {
       "type": "string"
@@ -100,7 +100,7 @@
     },
     "highlights2_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "highlights3_url": {
       "type": "string"
@@ -125,7 +125,7 @@
     },
     "highlights3_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "highlights4_url": {
       "type": "string"
@@ -150,7 +150,7 @@
     },
     "highlights4_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "highlights5_url": {
       "type": "string"
@@ -175,12 +175,12 @@
     },
     "highlights5_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "raw_shorts_views_5_total": {
       "type": "number",
       "default": 0,
-      "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 2\uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
+      "description": "\uc0c1\uc704 5\uac1c \uc20f\uce20 \uc911 score\uac00 \uc784\uacc4\uac12(\ud55c\uad6d>=1, \uc77c\ubcf8>=2) \uc774\uc0c1\uc778 \uac83\uc758 \uc870\ud68c\uc218 \ud569\uc0b0"
     },
     "popularity": {
       "type": "number",
@@ -210,7 +210,7 @@
     },
     "shorts1_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts2_url": {
       "type": "string"
@@ -235,7 +235,7 @@
     },
     "shorts2_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts3_url": {
       "type": "string"
@@ -260,7 +260,7 @@
     },
     "shorts3_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts4_url": {
       "type": "string"
@@ -285,7 +285,7 @@
     },
     "shorts4_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts5_url": {
       "type": "string"
@@ -310,7 +310,7 @@
     },
     "shorts5_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts6_url": {
       "type": "string"
@@ -335,7 +335,7 @@
     },
     "shorts6_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts7_url": {
       "type": "string"
@@ -360,7 +360,7 @@
     },
     "shorts7_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts8_url": {
       "type": "string"
@@ -385,7 +385,7 @@
     },
     "shorts8_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts9_url": {
       "type": "string"
@@ -410,7 +410,7 @@
     },
     "shorts9_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts10_url": {
       "type": "string"
@@ -435,7 +435,7 @@
     },
     "shorts10_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts11_url": {
       "type": "string"
@@ -460,7 +460,7 @@
     },
     "shorts11_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts12_url": {
       "type": "string"
@@ -485,7 +485,7 @@
     },
     "shorts12_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts13_url": {
       "type": "string"
@@ -510,7 +510,7 @@
     },
     "shorts13_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts14_url": {
       "type": "string"
@@ -535,7 +535,7 @@
     },
     "shorts14_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts15_url": {
       "type": "string"
@@ -560,7 +560,7 @@
     },
     "shorts15_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts16_url": {
       "type": "string"
@@ -585,7 +585,7 @@
     },
     "shorts16_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts17_url": {
       "type": "string"
@@ -610,7 +610,7 @@
     },
     "shorts17_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts18_url": {
       "type": "string"
@@ -635,7 +635,7 @@
     },
     "shorts18_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts19_url": {
       "type": "string"
@@ -660,7 +660,7 @@
     },
     "shorts19_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "shorts20_url": {
       "type": "string"
@@ -685,7 +685,7 @@
     },
     "shorts20_LLM_relevance": {
       "type": "string",
-      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN). score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8"
+      "description": "LLM \uad00\ub828\uc131 \ud310\ub2e8 \uacb0\uacfc (Y/N/UNKNOWN/SKIP). \ud55c\uad6d \ucd95\uc81c\ub294 score>=1, \uc77c\ubcf8 \ucd95\uc81c\ub294 score>=2\uc778 \uacbd\uc6b0\uc5d0\ub9cc \ud310\ub2e8 (\ubbf8\ub2ec \uc2dc SKIP)"
     },
     "total_views": {
       "type": "number",
@@ -695,5 +695,27 @@
   },
   "required": [
     "festival_id"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
     const { 
       festivalName,
       searchHighlightVideo = true,
-      searchShorts = true 
+      searchShorts = true,
+      llmScoreThreshold = 2  // LLM 관련성 판단 최소 score: 일본 축제 2, 한국 축제 1
     } = await req.json();
     
     if (!festivalName) {
@@ -416,11 +417,12 @@ Deno.serve(async (req) => {
                   console.log(`[FetchYoutubeVideos]   #${i+1} score=${v.relevanceScore} rank=${v.relevanceIndex+1} views=${top5ViewsMap[v.videoId]||0} "${v.title}"`);
                 });
 
-                // ========== LLM 검증: score >= 2인 하이라이트 영상만 ==========
-                console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for highlights with score >= 2...`);
+                // ========== LLM 검증: score >= llmScoreThreshold인 하이라이트 영상만 ==========
+                // 일본 축제: llmScoreThreshold=2, 한국 축제: llmScoreThreshold=1
+                console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for highlights with score >= ${llmScoreThreshold}...`);
                 highlightLLMRelevances = [];
                 for (const hv of highlightVideos) {
-                  if (hv.score >= 2) {
+                  if (hv.score >= llmScoreThreshold) {
                     const llmResult = await checkVideoRelevanceWithLLM(base44, festivalName, hv.title, hv.channelTitle, hv.description);
                     console.log(`[FetchYoutubeVideos]   LLM highlight: score=${hv.score} → ${llmResult} "${hv.title}"`);
                     highlightLLMRelevances.push(llmResult);
@@ -429,9 +431,9 @@ Deno.serve(async (req) => {
                   }
                 }
 
-                // score >= 2 AND LLM = Y인 첫 번째 영상 채택, 없으면 score >= 2인 영상 채택(LLM=N/UNKNOWN이어도)
-                const adoptedVideo = top5Videos.find((v, i) => v.relevanceScore >= 2 && highlightLLMRelevances[i] === 'Y')
-                  || top5Videos.find((v, i) => v.relevanceScore >= 2 && highlightLLMRelevances[i] === 'UNKNOWN')
+                // score >= llmScoreThreshold AND LLM = Y인 첫 번째 영상 채택, 없으면 UNKNOWN도 허용
+                const adoptedVideo = top5Videos.find((v, i) => v.relevanceScore >= llmScoreThreshold && highlightLLMRelevances[i] === 'Y')
+                  || top5Videos.find((v, i) => v.relevanceScore >= llmScoreThreshold && highlightLLMRelevances[i] === 'UNKNOWN')
                   || null;
 
                 if (adoptedVideo) {
@@ -444,8 +446,8 @@ Deno.serve(async (req) => {
                   highlightViews = top5ViewsMap[adoptedVideo.videoId] || 0;
                   console.log(`[FetchYoutubeVideos] ✅ Highlight adopted: score=${adoptedVideo.relevanceScore} LLM=${highlightLLMRelevances[adoptedIdx]} "${adoptedVideo.title}"`);
                 } else {
-                  highlightVideoUrl = '';
-                  console.log(`[FetchYoutubeVideos] ⚠️ No highlight video passed LLM check (all N or score<2). Setting highlight to empty.`);
+                    highlightVideoUrl = '';
+                    console.log(`[FetchYoutubeVideos] ⚠️ No highlight video passed LLM check (all N or score<${llmScoreThreshold}). Setting highlight to empty.`);
                 }
               }
             } else {
@@ -600,12 +602,13 @@ Deno.serve(async (req) => {
                   shortsScores = sd.scores;
                   shortsMatchedKeywords = sd.keywords;
 
-                  // ========== LLM 검증: score >= 2인 숏츠만 ==========
-                  console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for shorts with score >= 2...`);
+                  // ========== LLM 검증: score >= llmScoreThreshold인 숏츠만 ==========
+                  // 일본 축제: llmScoreThreshold=2, 한국 축제: llmScoreThreshold=1
+                  console.log(`[FetchYoutubeVideos] 🤖 Running LLM relevance check for shorts with score >= ${llmScoreThreshold}...`);
                   shortsLLMRelevances = [];
                   for (let si = 0; si < shortsUrls.length; si++) {
                     const sScore = shortsScores[si] || 0;
-                    if (sScore >= 2) {
+                    if (sScore >= llmScoreThreshold) {
                       const sId = shortsUrls[si].split('/').pop();
                       const sMeta = shortsMetaMap[sId];
                       const sSnippet = sMeta?.snippet || {};
@@ -622,16 +625,16 @@ Deno.serve(async (req) => {
                     }
                   }
 
-                  // 상위 5개 중 score >= 2 AND LLM != N인 숏츠 조회수만 합산
+                  // 상위 5개 중 score >= llmScoreThreshold AND LLM != N인 숏츠 조회수만 합산
                   const top5Shorts = shortsUrls.slice(0, 5);
                   shortsViewsTotal = top5Shorts.reduce((sum, url, idx) => {
                     const id = url.split('/').pop();
                     const score = shortsMetaMap[id]?.score || 0;
                     const views = finalViewsMap[url] || 0;
                     const llm = shortsLLMRelevances[idx] || 'SKIP';
-                    return sum + (score >= 2 && llm !== 'N' ? views : 0);
+                    return sum + (score >= llmScoreThreshold && llm !== 'N' ? views : 0);
                   }, 0);
-                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} shorts, top5 score>=2 LLM!=N views total: ${shortsViewsTotal}`);
+                  console.log(`[FetchYoutubeVideos] ✓ Found ${shortsUrls.length} shorts, top5 score>=${llmScoreThreshold} LLM!=N views total: ${shortsViewsTotal}`);
                 } else {
                   // 임베드 체크 실패 시 그냥 사용
                   shortsUrls = shortsVideoIds.map(id => `https://www.youtube.com/shorts/${id}`).slice(0, 20);
