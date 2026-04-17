@@ -412,11 +412,13 @@ Deno.serve(async (req) => {
             shortsViewsList: result.data.shortsViewsList || [],
             shortsScores: result.data.shortsScores || [],
             shortsRelevanceRanks: result.data.shortsRelevanceRanks || [],
-            shortsMatchedKeywords: result.data.shortsMatchedKeywords || []
+            shortsMatchedKeywords: result.data.shortsMatchedKeywords || [],
+            shortsLLMRelevances: result.data.shortsLLMRelevances || [],
+            highlightLLMRelevances: result.data.highlightLLMRelevances || []
           };
         } else {
           console.error(`[Transform] ❌ fetchYoutubeVideos failed:`, result.data.error);
-          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], highlightVideos: [], coreKeywords: [] };
+          return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], shortsLLMRelevances: [], highlightLLMRelevances: [], highlightVideos: [], coreKeywords: [] };
         }
         
       } catch (error) {
@@ -424,7 +426,7 @@ Deno.serve(async (req) => {
         if (error.message.includes('YOUTUBE_API_LIMIT_REACHED') || error.message.includes('API_LIMIT_REACHED')) {
           throw error;
         }
-        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], highlightVideos: [], coreKeywords: [] };
+        return { shortsUrls: [], topVideoUrl: '', topVideoChannelName: '', shortsViewsTotal: 0, shortsViewsList: [], shortsScores: [], shortsRelevanceRanks: [], shortsMatchedKeywords: [], shortsLLMRelevances: [], highlightLLMRelevances: [], highlightVideos: [], coreKeywords: [] };
         }
         };
     
@@ -1124,12 +1126,15 @@ ${context}
         let shortsRelevanceRanksList = [];
         let shortsScoresList = [];
         let shortsMatchedKeywordsList = [];
+        let shortsLLMRelevancesList = [];
 
         const rawShortsUrls = youtubeResult.shortsUrls || [];
         const rawShortsViewsList = youtubeResult.shortsViewsList || [];
         const rawShortsScores = youtubeResult.shortsScores || [];
         const rawShortsRelevanceRanks = youtubeResult.shortsRelevanceRanks || [];
         const rawShortsMatchedKeywords = youtubeResult.shortsMatchedKeywords || [];
+        const rawShortsLLMRelevances = youtubeResult.shortsLLMRelevances || [];
+        const rawHighlightLLMRelevances = youtubeResult.highlightLLMRelevances || [];
 
         const preservedYoutubeShorts = isUpdate && existingFestival ? (existingFestival.youtube_shorts_urls || []) : [];
 
@@ -1140,20 +1145,22 @@ ${context}
           shortsRelevanceRanksList = youtubeShorts.map(() => 0);
           shortsScoresList = youtubeShorts.map(() => 0);
           shortsMatchedKeywordsList = youtubeShorts.map(() => []);
+          shortsLLMRelevancesList = youtubeShorts.map(() => '');
           // 기존 shortsViewsTotal 유지
           shortsViewsTotal = isUpdate && existingFestival ? (existingFestival.shorts_views_5_total || 0) : 0;
           console.log(`[Transform] 📌 Using preserved YouTube Shorts (5개): ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
         } else {
-          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 1 필터링 후 최대 5개 선정
+          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 2 AND LLM != N 필터링 후 최대 5개 선정
           const filteredShorts = rawShortsUrls
             .map((url, idx) => ({
               url,
               views: rawShortsViewsList[idx] || 0,
               score: rawShortsScores[idx] || 0,
               relevanceRank: rawShortsRelevanceRanks[idx] || 0,
-              keywords: rawShortsMatchedKeywords[idx] || []
+              keywords: rawShortsMatchedKeywords[idx] || [],
+              llmRelevance: rawShortsLLMRelevances[idx] || ''
             }))
-            .filter(s => s.score >= 1)
+            .filter(s => s.score >= 2 && s.llmRelevance !== 'N')
             .slice(0, 5);
 
           youtubeShorts = filteredShorts.map(s => s.url);
@@ -1161,9 +1168,9 @@ ${context}
           shortsScoresList = filteredShorts.map(s => s.score);
           shortsRelevanceRanksList = filteredShorts.map(s => s.relevanceRank);
           shortsMatchedKeywordsList = filteredShorts.map(s => s.keywords);
-          // C: score >= 1인 최대 5개 조회수 합산
+          shortsLLMRelevancesList = filteredShorts.map(s => s.llmRelevance);
           shortsViewsTotal = koreanShortsViewsList.reduce((s, v) => s + v, 0);
-          console.log(`[Transform] 📌 New YouTube Shorts (score>=1, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
+          console.log(`[Transform] 📌 New YouTube Shorts (score>=2, LLM!=N, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
         }
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
@@ -1480,6 +1487,7 @@ ${context}
           
           youtube_shorts_urls: youtubeShorts,
           shorts_views_5_total: shortsViewsTotal,
+          popularity: (youtubeResult.highlightViews || 0) + (shortsViewsTotal || 0),
           media_urls: [
             // 1. 대표 이미지 (thumbnail) - null이면 제외
             ...(thumbnailUrl ? [{
@@ -1610,53 +1618,64 @@ ${context}
             highlights1_relevance_rank: highlightVideos[0]?.relevanceRank || youtubeResult.highlightRelevanceRank || 0,
             highlights1_score: highlightVideos[0]?.score || youtubeResult.highlightScore || 0,
             highlights1_keywords: highlightVideos[0]?.matchedKeywords || youtubeResult.highlightMatchedKeywords || [],
+            highlights1_LLM_relevance: rawHighlightLLMRelevances[0] || '',
             highlights2_url: highlightVideos[1]?.url || '',
             highlights2_views: highlightVideos[1]?.views || 0,
             highlights2_relevance_rank: highlightVideos[1]?.relevanceRank || 0,
             highlights2_score: highlightVideos[1]?.score || 0,
             highlights2_keywords: highlightVideos[1]?.matchedKeywords || [],
+            highlights2_LLM_relevance: rawHighlightLLMRelevances[1] || '',
             highlights3_url: highlightVideos[2]?.url || '',
             highlights3_views: highlightVideos[2]?.views || 0,
             highlights3_relevance_rank: highlightVideos[2]?.relevanceRank || 0,
             highlights3_score: highlightVideos[2]?.score || 0,
             highlights3_keywords: highlightVideos[2]?.matchedKeywords || [],
+            highlights3_LLM_relevance: rawHighlightLLMRelevances[2] || '',
             highlights4_url: highlightVideos[3]?.url || '',
             highlights4_views: highlightVideos[3]?.views || 0,
             highlights4_relevance_rank: highlightVideos[3]?.relevanceRank || 0,
             highlights4_score: highlightVideos[3]?.score || 0,
             highlights4_keywords: highlightVideos[3]?.matchedKeywords || [],
+            highlights4_LLM_relevance: rawHighlightLLMRelevances[3] || '',
             highlights5_url: highlightVideos[4]?.url || '',
             highlights5_views: highlightVideos[4]?.views || 0,
             highlights5_relevance_rank: highlightVideos[4]?.relevanceRank || 0,
             highlights5_score: highlightVideos[4]?.score || 0,
             highlights5_keywords: highlightVideos[4]?.matchedKeywords || [],
-            // 숏츠 영상 상세 (score>=1 필터링된 최대 5개)
+            highlights5_LLM_relevance: rawHighlightLLMRelevances[4] || '',
+            // 숏츠 영상 상세 (score>=2, LLM!=N 필터링된 최대 5개)
             raw_shorts_views_5_total: shortsViewsTotal || 0,
+            popularity: computedSelectedHighlightViews + (shortsViewsTotal || 0),
             shorts1_url: youtubeShorts[0] || '',
             shorts1_views: koreanShortsViewsList[0] || 0,
             shorts1_relevance_rank: shortsRelevanceRanksList[0] || 0,
             shorts1_score: shortsScoresList[0] || 0,
             shorts1_keywords: shortsMatchedKeywordsList[0] || [],
+            shorts1_LLM_relevance: shortsLLMRelevancesList[0] || '',
             shorts2_url: youtubeShorts[1] || '',
             shorts2_views: koreanShortsViewsList[1] || 0,
             shorts2_relevance_rank: shortsRelevanceRanksList[1] || 0,
             shorts2_score: shortsScoresList[1] || 0,
             shorts2_keywords: shortsMatchedKeywordsList[1] || [],
+            shorts2_LLM_relevance: shortsLLMRelevancesList[1] || '',
             shorts3_url: youtubeShorts[2] || '',
             shorts3_views: koreanShortsViewsList[2] || 0,
             shorts3_relevance_rank: shortsRelevanceRanksList[2] || 0,
             shorts3_score: shortsScoresList[2] || 0,
             shorts3_keywords: shortsMatchedKeywordsList[2] || [],
+            shorts3_LLM_relevance: shortsLLMRelevancesList[2] || '',
             shorts4_url: youtubeShorts[3] || '',
             shorts4_views: koreanShortsViewsList[3] || 0,
             shorts4_relevance_rank: shortsRelevanceRanksList[3] || 0,
             shorts4_score: shortsScoresList[3] || 0,
             shorts4_keywords: shortsMatchedKeywordsList[3] || [],
+            shorts4_LLM_relevance: shortsLLMRelevancesList[3] || '',
             shorts5_url: youtubeShorts[4] || '',
             shorts5_views: koreanShortsViewsList[4] || 0,
             shorts5_relevance_rank: shortsRelevanceRanksList[4] || 0,
             shorts5_score: shortsScoresList[4] || 0,
             shorts5_keywords: shortsMatchedKeywordsList[4] || [],
+            shorts5_LLM_relevance: shortsLLMRelevancesList[4] || '',
             total_views: shortsViewsTotal || 0
           };
           await base44.asServiceRole.entities.YoutubeRawdata.create(rawdataPayload);
