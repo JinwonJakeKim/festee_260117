@@ -925,7 +925,7 @@ export default function Home() {
                     <X className="w-3 h-3" />
                   </button>
                   <p className="font-bold text-cyan-400 mb-1 pr-4">인기도 순위의 기준은 무엇인가요?</p>
-                  <p className="text-gray-300">축제마다 관련성 기준으로 선정된<br/>TOP5 영상의 각 조회수를 합산합니다</p>
+                  <p className="text-gray-300">축제마다 관련성 기준으로 선정된<br/>영상의 각 조회수를 합산합니다</p>
                 </div>
               )}
             </div>
