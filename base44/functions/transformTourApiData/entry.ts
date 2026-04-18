@@ -1138,43 +1138,28 @@ ${context}
         const rawShortsLLMRelevances = youtubeResult.shortsLLMRelevances || [];
         const rawHighlightLLMRelevances = youtubeResult.highlightLLMRelevances || [];
 
-        const preservedYoutubeShorts = isUpdate && existingFestival ? (existingFestival.youtube_shorts_urls || []) : [];
+        // 항상 새로 검색된 결과에서 score >= 1 AND LLM != N 필터링 후 최대 5개 선정
+        // 한국 축제는 공백 없이 붙여쓰는 경우가 많아 키워드 1개 매칭도 유효한 것으로 판단 (일본은 score >= 2)
+        const filteredShorts = rawShortsUrls
+          .map((url, idx) => ({
+            url,
+            views: rawShortsViewsList[idx] || 0,
+            score: rawShortsScores[idx] || 0,
+            relevanceRank: rawShortsRelevanceRanks[idx] || 0,
+            keywords: rawShortsMatchedKeywords[idx] || [],
+            llmRelevance: rawShortsLLMRelevances[idx] || ''
+          }))
+          .filter(s => s.score >= 1 && s.llmRelevance !== 'N')
+          .slice(0, 5);
 
-        if (!retransform && preservedYoutubeShorts.length >= 5) {
-          // 기존 5개 이상 숏츠 보존 (retransform이 아닐 때만)
-          youtubeShorts = preservedYoutubeShorts.slice(0, 5);
-          koreanShortsViewsList = youtubeShorts.map(() => 0);
-          shortsRelevanceRanksList = youtubeShorts.map(() => 0);
-          shortsScoresList = youtubeShorts.map(() => 0);
-          shortsMatchedKeywordsList = youtubeShorts.map(() => []);
-          shortsLLMRelevancesList = youtubeShorts.map(() => '');
-          // 기존 shortsViewsTotal 유지
-          shortsViewsTotal = isUpdate && existingFestival ? (existingFestival.shorts_views_5_total || 0) : 0;
-          console.log(`[Transform] 📌 Using preserved YouTube Shorts (5개): ${youtubeShorts.length} videos, views: ${shortsViewsTotal}`);
-        } else {
-          // retransform이거나 기존 숏츠 없을 때: 새로 검색된 결과에서 score >= 1 AND LLM != N 필터링 후 최대 5개 선정
-          // 한국 축제는 공백 없이 붙여쓰는 경우가 많아 키워드 1개 매칭도 유효한 것으로 판단 (일본은 score >= 2)
-          const filteredShorts = rawShortsUrls
-            .map((url, idx) => ({
-              url,
-              views: rawShortsViewsList[idx] || 0,
-              score: rawShortsScores[idx] || 0,
-              relevanceRank: rawShortsRelevanceRanks[idx] || 0,
-              keywords: rawShortsMatchedKeywords[idx] || [],
-              llmRelevance: rawShortsLLMRelevances[idx] || ''
-            }))
-            .filter(s => s.score >= 1 && s.llmRelevance !== 'N')
-            .slice(0, 5);
-
-          youtubeShorts = filteredShorts.map(s => s.url);
-          koreanShortsViewsList = filteredShorts.map(s => s.views);
-          shortsScoresList = filteredShorts.map(s => s.score);
-          shortsRelevanceRanksList = filteredShorts.map(s => s.relevanceRank);
-          shortsMatchedKeywordsList = filteredShorts.map(s => s.keywords);
-          shortsLLMRelevancesList = filteredShorts.map(s => s.llmRelevance);
-          shortsViewsTotal = koreanShortsViewsList.reduce((s, v) => s + v, 0);
-          console.log(`[Transform] 📌 New YouTube Shorts (score>=1, LLM!=N, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
-        }
+        youtubeShorts = filteredShorts.map(s => s.url);
+        koreanShortsViewsList = filteredShorts.map(s => s.views);
+        shortsScoresList = filteredShorts.map(s => s.score);
+        shortsRelevanceRanksList = filteredShorts.map(s => s.relevanceRank);
+        shortsMatchedKeywordsList = filteredShorts.map(s => s.keywords);
+        shortsLLMRelevancesList = filteredShorts.map(s => s.llmRelevance);
+        shortsViewsTotal = koreanShortsViewsList.reduce((s, v) => s + v, 0);
+        console.log(`[Transform] 📌 YouTube Shorts (score>=1, LLM!=N, max5): ${youtubeShorts.length} videos, views total: ${shortsViewsTotal}`);
         
         console.log(`[Transform] 📺 Video URL: ${topVideoUrl || '(검색 실패 또는 API 에러)'}`);
         
