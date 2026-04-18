@@ -379,7 +379,8 @@ Deno.serve(async (req) => {
       ];
       const lowerCleaned = cleaned.toLowerCase();
       const hasFestivalKeyword = festivalKeywords.some(kw => lowerCleaned.includes(kw.toLowerCase()));
-      if (!hasFestivalKeyword) {
+      // '제'로 끝나는 이름은 이미 축제를 의미하므로 '축제' 추가 불필요
+      if (!hasFestivalKeyword && !cleaned.endsWith('제')) {
         cleaned = cleaned + ' 축제';
       }
       return cleaned;
