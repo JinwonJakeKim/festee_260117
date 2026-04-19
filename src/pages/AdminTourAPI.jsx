@@ -502,13 +502,15 @@ export default function AdminTourAPI() {
               <ul className="text-gray-300 text-sm space-y-1">
                 <li>✓ 선택한 RawData를 Festival 엔티티로 변환합니다</li>
                 <li>✓ 자동 번역 (한국어, 영어, 일본어, 중국어) 및 미디어 추가</li>
-                <li>✓ 대기중인 RawData를 5분마다 최대 10개씩 자동 변환</li>
+                <li>✓ YouTube 하이라이트 영상 & Shorts 자동 검색 <span className="text-yellow-300">(매 변환마다 항상 재검색)</span></li>
+                <li>✓ <span className="text-cyan-300 font-bold">Shorts 채택 기준: score ≥ 1 AND LLM 관련성 ≠ N</span> <span className="text-gray-400 text-xs">(Y·UNKNOWN·SKIP 포함, N만 제외)</span> → 조회수 합산 → <code className="bg-gray-800 px-1 rounded text-xs">shorts_views_5_total</code></li>
+                <li>✓ 재변환 시 기존 데이터를 업데이트합니다 <span className="text-yellow-300">(단, summary/description 번역은 스킵 — name/city/country만 재번역)</span></li>
                 <li>✓ 실패한 데이터는 재시도 가능</li>
               </ul>
               <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
                 <p className="text-red-400 font-bold text-xs mb-1">🚫 하이라이트 영상 블랙리스트 키워드</p>
                 <p className="text-gray-400 text-xs">영상 제목에 아래 키워드가 포함된 경우 하이라이트 영상에서 자동 제외됩니다:</p>
-                <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤</p>
+                <p className="text-red-300 text-xs font-mono mt-1">Idol, dance, 아이돌, 공연, 춤, stage</p>
               </div>
             </Card>
 
