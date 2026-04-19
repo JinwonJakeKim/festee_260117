@@ -57,7 +57,7 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
           <li>• 각 핵심 키워드가 영상 제목(title) 또는 설명(description)에 포함될 때마다 1점씩 부여</li>
           <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 영상만 하이라이트 후보로 채택</span> — 미달 시 하이라이트 영상 없음으로 처리 (기존 영상도 삭제)</li>
           <li>• 점수 높은 순 → 공공기관 채널 우선 → YouTube 관련성 순서로 최종 선택</li>
-          <li>• <span className="text-yellow-300 font-bold">Shorts:</span> 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → Festival <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 필드에 저장</li>
+          <li>• <span className="text-yellow-300 font-bold">Shorts:</span> 상위 5개 숏츠 중 <span className="text-cyan-300 font-bold">score ≥ 1 AND LLM 관련성 ≠ N</span>인 것의 조회수만 합산 → Festival <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 필드에 저장 <span className="text-gray-400 text-xs">(Y, UNKNOWN, SKIP은 포함 / N만 제외)</span></li>
         </ul>
       </div>
       <div className="mt-3 bg-red-900/20 border border-red-400/30 rounded-lg p-3">
@@ -68,8 +68,8 @@ export default function RawDataTransformInfoCard({ onRefresh }) {
       <div className="mt-3 bg-green-900/20 border border-green-400/30 rounded-lg p-3">
         <p className="text-green-400 font-bold text-xs mb-2">📱 YouTube Shorts 수집 로직</p>
         <ul className="text-gray-400 text-xs space-y-1">
-          <li>• <span className="text-yellow-300 font-bold">score ≥ 1인 숏츠만 채택</span> (하이라이트와 동일한 관련성 필터링)</li>
-          <li>• 상위 5개 숏츠 중 score ≥ 1인 것의 조회수만 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
+          <li>• <span className="text-yellow-300 font-bold">score ≥ 1 AND LLM 관련성 ≠ N인 숏츠만 채택</span> <span className="text-gray-400 text-xs">(Y·UNKNOWN·SKIP 포함, N만 제외)</span></li>
+          <li>• 상위 5개 숏츠 중 조건 충족하는 것의 조회수만 합산 → <code className="bg-gray-800 px-1 rounded">shorts_views_5_total</code> 저장</li>
           <li>• 하이라이트 영상과 동일한 videoId는 숏츠 목록에서 자동 제외 (중복 방지)</li>
         </ul>
       </div>
