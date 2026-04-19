@@ -908,7 +908,9 @@ ${context}
             });
             
             const detailUrl = `${baseUrl}/detailCommon2?${detailParams.toString()}`;
+            console.log(`[API] ▶ TourAPI detailCommon2 호출 시작 (contentid: ${rawData.contentid})`);
             const detailResponse = await fetch(detailUrl);
+            console.log(`[API] ◀ TourAPI detailCommon2 응답: status=${detailResponse.status}`);
             const detailText = await detailResponse.text();
             
             if (detailResponse.ok) {
@@ -951,7 +953,9 @@ ${context}
             });
             
             const introUrl = `${baseUrl}/detailIntro2?${introParams.toString()}`;
+            console.log(`[API] ▶ TourAPI detailIntro2 호출 시작 (contentid: ${rawData.contentid})`);
             const introResponse = await fetch(introUrl);
+            console.log(`[API] ◀ TourAPI detailIntro2 응답: status=${introResponse.status}`);
             const introText = await introResponse.text();
             
             if (introResponse.ok) {
@@ -1001,7 +1005,9 @@ ${context}
             });
             
             const infoUrl = `${baseUrl}/detailInfo2?${infoParams.toString()}`;
+            console.log(`[API] ▶ TourAPI detailInfo2 호출 시작 (contentid: ${rawData.contentid})`);
             const infoResponse = await fetch(infoUrl);
+            console.log(`[API] ◀ TourAPI detailInfo2 응답: status=${infoResponse.status}`);
             const infoText = await infoResponse.text();
             
             if (infoResponse.ok) {
@@ -1039,7 +1045,9 @@ ${context}
             });
             
             const imageUrl = `${baseUrl}/detailImage1?${imageParams.toString()}`;
+            console.log(`[API] ▶ TourAPI detailImage1 호출 시작 (contentid: ${rawData.contentid})`);
             const imageResponse = await fetch(imageUrl);
+            console.log(`[API] ◀ TourAPI detailImage1 응답: status=${imageResponse.status}`);
             const imageText = await imageResponse.text();
             
             if (imageResponse.ok) {
@@ -1096,6 +1104,7 @@ ${context}
         const festivalCategory = mapCategory(rawData.cat3);
         
         // ===== AI 기반 요약, 하이라이트, 태그 생성 =====
+        console.log(`[API] ▶ LLM (generateAIContent: 요약/하이라이트/태그) 호출 시작`);
         const aiResult = await generateAIContent(
           rawData.title,
           cleanedOverview,
@@ -1106,6 +1115,7 @@ ${context}
           }
         );
         
+        console.log(`[API] ◀ LLM (generateAIContent) 완료`);
         const summary = aiResult.summary;
         const highlights = aiResult.highlights;
         const aiTags = aiResult.tags || [];
@@ -1118,7 +1128,9 @@ ${context}
         
         const youtubeQuery = buildKoreanYoutubeQuery(rawData.title);
         console.log(`[Transform] 🎬 Searching YouTube for: "${youtubeQuery}" (원본: "${rawData.title}")`);
+        console.log(`[API] ▶ fetchYoutubeVideos 호출 시작 (query: "${youtubeQuery}")`);
         const youtubeResult = await searchYouTubeVideos(youtubeQuery);
+        console.log(`[API] ◀ fetchYoutubeVideos 호출 완료 (highlight: ${youtubeResult.topVideoUrl ? '✓' : '✗'}, shorts: ${youtubeResult.shortsUrls?.length || 0}개)`);
         topVideoUrl = youtubeResult.topVideoUrl;
         topVideoChannelName = youtubeResult.topVideoChannelName || '';
         
@@ -1304,6 +1316,7 @@ ${context}
 
         const cityKo = extractCity(detailData.addr1 || rawData.addr1);
 
+        console.log(`[API] ▶ AI/번역 단계 시작`);
         // A: retransform이면 항상 재번역. 아니면 이미 번역된 값 재사용.
         const alreadyTranslated = !!(
           isUpdate && existingFestival &&
@@ -1325,19 +1338,32 @@ ${context}
           cityTranslations = { ko: cityKo, en: existingFestival.city_en || cityKo, jp: existingFestival.city_jp || cityKo, zh: existingFestival.city_zh || cityKo };
         } else {
           // 다국어 필드 번역
+          console.log(`[API] ▶ googleTranslate/LLM (name) 호출 시작`);
           nameTranslations = await translateMultiLanguage(rawData.title, sourceLanguage, 'name');
+          console.log(`[API] ◀ googleTranslate/LLM (name) 완료`);
+          console.log(`[API] ▶ googleTranslate/LLM (summary) 호출 시작`);
           summaryTranslations = await translateMultiLanguage(summary, sourceLanguage, 'summary');
+          console.log(`[API] ◀ googleTranslate/LLM (summary) 완료`);
           
           // Description은 길이가 길어서 요약본만 번역 (처음 1000자)
           const descriptionForTranslation = fullDescription.length > 1000 
             ? fullDescription.substring(0, 1000) + '...' 
             : fullDescription;
+          console.log(`[API] ▶ googleTranslate/LLM (description) 호출 시작`);
           descriptionTranslations = await translateMultiLanguage(descriptionForTranslation, sourceLanguage, 'description');
+          console.log(`[API] ◀ googleTranslate/LLM (description) 완료`);
           
+          console.log(`[API] ▶ googleTranslate/LLM (highlights) 호출 시작`);
           highlightsTranslations = await translateArrayMultiLanguage(highlights, sourceLanguage, 'highlights');
+          console.log(`[API] ◀ googleTranslate/LLM (highlights) 완료`);
+          console.log(`[API] ▶ googleTranslate/LLM (tags) 호출 시작`);
           tagsTranslations = await translateArrayMultiLanguage(aiTags, sourceLanguage, 'tags');
+          console.log(`[API] ◀ googleTranslate/LLM (tags) 완료`);
+          console.log(`[API] ▶ googleTranslate/LLM (category) 호출 시작`);
           categoryTranslations = await translateMultiLanguage(festivalCategory, sourceLanguage, 'category');
+          console.log(`[API] ◀ googleTranslate/LLM (category) 완료`);
           // country/city는 Google Translate 대신 LLM 직접 사용 (고유명사 정확성)
+          console.log(`[API] ▶ LLM (country/city 번역) 호출 시작`);
           const locationLlm = await base44.asServiceRole.integrations.Core.InvokeLLM({
             prompt: `다음 국가명과 도시명을 영어, 일본어, 중국어로 번역해주세요. 고유명사는 해당 언어의 표기법을 따르세요.\n국가: 대한민국\n도시: ${cityKo}`,
             response_json_schema: {
@@ -1356,6 +1382,7 @@ ${context}
             country_en: 'South Korea', country_jp: '韓国', country_zh: '韩国',
             city_en: cityKo, city_jp: cityKo, city_zh: cityKo
           }));
+          console.log(`[API] ◀ LLM (country/city 번역) 완료`);
           countryTranslations = { ko: '대한민국', en: locationLlm.country_en, jp: locationLlm.country_jp, zh: locationLlm.country_zh };
           cityTranslations = { ko: cityKo, en: locationLlm.city_en, jp: locationLlm.city_jp, zh: locationLlm.city_zh };
         }
@@ -1544,20 +1571,24 @@ ${context}
         if (isUpdate && existingFestival) {
           // 기존 Festival 업데이트 (ID 유지) - update_time만 갱신, create_time은 기존값 유지
           console.log(`[Transform] 🔄 Updating existing Festival (ID: ${existingFestival.id})...`);
+          console.log(`[API] ▶ Base44 Festival.update 호출 시작`);
           festivalResult = await base44.asServiceRole.entities.Festival.update(existingFestival.id, {
             ...festivalData,
             create_time: existingFestival.create_time || nowIso,
             update_time: nowIso
           });
+          console.log(`[API] ◀ Base44 Festival.update 완료`);
           console.log(`[Transform] ✓ Festival updated (ID maintained: ${existingFestival.id})`);
         } else {
           // 새로운 Festival 생성 - create_time, update_time 모두 현재 시각
           console.log(`[Transform] ➕ Creating new Festival...`);
+          console.log(`[API] ▶ Base44 Festival.create 호출 시작`);
           festivalResult = await base44.asServiceRole.entities.Festival.create({
             ...festivalData,
             create_time: nowIso,
             update_time: nowIso
           });
+          console.log(`[API] ◀ Base44 Festival.create 완료`);
           console.log(`[Transform] ✓ New Festival created (ID: ${festivalResult.id})`);
         }
         

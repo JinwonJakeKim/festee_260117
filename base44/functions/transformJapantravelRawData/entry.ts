@@ -165,10 +165,12 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
         } else {
           console.log(`[Transform] ⏭️ summary/description translation skipped (retransform + already translated) → API 비용 절약`);
         }
+        console.log(`[API] ▶ googleTranslate 호출 시작 (fields: ${Object.keys(textsToTranslate).join(', ')})`);
         return base44.functions.invoke('googleTranslate', {
           texts: textsToTranslate,
           targetLanguages: filteredTargets
-        }).catch(e => { console.warn('[Transform] Google Translate error:', e.message); return { data: { success: false } }; });
+        }).then(r => { console.log(`[API] ◀ googleTranslate 호출 완료 (success: ${r?.data?.success})`); return r; })
+          .catch(e => { console.warn(`[API] ✗ googleTranslate 에러: ${e.message}`); return { data: { success: false } }; });
       })();
 
   // LLM translation promise (description 길이 제한 적용) - 폴백용
@@ -281,7 +283,9 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
 
   // Google Translate + LLM 병렬 실행 (YouTube는 번역 완료 후 순차 실행)
+  console.log(`[API] ▶ Google Translate + LLM 병렬 호출 시작`);
   const [googleTranslateResult, llmTranslatedData] = await Promise.all([googleTranslatePromise, llmPromise]);
+  console.log(`[API] ◀ Google Translate + LLM 병렬 호출 완료 (GT success: ${googleTranslateResult?.data?.success})`)
 
   // Google Translate 결과를 우선 사용, 실패 시 LLM 폴백
   let translatedData = llmTranslatedData;
@@ -468,6 +472,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
     console.log(`[Transform] 🎬 YouTube 1차 search (${primaryLang}): "${primaryQuery}", highlight=${shouldSearchHighlight}, shorts=${shouldSearchShorts}`);
 
+    console.log(`[API] ▶ fetchYoutubeVideos 1차 호출 시작 (query: "${primaryQuery}")`);
     const firstResult = await base44.functions.invoke('fetchYoutubeVideos', {
       festivalName: primaryQuery,
       searchHighlightVideo: shouldSearchHighlight,
@@ -477,6 +482,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return { data: { success: false } };
     });
 
+    console.log(`[API] ◀ fetchYoutubeVideos 1차 호출 완료 (success: ${firstResult.data?.success}, highlight: ${firstResult.data?.highlightVideoUrl ? '✓' : '✗'}, shorts: ${firstResult.data?.shortsUrls?.length || 0}개)`);
     if (firstResult.data?.success) {
     if (shouldSearchHighlight) {
       // score >= 1인 영상이 없으면 fetchYoutubeVideos가 '' 반환 → 기존 영상도 지움 (정확도 우선 기조)
@@ -647,10 +653,14 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
 
   if (existingFestivalRecord) {
     festivalId = existingFestivalRecord.id;
+    console.log(`[API] ▶ Base44 Festival.update 호출 시작 (id: ${festivalId})`);
     await base44.asServiceRole.entities.Festival.update(festivalId, { ...festivalPayload, update_time: now });
+    console.log(`[API] ◀ Base44 Festival.update 완료`);
     console.log(`[Transform] ✓ Updated Festival: ${festivalId}`);
   } else {
+    console.log(`[API] ▶ Base44 Festival.create 호출 시작`);
     const newFestival = await base44.asServiceRole.entities.Festival.create({ ...festivalPayload, create_time: now, update_time: now });
+    console.log(`[API] ◀ Base44 Festival.create 완료`);
     festivalId = newFestival.id;
     console.log(`[Transform] ✓ Created Festival: ${festivalId}`);
   }
