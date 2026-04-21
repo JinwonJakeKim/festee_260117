@@ -126,7 +126,7 @@ export default function FestivalMore() {
   const { data: festivals = [] } = useQuery({
     queryKey: ['festivals'],
     queryFn: async () => {
-      const allFestivals = await base44.entities.Festival.list('-likes_count', 200);
+      const allFestivals = await base44.entities.Festival.list('-popularity', 500);
       return removeDuplicateFestivals(allFestivals);
     },
     initialData: [],
@@ -185,7 +185,7 @@ export default function FestivalMore() {
     const pastFestivalMatch = !hidePastFestivals || (festival.end_date && new Date(festival.end_date) >= today);
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   }).sort((a, b) => {
-    if (sortOrder === "popularity") return (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0);
+    if (sortOrder === "popularity") return (b.popularity || 0) - (a.popularity || 0);
     if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
     if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
     return 0;

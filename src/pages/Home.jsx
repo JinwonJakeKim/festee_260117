@@ -265,7 +265,7 @@ export default function Home() {
   const { data: rawFestivals, isLoading } = useQuery({
     queryKey: ['rawFestivals'],
     queryFn: async () => {
-      const allFestivals = await base44.entities.Festival.list('-shorts_views_5_total', 500);
+      const allFestivals = await base44.entities.Festival.list('-popularity', 500);
       return allFestivals;
     },
     staleTime: 0,
@@ -447,7 +447,7 @@ export default function Home() {
     
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
   }).sort((a, b) => {
-    if (sortOrder === "popularity") return (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0);
+    if (sortOrder === "popularity") return (b.popularity || 0) - (a.popularity || 0);
     if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
     if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
     return 0;
