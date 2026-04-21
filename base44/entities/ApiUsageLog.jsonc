@@ -1,0 +1,39 @@
+{
+  "name": "ApiUsageLog",
+  "type": "object",
+  "properties": {
+    "api_name": {
+      "type": "string",
+      "enum": [
+        "google_custom_search",
+        "youtube_data_api",
+        "invoke_llm",
+        "google_geocoding_api"
+      ],
+      "description": "API \uc774\ub984"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc0ac\uc6a9 \ub0a0\uc9dc (YYYY-MM-DD)"
+    },
+    "count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ud574\ub2f9 \ub0a0\uc9dc\uc758 API \ud638\ucd9c \ud69f\uc218"
+    },
+    "limit": {
+      "type": "number",
+      "description": "\uc77c\uc77c \uc81c\ud55c \ud69f\uc218"
+    },
+    "console_url": {
+      "type": "string",
+      "description": "API \uad00\ub9ac \ucf58\uc194 URL"
+    }
+  },
+  "required": [
+    "api_name",
+    "date",
+    "count"
+  ]
+}

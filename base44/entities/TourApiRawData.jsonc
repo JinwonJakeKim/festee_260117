@@ -1,0 +1,194 @@
+{
+  "name": "TourApiRawData",
+  "type": "object",
+  "properties": {
+    "contentid": {
+      "type": "string",
+      "description": "TourAPI \ucf58\ud150\uce20 ID (\uace0\uc720 \uc2dd\ubcc4\uc790)"
+    },
+    "contenttypeid": {
+      "type": "string",
+      "description": "\ucf58\ud150\uce20 \ud0c0\uc785 ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984"
+    },
+    "eventstartdate": {
+      "type": "string",
+      "description": "\uc2dc\uc791\uc77c (YYYYMMDD \ud615\uc2dd)"
+    },
+    "eventenddate": {
+      "type": "string",
+      "description": "\uc885\ub8cc\uc77c (YYYYMMDD \ud615\uc2dd)"
+    },
+    "addr1": {
+      "type": "string",
+      "description": "\uc8fc\uc18c 1"
+    },
+    "addr2": {
+      "type": "string",
+      "description": "\uc8fc\uc18c 2"
+    },
+    "firstimage": {
+      "type": "string",
+      "description": "\ub300\ud45c \uc774\ubbf8\uc9c0 URL"
+    },
+    "firstimage2": {
+      "type": "string",
+      "description": "\ub300\ud45c \uc774\ubbf8\uc9c0 \uc378\ub124\uc77c URL"
+    },
+    "mapx": {
+      "type": "string",
+      "description": "\uacbd\ub3c4 (X \uc88c\ud45c)"
+    },
+    "mapy": {
+      "type": "string",
+      "description": "\uc704\ub3c4 (Y \uc88c\ud45c)"
+    },
+    "tel": {
+      "type": "string",
+      "description": "\uc804\ud654\ubc88\ud638"
+    },
+    "cat1": {
+      "type": "string",
+      "description": "\ub300\ubd84\ub958 \uce74\ud14c\uace0\ub9ac \ucf54\ub4dc"
+    },
+    "cat2": {
+      "type": "string",
+      "description": "\uc911\ubd84\ub958 \uce74\ud14c\uace0\ub9ac \ucf54\ub4dc"
+    },
+    "cat3": {
+      "type": "string",
+      "description": "\uc18c\ubd84\ub958 \uce74\ud14c\uace0\ub9ac \ucf54\ub4dc"
+    },
+    "areacode": {
+      "type": "string",
+      "description": "\uc9c0\uc5ed \ucf54\ub4dc"
+    },
+    "sigungucode": {
+      "type": "string",
+      "description": "\uc2dc\uad70\uad6c \ucf54\ub4dc"
+    },
+    "raw_search_json": {
+      "type": "string",
+      "description": "searchFestival2 API \uc6d0\ubcf8 JSON \uc751\ub2f5"
+    },
+    "overview": {
+      "type": "string",
+      "description": "\uc0c1\uc138 \uc124\uba85 (detailCommon2\uc5d0\uc11c \uac00\uc838\uc634)"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "\ud648\ud398\uc774\uc9c0 URL (detailCommon2\uc5d0\uc11c \uac00\uc838\uc634)"
+    },
+    "telname": {
+      "type": "string",
+      "description": "\uc804\ud654\ubc88\ud638\uba85"
+    },
+    "zipcode": {
+      "type": "string",
+      "description": "\uc6b0\ud3b8\ubc88\ud638"
+    },
+    "playtime": {
+      "type": "string",
+      "description": "\uc6b4\uc601 \uc2dc\uac04 (detailIntro2)"
+    },
+    "eventplace": {
+      "type": "string",
+      "description": "\ud589\uc0ac \uc7a5\uc18c (detailIntro2)"
+    },
+    "eventhomepage": {
+      "type": "string",
+      "description": "\ud589\uc0ac \ud648\ud398\uc774\uc9c0 (detailIntro2)"
+    },
+    "sponsor1": {
+      "type": "string",
+      "description": "\uc8fc\ucd5c \uae30\uad00 (detailIntro2)"
+    },
+    "sponsor1tel": {
+      "type": "string",
+      "description": "\uc8fc\ucd5c \uae30\uad00 \uc804\ud654\ubc88\ud638 (detailIntro2)"
+    },
+    "sponsor2": {
+      "type": "string",
+      "description": "\uc8fc\uad00 \uae30\uad00 (detailIntro2)"
+    },
+    "sponsor2tel": {
+      "type": "string",
+      "description": "\uc8fc\uad00 \uae30\uad00 \uc804\ud654\ubc88\ud638 (detailIntro2)"
+    },
+    "agelimit": {
+      "type": "string",
+      "description": "\uad00\ub78c \uac00\ub2a5\uc5f0\ub839"
+    },
+    "bookingplace": {
+      "type": "string",
+      "description": "\uc608\ub9e4\ucc98"
+    },
+    "discountinfofestival": {
+      "type": "string",
+      "description": "\ud560\uc778\uc815\ubcf4"
+    },
+    "festivalgrade": {
+      "type": "string",
+      "description": "\ucd95\uc81c\ub4f1\uae09"
+    },
+    "placeinfo": {
+      "type": "string",
+      "description": "\ud589\uc0ac\uc7a5 \uc704\uce58\uc548\ub0b4"
+    },
+    "program": {
+      "type": "string",
+      "description": "\ud589\uc0ac\ud504\ub85c\uadf8\ub7a8"
+    },
+    "spendtimefestival": {
+      "type": "string",
+      "description": "\uad00\ub78c \uc18c\uc694\uc2dc\uac04"
+    },
+    "subevent": {
+      "type": "string",
+      "description": "\ubd80\ub300\ud589\uc0ac"
+    },
+    "usetimefestival": {
+      "type": "string",
+      "description": "\uc774\uc6a9\uc694\uae08"
+    },
+    "raw_detail_json": {
+      "type": "string",
+      "description": "detailCommon2 API \uc6d0\ubcf8 JSON \uc751\ub2f5"
+    },
+    "raw_intro_json": {
+      "type": "string",
+      "description": "detailIntro2 API \uc6d0\ubcf8 JSON \uc751\ub2f5"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "processed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\ucc98\ub9ac \uc0c1\ud0dc: pending(\ub300\uae30), processing(\ucc98\ub9ac\uc911), processed(\uc644\ub8cc), failed(\uc2e4\ud328)"
+    },
+    "festival_id": {
+      "type": "string",
+      "description": "\ubcc0\ud658 \uc644\ub8cc\ub41c Festival \uc5d4\ud2f0\ud2f0 ID"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "\ucc98\ub9ac \uc2e4\ud328 \uc2dc \uc5d0\ub7ec \uba54\uc2dc\uc9c0"
+    },
+    "fetch_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ub370\uc774\ud130 \uc218\uc9d1 \ub0a0\uc9dc \ubc0f \uc2dc\uac04"
+    }
+  },
+  "required": [
+    "contentid",
+    "title"
+  ]
+}

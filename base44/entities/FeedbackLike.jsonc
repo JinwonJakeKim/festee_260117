@@ -1,0 +1,18 @@
+{
+  "name": "FeedbackLike",
+  "type": "object",
+  "properties": {
+    "feedback_id": {
+      "type": "string",
+      "description": "\ud53c\ub4dc\ubc31 ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\uc88b\uc544\uc694\ub97c \ub204\ub978 \uc0ac\uc6a9\uc790 \uc774\uba54\uc77c"
+    }
+  },
+  "required": [
+    "feedback_id",
+    "user_email"
+  ]
+}

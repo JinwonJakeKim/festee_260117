@@ -1,0 +1,48 @@
+{
+  "name": "Catch",
+  "type": "object",
+  "properties": {
+    "festival_id": {
+      "type": "string",
+      "description": "\ucd95\uc81c ID"
+    },
+    "festival_name": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790 \uc774\uba54\uc77c"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790 \uc774\ub984"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc378\ub124\uc77c \uc774\ubbf8\uc9c0 (\uc0ac\uc6a9\uc790 \uc0ac\uc9c4\uc774 \uc544\ub2cc \ucd95\uc81c \uc774\ubbf8\uc9c0)"
+    },
+    "location": {
+      "type": "string",
+      "description": "\uc778\uc99d \uc704\uce58"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "\uc778\uc99d \uc2dc \uc0ac\uc6a9\uc790 \uc704\ub3c4"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "\uc778\uc99d \uc2dc \uc0ac\uc6a9\uc790 \uacbd\ub3c4"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc88b\uc544\uc694 \uc218"
+    }
+  },
+  "required": [
+    "festival_id",
+    "user_email",
+    "image_url"
+  ]
+}

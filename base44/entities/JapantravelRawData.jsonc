@@ -1,0 +1,159 @@
+{
+  "name": "JapantravelRawData",
+  "type": "object",
+  "properties": {
+    "source_url": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \uc6f9\ud398\uc774\uc9c0 URL (japantravel.com)"
+    },
+    "original_language": {
+      "type": "string",
+      "description": "\uac10\uc9c0\ub41c \uc6d0\ubcf8 \uc5b8\uc5b4 \ucf54\ub4dc (ja, ko, en, zh, th \ub4f1)"
+    },
+    "name_original": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc774\ub984 (\uc6d0\ubcf8 \uc5b8\uc5b4)"
+    },
+    "summary_original": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc694\uc57d (\uc6d0\ubcf8 \uc5b8\uc5b4, 1-2\uc904)"
+    },
+    "description_original": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc124\uba85 (\uc6d0\ubcf8 \uc5b8\uc5b4, \uc6f9\ud398\uc774\uc9c0\uc758 \ubaa8\ub4e0 \uc124\uba85 \ud14d\uc2a4\ud2b8)"
+    },
+    "country": {
+      "type": "string",
+      "description": "\uad6d\uac00"
+    },
+    "city": {
+      "type": "string",
+      "description": "\ub3c4\uc2dc"
+    },
+    "category": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uce74\ud14c\uace0\ub9ac"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc2dc\uc791 \ub0a0\uc9dc (YYYY-MM-DD \ud615\uc2dd)"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc885\ub8cc \ub0a0\uc9dc (YYYY-MM-DD \ud615\uc2dd)"
+    },
+    "date_status": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "tentative",
+        "estimated"
+      ],
+      "default": "confirmed",
+      "description": "\ub0a0\uc9dc \uc0c1\ud0dc: confirmed(\ud655\uc815), tentative(\ubbf8\ud655\uc815), estimated(\ucd94\uc815)"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "\uc378\ub124\uc77c \uc774\ubbf8\uc9c0 URL"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "\ub300\ud45c \ud558\uc774\ub77c\uc774\ud2b8 \uc601\uc0c1 URL (YouTube)"
+    },
+    "image_gallery_urls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "originimgurl": {
+            "type": "string"
+          },
+          "smallimageurl": {
+            "type": "string"
+          },
+          "imgname": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "\uc774\ubbf8\uc9c0 \uac24\ub7ec\ub9ac URL \ubaa9\ub85d"
+    },
+    "website": {
+      "type": "string",
+      "description": "\uacf5\uc2dd \uc6f9\uc0ac\uc774\ud2b8"
+    },
+    "price_yen": {
+      "type": "number",
+      "description": "\uac00\uaca9 (\uc5d4\ud654)"
+    },
+    "price_details": {
+      "type": "string",
+      "description": "\ubaa8\ub4e0 \ud2f0\ucf13 \uc885\ub958\uc758 \uac00\uaca9 \uc0c1\uc138 \uc815\ubcf4"
+    },
+    "opening_hours": {
+      "type": "string",
+      "description": "\uc6b4\uc601 \uc2dc\uac04"
+    },
+    "address": {
+      "type": "string",
+      "description": "\uc8fc\uc18c \uc815\ubcf4"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "\uc704\ub3c4 (japantravel \uc6f9\uc0ac\uc774\ud2b8\uc5d0\uc11c \ucd94\ucd9c\ud55c \ucd95\uc81c \uc704\uce58 \uc704\ub3c4)"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "\uacbd\ub3c4 (japantravel \uc6f9\uc0ac\uc774\ud2b8\uc5d0\uc11c \ucd94\ucd9c\ud55c \ucd95\uc81c \uc704\uce58 \uacbd\ub3c4)"
+    },
+    "extract_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\ucd94\ucd9c \uc0c1\ud0dc: pending(\ub300\uae30), processed(\ucd94\ucd9c\uc644\ub8cc), failed(\ucd94\ucd9c\uc2e4\ud328)"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "processed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\ubcc0\ud658 \uc0c1\ud0dc: pending(\ub300\uae30), processing(\ucc98\ub9ac\uc911), processed(\ubcc0\ud658\uc644\ub8cc), failed(\ubcc0\ud658\uc2e4\ud328)"
+    },
+    "festival_id": {
+      "type": "string",
+      "description": "\ubcc0\ud658 \uc644\ub8cc\ub41c Festival \uc5d4\ud2f0\ud2f0 ID"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "\ucc98\ub9ac \uc2e4\ud328 \uc2dc \uc5d0\ub7ec \uba54\uc2dc\uc9c0"
+    },
+    "create_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ucd5c\ucd08 \uc0dd\uc131 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    },
+    "update_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ub9c8\uc9c0\ub9c9 \uc5c5\ub370\uc774\ud2b8 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    }
+  },
+  "required": [
+    "source_url",
+    "name_original",
+    "country",
+    "city",
+    "start_date",
+    "end_date"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "ChatUsageLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790 \uc774\uba54\uc77c"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc0ac\uc6a9 \ub0a0\uc9dc (YYYY-MM-DD)"
+    },
+    "count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ud574\ub2f9 \ub0a0\uc9dc\uc758 LLM \ud638\ucd9c \ud69f\uc218 (\uce90\uc2dc \ud788\ud2b8 \uc81c\uc678)"
+    }
+  },
+  "required": [
+    "user_email",
+    "date",
+    "count"
+  ]
+}

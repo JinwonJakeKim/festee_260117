@@ -1,0 +1,109 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\uc81c\ubaa9"
+    },
+    "content": {
+      "type": "string",
+      "description": "\ub0b4\uc6a9"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "\uac19\uc774\uac00\uae30",
+        "\ud6c4\uae30",
+        "\uc9c8\ubb38",
+        "\uc815\ubcf4\uacf5\uc720"
+      ],
+      "description": "\uac8c\uc2dc\uae00 \uc720\ud615"
+    },
+    "festival_id": {
+      "type": "string",
+      "description": "\uad00\ub828 \ucd95\uc81c ID"
+    },
+    "festival_name": {
+      "type": "string",
+      "description": "\uad00\ub828 \ucd95\uc81c \uc774\ub984"
+    },
+    "festival_location": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc704\uce58 (\uad6d\uac00, \ub3c4\uc2dc)"
+    },
+    "festival_category": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uce74\ud14c\uace0\ub9ac"
+    },
+    "festival_date": {
+      "type": "string",
+      "description": "\ucd95\uc81c \ub0a0\uc9dc"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790 \uc774\ub984"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790 \uc774\uba54\uc77c"
+    },
+    "author_profile_image": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790 \ud504\ub85c\ud544 \uc774\ubbf8\uc9c0"
+    },
+    "author_location": {
+      "type": "string",
+      "description": "\uc791\uc131\uc790 \uc704\uce58"
+    },
+    "temperature": {
+      "type": "number",
+      "default": 36.5,
+      "description": "\uc791\uc131\uc790 \uc628\ub3c4 (36.5 ~ 99.0)"
+    },
+    "image_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\uc774\ubbf8\uc9c0 URL \ubaa9\ub85d"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc88b\uc544\uc694 \uc218"
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ub313\uae00 \uc218"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ucd1d \uc870\ud68c\uc218"
+    },
+    "yesterday_views": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc804\uc77c(\uc5b4\uc81c) \uc870\ud68c\uc218"
+    },
+    "participant_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ucc38\uac00\uc790 \uc774\uba54\uc77c \ubaa9\ub85d"
+    },
+    "max_participants": {
+      "type": "number",
+      "description": "\ucd5c\ub300 \ucc38\uac00\uc790 \uc218"
+    }
+  },
+  "required": [
+    "title",
+    "content",
+    "type",
+    "author_email"
+  ]
+}

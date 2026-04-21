@@ -1,0 +1,45 @@
+{
+  "name": "ReferralLog",
+  "type": "object",
+  "properties": {
+    "referrer_email": {
+      "type": "string",
+      "description": "\ucd94\ucc9c\uc778 \uc774\uba54\uc77c"
+    },
+    "referrer_name": {
+      "type": "string",
+      "description": "\ucd94\ucc9c\uc778 \uc774\ub984"
+    },
+    "referrer_code": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\ub41c \ucd94\ucc9c \ucf54\ub4dc"
+    },
+    "referred_email": {
+      "type": "string",
+      "description": "\ud53c\ucd94\ucc9c\uc778 \uc774\uba54\uc77c (\ucf54\ub4dc\ub97c \uc785\ub825\ud55c \uc0ac\ub78c)"
+    },
+    "referred_name": {
+      "type": "string",
+      "description": "\ud53c\ucd94\ucc9c\uc778 \uc774\ub984"
+    },
+    "coins_awarded": {
+      "type": "number",
+      "default": 500,
+      "description": "\uc9c0\uae09\ub41c \ucf54\uc778 \uc218"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "failed"
+      ],
+      "default": "completed",
+      "description": "\uc9c0\uae09 \uc0c1\ud0dc"
+    }
+  },
+  "required": [
+    "referrer_email",
+    "referred_email",
+    "referrer_code"
+  ]
+}

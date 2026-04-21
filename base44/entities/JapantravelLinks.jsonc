@@ -1,0 +1,51 @@
+{
+  "name": "JapantravelLinks",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "\ucd95\uc81c \uc0c1\uc138 \ud398\uc774\uc9c0 URL"
+    },
+    "country": {
+      "type": "string",
+      "description": "\uad6d\uac00"
+    },
+    "source_url_id": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 FestivalSourceUrl ID"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "processed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\ucc98\ub9ac \uc0c1\ud0dc: pending(\ub300\uae30), processing(\ucc98\ub9ac\uc911), processed(\uc644\ub8cc), failed(\uc2e4\ud328)"
+    },
+    "raw_data_id": {
+      "type": "string",
+      "description": "\ucd94\ucd9c \uc644\ub8cc\ub41c JapantravelUrlExtractionRawData ID"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "\ucc98\ub9ac \uc2e4\ud328 \uc2dc \uc5d0\ub7ec \uba54\uc2dc\uc9c0"
+    },
+    "create_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ucd5c\ucd08 \uc0dd\uc131 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    },
+    "update_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ub9c8\uc9c0\ub9c9 \uc5c5\ub370\uc774\ud2b8 \uc2dc\uac04 (YYYY-MM-DD HH:mm:ss)"
+    }
+  },
+  "required": [
+    "url",
+    "country"
+  ]
+}

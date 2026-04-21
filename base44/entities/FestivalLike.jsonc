@@ -1,0 +1,18 @@
+{
+  "name": "FestivalLike",
+  "type": "object",
+  "properties": {
+    "festival_id": {
+      "type": "string",
+      "description": "\ucd95\uc81c ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790 \uc774\uba54\uc77c"
+    }
+  },
+  "required": [
+    "festival_id",
+    "user_email"
+  ]
+}

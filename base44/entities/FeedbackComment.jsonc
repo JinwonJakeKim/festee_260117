@@ -1,0 +1,28 @@
+{
+  "name": "FeedbackComment",
+  "type": "object",
+  "properties": {
+    "feedback_id": {
+      "type": "string",
+      "description": "\ud53c\ub4dc\ubc31 ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\ub313\uae00 \uc791\uc131\uc790 \uc774\uba54\uc77c"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\ub313\uae00 \uc791\uc131\uc790 \uc774\ub984"
+    },
+    "content": {
+      "type": "string",
+      "description": "\ub313\uae00 \ub0b4\uc6a9"
+    }
+  },
+  "required": [
+    "feedback_id",
+    "user_email",
+    "user_name",
+    "content"
+  ]
+}

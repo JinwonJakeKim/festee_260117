@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
 
     console.log('[AutoTransform] ========== AUTO TRANSFORM STARTED ==========');
     
-    // pending 상태의 원본 데이터 조회 (2개씩 처리 - 타임아웃 방지)
+    // pending 상태의 원본 데이터 조회 (1개씩 처리 - 타임아웃 방지)
     const pendingData = await base44.asServiceRole.entities.TourApiRawData.filter(
       { processing_status: 'pending' },
-      '-created_date',
-      2
+      'created_date',
+      1
     );
 
     if (pendingData.length === 0) {
@@ -27,28 +27,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[AutoTransform] Found ${pendingData.length} pending records`);
-    
-    // transformTourApiData 함수 호출
     const rawDataIds = pendingData.map(r => r.id);
-    
-    console.log(`[AutoTransform] Calling transformTourApiData with ${rawDataIds.length} IDs...`);
-    const transformResult = await base44.asServiceRole.functions.invoke('transformTourApiData', {
+    console.log(`[AutoTransform] Found ${pendingData.length} pending records: ${rawDataIds}`);
+
+    // 즉시 processing 상태로 변경하여 중복 처리 방지
+    for (const id of rawDataIds) {
+      await base44.asServiceRole.entities.TourApiRawData.update(id, {
+        processing_status: 'processing'
+      });
+    }
+
+    // transformTourApiData를 fire-and-forget으로 백그라운드 실행
+    // (await 없이 호출 - 응답을 기다리지 않음)
+    console.log(`[AutoTransform] Firing transformTourApiData in background (no await)...`);
+    base44.asServiceRole.functions.invoke('transformTourApiData', {
       rawDataIds: rawDataIds,
       retransform: false
+    }).catch(err => {
+      console.error('[AutoTransform] Background transform error:', err.message);
     });
 
-    console.log('[AutoTransform] ========== AUTO TRANSFORM COMPLETED ==========');
-    console.log(`[AutoTransform] Result:`, transformResult?.data);
+    console.log('[AutoTransform] ========== DISPATCHED - returning immediately ==========');
 
-    // transformResult.data에서 필요한 정보만 추출
-    const resultData = transformResult?.data || {};
-    
     return Response.json({
       success: true,
-      message: `${resultData.festivals_created || 0}개의 축제가 자동 변환되었습니다.`,
-      processed: resultData.festivals_created || 0,
-      festivals_count: resultData.festivals_created || 0
+      message: `${rawDataIds.length}개의 축제 변환을 백그라운드에서 시작했습니다.`,
+      dispatched: rawDataIds.length,
+      ids: rawDataIds
     });
 
   } catch (error) {

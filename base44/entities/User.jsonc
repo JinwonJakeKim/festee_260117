@@ -1,0 +1,59 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "nickname": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790 \ub2c9\ub124\uc784 (\ud504\ub85c\ud544\uba85)"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "\ud504\ub85c\ud544 \uc774\ubbf8\uc9c0 URL"
+    },
+    "bio": {
+      "type": "string",
+      "description": "\uc790\uae30\uc18c\uac1c"
+    },
+    "home_city": {
+      "type": "string",
+      "description": "\uac70\uc8fc \ub3c4\uc2dc"
+    },
+    "city_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "\ub3c4\uc2dc \uc778\uc99d \uc5ec\ubd80"
+    },
+    "youtube_url": {
+      "type": "string",
+      "description": "\uc720\ud29c\ube0c URL"
+    },
+    "coins": {
+      "type": "number",
+      "default": 0,
+      "description": "FESTEE \ucf54\uc778"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "en",
+        "jp",
+        "zh"
+      ],
+      "default": "ko",
+      "description": "\uc120\ud638 \uc5b8\uc5b4"
+    },
+    "home_country": {
+      "type": "string",
+      "description": "\uac70\uc8fc \uad6d\uac00"
+    }
+  },
+  "required": [
+    "nickname",
+    "profile_image",
+    "bio",
+    "home_city",
+    "youtube_url",
+    "home_country"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "ChatCache",
+  "type": "object",
+  "properties": {
+    "question_hash": {
+      "type": "string",
+      "description": "\uc9c8\ubb38\uc758 \ud574\uc2dc\uac12 (\uc911\ubcf5 \uccb4\ud06c\uc6a9)"
+    },
+    "question": {
+      "type": "string",
+      "description": "\uc6d0\ubcf8 \uc9c8\ubb38 \ud14d\uc2a4\ud2b8"
+    },
+    "answer": {
+      "type": "string",
+      "description": "LLM \uc751\ub2f5 \ud14d\uc2a4\ud2b8"
+    },
+    "recommended_festival_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ucd94\ucc9c \ucd95\uc81c ID \ubc30\uc5f4"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uce90\uc2dc \ub9cc\ub8cc \uc2dc\uac04 (24\uc2dc\uac04)"
+    }
+  },
+  "required": [
+    "question_hash",
+    "question",
+    "answer"
+  ]
+}

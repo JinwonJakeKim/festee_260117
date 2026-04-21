@@ -1,0 +1,68 @@
+{
+  "name": "Ranker",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\uc720\uc800 \uc774\uba54\uc77c"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "\ub2c9\ub124\uc784"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "\ud504\ub85c\ud544 \uc774\ubbf8\uc9c0"
+    },
+    "background_image": {
+      "type": "string",
+      "description": "\ubc30\uacbd \uc774\ubbf8\uc9c0"
+    },
+    "bio": {
+      "type": "string",
+      "description": "\uc790\uae30\uc18c\uac1c"
+    },
+    "catches_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uce90\uce58 \ud69f\uc218"
+    },
+    "followers_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ud314\ub85c\uc6cc \uc218"
+    },
+    "following_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ud314\ub85c\uc789 \uc218"
+    },
+    "top_festivals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ucd94\ucc9c \ucd95\uc81c Top3 ID"
+    },
+    "youtube_url": {
+      "type": "string",
+      "description": "\uc720\ud29c\ube0c URL"
+    },
+    "instagram_url": {
+      "type": "string",
+      "description": "\uc778\uc2a4\ud0c0\uadf8\ub7a8 URL"
+    },
+    "twitter_url": {
+      "type": "string",
+      "description": "\ud2b8\uc704\ud130(X) URL"
+    },
+    "facebook_url": {
+      "type": "string",
+      "description": "\ud398\uc774\uc2a4\ubd81 URL"
+    }
+  },
+  "required": [
+    "user_email",
+    "nickname"
+  ]
+}

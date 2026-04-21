@@ -1,0 +1,22 @@
+{
+  "name": "BlacklistedTerm",
+  "type": "object",
+  "properties": {
+    "term": {
+      "type": "string",
+      "description": "\ube14\ub799\ub9ac\uc2a4\ud2b8 \ub2e8\uc5b4 \ub610\ub294 \ubb38\uad6c (\uc601\ubb38/\uc77c\ubb38 \ub4f1 \uc6d0\ubcf8 \uc5b8\uc5b4\ub85c \uc785\ub825)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "\ube14\ub799\ub9ac\uc2a4\ud2b8\uc5d0 \ucd94\uac00\ub41c \uc774\uc720"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\ud65c\uc131\ud654 \uc5ec\ubd80"
+    }
+  },
+  "required": [
+    "term"
+  ]
+}

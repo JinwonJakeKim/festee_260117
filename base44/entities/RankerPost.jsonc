@@ -1,0 +1,42 @@
+{
+  "name": "RankerPost",
+  "type": "object",
+  "properties": {
+    "ranker_email": {
+      "type": "string",
+      "description": "\ub7ad\ucee4 \uc774\uba54\uc77c"
+    },
+    "content": {
+      "type": "string",
+      "description": "\uac8c\uc2dc\uae00 \ub0b4\uc6a9"
+    },
+    "media_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image",
+        "video",
+        "youtube"
+      ],
+      "description": "\ubbf8\ub514\uc5b4 \ud0c0\uc785"
+    },
+    "media_url": {
+      "type": "string",
+      "description": "\ubbf8\ub514\uc5b4 URL"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\uc88b\uc544\uc694 \uc218"
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\ub313\uae00 \uc218"
+    }
+  },
+  "required": [
+    "ranker_email",
+    "content"
+  ]
+}

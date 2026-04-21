@@ -1,0 +1,18 @@
+{
+  "name": "Follow",
+  "type": "object",
+  "properties": {
+    "follower_email": {
+      "type": "string",
+      "description": "\ud314\ub85c\uc6cc \uc774\uba54\uc77c"
+    },
+    "following_email": {
+      "type": "string",
+      "description": "\ud314\ub85c\uc789 \uc774\uba54\uc77c"
+    }
+  },
+  "required": [
+    "follower_email",
+    "following_email"
+  ]
+}

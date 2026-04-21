@@ -1,0 +1,63 @@
+{
+  "name": "Advertisement",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\uad11\uace0 \uc774\ub984"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "image",
+        "link"
+      ],
+      "description": "\uad11\uace0 \ud0c0\uc785"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "\uc774\ubbf8\uc9c0 URL"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "\uc720\ud29c\ube0c URL (\uc120\ud0dd)"
+    },
+    "link_url": {
+      "type": "string",
+      "description": "\ub9c1\ud06c URL (\uc120\ud0dd)"
+    },
+    "order": {
+      "type": "number",
+      "description": "\uc21c\uc11c"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\ud65c\uc131\ud654 \uc5ec\ubd80"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc2dc\uc791\uc77c"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\uc885\ub8cc\uc77c"
+    },
+    "featured_festival_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\ud648 \ubc30\ub108\uc5d0 \ub178\ucd9c\ud560 \ucd95\uc81c ID \ubaa9\ub85d (\uc21c\uc11c\ub300\ub85c \ubc30\uce58\ub428)"
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "image_url",
+    "order"
+  ]
+}

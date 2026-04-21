@@ -1,0 +1,31 @@
+{
+  "name": "FlightTime",
+  "type": "object",
+  "properties": {
+    "origin_city": {
+      "type": "string",
+      "description": "\ucd9c\ubc1c \ub3c4\uc2dc\uba85 (\uc608: \uc11c\uc6b8, \ub3c4\ucfc4, \ubca0\uc774\uc9d5 \ub4f1)"
+    },
+    "destination_city": {
+      "type": "string",
+      "description": "\ub3c4\ucc29 \ub3c4\uc2dc\uba85 (\uc608: \ub3c4\ucfc4, \uc624\uc0ac\uce74, \ud30c\ub9ac \ub4f1)"
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "\ube44\ud589 \uc2dc\uac04 (\uc2dc\uac04 \ub2e8\uc704, \uc608: 2.5)"
+    },
+    "origin_country": {
+      "type": "string",
+      "description": "\ucd9c\ubc1c \uad6d\uac00\uba85 (\uc120\ud0dd, \uc815\ud655\ud55c \ub9e4\uce6d\uc6a9)"
+    },
+    "destination_country": {
+      "type": "string",
+      "description": "\ub3c4\ucc29 \uad6d\uac00\uba85 (\uc120\ud0dd, \uc815\ud655\ud55c \ub9e4\uce6d\uc6a9)"
+    }
+  },
+  "required": [
+    "origin_city",
+    "destination_city",
+    "duration_hours"
+  ]
+}

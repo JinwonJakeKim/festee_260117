@@ -1,0 +1,48 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "sender_email": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\uba54\uc77c"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\ub984"
+    },
+    "sender_profile_image": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \ud504\ub85c\ud544 \uc774\ubbf8\uc9c0"
+    },
+    "receiver_email": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 \uc774\uba54\uc77c"
+    },
+    "receiver_name": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 \uc774\ub984"
+    },
+    "receiver_profile_image": {
+      "type": "string",
+      "description": "\uc218\uc2e0\uc790 \ud504\ub85c\ud544 \uc774\ubbf8\uc9c0"
+    },
+    "content": {
+      "type": "string",
+      "description": "\uba54\uc2dc\uc9c0 \ub0b4\uc6a9"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc77d\uc74c \uc5ec\ubd80"
+    },
+    "conversation_id": {
+      "type": "string",
+      "description": "\ub300\ud654\ubc29 ID (\ub450 \uc0ac\uc6a9\uc790\uc758 \uc774\uba54\uc77c\uc744 \uc54c\ud30c\ubcb3\uc21c\uc73c\ub85c \uc815\ub82c\ud558\uc5ec \uc0dd\uc131)"
+    }
+  },
+  "required": [
+    "sender_email",
+    "receiver_email",
+    "content"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\uc54c\ub78c \uc218\uc2e0\uc790 \uc774\uba54\uc77c"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "new_message",
+        "new_comment",
+        "new_follower",
+        "recommended_festival_update",
+        "post_like",
+        "catch_like",
+        "comment_like",
+        "festival_reminder",
+        "gotogether_join",
+        "gotogether_comment"
+      ],
+      "description": "\uc54c\ub78c \ud0c0\uc785"
+    },
+    "title": {
+      "type": "string",
+      "description": "\uc54c\ub78c \uc81c\ubaa9"
+    },
+    "content": {
+      "type": "string",
+      "description": "\uc54c\ub78c \ub0b4\uc6a9"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\uba54\uc77c"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \uc774\ub984"
+    },
+    "sender_profile_image": {
+      "type": "string",
+      "description": "\ubc1c\uc2e0\uc790 \ud504\ub85c\ud544 \uc774\ubbf8\uc9c0"
+    },
+    "link_url": {
+      "type": "string",
+      "description": "\uc54c\ub78c \ud074\ub9ad \uc2dc \uc774\ub3d9\ud560 URL"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc77d\uc74c \uc5ec\ubd80"
+    },
+    "related_id": {
+      "type": "string",
+      "description": "\uad00\ub828 \uc5d4\ud2f0\ud2f0 ID (\ud3ec\uc2a4\ud2b8, \uce90\uce58 \ub4f1)"
+    }
+  },
+  "required": [
+    "user_email",
+    "type",
+    "title",
+    "content"
+  ]
+}
