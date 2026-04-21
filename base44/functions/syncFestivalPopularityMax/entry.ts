@@ -45,9 +45,9 @@ Deno.serve(async (req) => {
 
     for (const festival of targetFestivals) {
       try {
-        // 해당 festival의 모든 YoutubeRawdata 레코드 조회
+        // 해당 festival의 YoutubeRawdata 레코드 중 가장 최신 레코드 1개 조회
         const allYtRecords = await base44.asServiceRole.entities.YoutubeRawdata.filter(
-          { festival_id: festival.id }, '-popularity', 50
+          { festival_id: festival.id }, '-update_time', 1
         );
 
         if (allYtRecords.length === 0) {
@@ -55,9 +55,8 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // 가장 높은 popularity 값을 가진 레코드 선택
-        const bestRecord = allYtRecords.reduce((best, cur) =>
-          (cur.popularity || 0) > (best.popularity || 0) ? cur : best, allYtRecords[0]);
+        // 가장 최신 레코드 사용
+        const bestRecord = allYtRecords[0];
 
         const maxPopularity = bestRecord.popularity || 0;
         const rawShorts = bestRecord.raw_shorts_views_5_total || 0;
@@ -67,20 +66,20 @@ Deno.serve(async (req) => {
             popularity: maxPopularity,
             shorts_views_5_total: rawShorts
           });
-          console.log(`[SyncMax] ✓ ${festival.name_ko || festival.id} → popularity=${maxPopularity} (${allYtRecords.length}개 레코드 중 최대값)`);
+          console.log(`[SyncMax] ✓ ${festival.name_ko || festival.id} → popularity=${maxPopularity} (최신 레코드: ${bestRecord.update_time})`);
           updated.push({
             id: festival.id,
             name: festival.name_ko || festival.name_original || festival.id,
             new_popularity: maxPopularity,
             shorts_views_5_total: rawShorts,
-            yt_records_count: allYtRecords.length
+            latest_update_time: bestRecord.update_time
           });
         } else {
-          console.log(`[SyncMax] Still 0: ${festival.name_ko || festival.id} (모든 YoutubeRawdata.popularity=0)`);
+          console.log(`[SyncMax] Still 0: ${festival.name_ko || festival.id} (최신 YoutubeRawdata.popularity=0)`);
           stillZero.push({
             id: festival.id,
             name: festival.name_ko || festival.name_original || festival.id,
-            reason: `모든 YoutubeRawdata(${allYtRecords.length}개).popularity=0`
+            reason: `최신 YoutubeRawdata(${bestRecord.update_time}).popularity=0`
           });
         }
       } catch (err) {
