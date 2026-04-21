@@ -540,21 +540,21 @@ export default function Home() {
     const koreaVariations = ['대한민국', '한국', 'Korea', 'South Korea'];
     return festivals
       .filter(f => koreaVariations.includes(f.country) && f.end_date && new Date(f.end_date) >= today)
-      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 10);
   }, [festivals]);
 
   const foodFestivals = useMemo(() => {
     return festivals
       .filter(f => f.category === '음식')
-      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 10);
   }, [festivals]);
 
   const cherryBlossomFestivals = useMemo(() => {
     return festivals
       .filter(f => (f.name_ko || f.name_original || '').includes('벚꽃'))
-      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 10);
   }, [festivals]);
 
@@ -563,7 +563,7 @@ export default function Home() {
     today.setHours(0, 0, 0, 0);
     return festivals
       .filter(f => f.country === 'Japan' && f.end_date && new Date(f.end_date) >= today)
-      .sort((a, b) => (b.shorts_views_5_total || 0) - (a.shorts_views_5_total || 0))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 10);
   }, [festivals]);
 
