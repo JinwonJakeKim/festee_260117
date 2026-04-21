@@ -49,7 +49,8 @@ Deno.serve(async (req) => {
       festivalName,
       searchHighlightVideo = true,
       searchShorts = true,
-      llmScoreThreshold = 2  // LLM 관련성 판단 최소 score: 일본 축제 2, 한국 축제 1
+      llmScoreThreshold = 2,  // LLM 관련성 판단 최소 score: 일본 축제 2, 한국 축제 1
+      relevanceLanguage = null  // YouTube 검색 언어 힌트 (예: 'ja', 'ko', 'en')
     } = await req.json();
     
     if (!festivalName) {
@@ -195,14 +196,16 @@ Deno.serve(async (req) => {
           throw new Error(`YOUTUBE_API_LIMIT_REACHED: ${usage.count}/${usage.limit} 쿼리 소진`);
         }
         
-        const searchParams = new URLSearchParams({
+        const searchParamsObj = {
           part: 'id,snippet',
           q: festivalNameForSearch,
           type: 'video',
           order: 'relevance',
           maxResults: '20',
           key: youtubeApiKey
-        });
+        };
+        if (relevanceLanguage) searchParamsObj.relevanceLanguage = relevanceLanguage;
+        const searchParams = new URLSearchParams(searchParamsObj);
         
         // Rate limiting 방지를 위한 지연 (300ms)
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -481,7 +484,9 @@ Deno.serve(async (req) => {
         // Shorts 검색: 일반 영상과 동일한 보정된 쿼리 사용 + #Shorts 태그 추가
         // festivalName은 이미 buildEnglishYoutubeQuery/buildJapaneseYoutubeQuery를 거친 보정된 쿼리
         const shortsQuery = `${festivalName} #Shorts`;
-        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(shortsQuery)}&type=video&videoDuration=short&order=relevance&maxResults=20&key=${youtubeApiKey}`;
+        const shortsParamsObj = { part: 'snippet', q: shortsQuery, type: 'video', videoDuration: 'short', order: 'relevance', maxResults: '20', key: youtubeApiKey };
+        if (relevanceLanguage) shortsParamsObj.relevanceLanguage = relevanceLanguage;
+        const shortsSearchUrl = `https://www.googleapis.com/youtube/v3/search?${new URLSearchParams(shortsParamsObj).toString()}`;
         const shortsResponse = await fetch(shortsSearchUrl);
         
         if (shortsResponse.ok) {

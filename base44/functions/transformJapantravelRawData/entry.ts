@@ -476,7 +476,8 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     const firstResult = await base44.functions.invoke('fetchYoutubeVideos', {
       festivalName: primaryQuery,
       searchHighlightVideo: shouldSearchHighlight,
-      searchShorts: shouldSearchShorts
+      searchShorts: shouldSearchShorts,
+      relevanceLanguage: 'ja'
     }).catch(e => {
       if (e.message && e.message.includes('YOUTUBE_API_LIMIT_REACHED')) throw e;
       return { data: { success: false } };
