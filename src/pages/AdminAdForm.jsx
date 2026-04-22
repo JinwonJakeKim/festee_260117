@@ -52,7 +52,7 @@ export default function AdminAdForm() {
 
   const { data: allFestivals = [] } = useQuery({
     queryKey: ['allFestivalsForAd'],
-    queryFn: () => base44.entities.Festival.list('-likes_count', 200),
+    queryFn: () => base44.entities.Festival.list('-likes_count', 9999),
   });
 
   useEffect(() => {
