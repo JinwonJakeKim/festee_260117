@@ -1272,7 +1272,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                              {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                             </p>
                           </div>
                         </div>
@@ -1315,7 +1315,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                              {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                             </p>
                           </div>
                         </div>
@@ -1356,7 +1356,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                              {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                             </p>
                           </div>
                         </div>
@@ -1397,7 +1397,7 @@ export default function Home() {
                               {localizedName}
                             </h3>
                             <p className="text-gray-300 text-xs">
-                              {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                              {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                             </p>
                           </div>
                         </div>
@@ -1439,7 +1439,7 @@ export default function Home() {
                             {localizedName}
                           </h3>
                           <p className="text-gray-300 text-xs">
-                            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                            {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                           </p>
                         </div>
                       </div>
@@ -1480,7 +1480,7 @@ export default function Home() {
                             {localizedName}
                           </h3>
                           <p className="text-gray-300 text-xs">
-                            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
+                            {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}
                           </p>
                         </div>
                       </div>

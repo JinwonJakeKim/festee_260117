@@ -888,7 +888,7 @@ export default function Search() {
                         <div className="flex-1">
                           <h3 className="text-white font-bold text-sm mb-1">{festival.name_ko || festival.name_original || festival.name}</h3>
                           <p className="text-gray-400 text-xs">
-                            {getLocalizedCity(festival)}, {getLocalizedCountry(festival)}{festival.category ? ` / ${festival.category}` : ''}
+                            {getLocalizedCountry(festival)}, {getLocalizedCity(festival)}{festival.category ? ` / ${festival.category}` : ''}
                           </p>
                           <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
                             <span>

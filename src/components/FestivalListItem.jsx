@@ -56,7 +56,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
             {localizedName}
           </h3>
           <div className="text-gray-400 text-xs">
-            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}{festival.category ? ` / ${festival.category}` : ''}
+            {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}{festival.category ? ` / ${festival.category}` : ''}
           </div>
           <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
             <span>
