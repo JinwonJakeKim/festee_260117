@@ -97,15 +97,19 @@ export default function AccountManagement() {
                     <p className="text-gray-500 text-xs">언제든지 다시 활성화 가능</p>
                   </div>
                 </div>
-                <ul className="space-y-1 mb-4">
+                <ul className="space-y-2 mb-4">
                   {[
-                    "로그인 및 서비스 이용이 일시 중단됩니다",
-                    "내 게시물, 댓글, 좋아요 데이터는 보존됩니다",
-                    "다시 로그인하면 계정이 자동으로 복구됩니다",
-                  ].map((text, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-400 text-sm">
-                      <span className="text-yellow-400 mt-0.5">•</span>
-                      {text}
+                    { text: "로그인 및 모든 서비스 이용이 일시 중단됩니다.", sub: "비활성화 기간 동안 앱에 접근할 수 없습니다." },
+                    { text: "내 프로필이 다른 사용자에게 보이지 않게 됩니다.", sub: "팔로워/팔로잉 목록에서도 숨겨집니다." },
+                    { text: "작성한 게시물, 댓글, 좋아요, 캐치 데이터는 모두 보존됩니다.", sub: "계정 복구 시 모든 데이터가 그대로 유지됩니다." },
+                    { text: "다시 로그인하면 계정이 즉시 복구됩니다.", sub: "비활성화 기간에 대한 제한은 없습니다." },
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-yellow-400 mt-1 shrink-0">•</span>
+                      <div>
+                        <p className="text-white text-sm">{item.text}</p>
+                        <p className="text-gray-500 text-xs mt-0.5">{item.sub}</p>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -136,15 +140,19 @@ export default function AccountManagement() {
                     계정 삭제 후에는 데이터 복구가 불가능합니다. 모든 개인 정보, 게시물, 좋아요, 팔로우 정보가 영구적으로 비활성화됩니다.
                   </p>
                 </div>
-                <ul className="space-y-1 mb-4">
+                <ul className="space-y-2 mb-4">
                   {[
-                    "계정 및 모든 활동 데이터가 비활성화됩니다",
-                    "같은 이메일로 재가입 시 새 계정으로 시작됩니다",
-                    "이 작업은 되돌릴 수 없습니다",
-                  ].map((text, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-400 text-sm">
-                      <span className="text-red-400 mt-0.5">•</span>
-                      {text}
+                    { text: "계정이 영구적으로 비활성화되며 로그인이 불가능해집니다.", sub: "삭제 처리 후에는 관리자도 복구할 수 없습니다." },
+                    { text: "프로필, 게시물, 댓글, 좋아요, 팔로우 정보가 모두 비공개 처리됩니다.", sub: "다른 사용자에게 더 이상 노출되지 않습니다." },
+                    { text: "데이터는 내부 보관 정책에 따라 일정 기간 후 완전 삭제됩니다.", sub: "서비스 운영 및 법적 의무 이행을 위해 일부 기록은 보존될 수 있습니다." },
+                    { text: "같은 이메일로 재가입하더라도 이전 데이터는 복구되지 않습니다.", sub: "완전히 새로운 계정으로 시작하게 됩니다." },
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-red-400 mt-1 shrink-0">•</span>
+                      <div>
+                        <p className="text-white text-sm">{item.text}</p>
+                        <p className="text-gray-500 text-xs mt-0.5">{item.sub}</p>
+                      </div>
                     </li>
                   ))}
                 </ul>
