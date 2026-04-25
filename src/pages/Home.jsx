@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,6 +18,7 @@ import { useFestivalLocalizedContent } from "../components/FestivalLocalizedCont
 import HomeChatbot from "../components/HomeChatbot";
 import FestivalListItem from "../components/FestivalListItem";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
+import PullToRefresh from "../components/PullToRefresh";
 
 // 앱 초기 로드 시 홈 페이지로 리다이렉트 처리
 if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
@@ -661,6 +662,12 @@ export default function Home() {
     base44.auth.redirectToLogin(window.location.pathname);
   };
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['rawFestivals'] });
+    await queryClient.invalidateQueries({ queryKey: ['advertisements'] });
+    await queryClient.invalidateQueries({ queryKey: ['topUsers'] });
+  }, [queryClient]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black pb-20">
@@ -684,6 +691,7 @@ export default function Home() {
   }
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen bg-black pb-20">
       <LoginPromptModal
         isOpen={showLoginModal}
@@ -1495,5 +1503,6 @@ export default function Home() {
 
       <HomeChatbot festivals={festivals} />
     </div>
+    </PullToRefresh>
   );
 }
