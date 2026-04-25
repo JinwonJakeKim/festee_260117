@@ -369,6 +369,25 @@ export default function Settings() {
           </Card>
         </div>
 
+        {/* 계정 관리 */}
+        <div>
+          <h2 className="text-white font-bold mb-3">계정 관리</h2>
+          <Card className="bg-gray-900 border-gray-800">
+            <div className="divide-y divide-gray-800">
+              <button
+                onClick={() => navigate('/AccountManagement')}
+                className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-red-400" />
+                  <span className="text-white">계정 비활성화 / 삭제</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+          </Card>
+        </div>
+
         {/* 기타 */}
         <div>
           <h2 className="text-white font-bold mb-3">{t('other')}</h2>

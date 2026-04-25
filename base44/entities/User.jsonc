@@ -2,58 +2,29 @@
   "name": "User",
   "type": "object",
   "properties": {
-    "nickname": {
-      "type": "string",
-      "description": "\uc0ac\uc6a9\uc790 \ub2c9\ub124\uc784 (\ud504\ub85c\ud544\uba85)"
-    },
-    "profile_image": {
-      "type": "string",
-      "description": "\ud504\ub85c\ud544 \uc774\ubbf8\uc9c0 URL"
-    },
-    "bio": {
-      "type": "string",
-      "description": "\uc790\uae30\uc18c\uac1c"
-    },
-    "home_city": {
-      "type": "string",
-      "description": "\uac70\uc8fc \ub3c4\uc2dc"
-    },
-    "city_verified": {
-      "type": "boolean",
-      "default": false,
-      "description": "\ub3c4\uc2dc \uc778\uc99d \uc5ec\ubd80"
-    },
-    "youtube_url": {
-      "type": "string",
-      "description": "\uc720\ud29c\ube0c URL"
-    },
-    "coins": {
-      "type": "number",
-      "default": 0,
-      "description": "FESTEE \ucf54\uc778"
-    },
-    "preferred_language": {
+    "role": {
       "type": "string",
       "enum": [
-        "ko",
-        "en",
-        "jp",
-        "zh"
+        "admin",
+        "user"
       ],
-      "default": "ko",
-      "description": "\uc120\ud638 \uc5b8\uc5b4"
+      "default": "user",
+      "description": "\uc0ac\uc6a9\uc790 \uc5ed\ud560"
     },
-    "home_country": {
+    "account_status": {
       "type": "string",
-      "description": "\uac70\uc8fc \uad6d\uac00"
+      "enum": [
+        "active",
+        "deactivated",
+        "deleted"
+      ],
+      "default": "active",
+      "description": "\uacc4\uc815 \uc0c1\ud0dc: active(\ud65c\uc131), deactivated(\ube44\ud65c\uc131\ud654), deleted(\uc0ad\uc81c)"
+    },
+    "account_status_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uacc4\uc815 \uc0c1\ud0dc \ubcc0\uacbd \uc2dc\uac04"
     }
-  },
-  "required": [
-    "nickname",
-    "profile_image",
-    "bio",
-    "home_city",
-    "youtube_url",
-    "home_country"
-  ]
+  }
 }
