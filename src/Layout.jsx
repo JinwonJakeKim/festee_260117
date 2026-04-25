@@ -10,6 +10,8 @@ export default function Layout({ children, currentPageName }) {
   const [showSplash, setShowSplash] = React.useState(true);
   const [slogonIndex, setSlogonIndex] = React.useState(0);
 
+
+
   const slogans = [
     "세상의 모든 축제를 한 곳에서",
     "당신의 특별한 순간을 찾아보세요",
@@ -53,74 +55,76 @@ export default function Layout({ children, currentPageName }) {
 
   const isMessageDetail = currentPageName === "MessageDetail";
 
-  const homeRelatedPages = [
-    createPageUrl("Home"),
-    createPageUrl("FestivalDetail"),
-    createPageUrl("FestivalMore"),
-    createPageUrl("Search"),
-    createPageUrl("RankerDetail"),
-    createPageUrl("FestivalVenueMap"),
-    createPageUrl("PostDetail"),
-    createPageUrl("GoTogetherDetail"),
-  ];
+  const tabGroups = {
+    home: [
+      createPageUrl("Home"),
+      createPageUrl("FestivalDetail"),
+      createPageUrl("FestivalMore"),
+      createPageUrl("Search"),
+      createPageUrl("RankerDetail"),
+      createPageUrl("FestivalVenueMap"),
+      createPageUrl("PostDetail"),
+      createPageUrl("GoTogetherDetail"),
+    ],
+    map: [createPageUrl("FestivalMap")],
+    catch: [createPageUrl("Catch"), createPageUrl("NearbyCatch")],
+    community: [createPageUrl("Community"), createPageUrl("CreatePost")],
+    my: [
+      createPageUrl("MyFestee"),
+      createPageUrl("Settings"),
+      createPageUrl("MyLikes"),
+      createPageUrl("MyComments"),
+      createPageUrl("MyRecommendations"),
+      createPageUrl("SelectCity"),
+      createPageUrl("AdminDashboard"),
+      createPageUrl("AdminTourAPI"),
+      createPageUrl("AdminEventbrite"),
+      createPageUrl("AdminAdForm"),
+      createPageUrl("AdminFestivalExtract"),
+      createPageUrl("AdminFestivalForm"),
+    ],
+  };
 
-  const communityRelatedPages = [
-    createPageUrl("Community"),
-    createPageUrl("CreatePost"),
-  ];
+  // 현재 URL이 속한 탭 키 찾기
+  const getCurrentTabKey = (pathname) => {
+    for (const [key, pages] of Object.entries(tabGroups)) {
+      if (pages.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+        return key;
+      }
+    }
+    return null;
+  };
 
-  const catchRelatedPages = [
-    createPageUrl("Catch"),
-    createPageUrl("NearbyCatch"),
-  ];
+  // 탭 클릭 핸들러: 마지막 방문 URL 저장 및 복원
+  const handleTabClick = (e, tabKey, defaultUrl) => {
+    e.preventDefault();
+    const currentTabKey = getCurrentTabKey(location.pathname);
+    
+    // 현재 탭의 URL 저장
+    if (currentTabKey) {
+      sessionStorage.setItem(`tab_last_url_${currentTabKey}`, location.pathname + location.search);
+    }
 
-  const myRelatedPages = [
-    createPageUrl("MyFestee"),
-    createPageUrl("Settings"),
-    createPageUrl("MyLikes"),
-    createPageUrl("MyComments"),
-    createPageUrl("MyRecommendations"),
-    createPageUrl("SelectCity"),
-    createPageUrl("AdminDashboard"),
-    createPageUrl("AdminTourAPI"),
-    createPageUrl("AdminEventbrite"),
-    createPageUrl("AdminAdForm"),
-    createPageUrl("AdminFestivalExtract"),
-    createPageUrl("AdminFestivalForm"),
-  ];
+    // 같은 탭 클릭 시 루트로 이동
+    if (currentTabKey === tabKey) {
+      navigate(defaultUrl);
+      return;
+    }
+
+    // 다른 탭 클릭 시 마지막 방문 URL로 복원
+    const savedUrl = sessionStorage.getItem(`tab_last_url_${tabKey}`);
+    navigate(savedUrl || defaultUrl);
+  };
 
   const navItems = [
-    { 
-      name: "홈", 
-      icon: Home, 
-      url: createPageUrl("Home"),
-      relatedPages: homeRelatedPages
-    },
-    { 
-      name: "지도", 
-      icon: Map, 
-      url: createPageUrl("FestivalMap"),
-      relatedPages: [createPageUrl("FestivalMap")]
-    },
-    { 
-      name: "캐치", 
-      icon: Target, 
-      url: createPageUrl("Catch"),
-      relatedPages: catchRelatedPages
-    },
-    { 
-      name: "커뮤니티", 
-      icon: Users, 
-      url: createPageUrl("Community"),
-      relatedPages: communityRelatedPages
-    },
-    { 
-      name: "MY", 
-      icon: User, 
-      url: createPageUrl("MyFestee"),
-      relatedPages: myRelatedPages
-    }
+    { key: "home", name: "홈", icon: Home, url: createPageUrl("Home") },
+    { key: "map", name: "지도", icon: Map, url: createPageUrl("FestivalMap") },
+    { key: "catch", name: "캐치", icon: Target, url: createPageUrl("Catch") },
+    { key: "community", name: "커뮤니티", icon: Users, url: createPageUrl("Community") },
+    { key: "my", name: "MY", icon: User, url: createPageUrl("MyFestee") },
   ];
+
+  const currentTabKey = getCurrentTabKey(location.pathname);
 
   return (
     <div className="min-h-screen bg-black">
@@ -616,15 +620,14 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-screen-xl mx-auto">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item) => {
-              const isActive = item.relatedPages.some(page => 
-                location.pathname === page || location.pathname.startsWith(page)
-              );
+              const isActive = currentTabKey === item.key;
               const Icon = item.icon;
               
               return (
-                <Link
-                  key={item.name}
-                  to={item.url}
+                <a
+                  key={item.key}
+                  href={item.url}
+                  onClick={(e) => handleTabClick(e, item.key, item.url)}
                   className="flex flex-col items-center justify-center gap-1 flex-1 transition-all duration-300"
                 >
                   <Icon 
@@ -639,7 +642,7 @@ export default function Layout({ children, currentPageName }) {
                   }`}>
                     {item.name}
                   </span>
-                </Link>
+                </a>
               );
             })}
           </div>
