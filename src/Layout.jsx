@@ -272,6 +272,11 @@ export default function Layout({ children, currentPageName }) {
           padding: 0 !important;
           color: #fff !important;
           overscroll-behavior-y: none !important;
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          user-select: none !important;
+          -webkit-touch-callout: none !important;
+          -webkit-tap-highlight-color: transparent !important;
         }
 
         #root {
