@@ -141,6 +141,15 @@ export default function AdminDashboard() {
     initialData: [],
   });
 
+  const toggleFestivalShowMutation = useMutation({
+    mutationFn: async ({ festivalId, show }) => {
+      await base44.entities.Festival.update(festivalId, { show });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['festivals'] });
+    },
+  });
+
   const updateFestivalStarMutation = useMutation({
     mutationFn: async ({ festivalId, starRating }) => {
       await base44.entities.Festival.update(festivalId, { star_rating: starRating });
@@ -744,7 +753,7 @@ export default function AdminDashboard() {
                         <p className="text-gray-400 text-sm mb-1">
                           {festival.city}, {festival.country}
                         </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {festival.star_rating && (
                             <Badge className="bg-yellow-500 text-black">
                               <Star className="w-3 h-3 mr-1" fill="currentColor" />
@@ -754,6 +763,20 @@ export default function AdminDashboard() {
                           <Badge variant="outline" className="text-gray-400 border-gray-700">
                             ❤️ {festival.likes_count || 0}
                           </Badge>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newShow = (festival.show !== 'N') ? 'N' : 'Y';
+                              toggleFestivalShowMutation.mutate({ festivalId: festival.id, show: newShow });
+                            }}
+                            className={`px-2 py-0.5 rounded text-xs font-bold transition-colors ${
+                              festival.show === 'N'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30'
+                                : 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30'
+                            }`}
+                          >
+                            {festival.show === 'N' ? '숨김' : '표시'}
+                          </button>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">

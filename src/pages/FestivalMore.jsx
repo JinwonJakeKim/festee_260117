@@ -127,7 +127,7 @@ export default function FestivalMore() {
     queryKey: ['festivals'],
     queryFn: async () => {
       const allFestivals = await base44.entities.Festival.list('-popularity', 500);
-      return removeDuplicateFestivals(allFestivals);
+      return removeDuplicateFestivals(allFestivals.filter(f => f.show !== 'N'));
     },
     initialData: [],
   });

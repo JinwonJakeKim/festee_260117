@@ -2,6 +2,15 @@
   "name": "Festival",
   "type": "object",
   "properties": {
+    "show": {
+      "type": "string",
+      "enum": [
+        "Y",
+        "N"
+      ],
+      "default": "Y",
+      "description": "\uc571 \ud45c\uc2dc \uc5ec\ubd80 (Y: \ud45c\uc2dc, N: \uc228\uae40)"
+    },
     "tour_api_raw_data_id": {
       "type": "string",
       "description": "\uc6d0\ubcf8 TourApiRawData \uc5d4\ud2f0\ud2f0 ID (\uc911\ubcf5 \ubc29\uc9c0\uc6a9)"

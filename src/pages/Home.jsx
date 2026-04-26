@@ -275,7 +275,7 @@ export default function Home() {
 
   const festivals = useMemo(() => {
     if (!rawFestivals) return [];
-    return removeDuplicateFestivals(rawFestivals);
+    return removeDuplicateFestivals(rawFestivals.filter(f => f.show !== 'N'));
   }, [rawFestivals]);
 
   const { data: flightTimes = [] } = useQuery({
