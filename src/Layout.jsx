@@ -640,19 +640,9 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
       
       <div className="relative overflow-hidden">
-        <AnimatePresence mode="sync" initial={false}>
-          <motion.main
-            key={location.pathname}
-            className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}
-            initial={pageVariants.initial}
-            animate={pageVariants.animate}
-            exit={pageVariants.exit}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            style={isDetailPage(location.pathname) ? { position: 'absolute', top: 0, left: 0, right: 0, willChange: "transform" } : {}}
-          >
-            {children}
-          </motion.main>
-        </AnimatePresence>
+        <main className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}>
+          {children}
+        </main>
       </div>
 
       {/* Bottom Navigation */}
