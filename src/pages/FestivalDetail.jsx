@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
@@ -158,6 +159,7 @@ export default function FestivalDetail() {
   const festivalId = urlParams.get('id');
   const { getLocalizedContent } = useFestivalLocalizedContent();
   const [commentText, setCommentText] = useState("");
+  const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showFreeEntryAlert, setShowFreeEntryAlert] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -286,6 +288,9 @@ export default function FestivalDetail() {
       setShowLoginModal(true);
       return;
     }
+    if (navigator.vibrate) navigator.vibrate(30);
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 400);
     likeMutation.mutate();
   };
 
@@ -889,10 +894,21 @@ export default function FestivalDetail() {
             onClick={handleLike}
             className="flex items-center gap-2"
           >
-            <Heart className={`w-6 h-6 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}`} />
-            <span className={`font-medium ${isLiked ? 'text-pink-500' : 'text-white'}`}>
+            <motion.div
+              animate={likeAnimating ? { scale: [1, 1.45, 1] } : { scale: 1 }}
+              transition={{ duration: 0.35, type: "spring", stiffness: 400, damping: 15 }}
+            >
+              <Heart className={`w-6 h-6 transition-colors duration-200 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}`} />
+            </motion.div>
+            <motion.span
+              key={festival.likes_count}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`font-medium ${isLiked ? 'text-pink-500' : 'text-white'}`}
+            >
               {formatNumber(festival.likes_count || 0)}
-            </span>
+            </motion.span>
           </button>
           <button
             onClick={() => commentSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}

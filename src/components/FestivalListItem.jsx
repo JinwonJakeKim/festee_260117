@@ -5,6 +5,7 @@ import { Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { motion } from "framer-motion";
 
 const safeFormatDate = (dateString, formatString) => {
   if (!dateString) return '날짜 미정';
@@ -33,8 +34,23 @@ const getRankColor = (index) => {
 export default function FestivalListItem({ festival, index, isLiked, onLike, getLocalizedContent }) {
   const dateStatus = festival.date_status || 'confirmed';
   const localizedName = getLocalizedContent(festival, 'name');
+  const [likeAnimating, setLikeAnimating] = React.useState(false);
+
+  const handleLikeClick = (e) => {
+    e.preventDefault();
+    // 햅틱 피드백
+    if (navigator.vibrate) navigator.vibrate(30);
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 400);
+    onLike(festival.id);
+  };
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: (index % 5) * 0.05, ease: "easeOut" }}
+    >
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
       <div className="flex items-center py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
         <div className="flex-shrink-0 w-6 text-center">
@@ -71,22 +87,31 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
         </div>
 
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            onLike(festival.id);
-          }}
+          onClick={handleLikeClick}
           className="flex-shrink-0 flex flex-col items-center gap-1"
         >
-          <Heart
-            className={`w-6 h-6 transition-all ${
-              isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-500'
-            }`}
-          />
-          <span className={`text-xs font-medium ${isLiked ? 'text-pink-500' : 'text-gray-500'}`}>
+          <motion.div
+            animate={likeAnimating ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+            transition={{ duration: 0.35, type: "spring", stiffness: 400, damping: 15 }}
+          >
+            <Heart
+              className={`w-6 h-6 transition-colors duration-200 ${
+                isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-500'
+              }`}
+            />
+          </motion.div>
+          <motion.span
+            key={festival.likes_count}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className={`text-xs font-medium ${isLiked ? 'text-pink-500' : 'text-gray-500'}`}
+          >
             {formatNumber(festival.likes_count || 0)}
-          </span>
+          </motion.span>
         </button>
       </div>
     </Link>
+    </motion.div>
   );
 }

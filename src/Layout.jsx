@@ -4,6 +4,27 @@ import { createPageUrl } from "@/utils";
 import { Home, Map, Target, Users, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// 페이지 전환 애니메이션 variants
+const isDetailPage = (pathname) => {
+  const detailPages = ['/FestivalDetail', '/FestivalMore', '/Search', '/RankerDetail', '/FestivalVenueMap', '/PostDetail', '/GoTogetherDetail'];
+  return detailPages.some(p => pathname.includes(p));
+};
+
+const getPageVariants = (pathname) => {
+  if (isDetailPage(pathname)) {
+    return {
+      initial: { opacity: 0, x: '100%' },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: '100%' },
+    };
+  }
+  return {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
+};
+
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -125,6 +146,8 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   const currentTabKey = getCurrentTabKey(location.pathname);
+
+  const pageVariants = getPageVariants(location.pathname);
 
   return (
     <div className="min-h-screen bg-black">
@@ -616,9 +639,19 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      <main className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}>
-        {children}
-      </main>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.main
+          key={location.pathname}
+          className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}
+          initial={pageVariants.initial}
+          animate={pageVariants.animate}
+          exit={pageVariants.exit}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          style={{ willChange: "transform, opacity" }}
+        >
+          {children}
+        </motion.main>
+      </AnimatePresence>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998] safe-area-inset-bottom" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
