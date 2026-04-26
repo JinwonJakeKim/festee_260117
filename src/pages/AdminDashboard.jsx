@@ -61,7 +61,7 @@ export default function AdminDashboard() {
 
   const { data: festivals } = useQuery({
     queryKey: ['festivals'],
-    queryFn: () => base44.entities.Festival.list('-created_date'),
+    queryFn: () => base44.entities.Festival.list('-created_date', 2000),
     initialData: [],
   });
 
