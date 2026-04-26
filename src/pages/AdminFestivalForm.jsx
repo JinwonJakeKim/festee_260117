@@ -37,6 +37,7 @@ export default function AdminFestivalForm() {
     highlights: [],
     lineup: [],
     tags: [],
+    show: "Y",
   });
 
   const [newHighlight, setNewHighlight] = useState("");
@@ -83,6 +84,7 @@ export default function AdminFestivalForm() {
         highlights: festival.highlights || [],
         lineup: festival.lineup || [],
         tags: festival.tags || [],
+        show: festival.show || "Y",
       });
     }
   }, [festival, isEdit]);
@@ -245,6 +247,41 @@ export default function AdminFestivalForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
+        {/* 앱 표시 여부 */}
+        <Card className="bg-gray-900 border-gray-800 p-4">
+          <h2 className="text-white font-bold mb-4">앱 표시 설정</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-medium">앱에 표시</p>
+              <p className="text-gray-400 text-sm">N으로 설정하면 앱 사용자에게 보이지 않습니다</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, show: "Y" })}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                  formData.show !== "N"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                Y (표시)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, show: "N" })}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                  formData.show === "N"
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                N (숨김)
+              </button>
+            </div>
+          </div>
+        </Card>
+
         {/* 기본 정보 */}
         <Card className="bg-gray-900 border-gray-800 p-4">
           <h2 className="text-white font-bold mb-4">기본 정보</h2>
