@@ -66,8 +66,8 @@ export default function AdminFestivalForm() {
   useEffect(() => {
     if (festival && isEdit) {
       setFormData({
-        name: festival.name || "",
-        summary: festival.summary || "",
+        name: festival.name_ko || festival.name || "",
+        summary: festival.summary_ko || festival.summary || "",
         description_original: festival.description_original || "",
         country: festival.country || "",
         city: festival.city || "",
