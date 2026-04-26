@@ -350,30 +350,56 @@ export default function Home() {
         setShowLoginModal(true);
         return;
       }
-      
       const existing = myLikes.find(like => like.festival_id === festivalId);
-      const festival = rawFestivals?.find(f => f.id === festivalId);
-      const currentCount = festival?.likes_count || 0;
-      
       if (existing) {
         await base44.entities.FestivalLike.delete(existing.id);
+        const festival = rawFestivals?.find(f => f.id === festivalId);
         await base44.entities.Festival.update(festivalId, {
-          likes_count: Math.max(0, currentCount - 1)
+          likes_count: Math.max(0, (festival?.likes_count || 0) - 1)
         });
       } else {
-        await base44.entities.FestivalLike.create({
-          festival_id: festivalId,
-          user_email: user.email
-        });
+        await base44.entities.FestivalLike.create({ festival_id: festivalId, user_email: user.email });
+        const festival = rawFestivals?.find(f => f.id === festivalId);
         await base44.entities.Festival.update(festivalId, {
-          likes_count: currentCount + 1
+          likes_count: (festival?.likes_count || 0) + 1
         });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rawFestivals'] }); 
+    onMutate: async (festivalId) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['myLikes', user.email] });
+      await queryClient.cancelQueries({ queryKey: ['rawFestivals'] });
+
+      const prevLikes = queryClient.getQueryData(['myLikes', user.email]);
+      const prevFestivals = queryClient.getQueryData(['rawFestivals']);
+
+      const existing = prevLikes?.find(like => like.festival_id === festivalId);
+
+      // 즉시 myLikes 업데이트
+      queryClient.setQueryData(['myLikes', user.email], (old = []) =>
+        existing
+          ? old.filter(l => l.festival_id !== festivalId)
+          : [...old, { festival_id: festivalId, user_email: user.email, id: 'optimistic' }]
+      );
+
+      // 즉시 rawFestivals 업데이트
+      queryClient.setQueryData(['rawFestivals'], (old = []) =>
+        old.map(f =>
+          f.id === festivalId
+            ? { ...f, likes_count: existing ? Math.max(0, (f.likes_count || 0) - 1) : (f.likes_count || 0) + 1 }
+            : f
+        )
+      );
+
+      return { prevLikes, prevFestivals };
+    },
+    onError: (err, festivalId, context) => {
+      if (context?.prevLikes) queryClient.setQueryData(['myLikes', user.email], context.prevLikes);
+      if (context?.prevFestivals) queryClient.setQueryData(['rawFestivals'], context.prevFestivals);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['rawFestivals'] });
       queryClient.invalidateQueries({ queryKey: ['myLikes'] });
-      queryClient.invalidateQueries({ queryKey: ['festival'] });
     },
   });
 

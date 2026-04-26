@@ -212,27 +212,44 @@ export default function FestivalDetail() {
         setShowLoginModal(true);
         return;
       }
-
       const existing = myLikes.find(like => like.festival_id === festivalId);
       const currentCount = festival?.likes_count || 0;
-      
       if (existing) {
         await base44.entities.FestivalLike.delete(existing.id);
-        await base44.entities.Festival.update(festivalId, {
-          likes_count: Math.max(0, currentCount - 1)
-        });
+        await base44.entities.Festival.update(festivalId, { likes_count: Math.max(0, currentCount - 1) });
       } else {
-        await base44.entities.FestivalLike.create({
-          festival_id: festivalId,
-          user_email: user.email
-        });
-        await base44.entities.Festival.update(festivalId, {
-          likes_count: currentCount + 1
-        });
+        await base44.entities.FestivalLike.create({ festival_id: festivalId, user_email: user.email });
+        await base44.entities.Festival.update(festivalId, { likes_count: currentCount + 1 });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['festival'] });
+    onMutate: async () => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['myLikes', user.email] });
+      await queryClient.cancelQueries({ queryKey: ['festival', festivalId] });
+
+      const prevLikes = queryClient.getQueryData(['myLikes', user.email]);
+      const prevFestival = queryClient.getQueryData(['festival', festivalId]);
+
+      const existing = prevLikes?.find(like => like.festival_id === festivalId);
+
+      queryClient.setQueryData(['myLikes', user.email], (old = []) =>
+        existing
+          ? old.filter(l => l.festival_id !== festivalId)
+          : [...old, { festival_id: festivalId, user_email: user.email, id: 'optimistic' }]
+      );
+
+      queryClient.setQueryData(['festival', festivalId], (old) =>
+        old ? { ...old, likes_count: existing ? Math.max(0, (old.likes_count || 0) - 1) : (old.likes_count || 0) + 1 } : old
+      );
+
+      return { prevLikes, prevFestival };
+    },
+    onError: (err, variables, context) => {
+      if (context?.prevLikes) queryClient.setQueryData(['myLikes', user.email], context.prevLikes);
+      if (context?.prevFestival) queryClient.setQueryData(['festival', festivalId], context.prevFestival);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['festival', festivalId] });
       queryClient.invalidateQueries({ queryKey: ['myLikes'] });
       queryClient.invalidateQueries({ queryKey: ['rawFestivals'] });
     },

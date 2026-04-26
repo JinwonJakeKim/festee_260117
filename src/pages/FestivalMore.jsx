@@ -151,7 +151,37 @@ export default function FestivalMore() {
         await base44.entities.Festival.update(festivalId, { likes_count: (festivals.find(f => f.id === festivalId)?.likes_count || 0) + 1 });
       }
     },
-    onSuccess: () => {
+    onMutate: async (festivalId) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['myLikes', user.email] });
+      await queryClient.cancelQueries({ queryKey: ['festivals'] });
+
+      const prevLikes = queryClient.getQueryData(['myLikes', user.email]);
+      const prevFestivals = queryClient.getQueryData(['festivals']);
+
+      const existing = prevLikes?.find(like => like.festival_id === festivalId);
+
+      queryClient.setQueryData(['myLikes', user.email], (old = []) =>
+        existing
+          ? old.filter(l => l.festival_id !== festivalId)
+          : [...old, { festival_id: festivalId, user_email: user.email, id: 'optimistic' }]
+      );
+
+      queryClient.setQueryData(['festivals'], (old = []) =>
+        old.map(f =>
+          f.id === festivalId
+            ? { ...f, likes_count: existing ? Math.max(0, (f.likes_count || 0) - 1) : (f.likes_count || 0) + 1 }
+            : f
+        )
+      );
+
+      return { prevLikes, prevFestivals };
+    },
+    onError: (err, festivalId, context) => {
+      if (context?.prevLikes) queryClient.setQueryData(['myLikes', user.email], context.prevLikes);
+      if (context?.prevFestivals) queryClient.setQueryData(['festivals'], context.prevFestivals);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['festivals'] });
       queryClient.invalidateQueries({ queryKey: ['myLikes'] });
     },
