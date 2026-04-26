@@ -13,9 +13,9 @@ const isDetailPage = (pathname) => {
 const getPageVariants = (pathname) => {
   if (isDetailPage(pathname)) {
     return {
-      initial: { opacity: 0, x: '100%' },
+      initial: { opacity: 0, x: '30px' },
       animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0, x: '100%' },
+      exit: { opacity: 0 },
     };
   }
   return {
@@ -639,7 +639,7 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="sync" initial={false}>
         <motion.main
           key={location.pathname}
           className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}
