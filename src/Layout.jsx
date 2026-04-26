@@ -13,15 +13,15 @@ const isDetailPage = (pathname) => {
 const getPageVariants = (pathname) => {
   if (isDetailPage(pathname)) {
     return {
-      initial: { opacity: 0, x: '30px' },
-      animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0 },
+      initial: { x: '100%' },
+      animate: { x: 0 },
+      exit: { x: '100%' },
     };
   }
   return {
-    initial: { opacity: 0 },
+    initial: { opacity: 1 },
     animate: { opacity: 1 },
-    exit: { opacity: 0 },
+    exit: { opacity: 1 },
   };
 };
 
@@ -639,19 +639,21 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      <AnimatePresence mode="sync" initial={false}>
-        <motion.main
-          key={location.pathname}
-          className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}
-          initial={pageVariants.initial}
-          animate={pageVariants.animate}
-          exit={pageVariants.exit}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
-          style={{ willChange: "transform, opacity" }}
-        >
-          {children}
-        </motion.main>
-      </AnimatePresence>
+      <div className="relative overflow-hidden">
+        <AnimatePresence mode="sync" initial={false}>
+          <motion.main
+            key={location.pathname}
+            className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}
+            initial={pageVariants.initial}
+            animate={pageVariants.animate}
+            exit={pageVariants.exit}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            style={isDetailPage(location.pathname) ? { position: 'absolute', top: 0, left: 0, right: 0, willChange: "transform" } : {}}
+          >
+            {children}
+          </motion.main>
+        </AnimatePresence>
+      </div>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998] safe-area-inset-bottom" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
