@@ -397,9 +397,15 @@ export default function AdminDashboard() {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
-      (festival.name_original || festival.name_ko || festival.name || '')?.toLowerCase().includes(query) ||
+      festival.name_original?.toLowerCase().includes(query) ||
+      festival.name_ko?.toLowerCase().includes(query) ||
+      festival.name_en?.toLowerCase().includes(query) ||
+      festival.name_jp?.toLowerCase().includes(query) ||
+      festival.name_zh?.toLowerCase().includes(query) ||
       festival.city?.toLowerCase().includes(query) ||
+      festival.city_ko?.toLowerCase().includes(query) ||
       festival.country?.toLowerCase().includes(query) ||
+      festival.country_ko?.toLowerCase().includes(query) ||
       festival.category?.toLowerCase().includes(query)
     );
   });
