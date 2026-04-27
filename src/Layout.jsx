@@ -97,6 +97,8 @@ export default function Layout({ children, currentPageName }) {
       createPageUrl("MyComments"),
       createPageUrl("MyRecommendations"),
       createPageUrl("SelectCity"),
+    ],
+    admin: [
       createPageUrl("AdminDashboard"),
       createPageUrl("AdminTourAPI"),
       createPageUrl("AdminEventbrite"),
