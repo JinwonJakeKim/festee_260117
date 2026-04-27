@@ -41,12 +41,6 @@ const festivalIcon = new L.Icon({
   popupAnchor: [0, -45],
 });
 
-const buskingIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCAzMCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTUgMEMxMC4xIDAgNiA0LjEgNiA5YzAgNS4yIDkgMjAgOSAyMHM5LTE0LjggOS0yMGMwLTQuOS00LjEtOS05LTl6bTAgMTJjLTEuNyAwLTMtMS4zLTMtM3MxLjMtMyAzLTMgMyAxLjMgMyAzLTEuMyAzLTMgM3oiIGZpbGw9IiNGRkMCMDUiLz4KICA8dGV4dCB4PSIxNSIgeT0iMTMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmaWxsPSIjMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CPC90ZXh0Pgo8L3N2Zz4=',
-  iconSize: [30, 45],
-  iconAnchor: [15, 45],
-  popupAnchor: [0, -45],
-});
 
 function MapController({ center }) {
   const map = useMap();
@@ -330,10 +324,6 @@ export default function FestivalMap() {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-500 rounded-full"></div>
               <span className="text-white text-sm">축제</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold">B</div>
-              <span className="text-white text-sm">버스킹</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
