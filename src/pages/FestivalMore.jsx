@@ -373,7 +373,7 @@ export default function FestivalMore() {
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           {filteredFestivals.map((festival, index) => (
             <FestivalListItem
               key={festival.id}

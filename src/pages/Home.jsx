@@ -1110,7 +1110,7 @@ export default function Home() {
               {[0, 1, 2, 3].map((pageIdx) => (
                 <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(100vw - 40px)', flexShrink: 0 }}>
                   {/* 현재 페이지 아이템 */}
-                  <div className="space-y-2 flex-1 min-w-0">
+                  <div className="space-y-1 flex-1 min-w-0">
                     {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
                       <FestivalListItem
                         key={festival.id}
