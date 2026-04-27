@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, Heart, Search, Tag } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
+import { geocodePlace } from "@/functions/geocodePlace";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -140,6 +141,7 @@ const calculateInfoScore = (festival) => {
 export default function FestivalMap() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState([20, 0]);
   const [userLocation, setUserLocation] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -193,19 +195,20 @@ export default function FestivalMap() {
     }
   }, []);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const festival = festivals.find(f =>
-        getFestivalName(f).toLowerCase().includes(q) ||
-        (f.city_ko || f.city || '').toLowerCase().includes(q) ||
-        (f.city_en || '').toLowerCase().includes(q) ||
-        (f.country_ko || f.country || '').toLowerCase().includes(q) ||
-        (f.country_en || '').toLowerCase().includes(q)
-      );
-      if (festival && festival.latitude && festival.longitude) {
-        setMapCenter([festival.latitude, festival.longitude]);
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const result = await geocodePlace({ query: searchQuery });
+      if (result?.data?.success) {
+        setMapCenter([result.data.latitude, result.data.longitude]);
+      } else {
+        alert("위치를 찾을 수 없습니다.");
       }
+    } catch (e) {
+      alert("검색 중 오류가 발생했습니다.");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -221,19 +224,25 @@ export default function FestivalMap() {
     <div className="h-screen flex flex-col bg-black">
       <div className="bg-black border-b border-gray-800 py-3 px-4 z-[1000] flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
-          <Link to={createPageUrl("Search")} className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="언제 어디로 여행가세요? 무엇을 좋아하세요?"
-                className="w-full pl-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 rounded-xl"
-                readOnly
-              />
-            </div>
-          </Link>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="지명을 검색하세요 (예: 오사카, 도쿄, 서울)"
+              className="w-full pl-12 pr-16 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 rounded-xl"
+            />
+            {searchQuery && (
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-400 text-xs font-bold disabled:opacity-50"
+              >
+                {isSearching ? "검색중..." : "이동"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
