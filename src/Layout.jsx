@@ -123,8 +123,8 @@ export default function Layout({ children, currentPageName }) {
     e.preventDefault();
     const currentTabKey = getCurrentTabKey(location.pathname);
     
-    // 현재 탭의 URL 저장
-    if (currentTabKey) {
+    // 현재 탭의 URL 저장 (admin 탭은 저장하지 않음)
+    if (currentTabKey && currentTabKey !== 'admin') {
       sessionStorage.setItem(`tab_last_url_${currentTabKey}`, location.pathname + location.search);
     }
 
@@ -134,9 +134,11 @@ export default function Layout({ children, currentPageName }) {
       return;
     }
 
-    // 다른 탭 클릭 시 마지막 방문 URL로 복원
+    // 다른 탭 클릭 시 마지막 방문 URL로 복원 (admin URL은 복원하지 않음)
     const savedUrl = sessionStorage.getItem(`tab_last_url_${tabKey}`);
-    navigate(savedUrl || defaultUrl);
+    const adminUrls = tabGroups.admin || [];
+    const isAdminUrl = savedUrl && adminUrls.some(u => savedUrl.startsWith(u));
+    navigate((!savedUrl || isAdminUrl) ? defaultUrl : savedUrl);
   };
 
   const navItems = [
