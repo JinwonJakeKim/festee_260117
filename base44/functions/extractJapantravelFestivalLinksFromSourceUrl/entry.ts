@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     }
 
     const { sourceUrlId, targetMonth } = await req.json();
+    const logStart = Date.now();
     
     console.log(`[${VERSION}] 🚀 START`);
     console.log(`[${VERSION}] 🔒 MAX_PAGES=${MAX_PAGES}, MAX_LINKS_PER_PAGE=${MAX_LINKS_PER_PAGE}`);

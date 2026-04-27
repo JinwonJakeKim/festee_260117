@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import JapantravelRawDataTab from "@/components/admin/JapantravelRawDataTab";
+import ExtractionLogSection from "@/components/admin/ExtractionLogSection";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Trash2, CheckSquare, Square, ExternalLink, Loader2, Pencil, Database, XCircle, Search, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, CheckSquare, Square, ExternalLink, Loader2, Pencil, Database, XCircle, Search, Calendar, MapPin, ClipboardList } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,8 @@ export default function AdminUrlExtraction() {
     },
     initialData: [],
   });
+
+
 
   React.useEffect(() => {
     if (!userLoading && (!user || user.role !== 'admin')) {
@@ -300,6 +303,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(`✅ 링크 추출 완료!\n\n${data.message}`);
         queryClient.invalidateQueries({ queryKey: ['japantravelLinks'] });
+        queryClient.invalidateQueries({ queryKey: ['japantravelExtractionLogs'] });
         setActiveTab("festivalExtraction");
       } else {
         alert(`❌ 링크 추출 실패\n\n${data.error || data.message}`);
@@ -1202,6 +1206,8 @@ export default function AdminUrlExtraction() {
                 </ul>
               </div>
             </Card>
+
+            <ExtractionLogSection />
           </TabsContent>
 
           <TabsContent value="festivalExtraction" className="mt-4 space-y-4">

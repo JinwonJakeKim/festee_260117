@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
     }
 
     const { sourceUrlId, targetMonth, maxPages } = await req.json();
+    const logStart = Date.now();
     
     if (!sourceUrlId) {
       return Response.json({ success: false, error: 'sourceUrlId required' }, { status: 400 });
@@ -167,6 +168,21 @@ Deno.serve(async (req) => {
       last_used_date: new Date().toISOString()
     });
 
+    const resultMessage = `${useAutoDetect ? '자동 감지' : `${maxPagesToProcess}페이지 지정`}: ${actualPagesProcessed}개 페이지에서 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`;
+    
+    // 추출 로그 저장
+    await base44.asServiceRole.entities.JapantravelExtractionLog.create({
+      initiated_by: user.email,
+      source_name: sourceUrl.name,
+      target_month: targetMonth || '',
+      status: 'success',
+      pages_processed: actualPagesProcessed,
+      total_links: allLinks.length,
+      new_records: toCreate.length,
+      duration_ms: Date.now() - logStart,
+      message: resultMessage,
+    });
+
     return Response.json({
       success: true,
       version: VERSION,
@@ -174,7 +190,7 @@ Deno.serve(async (req) => {
       actual_pages_processed: actualPagesProcessed,
       total_links: allLinks.length,
       new_records: toCreate.length,
-      message: `${useAutoDetect ? '자동 감지' : `${maxPagesToProcess}페이지 지정`}: ${actualPagesProcessed}개 페이지에서 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`
+      message: resultMessage
     });
 
   } catch (error) {

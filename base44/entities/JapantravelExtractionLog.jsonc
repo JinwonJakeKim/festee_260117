@@ -1,0 +1,55 @@
+{
+  "name": "JapantravelExtractionLog",
+  "type": "object",
+  "properties": {
+    "initiated_by": {
+      "type": "string",
+      "description": "\ucd94\ucd9c\uc744 \uc2dc\uc791\ud55c \uad00\ub9ac\uc790 \uc774\uba54\uc77c"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "\uc18c\uc2a4 URL \uc774\ub984"
+    },
+    "target_month": {
+      "type": "string",
+      "description": "\ucd94\ucd9c \ub300\uc0c1 \uc6d4 (\uc608: 2026-06)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed"
+      ],
+      "description": "\ucd94\ucd9c \uacb0\uacfc \uc0c1\ud0dc"
+    },
+    "pages_processed": {
+      "type": "number",
+      "description": "\ucc98\ub9ac\ub41c \ud398\uc774\uc9c0 \uc218"
+    },
+    "total_links": {
+      "type": "number",
+      "description": "\ucd94\ucd9c\ub41c \ucd1d \ub9c1\ud06c \uc218"
+    },
+    "new_records": {
+      "type": "number",
+      "description": "\uc2e0\uaddc \uc800\uc7a5\ub41c \ub9c1\ud06c \uc218"
+    },
+    "duration_ms": {
+      "type": "number",
+      "description": "\uc791\uc5c5 \uc18c\uc694 \uc2dc\uac04 (\ubc00\ub9ac\ucd08)"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "\uc2e4\ud328 \uc2dc \uc624\ub958 \uba54\uc2dc\uc9c0"
+    },
+    "message": {
+      "type": "string",
+      "description": "\uacb0\uacfc \uc694\uc57d \uba54\uc2dc\uc9c0"
+    }
+  },
+  "required": [
+    "initiated_by",
+    "target_month",
+    "status"
+  ]
+}
