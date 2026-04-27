@@ -58,10 +58,21 @@ export default function Layout({ children, currentPageName }) {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2500);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
+
+  // 슬로건 순환
+  React.useEffect(() => {
+    if (!showSplash) return;
+    
+    const interval = setInterval(() => {
+      setSlogonIndex((prev) => (prev + 1) % slogans.length);
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [showSplash]);
 
   const isMessageDetail = currentPageName === "MessageDetail";
 
@@ -212,9 +223,18 @@ export default function Layout({ children, currentPageName }) {
                 transition={{ delay: 0.3, duration: 0.5 }}
                 className="h-8"
               >
-                <p className="text-white text-sm font-medium">
-                  당신의 특별한 순간을 찾아보세요
-                </p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={slogonIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-gray-400 text-sm font-medium"
+                  >
+                    {slogans[slogonIndex]}
+                  </motion.p>
+                </AnimatePresence>
               </motion.div>
 
               {/* 로딩 점 애니메이션 */}
@@ -222,16 +242,16 @@ export default function Layout({ children, currentPageName }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex justify-center gap-3 mt-8"
+                className="flex justify-center gap-2 mt-8"
               >
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    className="w-4 h-4 rounded-full"
-                    style={{ background: ['#00C8AF', '#FF9500', '#FF4060'][i] }}
+                    className="w-3 h-3 rounded-full"
+                    style={{ background: ['#FF9500', '#00C8AF', '#2060FF'][i] }}
                     animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.7, 1, 0.7],
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 1, 0.5],
                     }}
                     transition={{
                       duration: 1,
