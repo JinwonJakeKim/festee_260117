@@ -107,10 +107,11 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
     youtubeShortUrls = existingShorts; // 폴백: 재쿼리 결과가 있으면 덮어씌워짐
   }
 
-  // 이미 번역된 Festival이 있으면 번역 스킵
+  // 이미 번역된 Festival이 있으면 번역 스킵 (name_ko가 실제 한국어인지 확인)
+  const isKorean = (str) => /[\uAC00-\uD7A3]/.test(str || '');
   const alreadyTranslated = !!(
     existingFestivalRecord &&
-    existingFestivalRecord.name_ko &&
+    isKorean(existingFestivalRecord.name_ko) &&
     existingFestivalRecord.name_en &&
     existingFestivalRecord.description_ko
   );
