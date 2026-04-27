@@ -171,7 +171,7 @@ export default function Layout({ children, currentPageName }) {
                   key={i}
                   className="absolute w-2 h-2 rounded-full"
                   style={{
-                    background: i % 3 === 0 ? '#00d4ff' : i % 3 === 1 ? '#ff006e' : '#8b5cf6',
+                    background: ['#FF9500', '#FFD000', '#00C8AF', '#F030C8', '#2060FF', '#FF4A00'][i % 6],
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
                   }}
@@ -199,7 +199,7 @@ export default function Layout({ children, currentPageName }) {
                 <motion.h1
                   className="text-7xl font-black mb-4"
                   style={{
-                    background: 'linear-gradient(135deg, #00d4ff 0%, #ff006e 50%, #8b5cf6 100%)',
+                    background: 'linear-gradient(135deg, #FF9500 0%, #FFD000 20%, #00C8AF 40%, #F030C8 60%, #2060FF 80%, #FF4A00 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -247,7 +247,8 @@ export default function Layout({ children, currentPageName }) {
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    className="w-3 h-3 rounded-full bg-cyan-400"
+                    className="w-3 h-3 rounded-full"
+                    style={{ background: ['#FF9500', '#00C8AF', '#2060FF'][i] }}
                     animate={{
                       scale: [1, 1.5, 1],
                       opacity: [0.5, 1, 0.5],
