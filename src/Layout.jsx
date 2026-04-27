@@ -29,16 +29,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = React.useState(true);
-  const [slogonIndex, setSlogonIndex] = React.useState(0);
 
-
-
-  const slogans = [
-    "세상의 모든 축제를 한 곳에서",
-    "당신의 특별한 순간을 찾아보세요",
-    "축제로 연결되는 세계",
-    "Festee와 함께 떠나는 축제 여행",
-  ];
 
   // React.useEffect(() => {
   //   const homeUrl = createPageUrl("Home");
@@ -63,16 +54,7 @@ export default function Layout({ children, currentPageName }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // 슬로건 순환
-  React.useEffect(() => {
-    if (!showSplash) return;
-    
-    const interval = setInterval(() => {
-      setSlogonIndex((prev) => (prev + 1) % slogans.length);
-    }, 800);
 
-    return () => clearInterval(interval);
-  }, [showSplash]);
 
   const isMessageDetail = currentPageName === "MessageDetail";
 
@@ -171,7 +153,7 @@ export default function Layout({ children, currentPageName }) {
                   key={i}
                   className="absolute w-2 h-2 rounded-full"
                   style={{
-                    background: ['#FF9500', '#FFD000', '#00C8AF', '#F030C8', '#2060FF', '#FF4A00'][i % 6],
+                    background: ['#00C846', '#78D800', '#FFD000', '#FF9500', '#FF4400', '#FF0070', '#9000FF', '#0088FF'][i % 8],
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
                   }}
@@ -199,18 +181,10 @@ export default function Layout({ children, currentPageName }) {
                 <motion.h1
                   className="text-7xl font-black mb-4"
                   style={{
-                    background: 'linear-gradient(135deg, #FF9500 0%, #FFD000 20%, #00C8AF 40%, #F030C8 60%, #2060FF 80%, #FF4A00 100%)',
+                    background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
-                  }}
-                  animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "linear"
                   }}
                 >
                   FESTEE
@@ -223,18 +197,14 @@ export default function Layout({ children, currentPageName }) {
                 transition={{ delay: 0.3, duration: 0.5 }}
                 className="h-8"
               >
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={slogonIndex}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-gray-400 text-sm font-medium"
-                  >
-                    {slogans[slogonIndex]}
-                  </motion.p>
-                </AnimatePresence>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-gray-400 text-sm font-medium"
+                >
+                  세상의 모든 축제를 한 곳에서
+                </motion.p>
               </motion.div>
 
               {/* 로딩 점 애니메이션 */}
