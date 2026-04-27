@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Heart, Search, Navigation, Tag } from "lucide-react";
+import { MapPin, Calendar, Heart, Search, Tag } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -50,6 +50,50 @@ function MapController({ center }) {
     }
   }, [center, map]);
   return null;
+}
+
+function LocateButton({ userLocation, onLocate }) {
+  const map = useMap();
+
+  const handleClick = () => {
+    if (userLocation) {
+      map.setView(userLocation, 13);
+      onLocate();
+    } else {
+      alert("위치 정보를 가져올 수 없습니다");
+    }
+  };
+
+  return (
+    <div className="leaflet-bottom leaflet-right" style={{ zIndex: 1000 }}>
+      <div className="leaflet-control" style={{ marginBottom: '80px', marginRight: '12px' }}>
+        <button
+          onClick={handleClick}
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3.5" fill="#0098FF"/>
+            <circle cx="12" cy="12" r="6.5" stroke="#0098FF" strokeWidth="2" fill="none"/>
+            <line x1="12" y1="2" x2="12" y2="5.5" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="12" y1="18.5" x2="12" y2="22" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="2" y1="12" x2="5.5" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="18.5" y1="12" x2="22" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 const getFestivalName = (festival) => {
@@ -117,8 +161,12 @@ export default function FestivalMap() {
 
   const categories = [...new Set(festivals.map(f => f.category).filter(Boolean))];
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const festivalsWithLocation = festivals.filter(f => {
     if (!f.latitude || !f.longitude) return false;
+    if (f.end_date && new Date(f.end_date) < today) return false;
     if (categoryFilter !== "all" && f.category !== categoryFilter) return false;
     if (dateRange.from && dateRange.to) {
       const start = new Date(f.start_date);
@@ -221,15 +269,7 @@ export default function FestivalMap() {
             onApply={(range) => setDateRange(range)}
           />
 
-          <Button
-            onClick={handleMyLocation}
-            size="sm"
-            variant="outline"
-            className="bg-gray-900 border-gray-800 text-white hover:bg-gray-800 rounded-full"
-          >
-            <Navigation className="w-4 h-4 mr-1" />
-            내 위치
-          </Button>
+
         </div>
       </div>
 
@@ -250,6 +290,7 @@ export default function FestivalMap() {
               attribution='&copy; OpenStreetMap contributors'
             />
             <MapController center={mapCenter} />
+            <LocateButton userLocation={userLocation} onLocate={() => setMapCenter(userLocation)} />
 
             {userLocation && (
               <Marker
