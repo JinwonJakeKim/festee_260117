@@ -608,6 +608,36 @@ export default function Search() {
     return results;
   }, [locationStats, locationSearchQuery]);
 
+  const recommendedSearchKeywords = useMemo(() => {
+    const defaultKeywords = ["가족과 가기 좋은", "Sziget", "무료", "불꽃놀이", "여름 축제"];
+    if (!user || !myLikes?.length || !festivals?.length) return defaultKeywords;
+
+    const likedFestivalIds = new Set(myLikes.map(like => like.festival_id));
+    const likedFestivals = festivals.filter(festival => likedFestivalIds.has(festival.id));
+    if (likedFestivals.length === 0) return defaultKeywords;
+
+    const countValues = (values) => values.reduce((acc, value) => {
+      if (value) acc[value] = (acc[value] || 0) + 1;
+      return acc;
+    }, {});
+    const topValue = (values) => Object.entries(countValues(values)).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+    const topCountry = topValue(likedFestivals.map(festival => festival.country_ko || festival.country));
+    const topCategory = topValue(likedFestivals.map(festival => festival.category));
+    const topCity = topValue(likedFestivals.map(festival => festival.city_ko || festival.city));
+    const topTags = likedFestivals.flatMap(festival => festival.tags_ko || []).slice(0, 6);
+    const topEnglishNames = likedFestivals.map(festival => festival.name_en).filter(Boolean).slice(0, 2);
+
+    return [
+      topCountry && topCategory ? `${topCountry} ${topCategory} 축제` : null,
+      topCity ? `${topCity} 축제` : null,
+      topCategory ? `${topCategory} 축제` : null,
+      ...topTags,
+      ...topEnglishNames,
+      ...defaultKeywords,
+    ].filter(Boolean).filter((keyword, index, list) => list.indexOf(keyword) === index).slice(0, 6);
+  }, [user, myLikes, festivals]);
+
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제"];
   const tags = ["연인과", "Kpop", "반려동물", "가족과", "여름", "무료", "FESTEE추천", "불꽃놀이"];
 
@@ -834,32 +864,22 @@ export default function Search() {
 
             {/* Recommended Search */}
             <div className="mt-6">
-              <h3 className="text-white font-bold mb-3">추천 검색어</h3>
+              <h3 className="text-white font-bold mb-3">
+                {user && myLikes?.length > 0 ? "내 취향 추천 검색어" : "추천 검색어"}
+              </h3>
               <div className="flex flex-wrap gap-2">
-                <Badge className="cursor-pointer bg-gray-800 text-white hover:bg-cyan-400 hover:text-black"
-                  onClick={() => {
-                    setLocalSearchInput("가족과 가기 좋은");
-                    handleSearch("가족과 가기 좋은");
-                  }}
-                >
-                  가족과 가기 좋은
-                </Badge>
-                <Badge className="cursor-pointer bg-gray-800 text-white hover:bg-cyan-400 hover:text-black"
-                  onClick={() => {
-                    setLocalSearchInput("도시락박스도");
-                    handleSearch("도시락박스도");
-                  }}
-                >
-                  도시락박스도
-                </Badge>
-                <Badge className="cursor-pointer bg-gray-800 text-white hover:bg-cyan-400 hover:text-black"
-                  onClick={() => {
-                    setLocalSearchInput("Sziget");
-                    handleSearch("Sziget");
-                  }}
-                >
-                  Sziget
-                </Badge>
+                {recommendedSearchKeywords.map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    className="cursor-pointer bg-gray-800 text-white hover:bg-cyan-400 hover:text-black"
+                    onClick={() => {
+                      setLocalSearchInput(keyword);
+                      handleSearch(keyword);
+                    }}
+                  >
+                    {keyword}
+                  </Badge>
+                ))}
               </div>
             </div>
           </>
