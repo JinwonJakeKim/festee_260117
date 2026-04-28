@@ -231,7 +231,7 @@ export default function FestivalMap() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="지명을 검색하세요 (예: 오사카, 도쿄, 서울)"
-              className="w-full pl-12 pr-16 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 rounded-xl"
+              className="festival-map-search-input w-full bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 rounded-xl"
             />
             {searchQuery && (
               <button
@@ -386,6 +386,11 @@ export default function FestivalMap() {
         </div>
       </div>
       <style jsx global>{`
+        .festival-map-search-input {
+          padding-left: 3rem !important;
+          padding-right: 4rem !important;
+        }
+
         /* Leaflet controls should be below buttons */
         .leaflet-control-container {
           z-index: 100 !important;
