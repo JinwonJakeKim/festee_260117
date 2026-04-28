@@ -393,7 +393,10 @@ export default function Settings() {
           <h2 className="text-white font-bold mb-3">{t('other')}</h2>
           <Card className="bg-gray-900 border-gray-800">
             <div className="divide-y divide-gray-800">
-              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => navigate('/PrivacyPolicy')}
+                className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <Lock className="w-5 h-5 text-gray-400" />
                   <span className="text-white">{t('privacyPolicy')}</span>
