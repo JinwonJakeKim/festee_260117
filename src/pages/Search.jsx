@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Search as SearchIcon, X, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, Star, Heart, MapPin, ChevronRight, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Search as SearchIcon, X, TrendingUp, Calendar as CalendarIcon, Filter, Star, Heart, MapPin, ChevronRight, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LocationBottomModal from "@/components/LocationBottomModal";
 import { Input } from "@/components/ui/input";
@@ -225,6 +225,41 @@ export default function Search() {
       return history ? JSON.parse(history) : [];
     },
     initialData: [],
+  });
+
+  const { data: trendingKeywords = [] } = useQuery({
+    queryKey: ['trendingSearchKeywords'],
+    queryFn: async () => {
+      const logs = await base44.entities.SearchQueryLog.list('-searched_at', 500);
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      const counts = logs
+        .filter(log => log.query && new Date(log.searched_at || log.created_date).getTime() >= oneDayAgo)
+        .reduce((acc, log) => {
+          const keyword = log.query.trim();
+          if (keyword.length < 2) return acc;
+          acc[keyword] = (acc[keyword] || 0) + 1;
+          return acc;
+        }, {});
+
+      return Object.entries(counts)
+        .map(([keyword, count]) => ({ keyword, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+    },
+    initialData: [],
+    refetchInterval: 1000 * 60,
+  });
+
+  const logSearchMutation = useMutation({
+    mutationFn: (query) => base44.entities.SearchQueryLog.create({
+      query: query.trim(),
+      user_email: user?.email || '',
+      searched_at: new Date().toISOString(),
+      language: user?.language || 'ko',
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trendingSearchKeywords'] });
+    },
   });
 
   // 현재 날짜
@@ -573,14 +608,6 @@ export default function Search() {
     return results;
   }, [locationStats, locationSearchQuery]);
 
-  const trendingKeywords = [
-    { keyword: "토모로우랜드", change: "up", count: 1234 },
-    { keyword: "Seoul", change: "up", count: 987 },
-    { keyword: "서울 재즈 페스티벌", change: "down", count: 756 },
-    { keyword: "가족과 가기 좋은", change: "up", count: 654 },
-    { keyword: "Coachella Valley Music", change: "same", count: 543 },
-  ];
-
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제"];
   const tags = ["연인과", "Kpop", "반려동물", "가족과", "여름", "무료", "FESTEE추천", "불꽃놀이"];
 
@@ -590,6 +617,7 @@ export default function Search() {
       const newHistory = [query, ...history.filter(h => h !== query)].slice(0, 10);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
       refetchHistory();
+      logSearchMutation.mutate(query);
       // searchQuery를 직접 업데이트하는 대신, URL을 업데이트
       updateUrlParams({ q: query });
     }
@@ -781,24 +809,27 @@ export default function Search() {
             {/* Trending Keywords */}
             <div>
               <h3 className="text-white font-bold mb-3">실시간 인기 검색어</h3>
-              <div className="space-y-2">
-                {trendingKeywords.map((item, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      setLocalSearchInput(item.keyword);
-                      handleSearch(item.keyword);
-                    }}
-                    className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors"
-                  >
-                    <span className="text-cyan-400 font-bold w-6">{idx + 1}</span>
-                    <span className="flex-1 text-white">{item.keyword}</span>
-                    {item.change === "up" && <TrendingUp className="w-4 h-4 text-green-500" />}
-                    {item.change === "down" && <TrendingDown className="w-4 h-4 text-red-500" />}
-                    <span className="text-gray-500 text-sm">{item.count}</span>
-                  </div>
-                ))}
-              </div>
+              {trendingKeywords.length > 0 ? (
+                <div className="space-y-2">
+                  {trendingKeywords.map((item, idx) => (
+                    <div
+                      key={item.keyword}
+                      onClick={() => {
+                        setLocalSearchInput(item.keyword);
+                        handleSearch(item.keyword);
+                      }}
+                      className="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors"
+                    >
+                      <span className="text-cyan-400 font-bold w-6">{idx + 1}</span>
+                      <span className="flex-1 text-white">{item.keyword}</span>
+                      <TrendingUp className="w-4 h-4 text-cyan-400" />
+                      <span className="text-gray-500 text-sm">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm bg-gray-900 rounded-lg p-3">아직 집계된 검색어가 없습니다</p>
+              )}
             </div>
 
             {/* Recommended Search */}

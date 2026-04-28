@@ -1,0 +1,41 @@
+{
+  "name": "SearchQueryLog",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "\uc0ac\uc6a9\uc790\uac00 \uac80\uc0c9\ud55c \uac80\uc0c9\uc5b4"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\uac80\uc0c9\ud55c \uc0ac\uc6a9\uc790 \uc774\uba54\uc77c. \ube44\ub85c\uadf8\uc778 \uc0ac\uc6a9\uc790\ub294 \ube44\uc6cc\ub460"
+    },
+    "searched_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\uac80\uc0c9\uc774 \uc2e4\ud589\ub41c \uc2dc\uac04"
+    },
+    "language": {
+      "type": "string",
+      "description": "\uac80\uc0c9 \ub2f9\uc2dc \uc0ac\uc6a9\uc790 \uc5b8\uc5b4"
+    }
+  },
+  "required": [
+    "query",
+    "searched_at"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
