@@ -100,27 +100,10 @@ export default function Layout({ children, currentPageName }) {
     return null;
   };
 
-  // 탭 클릭 핸들러: 마지막 방문 URL 저장 및 복원
+  // 탭 클릭 핸들러: 각 탭은 항상 최상위 페이지로 이동
   const handleTabClick = (e, tabKey, defaultUrl) => {
     e.preventDefault();
-    const currentTabKey = getCurrentTabKey(location.pathname);
-    
-    // 현재 탭의 URL 저장 (admin 탭은 저장하지 않음)
-    if (currentTabKey && currentTabKey !== 'admin') {
-      sessionStorage.setItem(`tab_last_url_${currentTabKey}`, location.pathname + location.search);
-    }
-
-    // 같은 탭 클릭 시 루트로 이동
-    if (currentTabKey === tabKey) {
-      navigate(defaultUrl);
-      return;
-    }
-
-    // 다른 탭 클릭 시 마지막 방문 URL로 복원 (admin URL은 복원하지 않음)
-    const savedUrl = sessionStorage.getItem(`tab_last_url_${tabKey}`);
-    const adminUrls = tabGroups.admin || [];
-    const isAdminUrl = savedUrl && adminUrls.some(u => savedUrl.startsWith(u));
-    navigate((!savedUrl || isAdminUrl) ? defaultUrl : savedUrl);
+    navigate(defaultUrl);
   };
 
   const navItems = [
