@@ -54,7 +54,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
     <Link key={festival.id} to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
       <div className="flex items-center py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
         <div className="flex-shrink-0 w-6 text-center">
-          <span className="text-gray-600 font-bold text-lg leading-none">
+          <span className="text-white font-bold text-lg leading-none">
             {index + 1}
           </span>
         </div>
@@ -71,10 +71,10 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
           <h3 className="text-white font-bold text-sm truncate mb-1">
             {localizedName}
           </h3>
-          <div className="text-gray-400 text-xs">
+          <div className="text-white text-xs">
             {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}{festival.category ? ` / ${festival.category}` : ''}
           </div>
-          <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
+          <div className="text-white text-xs flex items-center gap-1 flex-wrap">
             <span>
               {safeFormatDate(festival.start_date, 'yyyy.MM.dd')} - {safeFormatDate(festival.end_date, 'MM.dd')}
             </span>
