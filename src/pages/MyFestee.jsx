@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -392,6 +392,21 @@ export default function MyFestee() {
           </Card>
         </div>
 
+        {/* 개인정보처리방침 */}
+        <div className="px-4 pt-2 pb-0">
+          <Link to="/PrivacyPolicy">
+            <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-white font-medium">개인정보처리방침</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-500" />
+            </Card>
+          </Link>
+        </div>
+
         {/* Login Benefits */}
         <div className="px-4 py-4">
           <Card className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border-cyan-400/30">
@@ -474,6 +489,12 @@ export default function MyFestee() {
       link: createPageUrl("Settings"),
       icon: Settings,
       bgColor: "bg-gray-600",
+    },
+    {
+      label: "개인정보처리방침",
+      link: "/PrivacyPolicy",
+      icon: Lock,
+      bgColor: "bg-gray-700",
     },
   ].filter(item => !item.adminOnly || user.role === 'admin');
 
