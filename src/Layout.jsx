@@ -587,13 +587,26 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
       
       <div className="relative overflow-hidden">
-        <main className={isMessageDetail ? "h-screen overflow-hidden" : "pb-20 min-h-screen"}>
+        <main
+          className={isMessageDetail ? "overflow-hidden" : "min-h-screen"}
+          style={isMessageDetail
+            ? { height: '100vh', paddingTop: 'env(safe-area-inset-top)' }
+            : { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }
+          }
+        >
           {children}
         </main>
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998] safe-area-inset-bottom" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998]"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+        }}
+      >
         <div className="max-w-screen-xl mx-auto">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item) => {

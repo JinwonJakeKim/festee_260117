@@ -98,7 +98,7 @@ export default function Settings() {
       />
 
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
+      <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 pb-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
