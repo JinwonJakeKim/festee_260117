@@ -25,33 +25,22 @@ const getPageVariants = (pathname) => {
   };
 };
 
+const splashShown = { value: false };
+
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(!splashShown.value);
 
-
-  // React.useEffect(() => {
-  //   const homeUrl = createPageUrl("Home");
-  //   
-  //   const isRootPath = 
-  //     location.pathname === '/' || 
-  //     location.pathname === '' ||
-  //     location.pathname === '/index.html';
-  //   
-  //   if (isRootPath && location.pathname !== homeUrl) {
-  //     console.log('🏠 Redirecting to Home from:', location.pathname);
-  //     navigate(homeUrl, { replace: true });
-  //   }
-  // }, [location.pathname, navigate]);
-
-  // 스플래시 화면 타이머
+  // 스플래시 화면 타이머 - 앱 최초 진입 시 1회만 표시
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
+    if (!splashShown.value) {
+      splashShown.value = true;
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
 

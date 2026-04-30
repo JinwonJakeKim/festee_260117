@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Settings, LogOut, MessageCircle, Star, BookOpen, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -476,12 +476,6 @@ export default function MyFestee() {
       link: createPageUrl("MyComments"),
       icon: MessageCircle,
       bgColor: "bg-green-500",
-    },
-    {
-      label: "FESTEE Magazine",
-      link: createPageUrl("FesteeMagazine"),
-      icon: BookOpen,
-      bgColor: "bg-purple-500",
     },
     {
       label: "설정",

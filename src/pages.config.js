@@ -60,7 +60,6 @@ import Community from './pages/Community';
 import CreatePost from './pages/CreatePost';
 import FeedbackDetail from './pages/FeedbackDetail';
 import FeedbackForm from './pages/FeedbackForm';
-import FesteeMagazine from './pages/FesteeMagazine';
 import FestivalDetail from './pages/FestivalDetail';
 import FestivalMap from './pages/FestivalMap';
 import FestivalMore from './pages/FestivalMore';
@@ -101,7 +100,6 @@ export const PAGES = {
     "CreatePost": CreatePost,
     "FeedbackDetail": FeedbackDetail,
     "FeedbackForm": FeedbackForm,
-    "FesteeMagazine": FesteeMagazine,
     "FestivalDetail": FestivalDetail,
     "FestivalMap": FestivalMap,
     "FestivalMore": FestivalMore,
