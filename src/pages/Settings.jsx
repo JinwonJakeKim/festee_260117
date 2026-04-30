@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { ArrowLeft, User, Mail, Globe, MapPin, Bell, Lock, HelpCircle, Info, ChevronRight, MessageCircle, Heart, UserPlus, Star, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { useTranslation } from "@/components/useTranslation";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { goBack } = useTabNavigation();
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -101,7 +103,7 @@ export default function Settings() {
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 pb-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => goBack()}
             className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-white" />

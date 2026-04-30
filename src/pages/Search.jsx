@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { ArrowLeft, Search as SearchIcon, X, TrendingUp, Calendar as CalendarIcon, Filter, Star, Heart, MapPin, ChevronRight, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LocationBottomModal from "@/components/LocationBottomModal";
@@ -130,6 +131,7 @@ const safeFormatDate = (dateString, formatString) => {
 
 export default function Search() {
   const navigate = useNavigate();
+  const { goBack } = useTabNavigation();
   const location = useLocation();
   const queryClient = useQueryClient();
 
@@ -715,7 +717,7 @@ export default function Search() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
+          <button onClick={() => goBack()} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
 

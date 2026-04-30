@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
+import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Heart, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ const safeFormatDate = (dateString, formatString) => {
 
 export default function PostDetail() {
   const navigate = useNavigate();
+  const { goBack } = useTabNavigation();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const postId = urlParams.get('id');
@@ -118,7 +119,7 @@ export default function PostDetail() {
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => goBack()}
             className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5 text-white" />

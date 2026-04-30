@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -154,6 +155,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, fest
 
 export default function FestivalDetail() {
   const navigate = useNavigate();
+  const { goBack } = useTabNavigation();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
@@ -669,7 +671,7 @@ export default function FestivalDetail() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg border-b border-gray-800">
         <div className="px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
+          <button onClick={() => goBack()} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <div />

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
+import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Heart, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,7 @@ const safeFormatDate = (dateString, formatString) => {
 
 export default function MyLikes() {
   const navigate = useNavigate();
+  const { goBack } = useTabNavigation();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -103,7 +105,7 @@ export default function MyLikes() {
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800 px-4 py-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => goBack()}
             className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
