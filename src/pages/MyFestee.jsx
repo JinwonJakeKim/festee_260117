@@ -390,19 +390,18 @@ export default function MyFestee() {
               <ChevronRight className="w-5 h-5 text-gray-500" />
             </div>
           </Card>
-        </div>
 
-        {/* 개인정보처리방침 */}
-        <div className="px-4 pt-2 pb-0">
           <Link to="/PrivacyPolicy">
-            <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-white" />
+            <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all">
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-white font-medium">개인정보처리방침</span>
                 </div>
-                <span className="text-white font-medium">개인정보처리방침</span>
+                <ChevronRight className="w-5 h-5 text-gray-500" />
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-500" />
             </Card>
           </Link>
         </div>
