@@ -606,10 +606,24 @@ export default function FestivalDetail() {
     return () => clearInterval(timer);
   }, [mediaItems.length, mediaIndex, mediaItems]);
 
-  if (isLoading || !festival) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400" />
+      </div>
+    );
+  }
+
+  if (!festival) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-400 text-lg">축제를 찾을 수 없습니다.</p>
+        <button
+          onClick={() => goBack()}
+          className="px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors"
+        >
+          돌아가기
+        </button>
       </div>
     );
   }
