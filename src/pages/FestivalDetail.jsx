@@ -193,6 +193,7 @@ export default function FestivalDetail() {
     queryKey: ['festival', festivalId],
     queryFn: () => base44.entities.Festival.filter({ id: festivalId }).then(res => res[0]),
     enabled: !!festivalId,
+    retry: false,
   });
 
   const { data: comments } = useQuery({
@@ -200,6 +201,7 @@ export default function FestivalDetail() {
     queryFn: () => base44.entities.Comment.filter({ festival_id: festivalId }),
     enabled: !!festivalId,
     initialData: [],
+    retry: false,
   });
 
   const { data: myLikes } = useQuery({
@@ -207,6 +209,7 @@ export default function FestivalDetail() {
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
     enabled: !!user,
     initialData: [],
+    retry: false,
   });
 
   const likeMutation = useMutation({
