@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { ArrowLeft, Calendar as CalendarIcon, Globe, Tag, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -81,7 +80,6 @@ const getCountryNameInKorean = (country) => {
 
 export default function FestivalMore() {
   const navigate = useNavigate();
-  const { goBack } = useTabNavigation();
   const queryClient = useQueryClient();
   const { getLocalizedContent } = useFestivalLocalizedContent();
   const urlParams = new URLSearchParams(window.location.search);
@@ -247,7 +245,7 @@ export default function FestivalMore() {
       <div className="sticky top-0 z-50 bg-black border-b border-gray-800">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
-            onClick={() => goBack()}
+            onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-white" />

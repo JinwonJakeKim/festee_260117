@@ -4,7 +4,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useTabNavigation } from "@/lib/TabNavigationContext";
 import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +154,6 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, fest
 
 export default function FestivalDetail() {
   const navigate = useNavigate();
-  const { goBack } = useTabNavigation();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
@@ -193,7 +191,6 @@ export default function FestivalDetail() {
     queryKey: ['festival', festivalId],
     queryFn: () => base44.entities.Festival.filter({ id: festivalId }).then(res => res[0]),
     enabled: !!festivalId,
-    retry: false,
   });
 
   const { data: comments } = useQuery({
@@ -201,7 +198,6 @@ export default function FestivalDetail() {
     queryFn: () => base44.entities.Comment.filter({ festival_id: festivalId }),
     enabled: !!festivalId,
     initialData: [],
-    retry: false,
   });
 
   const { data: myLikes } = useQuery({
@@ -209,7 +205,6 @@ export default function FestivalDetail() {
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
     enabled: !!user,
     initialData: [],
-    retry: false,
   });
 
   const likeMutation = useMutation({
@@ -609,24 +604,10 @@ export default function FestivalDetail() {
     return () => clearInterval(timer);
   }, [mediaItems.length, mediaIndex, mediaItems]);
 
-  if (isLoading) {
+  if (isLoading || !festival) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400" />
-      </div>
-    );
-  }
-
-  if (!festival) {
-    return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-400 text-lg">축제를 찾을 수 없습니다.</p>
-        <button
-          onClick={() => goBack()}
-          className="px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors"
-        >
-          돌아가기
-        </button>
       </div>
     );
   }
@@ -688,7 +669,7 @@ export default function FestivalDetail() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg border-b border-gray-800">
         <div className="px-4 py-3 flex items-center justify-between">
-          <button onClick={() => goBack()} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <div />
