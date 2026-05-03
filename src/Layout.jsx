@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Home, Map, Target, Users, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
 
 // 페이지 전환 애니메이션 variants
 const isDetailPage = (pathname) => {
@@ -45,6 +46,7 @@ export default function Layout({ children, currentPageName }) {
 
 
 
+  const insets = useSafeAreaInsets();
   const isMessageDetail = currentPageName === "MessageDetail";
 
   const tabGroups = {
@@ -590,8 +592,8 @@ export default function Layout({ children, currentPageName }) {
         <main
           className={isMessageDetail ? "overflow-hidden" : "min-h-screen"}
           style={isMessageDetail
-            ? { height: '100vh', paddingTop: 'env(safe-area-inset-top)' }
-            : { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }
+            ? { height: '100vh', paddingTop: `${insets.top}px` }
+            : { paddingTop: `${insets.top}px`, paddingBottom: `calc(4rem + ${insets.bottom}px)` }
           }
         >
           {children}
@@ -602,9 +604,9 @@ export default function Layout({ children, currentPageName }) {
       <nav
         className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          paddingLeft: 'env(safe-area-inset-left)',
-          paddingRight: 'env(safe-area-inset-right)',
+          paddingBottom: `${insets.bottom}px`,
+          paddingLeft: `${insets.left}px`,
+          paddingRight: `${insets.right}px`,
         }}
       >
         <div className="max-w-screen-xl mx-auto">
