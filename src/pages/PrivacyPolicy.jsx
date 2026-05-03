@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, User, MapPin, MessageCircle, Heart, Search, Bell, Trash2, Mail } from "lucide-react";
+import { ArrowLeft, Shield, User, MapPin, MessageCircle, Heart, Search, Bell, Trash2, Mail, Camera } from "lucide-react";
 
 const Section = ({ icon: SectionIcon, iconColor, title, children }) => (
   <div className="mb-8">
@@ -83,8 +83,17 @@ export default function PrivacyPolicy() {
           <Item>위치 권한은 언제든지 기기 설정에서 철회할 수 있으며, 권한 없이도 대부분의 서비스를 이용할 수 있습니다.</Item>
         </Section>
 
-        {/* 4. 정보 공유 */}
-        <Section icon={MessageCircle} iconColor="text-purple-400" title="4. 개인정보 제3자 제공">
+        {/* 4. 카메라 */}
+        <Section icon={Camera} iconColor="text-yellow-400" title="4. 카메라 사용">
+          <p>카메라 권한은 아래 목적으로만 사용됩니다.</p>
+          <Item><strong className="text-gray-300">캐치(방문 인증) 기능</strong>: 사용자가 축제 현장에서 사진을 촬영하여 방문을 인증할 때 카메라가 사용됩니다.</Item>
+          <Item><strong className="text-gray-300">프로필 사진 등록</strong>: 사용자가 직접 카메라로 촬영하여 프로필 이미지를 설정할 때 사용됩니다.</Item>
+          <Item>촬영된 사진 중 사용자가 직접 업로드한 이미지는 Festee 서버에 저장되며, 업로드하지 않은 사진은 앱 외부로 전송되지 않습니다.</Item>
+          <Item>카메라 권한은 언제든지 기기 설정에서 철회할 수 있으며, 권한 없이도 기존에 저장된 이미지를 사용하거나 다른 기능을 이용할 수 있습니다.</Item>
+        </Section>
+
+        {/* 6. 정보 공유 */}
+        <Section icon={MessageCircle} iconColor="text-purple-400" title="5. 개인정보 제3자 제공">
           <p>Festee는 원칙적으로 사용자의 개인정보를 외부에 제공하지 않습니다. 다만, 다음의 경우는 예외입니다.</p>
           <Item>사용자가 직접 동의한 경우</Item>
           <Item>법령에 의거하거나 수사기관의 적법한 요청이 있는 경우</Item>
@@ -94,7 +103,7 @@ export default function PrivacyPolicy() {
         </Section>
 
         {/* 5. 보존 기간 */}
-        <Section icon={Trash2} iconColor="text-orange-400" title="5. 개인정보 보존 및 삭제">
+        <Section icon={Trash2} iconColor="text-orange-400" title="6. 개인정보 보존 및 삭제">
           <Item>계정 및 활동 정보는 서비스 이용 기간 동안 보존됩니다.</Item>
           <Item>계정 삭제(탈퇴) 시 관련 개인정보는 즉시 삭제 처리됩니다.</Item>
           <Item>검색 기록은 서비스 통계 개선을 위해 익명화 후 최대 1년간 보존될 수 있습니다.</Item>
@@ -102,7 +111,7 @@ export default function PrivacyPolicy() {
         </Section>
 
         {/* 6. 사용자 권리 */}
-        <Section icon={Heart} iconColor="text-pink-500" title="6. 사용자의 권리">
+        <Section icon={Heart} iconColor="text-pink-500" title="7. 사용자의 권리">
           <p>사용자는 언제든지 다음 권리를 행사할 수 있습니다.</p>
           <Item>본인의 개인정보 열람 및 수정</Item>
           <Item>개인정보 처리 동의 철회</Item>
@@ -111,21 +120,21 @@ export default function PrivacyPolicy() {
         </Section>
 
         {/* 7. 알림 */}
-        <Section icon={Bell} iconColor="text-yellow-400" title="7. 알림 및 마케팅">
+        <Section icon={Bell} iconColor="text-yellow-400" title="8. 알림 및 마케팅">
           <Item>서비스 관련 중요 알림(보안, 계정 등)은 동의와 관계없이 발송될 수 있습니다.</Item>
           <Item>축제 알림, 팔로워 알림 등 개인화 알림은 설정 페이지에서 언제든지 끌 수 있습니다.</Item>
           <Item>마케팅 이메일은 별도 동의 시에만 발송됩니다.</Item>
         </Section>
 
         {/* 8. 검색 기록 */}
-        <Section icon={Search} iconColor="text-blue-400" title="8. 검색 기록">
+        <Section icon={Search} iconColor="text-blue-400" title="9. 검색 기록">
           <Item>검색어는 서비스 트렌드 파악 및 추천 기능 개선에 활용됩니다.</Item>
           <Item>비로그인 상태의 검색은 사용자 식별 없이 익명으로 저장됩니다.</Item>
           <Item>개인 검색 기록은 서비스 내 삭제 기능을 통해 직접 삭제할 수 있습니다.</Item>
         </Section>
 
         {/* 9. 문의 */}
-        <Section icon={Mail} iconColor="text-cyan-400" title="9. 개인정보 관련 문의">
+        <Section icon={Mail} iconColor="text-cyan-400" title="10. 개인정보 관련 문의">
           <p>개인정보 처리에 관한 문의사항은 앱 내 <strong className="text-gray-300">설정 → 피드백 보내기</strong>를 통해 접수해 주세요.</p>
           <p className="mt-2 text-gray-500">Festee는 본 방침을 변경할 경우 앱 내 공지사항을 통해 7일 전 사전 안내합니다.</p>
         </Section>
