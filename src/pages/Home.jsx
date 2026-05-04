@@ -633,7 +633,7 @@ export default function Home() {
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
-  const [bannerContainerWidth, setBannerContainerWidth] = useState(0);
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -641,9 +641,13 @@ export default function Home() {
         setBannerContainerWidth(bannerContainerRef.current.offsetWidth);
       }
     };
-    updateWidth();
+    // 렌더 직후 측정
+    const raf = requestAnimationFrame(updateWidth);
     window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updateWidth);
+    };
   }, []);
 
   useEffect(() => {
@@ -854,7 +858,6 @@ export default function Home() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {bannerContainerWidth > 0 && (
             <div
               className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
@@ -936,7 +939,6 @@ export default function Home() {
                 );
               })}
             </div>
-            )}
           </div>
 
           {/* 인디케이터 */}
