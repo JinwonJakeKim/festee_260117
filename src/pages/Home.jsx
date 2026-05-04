@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -611,7 +611,7 @@ export default function Home() {
     if (!touchStart || !touchEnd) return;
     
     const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50;
+    const minSwipeDistance = 40;
 
     if (distance > minSwipeDistance) {
       setBannerIndex((prev) => prev + 1);
@@ -632,6 +632,19 @@ export default function Home() {
 
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
+  const bannerContainerRef = useRef(null);
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (bannerContainerRef.current) {
+        setBannerContainerWidth(bannerContainerRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   useEffect(() => {
     if (isJumping) return;
@@ -834,18 +847,20 @@ export default function Home() {
         <div className="py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 */}
           <div
+            ref={bannerContainerRef}
             className="relative overflow-hidden"
             style={{ height: '208px', backgroundColor: '#000' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
+            {bannerContainerWidth > 0 && (
             <div
               className={`flex ${isDragging || isJumping ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 height: '208px',
                 backgroundColor: '#000',
-                transform: `translateX(calc(-${bannerIndex + 1} * 84vw + 8vw + ${dragOffset}px))`,
+                transform: `translateX(calc(-${bannerIndex + 1} * ${bannerContainerWidth * 0.84}px + ${bannerContainerWidth * 0.08}px + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
@@ -854,7 +869,7 @@ export default function Home() {
                   <div
                     key={idx}
                     className="flex-shrink-0"
-                    style={{ width: '84vw', height: '208px', padding: '0 8px', backgroundColor: '#000' }}
+                    style={{ width: `${bannerContainerWidth * 0.84}px`, height: '208px', padding: '0 8px', backgroundColor: '#000' }}
                     onClick={() => {
                       if (isCenter) {
                         handleBannerClick();
@@ -921,6 +936,7 @@ export default function Home() {
                 );
               })}
             </div>
+            )}
           </div>
 
           {/* 인디케이터 */}
