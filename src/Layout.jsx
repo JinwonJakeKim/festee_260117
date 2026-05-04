@@ -596,7 +596,9 @@ export default function Layout({ children, currentPageName }) {
             : { paddingTop: `${insets.top}px`, paddingBottom: `calc(4rem + ${insets.bottom}px)` }
           }
         >
-          {children}
+          <div className="max-w-screen-lg mx-auto">
+            {children}
+          </div>
         </main>
       </div>
 
