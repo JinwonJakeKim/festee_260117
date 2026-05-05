@@ -596,7 +596,7 @@ export default function Layout({ children, currentPageName }) {
             : { paddingTop: `${insets.top}px`, paddingBottom: `calc(4rem + ${insets.bottom}px)` }
           }
         >
-          <div className="max-w-screen-lg mx-auto">
+          <div className="max-w-screen-md mx-auto">
             {children}
           </div>
         </main>
@@ -611,7 +611,7 @@ export default function Layout({ children, currentPageName }) {
           paddingRight: `${insets.right}px`,
         }}
       >
-        <div className="max-w-screen-xl mx-auto">
+        <div className="max-w-screen-md mx-auto">
           <div className="flex justify-around items-center h-16 px-2">
             {navItems.map((item) => {
               const isActive = currentTabKey === item.key;
