@@ -863,7 +863,7 @@ export default function Home() {
               style={{
                 height: '208px',
                 backgroundColor: '#000',
-                transform: `translateX(calc(-${bannerIndex + 1} * ${bannerContainerWidth * 0.84}px + ${bannerContainerWidth * 0.08}px + ${dragOffset}px))`,
+                transform: `translateX(calc(-${bannerIndex + 1} * ${bannerContainerWidth * 0.84}px + ${(bannerContainerWidth - bannerContainerWidth * 0.84) / 2}px + ${dragOffset}px))`,
               }}
             >
               {loopedBanners.map((banner, idx) => {
