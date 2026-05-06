@@ -1150,8 +1150,9 @@ ${context}
         
         console.log(`[Transform] Overview length: ${cleanedOverview.length} chars`);
         
-        // ===== 카테고리 정보 =====
+        // ===== 카테고리/도시 정보 =====
         const festivalCategory = mapCategory(rawData.cat3);
+        const cityKo = extractCity(detailData.addr1 || rawData.addr1);
         
         // ===== AI 기반 요약, 하이라이트, 태그 생성 =====
         console.log(`[API] ▶ LLM (generateAIContent: 요약/하이라이트/태그) 호출 시작`);
@@ -1363,8 +1364,6 @@ ${context}
         // ===== 다국어 번역 =====
         const sourceLanguage = detectLanguage(rawData.title);
         console.log(`[Transform] 📝 Detected source language: ${sourceLanguage}`);
-
-        const cityKo = extractCity(detailData.addr1 || rawData.addr1);
 
         console.log(`[API] ▶ AI/번역 단계 시작`);
         // A: retransform이면 항상 재번역. 아니면 이미 번역된 값 재사용.
