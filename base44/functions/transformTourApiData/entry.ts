@@ -367,7 +367,25 @@ Deno.serve(async (req) => {
     };
     
     // YouTube 검색 쿼리 보정 함수 (한국어)
-    const buildKoreanYoutubeQuery = (nameKo) => {
+    const KOREAN_LOCATION_NAMES = [
+      '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+      '수원', '고양', '용인', '창원', '성남', '청주', '전주', '천안', '안산', '포항', '남양주', '화성', '평택', '의정부', '김해', '파주',
+      '여수', '순천', '강릉', '제주', '서귀포', '구미', '아산', '원주', '충주', '제천', '당진', '서산', '논산', '공주', '익산', '군산', '정읍',
+      '김천', '경산', '안동', '영주', '상주', '거제', '양산', '진주', '통영', '속초', '동해', '태백', '삼척', '문경', '영천', '사천', '밀양',
+      '계룡', '보령', '나주', '광양', '김제', '김포', '하남', '오산', '이천', '안성', '양주', '포천', '여주', '과천', '의왕', '동두천',
+      '구리', '군포', '시흥', '광명', '부천', '의령', '함안', '고성', '남해', '하동', '산청', '거창', '합천', '창녕', '의성', '청도',
+      '고령', '성주', '칠곡', '예천', '봉화', '울진', '영덕', '영양', '청송', '군위', '곡성', '구례', '고흥', '보성', '화순', '장흥',
+      '강진', '해남', '무안', '함평', '영광', '장성', '완도', '진도', '신안', '영동', '옥천', '보은', '증평', '진천', '괴산', '음성',
+      '단양', '홍성', '예산', '태안', '서천', '금산', '부여', '청양', '홍천', '횡성', '영월', '평창', '정선', '철원', '화천', '양구',
+      '인제', '양양'
+    ];
+
+    const normalizeKoreanLocationName = (locationName) => {
+      if (!locationName) return '';
+      return locationName.replace(/(특별시|광역시|특별자치시|특별자치도|자치도|도|시|군|구)$/g, '').trim();
+    };
+
+    const buildKoreanYoutubeQuery = (nameKo, cityKo) => {
       if (!nameKo) return nameKo;
       // 년도 숫자(4자리) 및 '년' 글자 제거
       let cleaned = nameKo.replace(/\d{4}년?/g, '').replace(/\s{2,}/g, ' ').trim();
@@ -383,6 +401,14 @@ Deno.serve(async (req) => {
       if (!hasFestivalKeyword && !cleaned.endsWith('제')) {
         cleaned = cleaned + ' 축제';
       }
+
+      const normalizedCity = normalizeKoreanLocationName(cityKo);
+      const hasLocationInName = KOREAN_LOCATION_NAMES.some(location => cleaned.includes(location)) || (normalizedCity && cleaned.includes(normalizedCity));
+      if (normalizedCity && !hasLocationInName) {
+        cleaned = `${cleaned} ${normalizedCity}`;
+        console.log(`[Transform] 🗺️ YouTube query city added: ${cleaned}`);
+      }
+
       return cleaned;
     };
 
@@ -395,7 +421,8 @@ Deno.serve(async (req) => {
           festivalName,
           searchHighlightVideo: true,
           searchShorts: true,
-          llmScoreThreshold: 1  // 한국 축제: score >= 1인 영상에 대해 LLM 관련성 판단 (일본은 2)
+          llmScoreThreshold: 1,  // 한국 축제: score >= 1인 영상에 대해 LLM 관련성 판단 (일본은 2)
+          relevanceLanguage: 'ko'
         });
         
         if (result.data.success) {
@@ -1149,8 +1176,8 @@ ${context}
         let topVideoChannelName = '';
         let shortsViewsTotal = 0;
         
-        const youtubeQuery = buildKoreanYoutubeQuery(rawData.title);
-        console.log(`[Transform] 🎬 Searching YouTube for: "${youtubeQuery}" (원본: "${rawData.title}")`);
+        const youtubeQuery = buildKoreanYoutubeQuery(rawData.title, cityKo);
+        console.log(`[Transform] 🎬 Searching YouTube for: "${youtubeQuery}" (원본: "${rawData.title}", 도시: "${cityKo}")`);
         console.log(`[API] ▶ fetchYoutubeVideos 호출 시작 (query: "${youtubeQuery}")`);
         const youtubeResult = await searchYouTubeVideos(youtubeQuery);
         console.log(`[API] ◀ fetchYoutubeVideos 호출 완료 (highlight: ${youtubeResult.topVideoUrl ? '✓' : '✗'}, shorts: ${youtubeResult.shortsUrls?.length || 0}개)`);
