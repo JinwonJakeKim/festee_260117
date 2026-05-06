@@ -13,6 +13,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
+    // YouTube API 일일 한도 사전 체크
+    const today = new Date().toISOString().split('T')[0];
+    const ytLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+      api_name: 'youtube_data_api',
+      date: today
+    }).catch(() => []);
+    const ytCount = ytLogs[0]?.count || 0;
+    if (ytCount >= 95) {
+      console.warn(`[${VERSION}] ⛔ YouTube API 일일 한도 초과 (${ytCount}/95) - 자동 변환 중단`);
+      return Response.json({
+        success: false,
+        error: 'YOUTUBE_API_LIMIT_REACHED',
+        message: `YouTube API 일일 한도 초과 (${ytCount}/95). 날짜가 바뀌면 자동으로 재개됩니다.`
+      }, { status: 429 });
+    }
+
     // pending 상태의 RawData 1개만 조회 (CPU 시간 제한 초과 방지)
     const pendingRawData = await base44.asServiceRole.entities.JapantravelRawData.filter({
       processing_status: 'pending',

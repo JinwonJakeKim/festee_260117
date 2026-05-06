@@ -26,5 +26,8 @@
       "format": "date-time",
       "description": "\uacc4\uc815 \uc0c1\ud0dc \ubcc0\uacbd \uc2dc\uac04"
     }
-  }
+  },
+  "required": [
+    "account_status_updated_at"
+  ]
 }

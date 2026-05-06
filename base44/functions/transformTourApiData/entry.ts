@@ -763,6 +763,29 @@ ${context}
       }
     };
     
+    // ========== YouTube API 일일 한도 사전 체크 ==========
+    const today = new Date().toISOString().split('T')[0];
+    const ytLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({
+      api_name: 'youtube_data_api',
+      date: today
+    }).catch(() => []);
+    const ytCount = ytLogs[0]?.count || 0;
+    if (ytCount >= 95) {
+      console.warn(`[Transform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/95) - 처리 중단`);
+      // 모든 처리 예정 레코드를 failed로 표시
+      for (const id of rawDataIds) {
+        await base44.asServiceRole.entities.TourApiRawData.update(id, {
+          processing_status: 'failed',
+          error_message: `YouTube API 일일 한도 초과 (${ytCount}/95). 날짜가 바뀌어 초기화되면 다시 시도하세요.`
+        }).catch(() => {});
+      }
+      return Response.json({
+        success: false,
+        error: 'YOUTUBE_API_LIMIT_REACHED',
+        message: `YouTube API 일일 한도 초과 (${ytCount}/95). 날짜가 바뀌면 재시도하세요.`
+      }, { status: 429 });
+    }
+
     // ========== 메인 처리 로직 ==========
     
     for (let i = 0; i < rawDataIds.length; i++) {
