@@ -137,12 +137,12 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 z-[100]"
+            className="fixed inset-0 bg-black/70 z-[10000]"
           />
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed left-0 right-0 z-[101] bg-gray-950 rounded-t-3xl flex flex-col"
+            className="fixed left-0 right-0 z-[10001] bg-gray-950 rounded-t-3xl flex flex-col"
             style={{ bottom: '64px', maxHeight: 'calc(80vh - 64px)' }}
           >
             {/* Handle */}
