@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -130,19 +131,19 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
     onClose();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 z-[10000]"
+            className="fixed inset-0 bg-black/70 z-[2147483646]"
           />
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed left-0 right-0 z-[10001] bg-gray-950 rounded-t-3xl flex flex-col"
+            className="fixed left-0 right-0 z-[2147483647] bg-gray-950 rounded-t-3xl flex flex-col"
             style={{ bottom: '64px', maxHeight: 'calc(80vh - 64px)' }}
           >
             {/* Handle */}
@@ -183,6 +184,7 @@ export default function DateRangeBottomSheet({ isOpen, onClose, dateRange, onApp
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
