@@ -86,8 +86,10 @@ Deno.serve(async (req) => {
       if (!doc) break;
 
       const configuredContainer = sourceUrl.container_selector ? doc.querySelector(sourceUrl.container_selector) : null;
-      const fallbackContainer = doc.querySelector('div[data-block-type="events-masonry"], div[data-block-type="events-upcoming"], div.grid');
-      const searchRoots = [configuredContainer, fallbackContainer, doc].filter(Boolean);
+      const upcomingContainer = doc.querySelector('div[data-block-type="events-upcoming"]');
+      const configuredUpcomingContainer = configuredContainer?.querySelector?.('div[data-block-type="events-upcoming"]') || null;
+      const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
+      const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
       
       const currentPageLinks = [];
       for (const root of searchRoots) {

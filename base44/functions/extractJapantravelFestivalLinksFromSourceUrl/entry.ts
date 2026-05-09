@@ -193,8 +193,10 @@ function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
     if (!doc) return [];
 
     const configuredContainer = containerSelector ? doc.querySelector(containerSelector) : null;
-    const fallbackContainer = doc.querySelector('div[data-block-type="events-masonry"], div[data-block-type="events-upcoming"], div.grid');
-    const searchRoots = [configuredContainer, fallbackContainer, doc].filter(Boolean);
+    const upcomingContainer = doc.querySelector('div[data-block-type="events-upcoming"]');
+    const configuredUpcomingContainer = configuredContainer?.querySelector?.('div[data-block-type="events-upcoming"]') || null;
+    const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
+    const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
 
     for (const root of searchRoots) {
       const configuredLinkElements = linkSelector ? root.querySelectorAll(linkSelector) : [];
