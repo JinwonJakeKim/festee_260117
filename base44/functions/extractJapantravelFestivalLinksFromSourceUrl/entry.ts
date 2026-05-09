@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { DOMParser } from 'npm:deno-dom/deno-dom-wasm';
+import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
   const VERSION = "v2026-02-10-FINAL";
@@ -192,32 +192,39 @@ function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
 
     if (!doc) return [];
 
-    const container = doc.querySelector(containerSelector || 'div.row.small-event-gutter');
-    if (!container) return [];
+    const configuredContainer = containerSelector ? doc.querySelector(containerSelector) : null;
+    const fallbackContainer = doc.querySelector('div[data-block-type="events-masonry"], div[data-block-type="events-upcoming"], div.grid');
+    const searchRoots = [configuredContainer, fallbackContainer, doc].filter(Boolean);
 
-    const linkElements = container.querySelectorAll(linkSelector || 'div.recommended-event-wrapper a');
-    
-    for (const linkElement of linkElements) {
-      // 🔒 최대 개수 도달시 중단
-      if (links.length >= maxLinks) break;
+    for (const root of searchRoots) {
+      const configuredLinkElements = linkSelector ? root.querySelectorAll(linkSelector) : [];
+      const fallbackLinkElements = root.querySelectorAll('a[href]');
+      const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
       
-      const href = linkElement.getAttribute('href');
-      if (!href) continue;
+      for (const linkElement of linkElements) {
+        // 🔒 최대 개수 도달시 중단
+        if (links.length >= maxLinks) break;
+        
+        const href = linkElement.getAttribute('href');
+        if (!href) continue;
 
-      let absoluteUrl = href;
-      if (href.startsWith('/')) {
-        absoluteUrl = 'https://en.japantravel.com' + href;
-      }
+        let absoluteUrl = href;
+        if (href.startsWith('/')) {
+          absoluteUrl = 'https://en.japantravel.com' + href;
+        }
 
-      // 축제 URL 패턴: /prefecture/slug/숫자ID
-      const pattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/;
-      
-      if (pattern.test(absoluteUrl)) {
-        const normalized = absoluteUrl.replace(/\/$/, '');
-        if (!links.includes(normalized)) {
-          links.push(normalized);
+        // 축제 URL 패턴: /prefecture/slug/숫자ID
+        const pattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/;
+        
+        if (pattern.test(absoluteUrl)) {
+          const normalized = absoluteUrl.replace(/\/$/, '');
+          if (!links.includes(normalized)) {
+            links.push(normalized);
+          }
         }
       }
+
+      if (links.length > 0) break;
     }
   } catch (e) {
     console.error('Parse error:', e);

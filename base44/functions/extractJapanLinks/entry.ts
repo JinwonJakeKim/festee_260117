@@ -85,22 +85,27 @@ Deno.serve(async (req) => {
       const doc = parser.parseFromString(html, 'text/html');
       if (!doc) break;
 
-      const container = doc.querySelector(sourceUrl.container_selector || 'div.row.small-event-gutter');
-      if (!container) break;
-
-      const linkElements = container.querySelectorAll(sourceUrl.link_selector || 'div.recommended-event-wrapper a');
+      const configuredContainer = sourceUrl.container_selector ? doc.querySelector(sourceUrl.container_selector) : null;
+      const fallbackContainer = doc.querySelector('div[data-block-type="events-masonry"], div[data-block-type="events-upcoming"], div.grid');
+      const searchRoots = [configuredContainer, fallbackContainer, doc].filter(Boolean);
       
       const currentPageLinks = [];
-      for (const linkElement of linkElements) {
-        const href = linkElement.getAttribute('href');
-        if (!href) continue;
+      for (const root of searchRoots) {
+        const configuredLinkElements = sourceUrl.link_selector ? root.querySelectorAll(sourceUrl.link_selector) : [];
+        const fallbackLinkElements = root.querySelectorAll('a[href]');
+        const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
+        for (const linkElement of linkElements) {
+          const href = linkElement.getAttribute('href');
+          if (!href) continue;
 
-        let url = href.startsWith('/') ? 'https://en.japantravel.com' + href : href;
-        
-        if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/.test(url)) {
-          url = url.replace(/\/$/, '');
-          currentPageLinks.push(url);
+          let url = href.startsWith('/') ? 'https://en.japantravel.com' + href : href;
+          
+          if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/.test(url)) {
+            url = url.replace(/\/$/, '');
+            if (!currentPageLinks.includes(url)) currentPageLinks.push(url);
+          }
         }
+        if (currentPageLinks.length > 0) break;
       }
       
       // 자동 감지 모드: 이전 페이지와 현재 페이지의 링크가 동일한지 확인
