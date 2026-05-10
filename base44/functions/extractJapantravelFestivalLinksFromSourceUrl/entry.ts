@@ -1,137 +1,128 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
-  const VERSION = "v2026-05-10-PAGINATION-FULL-LINKS";
+  const VERSION = "v2026-05-10-API-BASED";
   const startTime = Date.now();
-  const ABSOLUTE_TIME_LIMIT = 30000; // 30초
-  const MAX_PAGES = 10; // JapanTravel 월별 페이지네이션 확인용
+  const ABSOLUTE_TIME_LIMIT = 55000; // 55초
   
   try {
     const base44 = createClientFromRequest(req);
     
-    // 관리자 권한 체크
     const user = await base44.auth.me();
     if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
     const { sourceUrlId, targetMonth } = await req.json();
-    const logStart = Date.now();
     
-    console.log(`[${VERSION}] 🚀 START`);
-    console.log(`[${VERSION}] 🔒 MAX_PAGES=${MAX_PAGES}, page link limit removed`);
+    console.log(`[${VERSION}] 🚀 START sourceUrlId=${sourceUrlId}, targetMonth=${targetMonth}`);
     
     if (!sourceUrlId) {
-      return Response.json({ 
-        success: false, 
-        error: 'sourceUrlId required' 
-      }, { status: 400 });
+      return Response.json({ success: false, error: 'sourceUrlId required' }, { status: 400 });
     }
 
     // FestivalSourceUrl 조회
     const sourceUrl = await base44.asServiceRole.entities.FestivalSourceUrl.get(sourceUrlId);
     if (!sourceUrl) {
-      return Response.json({ 
-        success: false, 
-        error: 'Source not found' 
-      }, { status: 404 });
+      return Response.json({ success: false, error: 'Source not found' }, { status: 404 });
     }
 
-    // 날짜 파라미터 적용
-    let baseUrl = sourceUrl.url;
-    if (sourceUrl.use_date_parameters && sourceUrl.date_parameter_template && targetMonth) {
+    // 날짜 범위 계산
+    let fromDate = '';
+    let toDate = '';
+    if (targetMonth) {
       const [year, month] = targetMonth.split('-');
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      
-      baseUrl = sourceUrl.date_parameter_template
-        .replace(/{YYYY}/g, year)
-        .replace(/{MM}/g, month)
-        .replace(/{LAST_DAY}/g, lastDay.toString());
-      
-      console.log(`[${VERSION}] 📅 URL: ${baseUrl}`);
+      fromDate = `${year}-${month}-01`;
+      toDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
     }
+
+    console.log(`[${VERSION}] 📅 Date range: ${fromDate} ~ ${toDate}`);
+
+    // API 기본 파라미터 구성 (japantravel events API)
+    // 예시 URL: https://en.japantravel.com/events?type=event&from=2026-06-01&to=2026-06-30
+    // 실제 API: https://api.japantravel.com/api/articles?page=N&...
+    // FestivalSourceUrl의 url에서 쿼리 파라미터 추출
+    const sourceUrlObj = new URL(sourceUrl.url.includes('?') ? sourceUrl.url : sourceUrl.url + '?');
+    const baseParams = new URLSearchParams(sourceUrlObj.search);
+    
+    // 날짜 파라미터 설정
+    if (fromDate) baseParams.set('from', fromDate);
+    if (toDate) baseParams.set('to', toDate);
 
     const allLinks = [];
     let pagesProcessed = 0;
-    let previousPageSignature = null;
+    let lastPage = 1;
 
-    // 🔒 정확히 5페이지만 탐색
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      console.log(`[${VERSION}] 📄 Processing page ${page}/${MAX_PAGES}`);
-      pagesProcessed = page;
-      
-      // 30초 타임아웃 체크
-      if (Date.now() - startTime > ABSOLUTE_TIME_LIMIT) {
-        console.log(`[${VERSION}] ⏰ Timeout (30s), stopping at page ${page}`);
-        break;
+    // 1페이지 먼저 요청하여 last_page 확인
+    const firstApiUrl = `https://api.japantravel.com/api/articles?${baseParams.toString()}&page=1`;
+    console.log(`[${VERSION}] 🔎 First page API URL: ${firstApiUrl}`);
+
+    const firstRes = await fetch(firstApiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://en.japantravel.com/',
       }
-      
-      // 페이지 URL 생성
-      const urlObj = new URL(baseUrl);
-      urlObj.searchParams.set('p', page.toString());
-      const pageUrl = urlObj.toString();
-      console.log(`[${VERSION}] 🔎 Fetching page ${page}: ${pageUrl}`);
+    });
 
-      // HTML 가져오기
-      let html;
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        
-        const response = await fetch(pageUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          console.log(`[${VERSION}] ❌ HTTP ${response.status}, stopping`);
-          break;
-        }
-        
-        html = await response.text();
-      } catch (fetchError) {
-        console.error(`[${VERSION}] ❌ Fetch error: ${fetchError.message}, stopping`);
-        break;
-      }
-
-      // 링크 추출 (해당 페이지의 모든 축제 링크)
-      const links = extractLinks(
-        html,
-        sourceUrl.container_selector,
-        sourceUrl.link_selector
-      );
-      
-      if (links.length === 0) {
-        console.log(`[${VERSION}] No links found on page ${page}, stopping`);
-        break;
-      }
-
-      const pageSignature = JSON.stringify([...links].sort());
-      if (page > 1 && previousPageSignature === pageSignature) {
-        console.log(`[${VERSION}] ⚠️ Page ${page} returned the same links as the previous page. Pagination parameter may not be applied correctly.`);
-        break;
-      }
-
-      console.log(`[${VERSION}] ✅ Found ${links.length} links on page ${page}`);
-      console.log(`[${VERSION}] 🔗 Links on page ${page}: ${JSON.stringify(links)}`);
-      allLinks.push(...links);
-      previousPageSignature = pageSignature;
-
-      // 짧은 대기 (서버 부하 방지)
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (!firstRes.ok) {
+      throw new Error(`API first page failed: ${firstRes.status}`);
     }
 
-    console.log(`[${VERSION}] ✅ Extraction complete: ${pagesProcessed} pages, ${allLinks.length} total links`);
+    const firstData = await firstRes.json();
+    lastPage = firstData.meta?.last_page ?? 1;
+    
+    console.log(`[${VERSION}] 📊 Total pages: ${lastPage}, total items: ${firstData.meta?.total}`);
+
+    // 1페이지 링크 추출
+    const firstPageLinks = (firstData.items || []).map(item => item.url).filter(Boolean);
+    allLinks.push(...firstPageLinks);
+    pagesProcessed = 1;
+    console.log(`[${VERSION}] ✅ Page 1: ${firstPageLinks.length} links`);
+
+    // 나머지 페이지 순차 처리
+    for (let page = 2; page <= lastPage; page++) {
+      // 타임아웃 체크
+      if (Date.now() - startTime > ABSOLUTE_TIME_LIMIT) {
+        console.log(`[${VERSION}] ⏰ Timeout at page ${page}/${lastPage}`);
+        break;
+      }
+
+      const apiUrl = `https://api.japantravel.com/api/articles?${baseParams.toString()}&page=${page}`;
+      console.log(`[${VERSION}] 🔎 Page ${page}/${lastPage}: ${apiUrl}`);
+
+      const res = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'Referer': 'https://en.japantravel.com/',
+        }
+      });
+
+      if (!res.ok) {
+        console.log(`[${VERSION}] ❌ HTTP ${res.status} on page ${page}, stopping`);
+        break;
+      }
+
+      const data = await res.json();
+      const pageLinks = (data.items || []).map(item => item.url).filter(Boolean);
+      
+      console.log(`[${VERSION}] ✅ Page ${page}: ${pageLinks.length} links`);
+      allLinks.push(...pageLinks);
+      pagesProcessed = page;
+
+      // 서버 부하 방지
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    console.log(`[${VERSION}] ✅ Done: ${pagesProcessed}/${lastPage} pages, ${allLinks.length} total links`);
 
     // 중복 제거
     const uniqueLinks = [...new Set(allLinks)];
     console.log(`[${VERSION}] 🔍 Unique links: ${uniqueLinks.length}`);
-    console.log(`[${VERSION}] 🔗 Unique link list: ${JSON.stringify(uniqueLinks)}`);
-    
-    // DB 최적화: 추출된 링크만 필터 쿼리
+
+    // 기존 레코드 확인
     const existingMatches = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
       source_url: { $in: uniqueLinks }
     });
@@ -139,20 +130,17 @@ Deno.serve(async (req) => {
     console.log(`[${VERSION}] 📊 Existing: ${existingUrls.size}, New: ${uniqueLinks.length - existingUrls.size}`);
 
     // 새 레코드 생성
-    const recordsToCreate = [];
-    for (const link of uniqueLinks) {
-      if (!existingUrls.has(link)) {
-        recordsToCreate.push({
-          source_url: link,
-          country: sourceUrl.country,
-          processing_status: 'pending',
-          name_original: "",
-          city: "",
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: new Date().toISOString().split('T')[0],
-        });
-      }
-    }
+    const recordsToCreate = uniqueLinks
+      .filter(link => !existingUrls.has(link))
+      .map(link => ({
+        source_url: link,
+        country: sourceUrl.country,
+        processing_status: 'pending',
+        name_original: "",
+        city: "",
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+      }));
 
     // 100개씩 청크로 저장
     if (recordsToCreate.length > 0) {
@@ -173,11 +161,11 @@ Deno.serve(async (req) => {
       success: true,
       version: VERSION,
       pages_processed: pagesProcessed,
-      max_pages_limit: MAX_PAGES,
+      total_pages: lastPage,
       total_links: allLinks.length,
       unique_links: uniqueLinks.length,
       new_records: recordsToCreate.length,
-      message: `✅ ${uniqueLinks.length}개 링크 추출 (${pagesProcessed}/${MAX_PAGES} 페이지, 신규 ${recordsToCreate.length}개)`
+      message: `✅ ${uniqueLinks.length}개 링크 추출 (${pagesProcessed}/${lastPage} 페이지, 신규 ${recordsToCreate.length}개)`
     });
 
   } catch (error) {
@@ -189,54 +177,3 @@ Deno.serve(async (req) => {
     }, { status: 500 });
   }
 });
-
-// 링크 추출 함수
-function extractLinks(html, containerSelector, linkSelector) {
-  const links = [];
-
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    if (!doc) return [];
-
-    const configuredContainer = containerSelector ? doc.querySelector(containerSelector) : null;
-    const upcomingContainer = doc.querySelector('div[data-block-type="events-upcoming"]');
-    const configuredUpcomingContainer = configuredContainer?.querySelector?.('div[data-block-type="events-upcoming"]') || null;
-    const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
-    console.log(`Selector debug: containerSelector=${containerSelector}, linkSelector=${linkSelector}, configuredContainer=${!!configuredContainer}, upcomingContainer=${!!upcomingContainer}, fallbackContainer=${!!fallbackContainer}`);
-    const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
-
-    for (const root of searchRoots) {
-      const configuredLinkElements = linkSelector ? root.querySelectorAll(linkSelector) : [];
-      const fallbackLinkElements = root.querySelectorAll('a[href]');
-      const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
-      
-      for (const linkElement of linkElements) {
-        const href = linkElement.getAttribute('href');
-        if (!href) continue;
-
-        let absoluteUrl = href;
-        if (href.startsWith('/')) {
-          absoluteUrl = 'https://en.japantravel.com' + href;
-        }
-
-        // 축제 URL 패턴: /prefecture/slug/숫자ID
-        const pattern = /^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/;
-        
-        if (pattern.test(absoluteUrl)) {
-          const normalized = absoluteUrl.replace(/\/$/, '');
-          if (!links.includes(normalized)) {
-            links.push(normalized);
-          }
-        }
-      }
-
-      if (links.length > 0) break;
-    }
-  } catch (e) {
-    console.error('Parse error:', e);
-  }
-
-  return links;
-}
