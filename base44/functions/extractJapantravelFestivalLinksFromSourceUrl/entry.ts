@@ -2,11 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "v2026-02-10-FINAL";
+  const VERSION = "v2026-05-10-DEBUG-PAGINATION";
   const startTime = Date.now();
   const ABSOLUTE_TIME_LIMIT = 30000; // 30초
-  const MAX_PAGES = 5; // 🔒 하드코딩
-  const MAX_LINKS_PER_PAGE = 8; // 🔒 페이지당 8개
+  const MAX_PAGES = 10; // 디버그: JapanTravel 월별 페이지네이션 확인용
+  const MAX_LINKS_PER_PAGE = 8; // 페이지당 8개
   
   try {
     const base44 = createClientFromRequest(req);
@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       const urlObj = new URL(baseUrl);
       urlObj.searchParams.set('p', page.toString());
       const pageUrl = urlObj.toString();
+      console.log(`[${VERSION}] 🔎 Fetching page ${page}: ${pageUrl}`);
 
       // HTML 가져오기
       let html;
@@ -110,6 +111,7 @@ Deno.serve(async (req) => {
       }
 
       console.log(`[${VERSION}] ✅ Found ${links.length} links on page ${page}`);
+      console.log(`[${VERSION}] 🔗 Links on page ${page}: ${JSON.stringify(links)}`);
       allLinks.push(...links);
 
       // 짧은 대기 (서버 부하 방지)
@@ -121,6 +123,7 @@ Deno.serve(async (req) => {
     // 중복 제거
     const uniqueLinks = [...new Set(allLinks)];
     console.log(`[${VERSION}] 🔍 Unique links: ${uniqueLinks.length}`);
+    console.log(`[${VERSION}] 🔗 Unique link list: ${JSON.stringify(uniqueLinks)}`);
     
     // DB 최적화: 추출된 링크만 필터 쿼리
     const existingMatches = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
@@ -196,6 +199,7 @@ function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
     const upcomingContainer = doc.querySelector('div[data-block-type="events-upcoming"]');
     const configuredUpcomingContainer = configuredContainer?.querySelector?.('div[data-block-type="events-upcoming"]') || null;
     const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
+    console.log(`Selector debug: containerSelector=${containerSelector}, linkSelector=${linkSelector}, configuredContainer=${!!configuredContainer}, upcomingContainer=${!!upcomingContainer}, fallbackContainer=${!!fallbackContainer}`);
     const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
 
     for (const root of searchRoots) {
