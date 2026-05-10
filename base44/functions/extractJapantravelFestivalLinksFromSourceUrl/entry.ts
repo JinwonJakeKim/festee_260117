@@ -39,23 +39,20 @@ Deno.serve(async (req) => {
 
     console.log(`[${VERSION}] 📅 Date range: ${fromDate} ~ ${toDate}`);
 
-    // API 기본 파라미터 구성 (japantravel events API)
-    // 예시 URL: https://en.japantravel.com/events?type=event&from=2026-06-01&to=2026-06-30
-    // 실제 API: https://api.japantravel.com/api/articles?page=N&...
-    // FestivalSourceUrl의 url에서 쿼리 파라미터 추출
-    const sourceUrlObj = new URL(sourceUrl.url.includes('?') ? sourceUrl.url : sourceUrl.url + '?');
-    const baseParams = new URLSearchParams(sourceUrlObj.search);
-    
-    // 날짜 파라미터 설정
-    if (fromDate) baseParams.set('from', fromDate);
-    if (toDate) baseParams.set('to', toDate);
+    // API 파라미터 구성 - type=event 고정, 날짜 파라미터만 추가
+    const buildApiUrl = (page) => {
+      const params = new URLSearchParams({ type: 'event', page: String(page) });
+      if (fromDate) params.set('from', fromDate);
+      if (toDate) params.set('to', toDate);
+      return `https://api.japantravel.com/api/articles?${params.toString()}`;
+    };
 
     const allLinks = [];
     let pagesProcessed = 0;
     let lastPage = 1;
 
     // 1페이지 먼저 요청하여 last_page 확인
-    const firstApiUrl = `https://api.japantravel.com/api/articles?${baseParams.toString()}&page=1`;
+    const firstApiUrl = buildApiUrl(1);
     console.log(`[${VERSION}] 🔎 First page API URL: ${firstApiUrl}`);
 
     const firstRes = await fetch(firstApiUrl, {
@@ -89,7 +86,7 @@ Deno.serve(async (req) => {
         break;
       }
 
-      const apiUrl = `https://api.japantravel.com/api/articles?${baseParams.toString()}&page=${page}`;
+      const apiUrl = buildApiUrl(page);
       console.log(`[${VERSION}] 🔎 Page ${page}/${lastPage}: ${apiUrl}`);
 
       const res = await fetch(apiUrl, {
@@ -122,24 +119,25 @@ Deno.serve(async (req) => {
     const uniqueLinks = [...new Set(allLinks)];
     console.log(`[${VERSION}] 🔍 Unique links: ${uniqueLinks.length}`);
 
-    // 기존 레코드 확인
-    const existingMatches = await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.filter({
-      source_url: { $in: uniqueLinks }
+    // 기존 레코드 확인 (JapantravelLinks)
+    const existingMatches = await base44.asServiceRole.entities.JapantravelLinks.filter({
+      url: { $in: uniqueLinks }
     });
-    const existingUrls = new Set(existingMatches.map(r => r.source_url));
+    const existingUrls = new Set(existingMatches.map(r => r.url));
     console.log(`[${VERSION}] 📊 Existing: ${existingUrls.size}, New: ${uniqueLinks.length - existingUrls.size}`);
+
+    const now = new Date().toISOString();
 
     // 새 레코드 생성
     const recordsToCreate = uniqueLinks
       .filter(link => !existingUrls.has(link))
       .map(link => ({
-        source_url: link,
+        url: link,
         country: sourceUrl.country,
+        source_url_id: sourceUrlId,
         processing_status: 'pending',
-        name_original: "",
-        city: "",
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date().toISOString().split('T')[0],
+        create_time: now,
+        update_time: now,
       }));
 
     // 100개씩 청크로 저장
@@ -147,7 +145,7 @@ Deno.serve(async (req) => {
       const CHUNK_SIZE = 100;
       for (let i = 0; i < recordsToCreate.length; i += CHUNK_SIZE) {
         const chunk = recordsToCreate.slice(i, i + CHUNK_SIZE);
-        await base44.asServiceRole.entities.JapantravelUrlExtractionRawData.bulkCreate(chunk);
+        await base44.asServiceRole.entities.JapantravelLinks.bulkCreate(chunk);
         console.log(`[${VERSION}] 💾 Saved ${Math.min(i + CHUNK_SIZE, recordsToCreate.length)}/${recordsToCreate.length}`);
       }
     }
