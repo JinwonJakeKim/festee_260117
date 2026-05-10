@@ -2,11 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "v2026-05-10-DEBUG-PAGINATION";
+  const VERSION = "v2026-05-10-PAGINATION-FULL-LINKS";
   const startTime = Date.now();
   const ABSOLUTE_TIME_LIMIT = 30000; // 30초
-  const MAX_PAGES = 10; // 디버그: JapanTravel 월별 페이지네이션 확인용
-  const MAX_LINKS_PER_PAGE = 8; // 페이지당 8개
+  const MAX_PAGES = 10; // JapanTravel 월별 페이지네이션 확인용
   
   try {
     const base44 = createClientFromRequest(req);
@@ -21,7 +20,7 @@ Deno.serve(async (req) => {
     const logStart = Date.now();
     
     console.log(`[${VERSION}] 🚀 START`);
-    console.log(`[${VERSION}] 🔒 MAX_PAGES=${MAX_PAGES}, MAX_LINKS_PER_PAGE=${MAX_LINKS_PER_PAGE}`);
+    console.log(`[${VERSION}] 🔒 MAX_PAGES=${MAX_PAGES}, page link limit removed`);
     
     if (!sourceUrlId) {
       return Response.json({ 
@@ -55,6 +54,7 @@ Deno.serve(async (req) => {
 
     const allLinks = [];
     let pagesProcessed = 0;
+    let previousPageSignature = null;
 
     // 🔒 정확히 5페이지만 탐색
     for (let page = 1; page <= MAX_PAGES; page++) {
@@ -97,12 +97,11 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // 링크 추출 (페이지당 최대 8개)
+      // 링크 추출 (해당 페이지의 모든 축제 링크)
       const links = extractLinks(
-        html, 
-        sourceUrl.container_selector, 
-        sourceUrl.link_selector, 
-        MAX_LINKS_PER_PAGE
+        html,
+        sourceUrl.container_selector,
+        sourceUrl.link_selector
       );
       
       if (links.length === 0) {
@@ -110,9 +109,16 @@ Deno.serve(async (req) => {
         break;
       }
 
+      const pageSignature = JSON.stringify([...links].sort());
+      if (page > 1 && previousPageSignature === pageSignature) {
+        console.log(`[${VERSION}] ⚠️ Page ${page} returned the same links as the previous page. Pagination parameter may not be applied correctly.`);
+        break;
+      }
+
       console.log(`[${VERSION}] ✅ Found ${links.length} links on page ${page}`);
       console.log(`[${VERSION}] 🔗 Links on page ${page}: ${JSON.stringify(links)}`);
       allLinks.push(...links);
+      previousPageSignature = pageSignature;
 
       // 짧은 대기 (서버 부하 방지)
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -168,7 +174,6 @@ Deno.serve(async (req) => {
       version: VERSION,
       pages_processed: pagesProcessed,
       max_pages_limit: MAX_PAGES,
-      links_per_page_limit: MAX_LINKS_PER_PAGE,
       total_links: allLinks.length,
       unique_links: uniqueLinks.length,
       new_records: recordsToCreate.length,
@@ -186,7 +191,7 @@ Deno.serve(async (req) => {
 });
 
 // 링크 추출 함수
-function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
+function extractLinks(html, containerSelector, linkSelector) {
   const links = [];
 
   try {
@@ -208,9 +213,6 @@ function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
       const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
       
       for (const linkElement of linkElements) {
-        // 🔒 최대 개수 도달시 중단
-        if (links.length >= maxLinks) break;
-        
         const href = linkElement.getAttribute('href');
         if (!href) continue;
 
