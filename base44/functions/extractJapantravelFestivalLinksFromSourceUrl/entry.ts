@@ -72,8 +72,30 @@ Deno.serve(async (req) => {
     
     console.log(`[${VERSION}] 📊 Total pages: ${lastPage}, total items: ${firstData.meta?.total}`);
 
-    // 1페이지 링크 추출
-    const firstPageLinks = (firstData.items || []).map(item => item.url).filter(Boolean);
+    // API 응답 구조 전체 디버깅
+    console.log(`[${VERSION}] 🔍 firstData keys: ${Object.keys(firstData).join(', ')}`);
+    console.log(`[${VERSION}] 🔍 firstData.meta: ${JSON.stringify(firstData.meta)}`);
+    const firstItems = firstData.items || firstData.data || firstData.results || firstData.articles || [];
+    console.log(`[${VERSION}] 🔍 firstItems.length: ${firstItems.length}`);
+    if (firstItems.length > 0) {
+      console.log(`[${VERSION}] 🔍 First item keys: ${Object.keys(firstItems[0]).join(', ')}`);
+      console.log(`[${VERSION}] 🔍 First item sample: ${JSON.stringify(firstItems[0]).substring(0, 500)}`);
+    } else {
+      // items가 없으면 전체 응답 확인
+      console.log(`[${VERSION}] 🔍 Full response (first 1000 chars): ${JSON.stringify(firstData).substring(0, 1000)}`);
+    }
+
+    // URL 필드 자동 감지 (url, permalink, slug, link 순서로 시도)
+    const extractUrl = (item) => {
+      if (item.url) return item.url;
+      if (item.permalink) return item.permalink;
+      if (item.slug) return `https://en.japantravel.com/event/${item.slug}`;
+      if (item.link) return item.link;
+      if (item.id) return `https://en.japantravel.com/events/${item.id}`;
+      return null;
+    };
+
+    const firstPageLinks = firstItems.map(extractUrl).filter(Boolean);
     allLinks.push(...firstPageLinks);
     pagesProcessed = 1;
     console.log(`[${VERSION}] ✅ Page 1: ${firstPageLinks.length} links`);
@@ -103,7 +125,8 @@ Deno.serve(async (req) => {
       }
 
       const data = await res.json();
-      const pageLinks = (data.items || []).map(item => item.url).filter(Boolean);
+      const pageItems = data.data || data.items || data.results || data.articles || [];
+      const pageLinks = pageItems.map(extractUrl).filter(Boolean);
       
       console.log(`[${VERSION}] ✅ Page ${page}: ${pageLinks.length} links`);
       allLinks.push(...pageLinks);
