@@ -87,12 +87,16 @@ Deno.serve(async (req) => {
 
     // URL 필드 자동 감지 (url, permalink, slug, link 순서로 시도)
     const extractUrl = (item) => {
-      if (item.url) return item.url;
-      if (item.permalink) return item.permalink;
-      if (item.slug) return `https://en.japantravel.com/event/${item.slug}`;
-      if (item.link) return item.link;
-      if (item.id) return `https://en.japantravel.com/events/${item.id}`;
-      return null;
+      let url = null;
+      if (item.url) url = item.url;
+      else if (item.permalink) url = item.permalink;
+      else if (item.slug) url = `https://en.japantravel.com/event/${item.slug}`;
+      else if (item.link) url = item.link;
+      else if (item.id) url = `https://en.japantravel.com/events/${item.id}`;
+      
+      if (!url) return null;
+      // en.en. 중복 방지
+      return url.replace('https://en.en.japantravel.com/', 'https://en.japantravel.com/');
     };
 
     const firstPageLinks = firstItems.map(extractUrl).filter(Boolean);
