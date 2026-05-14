@@ -1130,25 +1130,13 @@ export default function AdminUrlExtraction() {
                                 {/* 완성된 URL 미리보기 */}
                                 {selectedMonths[source.id] && (
                                   <div className="space-y-2">
-                                    <label className="text-gray-400 text-xs font-medium">대상 URL:</label>
+                                    <label className="text-gray-400 text-xs font-medium">API 호출 URL (page=1 기준):</label>
                                     <div className="bg-black/50 border border-cyan-400/30 rounded-lg p-3">
                                       <p className="text-cyan-400 text-sm font-mono break-all">
                                         {(() => {
                                           const [year, month] = selectedMonths[source.id].split('-');
-                                          const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-                                          const paddedLastDay = lastDay.toString().padStart(2, '0');
-                                          
-                                          if (source.date_parameter_template) {
-                                            return source.date_parameter_template
-                                              .replaceAll('{YYYY}', year)
-                                              .replaceAll('{MM}', month)
-                                              .replaceAll('{LAST_DAY}', paddedLastDay);
-                                          } else {
-                                            const url = new URL(source.url);
-                                            url.searchParams.set('from', `${year}-${month}-01`);
-                                            url.searchParams.set('to', `${year}-${month}-${paddedLastDay}`);
-                                            return url.toString();
-                                          }
+                                          const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate().toString().padStart(2, '0');
+                                          return `https://api.japantravel.com/api/articles?type=event&page=1&from=${year}-${month}-01&to=${year}-${month}-${lastDay}`;
                                         })()}
                                       </p>
                                     </div>
