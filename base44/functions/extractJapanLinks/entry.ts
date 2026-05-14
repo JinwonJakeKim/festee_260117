@@ -110,27 +110,26 @@ Deno.serve(async (req) => {
         if (currentPageLinks.length > 0) break;
       }
       
-      // 자동 감지 모드: 이전 페이지와 현재 페이지의 링크가 동일한지 확인
+      // 링크가 하나도 없으면 중단
+      if (currentPageLinks.length === 0) {
+        console.log(`[${VERSION}] No links found on page ${page}. Stopping.`);
+        break;
+      }
+
+      // 자동 감지 모드: 이전 페이지와 현재 페이지의 링크가 동일한지 확인 (마지막 페이지 감지)
       if (useAutoDetect && page > 1 && prevPageLinks && currentPageLinks.length > 0) {
-        const currentHash = JSON.stringify(currentPageLinks.sort());
-        const prevHash = JSON.stringify(prevPageLinks.sort());
-        
+        const currentHash = JSON.stringify([...currentPageLinks].sort());
+        const prevHash = JSON.stringify([...prevPageLinks].sort());
         if (currentHash === prevHash) {
           console.log(`[${VERSION}] Page ${page} is identical to page ${page - 1}. Last page detected!`);
           break;
         }
       }
       
-      // 링크가 하나도 없으면 중단
-      if (currentPageLinks.length === 0) {
-        console.log(`[${VERSION}] No links found on page ${page}. Stopping.`);
-        break;
-      }
-      
-      // 중복 제거하면서 전체 링크에 추가
+      // 중복 제거하면서 전체 링크에 추가 (페이지당 제한 없음)
       let pageLinksAdded = 0;
       for (const url of currentPageLinks) {
-        if (!allLinks.includes(url) && pageLinksAdded < MAX_LINKS_PER_PAGE) {
+        if (!allLinks.includes(url)) {
           allLinks.push(url);
           pageLinksAdded++;
         }

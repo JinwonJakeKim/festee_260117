@@ -5,8 +5,8 @@ Deno.serve(async (req) => {
   const VERSION = "v2026-02-10-FINAL";
   const startTime = Date.now();
   const ABSOLUTE_TIME_LIMIT = 30000; // 30초
-  const MAX_PAGES = 5; // 🔒 하드코딩
-  const MAX_LINKS_PER_PAGE = 8; // 🔒 페이지당 8개
+  const MAX_PAGES = 50; // 마지막 페이지 자동 감지
+  const MAX_LINKS_PER_PAGE = 999; // 제한 없음
   
   try {
     const base44 = createClientFromRequest(req);
@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
 
     const allLinks = [];
     let pagesProcessed = 0;
+    let prevPageLinks = null;
 
     // 🔒 정확히 5페이지만 탐색
     for (let page = 1; page <= MAX_PAGES; page++) {
@@ -109,8 +110,23 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // 이전 페이지와 동일하면 마지막 페이지로 판단하고 중단
+      if (page > 1 && prevPageLinks) {
+        const currentHash = JSON.stringify([...links].sort());
+        const prevHash = JSON.stringify([...prevPageLinks].sort());
+        if (currentHash === prevHash) {
+          console.log(`[${VERSION}] Page ${page} identical to previous. Last page detected!`);
+          break;
+        }
+      }
+
       console.log(`[${VERSION}] ✅ Found ${links.length} links on page ${page}`);
-      allLinks.push(...links);
+      // 중복 없이 추가 (페이지당 제한 없음)
+      for (const url of links) {
+        if (!allLinks.includes(url)) allLinks.push(url);
+      }
+
+      prevPageLinks = links;
 
       // 짧은 대기 (서버 부하 방지)
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -204,8 +220,6 @@ function extractLinks(html, containerSelector, linkSelector, maxLinks = 8) {
       const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
       
       for (const linkElement of linkElements) {
-        // 🔒 최대 개수 도달시 중단
-        if (links.length >= maxLinks) break;
         
         const href = linkElement.getAttribute('href');
         if (!href) continue;
