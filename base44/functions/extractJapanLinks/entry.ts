@@ -5,7 +5,6 @@ Deno.serve(async (req) => {
   const VERSION = "AUTO-DETECT-V2";
   const startTime = Date.now();
   const MAX_PESSIMISTIC_PAGES = 50; // 무한 루프 방지용 최대값
-  const MAX_LINKS_PER_PAGE = 8;
   const TIME_LIMIT = 30000;
   
   console.log(`[${VERSION}] START - Auto-detect or manual pages`);
@@ -116,17 +115,7 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // 자동 감지 모드: 이전 페이지와 현재 페이지의 링크가 동일한지 확인 (마지막 페이지 감지)
-      if (useAutoDetect && page > 1 && prevPageLinks && currentPageLinks.length > 0) {
-        const currentHash = JSON.stringify([...currentPageLinks].sort());
-        const prevHash = JSON.stringify([...prevPageLinks].sort());
-        if (currentHash === prevHash) {
-          console.log(`[${VERSION}] Page ${page} is identical to page ${page - 1}. Last page detected!`);
-          break;
-        }
-      }
-      
-      // 중복 제거하면서 전체 링크에 추가 (페이지당 제한 없음)
+      // 중복 제거하면서 전체 링크에 추가
       let pageLinksAdded = 0;
       for (const url of currentPageLinks) {
         if (!allLinks.includes(url)) {
