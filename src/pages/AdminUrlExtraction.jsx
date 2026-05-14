@@ -278,12 +278,11 @@ export default function AdminUrlExtraction() {
   });
 
   const runLinkExtractionMutation = useMutation({
-    mutationFn: async ({ sourceUrlId, targetMonth, maxPages, abortSignal }) => {
-      const { data } = await base44.functions.invoke('extractJapanLinks', { 
+    mutationFn: async ({ sourceUrlId, targetMonth }) => {
+      const { data } = await base44.functions.invoke('extractJapantravelFestivalLinksFromSourceUrl', { 
         sourceUrlId,
-        targetMonth,
-        maxPages
-      }, { signal: abortSignal });
+        targetMonth
+      });
       return data;
     },
     onMutate: ({ maxPages }) => {
@@ -483,14 +482,10 @@ export default function AdminUrlExtraction() {
     }
   };
 
-  const handleRunLinkExtraction = ({ sourceUrlId, targetMonth, maxPages }) => {
-    const controller = new AbortController();
-    setExtractionAbortController(controller);
+  const handleRunLinkExtraction = ({ sourceUrlId, targetMonth }) => {
     runLinkExtractionMutation.mutate({ 
       sourceUrlId, 
-      targetMonth,
-      maxPages,
-      abortSignal: controller.signal
+      targetMonth
     });
   };
 
@@ -1168,13 +1163,12 @@ export default function AdminUrlExtraction() {
                                     }
                                     handleRunLinkExtraction({
                                       sourceUrlId: source.id,
-                                      targetMonth: selectedMonths[source.id],
-                                      maxPages: selectedMaxPages[source.id] || 'auto'
+                                      targetMonth: selectedMonths[source.id]
                                     });
                                   }}
                                   disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
                                   className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-base font-bold"
-                                >
+                                  >
                                   {runLinkExtractionMutation.isPending ? (
                                     <>
                                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -1186,18 +1180,33 @@ export default function AdminUrlExtraction() {
                                       링크 정보 추출 시작
                                     </>
                                   )}
-                                </Button>
+                                  </Button>
 
-                                <div className="rounded-lg border border-cyan-400/30 bg-cyan-900/10 p-4 text-xs text-gray-300 space-y-2">
-                                  <p className="text-cyan-400 font-bold text-sm">URL 추출 규칙</p>
-                                  <ul className="space-y-1 list-disc list-inside">
-                                    <li><strong className="text-white">container_selector</strong>: 축제 카드 목록을 감싸는 영역입니다. JapanTravel은 <code className="text-cyan-300">data-block-type="events-upcoming"</code> 영역을 최우선으로 추출합니다.</li>
-                                    <li><strong className="text-white">link_selector</strong>: 컨테이너 안에서 축제 상세 링크를 찾는 선택자입니다. 지정한 선택자로 링크가 없으면 <code className="text-cyan-300">a[href]</code> 전체 링크를 검사합니다.</li>
-                                    <li>추출 대상 URL은 <code className="text-cyan-300">https://en.japantravel.com/지역/축제명/숫자ID</code> 형식만 저장합니다.</li>
-                                    <li>중복 URL은 자동으로 제거되며, 이미 저장된 링크는 새로 생성하지 않습니다.</li>
-                                    <li>자동 모드는 다음 페이지 링크가 이전 페이지와 같거나 링크가 없을 때 마지막 페이지로 판단하고 중단합니다.</li>
+                                  <div className="rounded-lg border border-cyan-400/30 bg-cyan-900/10 p-4 text-xs text-gray-300 space-y-2">
+                                  <p className="text-cyan-400 font-bold text-sm">🌐 API 호출 방식</p>
+                                  <p className="text-gray-400">웹 스크래핑이 아닌 <strong className="text-cyan-300">JapanTravel 공개 API</strong>를 직접 호출하여 축제 링크를 수집합니다.</p>
+
+                                  <div className="bg-black/40 border border-gray-700 rounded p-2 mt-2">
+                                    <p className="text-gray-400 text-xs mb-1 font-bold">📡 API 호출 URL (예: 6월 선택 시)</p>
+                                    <code className="text-green-400 text-xs break-all block">
+                                      {selectedMonths[source.id] ? (() => {
+                                        const [year, month] = selectedMonths[source.id].split('-');
+                                        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate().toString().padStart(2, '0');
+                                        return `https://api.japantravel.com/api/articles?type=event&page=1&from=${year}-${month}-01&to=${year}-${month}-${lastDay}`;
+                                      })() : 'https://api.japantravel.com/api/articles?type=event&page=1&from=YYYY-MM-01&to=YYYY-MM-DD'}
+                                    </code>
+                                  </div>
+
+                                  <p className="text-gray-400 font-bold mt-2">📋 수집 로직</p>
+                                  <ul className="space-y-1 list-decimal list-inside text-gray-300">
+                                    <li>1페이지를 먼저 호출하여 API 응답의 <code className="text-cyan-300">meta.last_page</code>로 전체 페이지 수 확인</li>
+                                    <li>page=1 부터 last_page 까지 순차적으로 API 호출 (페이지당 0.3초 대기)</li>
+                                    <li>각 응답에서 <code className="text-cyan-300">url</code> 필드를 추출 (없으면 slug로 URL 생성)</li>
+                                    <li><code className="text-cyan-300">en.en.japantravel.com</code> → <code className="text-cyan-300">en.japantravel.com</code> 자동 수정</li>
+                                    <li>중복 제거 후 DB에 없는 신규 링크만 <code className="text-cyan-300">pending</code> 상태로 저장</li>
+                                    <li>전체 실행 시간이 55초 초과 시 자동 중단</li>
                                   </ul>
-                                </div>
+                                  </div>
                               </div>
                             </div>
                           )}
