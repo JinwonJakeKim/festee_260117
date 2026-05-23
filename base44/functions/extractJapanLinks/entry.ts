@@ -165,7 +165,8 @@ Deno.serve(async (req) => {
 
     const resultMessage = `${useAutoDetect ? '자동 감지' : `${maxPagesToProcess}페이지 지정`}: ${actualPagesProcessed}개 페이지에서 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`;
     
-    // 추출 로그 저장
+    // 추출 로그 저장 (한국시간)
+    const koreaTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
     await base44.asServiceRole.entities.JapantravelExtractionLog.create({
       initiated_by: user.email,
       source_name: sourceUrl.name,
@@ -176,6 +177,7 @@ Deno.serve(async (req) => {
       new_records: toCreate.length,
       duration_ms: Date.now() - logStart,
       message: resultMessage,
+      created_date: koreaTime,
     });
 
     return Response.json({
