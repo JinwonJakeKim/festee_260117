@@ -110,12 +110,24 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
   }
 
   // 이미 번역된 Festival이 있으면 번역 스킵 (name_ko가 실제 한국어인지 확인)
+  // retransform=true일 때는 summary가 비어있거나 일반 문구이면 LLM 재실행
   const isKorean = (str) => /[\uAC00-\uD7A3]/.test(str || '');
+  const SITE_GENERIC_CHECK = ['japan travel', 'official guide', 'things to do in japan', 'plan your next japan trip'];
+  const isSummaryGeneric = (str) => {
+    if (!str || !str.trim()) return true;
+    const lower = str.toLowerCase();
+    return SITE_GENERIC_CHECK.some(p => lower.includes(p));
+  };
+  const existingSummaryOk = existingFestivalRecord &&
+    !isSummaryGeneric(existingFestivalRecord.summary_ko) &&
+    !isSummaryGeneric(existingFestivalRecord.summary_en);
   const alreadyTranslated = !!(
     existingFestivalRecord &&
     isKorean(existingFestivalRecord.name_ko) &&
     existingFestivalRecord.name_en &&
-    existingFestivalRecord.description_ko
+    existingFestivalRecord.description_ko &&
+    // retransform 시 summary가 일반 문구이면 번역 스킵하지 않음
+    (!retransform || existingSummaryOk)
   );
 
   if (alreadyTranslated) {
