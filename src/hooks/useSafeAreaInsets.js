@@ -34,23 +34,9 @@ export default function useSafeAreaInsets() {
       const left = getInsetValue('safe-area-inset-left');
       const right = getInsetValue('safe-area-inset-right');
 
-      // env()가 0을 반환하는 경우 Android 기기 유형에 따른 폴백 적용
-      const isAndroid = /android/i.test(navigator.userAgent);
-      const fallbackTop = isAndroid && top === 0 ? 24 : top;
-
-      let fallbackBottom = bottom;
-      if (isAndroid && bottom === 0) {
-        if (window.visualViewport) {
-          const navBarHeight = window.screen.height - window.visualViewport.height - window.visualViewport.offsetTop;
-          fallbackBottom = navBarHeight > 0 ? navBarHeight : 48;
-        } else {
-          fallbackBottom = 48;
-        }
-      }
-
       setInsets({
-        top: fallbackTop,
-        bottom: fallbackBottom,
+        top,
+        bottom,
         left,
         right,
       });
