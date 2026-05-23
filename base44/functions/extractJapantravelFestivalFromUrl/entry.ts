@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
     console.log(`[Japantravel] Name: ${festivalName}`);
 
     // ===== 요약 =====
-    const summary = article.summary || article.meta_description || props.siteSettings?.metadata?.description || '';
+    // props.siteSettings?.metadata?.description 은 사이트 전체 공통 설명이므로 사용 금지
+    const summary = article.summary || article.meta_description || '';
 
     // ===== 설명 =====
     // content/body는 HTML일 수 있으므로 태그 제거

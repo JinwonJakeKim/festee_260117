@@ -200,14 +200,15 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
 원본 언어: ${festivalData.original_language || 'unknown'}
 축제명: ${festivalData.name_original || ''}
-요약: ${truncatedSummary || ''}
+요약: ${truncatedSummary || '(없음 - 아래 설명에서 2~3문장으로 요약 생성 필요)'}
 설명: ${truncatedDescription || ''}
 카테고리: ${festivalData.category || ''}
 태그: ${JSON.stringify(festivalData.tags || [])}
 국가: ${festivalData.country || ''}
 도시: ${festivalData.city || ''}
 
-번역 규칙:
+번역/요약 규칙:
+- summary_ko/en/jp/zh: 요약이 "(없음...)"인 경우 설명(description)을 바탕으로 해당 축제의 핵심 내용을 2~3문장으로 직접 작성하세요. 절대 사이트 소개 문구를 쓰지 마세요.
 - _ko: 한국어 (존댓말, ~입니다체)
 - _en: 영어 (간결하고 자연스럽게)
 - _jp: 일본어 (です・ます調)
