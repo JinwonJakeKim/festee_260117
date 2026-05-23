@@ -40,6 +40,16 @@ Deno.serve(async (req) => {
         .replace(/{LAST_DAY}/g, lastDay.toString());
     }
     
+    // baseUrl에서 기존 p/page 파라미터 제거 (루프에서 동적으로 추가)
+    try {
+      const cleanUrl = new URL(baseUrl);
+      cleanUrl.searchParams.delete('p');
+      cleanUrl.searchParams.delete('page');
+      baseUrl = cleanUrl.toString();
+    } catch (e) {
+      // URL 파싱 실패 시 원본 유지
+    }
+    
     // maxPages 처리: "auto" 또는 null이면 자동 감지, 숫자면 그 페이지까지만
     const useAutoDetect = !maxPages || maxPages === "auto";
     const maxPagesToProcess = useAutoDetect ? MAX_PESSIMISTIC_PAGES : parseInt(maxPages);
@@ -60,7 +70,7 @@ Deno.serve(async (req) => {
       }
       
       const urlObj = new URL(baseUrl);
-      urlObj.searchParams.set('p', page.toString());
+      urlObj.searchParams.set('page', page.toString());
       const pageUrl = urlObj.toString();
 
       let html;

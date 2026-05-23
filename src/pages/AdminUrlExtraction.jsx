@@ -1143,8 +1143,9 @@ export default function AdminUrlExtraction() {
                                           const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
                                           const paddedLastDay = lastDay.toString().padStart(2, '0');
                                           
+                                          let previewUrl;
                                           if (source.date_parameter_template) {
-                                            return source.date_parameter_template
+                                            previewUrl = source.date_parameter_template
                                               .replaceAll('{YYYY}', year)
                                               .replaceAll('{MM}', month)
                                               .replaceAll('{LAST_DAY}', paddedLastDay);
@@ -1152,8 +1153,17 @@ export default function AdminUrlExtraction() {
                                             const url = new URL(source.url);
                                             url.searchParams.set('from', `${year}-${month}-01`);
                                             url.searchParams.set('to', `${year}-${month}-${paddedLastDay}`);
-                                            return url.toString();
+                                            previewUrl = url.toString();
                                           }
+                                          // p/page 파라미터 제거 후 page=1 추가
+                                          try {
+                                            const urlObj = new URL(previewUrl);
+                                            urlObj.searchParams.delete('p');
+                                            urlObj.searchParams.delete('page');
+                                            urlObj.searchParams.set('page', '1');
+                                            previewUrl = urlObj.toString();
+                                          } catch (e) {}
+                                          return previewUrl;
                                         })()}
                                       </p>
                                     </div>
