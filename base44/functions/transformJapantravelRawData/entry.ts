@@ -66,7 +66,9 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
   // description 길이 제한 (LLM 응답 속도 향상)
   const truncatedDescription = truncateText(festivalData.description_original, 1500);
-  const truncatedSummary = truncateText(festivalData.summary_original, 500);
+  // summary_original이 비어있으면 LLM이 description에서 직접 요약하도록 명시적으로 빈값 전달
+  const hasSummary = !!(festivalData.summary_original && festivalData.summary_original.trim());
+  const truncatedSummary = hasSummary ? truncateText(festivalData.summary_original, 500) : '';
 
   // 기존 Festival 엔티티 조회 (유튜브 데이터 보존 + 유저 인터랙션 보존)
   let existingVideoUrl = null;
@@ -200,7 +202,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
 원본 언어: ${festivalData.original_language || 'unknown'}
 축제명: ${festivalData.name_original || ''}
-요약: ${truncatedSummary || '(없음 - 아래 설명에서 2~3문장으로 요약 생성 필요)'}
+요약: ${truncatedSummary || '(없음 - 반드시 아래 설명 텍스트를 기반으로 2~3문장 직접 작성)'}
 설명: ${truncatedDescription || ''}
 카테고리: ${festivalData.category || ''}
 태그: ${JSON.stringify(festivalData.tags || [])}
@@ -208,7 +210,7 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 도시: ${festivalData.city || ''}
 
 번역/요약 규칙:
-- summary_ko/en/jp/zh: 요약이 "(없음...)"인 경우 설명(description)을 바탕으로 해당 축제의 핵심 내용을 2~3문장으로 직접 작성하세요. 절대 사이트 소개 문구를 쓰지 마세요.
+- summary_ko/en/jp/zh: 요약 원문이 비어있거나 "(없음)"인 경우, 반드시 아래 설명(description) 텍스트를 읽고 해당 축제의 특징과 핵심 내용을 2~3문장으로 직접 작성하세요. "Japan Travel은..." 또는 사이트 소개 문구는 절대 사용하지 마세요. 설명이 있으면 그것만 참고하세요.
 - _ko: 한국어 (존댓말, ~입니다체)
 - _en: 영어 (간결하고 자연스럽게)
 - _jp: 일본어 (です・ます調)

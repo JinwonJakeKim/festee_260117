@@ -72,8 +72,18 @@ Deno.serve(async (req) => {
     console.log(`[Japantravel] Name: ${festivalName}`);
 
     // ===== 요약 =====
-    // props.siteSettings?.metadata?.description 은 사이트 전체 공통 설명이므로 사용 금지
-    const summary = article.summary || article.meta_description || '';
+    // article.summary / meta_description이 사이트 공통 설명일 경우 제외
+    const SITE_GENERIC_PHRASES = [
+      'japan travel', 'japantravel', 'official guide', 'things to do in japan',
+      'plan your next japan trip', 'local info', 'tourism guides'
+    ];
+    const isSiteGeneric = (text) => {
+      if (!text) return true;
+      const lower = text.toLowerCase();
+      return SITE_GENERIC_PHRASES.some(phrase => lower.includes(phrase));
+    };
+    const rawSummary = article.summary || article.meta_description || '';
+    const summary = isSiteGeneric(rawSummary) ? '' : rawSummary;
 
     // ===== 설명 =====
     // content/body는 HTML일 수 있으므로 태그 제거
