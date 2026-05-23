@@ -230,7 +230,9 @@ Write only the summary, nothing else.`,
 
     // ===== 기타 =====
     const websiteArr = article.websites || [];
-    const website = article.website || (Array.isArray(websiteArr) && websiteArr[0]?.url) || article.external_url || '';
+    const website = article.website ||
+      (Array.isArray(websiteArr) && websiteArr.length > 0 ? (websiteArr[0]?.url || websiteArr[0]) : null) ||
+      article.external_url || null;
     const openingHours = article.opening_hours || article.hours || null;
     const address = article.address_en || article.address || article.location || article.event_venue?.name_en || article.event_venue?.name || null;
 
@@ -288,7 +290,7 @@ Write only the summary, nothing else.`,
       thumbnail_url: thumbnailUrl,
       video_url: videoUrl,
       image_gallery_urls: imageGalleryUrls,
-      website: website || url,
+      website: website || null,
       price_yen: priceYen,
       price_details: priceDetails,
       opening_hours: openingHours,
