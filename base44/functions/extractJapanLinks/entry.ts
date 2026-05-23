@@ -100,6 +100,14 @@ Deno.serve(async (req) => {
       const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
       const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
       
+      // "Sorry, no events found" 메시지 감지 → 즉시 중단
+      const noEventsEl = doc.querySelector('h3.text-\\[24px\\], h3[class*="text-[24px]"]');
+      const noEventsText = doc.body?.textContent || '';
+      if (noEventsText.includes('Sorry, no events found')) {
+        console.log(`[${VERSION}] "Sorry, no events found" detected on page ${page}. Stopping.`);
+        break;
+      }
+
       const currentPageLinks = [];
       for (const root of searchRoots) {
         const configuredLinkElements = sourceUrl.link_selector ? root.querySelectorAll(sourceUrl.link_selector) : [];
