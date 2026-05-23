@@ -83,13 +83,34 @@ Deno.serve(async (req) => {
       return SITE_GENERIC_PHRASES.some(phrase => lower.includes(phrase));
     };
     const rawSummary = article.summary || article.meta_description || '';
-    const summary = isSiteGeneric(rawSummary) ? '' : rawSummary;
+    let summary = isSiteGeneric(rawSummary) ? '' : rawSummary;
 
     // ===== 설명 =====
     // content/body는 HTML일 수 있으므로 태그 제거
     const rawDescription = article.content || article.body || article.description || '';
     const description = rawDescription.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     console.log(`[Japantravel] Description length: ${description.length}`);
+
+    // ===== LLM으로 summary 생성 (description이 있고 summary가 비어있는 경우) =====
+    if (!summary && description.length > 50) {
+      try {
+        console.log(`[Japantravel] Generating summary via LLM...`);
+        const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: `You are a festival information summarizer. Based on the following festival description, write a concise 2-3 sentence summary in English that captures what the festival is, where/when it happens, and what makes it special. Do NOT include any website branding or generic tourism phrases. Write only about this specific festival.
+
+Festival name: ${festivalName}
+Description: ${description.substring(0, 2000)}
+
+Write only the summary, nothing else.`,
+        });
+        if (llmResult && typeof llmResult === 'string' && llmResult.trim().length > 10) {
+          summary = llmResult.trim();
+          console.log(`[Japantravel] LLM summary generated (${summary.length} chars)`);
+        }
+      } catch (e) {
+        console.error('[Japantravel] LLM summary generation failed:', e.message);
+      }
+    }
 
     // ===== 날짜 파싱 =====
     let startDate = null;
