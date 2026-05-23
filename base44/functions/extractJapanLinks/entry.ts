@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
           let url = href.startsWith('/') ? 'https://en.japantravel.com' + href : href;
           
-          if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{5,}\/?$/.test(url)) {
+          if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{3,}\/?$/.test(url)) {
             url = url.replace(/\/$/, '');
             if (!currentPageLinks.includes(url)) currentPageLinks.push(url);
           }
