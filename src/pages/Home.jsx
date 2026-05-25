@@ -634,13 +634,21 @@ export default function Home() {
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
-  const getBannerWidth = () => Math.min(window.innerWidth, 640);
-  const [bannerContainerWidth, setBannerContainerWidth] = useState(() => getBannerWidth());
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(window.innerWidth);
 
   useEffect(() => {
-    const updateWidth = () => setBannerContainerWidth(getBannerWidth());
+    const updateWidth = () => {
+      if (bannerContainerRef.current) {
+        setBannerContainerWidth(bannerContainerRef.current.offsetWidth);
+      }
+    };
+    // 렌더 직후 측정
+    const raf = requestAnimationFrame(updateWidth);
     window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updateWidth);
+    };
   }, []);
 
   useEffect(() => {
@@ -1120,7 +1128,7 @@ export default function Home() {
           <div className="overflow-x-auto scrollbar-hide -mx-4 pl-4">
             <div className="flex" style={{ width: 'max-content' }}>
               {[0, 1, 2, 3].map((pageIdx) => (
-                <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(50vw - 40px)', flexShrink: 0 }}>
+                <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(100vw - 40px)', flexShrink: 0 }}>
                   {/* 현재 페이지 아이템 */}
                   <div className="space-y-1 flex-1 min-w-0">
                     {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
