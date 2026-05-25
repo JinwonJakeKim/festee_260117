@@ -317,6 +317,22 @@ Write only the summary, nothing else.`,
       console.log(`[Japantravel] ✅ Created: ${savedRecord.id}`);
     }
 
+    // JapantravelLinks 상태 업데이트 (성공)
+    try {
+      const matchingLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({ url: url });
+      if (matchingLinks && matchingLinks.length > 0) {
+        await base44.asServiceRole.entities.JapantravelLinks.update(matchingLinks[0].id, {
+          processing_status: 'processed',
+          raw_data_id: savedRecord.id,
+          error_message: null,
+          update_time: new Date().toISOString()
+        });
+        console.log(`[Japantravel] ✅ JapantravelLinks updated to processed: ${matchingLinks[0].id}`);
+      }
+    } catch (e) {
+      console.error('[Japantravel] Failed to update JapantravelLinks:', e.message);
+    }
+
     return Response.json({
       success: true,
       source_url: url,
@@ -363,6 +379,20 @@ Write only the summary, nothing else.`,
         }
       } catch (e) {
         console.error('[Japantravel] Failed to save error record:', e.message);
+      }
+
+      // JapantravelLinks 상태 업데이트 (실패)
+      try {
+        const matchingLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({ url: url });
+        if (matchingLinks && matchingLinks.length > 0) {
+          await base44.asServiceRole.entities.JapantravelLinks.update(matchingLinks[0].id, {
+            processing_status: 'failed',
+            error_message: error.message || 'Unknown error',
+            update_time: new Date().toISOString()
+          });
+        }
+      } catch (e) {
+        console.error('[Japantravel] Failed to update JapantravelLinks on error:', e.message);
       }
     }
 
