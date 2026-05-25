@@ -849,12 +849,12 @@ export default function Home() {
       </AnimatePresence>
 
       {banners.length > 0 && (
-        <div className="py-4" style={{ backgroundColor: '#000' }}>
+        <div className="py-4" style={{ backgroundColor: '#000', width: '100%' }}>
           {/* 캐러셀 트랙 */}
           <div
             ref={bannerContainerRef}
-            className="relative overflow-hidden"
-            style={{ height: '208px', backgroundColor: '#000' }}
+            className="relative overflow-hidden mx-auto"
+            style={{ height: '208px', backgroundColor: '#000', width: '100%', maxWidth: '50vw' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -943,7 +943,7 @@ export default function Home() {
           </div>
 
           {/* 인디케이터 */}
-          <div className="flex justify-center gap-2 mt-3">
+          <div className="flex justify-center gap-2 mt-3" style={{ width: '100%', maxWidth: '50vw', margin: '0 auto' }}>
             {banners.map((_, idx) => (
               <button
                 key={idx}
@@ -1128,7 +1128,7 @@ export default function Home() {
           <div className="overflow-x-auto scrollbar-hide -mx-4 pl-4">
             <div className="flex" style={{ width: 'max-content' }}>
               {[0, 1, 2, 3].map((pageIdx) => (
-                <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(100vw - 40px)', flexShrink: 0 }}>
+                <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(50vw - 40px)', flexShrink: 0 }}>
                   {/* 현재 페이지 아이템 */}
                   <div className="space-y-1 flex-1 min-w-0">
                     {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
