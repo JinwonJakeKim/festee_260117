@@ -218,6 +218,7 @@ export default function FestivalMore() {
     if (sortOrder === "popularity") return (b.popularity || 0) - (a.popularity || 0);
     if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
     if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
+    if (sortOrder === "updated") return new Date(b.updated_date || 0) - new Date(a.updated_date || 0);
     return 0;
   });
 
@@ -328,13 +329,14 @@ export default function FestivalMore() {
             <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${sortOrder !== "popularity" ? "bg-yellow-500/20 border-yellow-400 text-yellow-400" : "bg-gray-900 border-gray-800 text-white"}`}>
               <div className="flex items-center gap-1.5">
                 <ArrowUpDown className="w-4 h-4 text-yellow-400" />
-                <span>{sortOrder === "popularity" ? "인기도순" : sortOrder === "likes" ? "좋아요순" : "날짜순"}</span>
+                <span>{sortOrder === "popularity" ? "인기도순" : sortOrder === "likes" ? "좋아요순" : sortOrder === "updated" ? "업데이트순" : "날짜순"}</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
               <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">인기도순</SelectItem>
               <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">좋아요순</SelectItem>
               <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">날짜순</SelectItem>
+              <SelectItem value="updated" className="text-white hover:bg-gray-800 focus:bg-gray-800">업데이트순</SelectItem>
             </SelectContent>
           </Select>
         </div>

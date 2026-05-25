@@ -477,6 +477,7 @@ export default function Home() {
     if (sortOrder === "popularity") return (b.popularity || 0) - (a.popularity || 0);
     if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
     if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
+    if (sortOrder === "updated") return new Date(b.updated_date || 0) - new Date(a.updated_date || 0);
     return 0;
   });
 
@@ -1051,6 +1052,7 @@ export default function Home() {
                 <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">인기도순</SelectItem>
                 <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">좋아요순</SelectItem>
                 <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">날짜순</SelectItem>
+                <SelectItem value="updated" className="text-white hover:bg-gray-800 focus:bg-gray-800">업데이트순</SelectItem>
               </SelectContent>
             </Select>
           </div>
