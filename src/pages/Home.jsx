@@ -634,7 +634,7 @@ export default function Home() {
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
-  const [bannerContainerWidth, setBannerContainerWidth] = useState(window.innerWidth);
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(0);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -848,13 +848,13 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {banners.length > 0 && (
-        <div className="py-4" style={{ backgroundColor: '#000', width: '100%' }}>
+      {banners.length > 0 && bannerContainerWidth > 0 && (
+        <div className="py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 */}
           <div
             ref={bannerContainerRef}
-            className="relative overflow-hidden mx-auto"
-            style={{ height: '208px', backgroundColor: '#000', width: '100%', maxWidth: '50vw' }}
+            className="relative overflow-hidden"
+            style={{ height: '208px', backgroundColor: '#000' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -943,7 +943,7 @@ export default function Home() {
           </div>
 
           {/* 인디케이터 */}
-          <div className="flex justify-center gap-2 mt-3" style={{ width: '100%', maxWidth: '50vw', margin: '0 auto' }}>
+          <div className="flex justify-center gap-2 mt-3">
             {banners.map((_, idx) => (
               <button
                 key={idx}
