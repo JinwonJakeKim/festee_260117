@@ -634,25 +634,13 @@ export default function Home() {
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
-  const [bannerContainerWidth, setBannerContainerWidth] = useState(0);
+  const getBannerWidth = () => Math.min(window.innerWidth, 640);
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(() => getBannerWidth());
 
   useEffect(() => {
-    const updateWidth = () => {
-      if (bannerContainerRef.current) {
-        const w = bannerContainerRef.current.offsetWidth;
-        if (w > 0) setBannerContainerWidth(w);
-      }
-    };
-    // 여러 번 시도해서 레이아웃 완성 후 측정
-    updateWidth();
-    const t1 = setTimeout(updateWidth, 50);
-    const t2 = setTimeout(updateWidth, 200);
+    const updateWidth = () => setBannerContainerWidth(getBannerWidth());
     window.addEventListener('resize', updateWidth);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      window.removeEventListener('resize', updateWidth);
-    };
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
   useEffect(() => {
@@ -852,11 +840,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* 배너 너비 측정용 숨김 div - 항상 렌더 */}
-      {bannerContainerWidth === 0 && (
-        <div ref={bannerContainerRef} style={{ width: '100%', height: 0, overflow: 'hidden' }} />
-      )}
-      {banners.length > 0 && bannerContainerWidth > 0 && (
+      {banners.length > 0 && (
         <div className="py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 */}
           <div
