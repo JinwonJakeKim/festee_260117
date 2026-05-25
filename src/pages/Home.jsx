@@ -639,14 +639,18 @@ export default function Home() {
   useEffect(() => {
     const updateWidth = () => {
       if (bannerContainerRef.current) {
-        setBannerContainerWidth(bannerContainerRef.current.offsetWidth);
+        const w = bannerContainerRef.current.offsetWidth;
+        if (w > 0) setBannerContainerWidth(w);
       }
     };
-    // 렌더 직후 측정
-    const raf = requestAnimationFrame(updateWidth);
+    // 여러 번 시도해서 레이아웃 완성 후 측정
+    updateWidth();
+    const t1 = setTimeout(updateWidth, 50);
+    const t2 = setTimeout(updateWidth, 200);
     window.addEventListener('resize', updateWidth);
     return () => {
-      cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
       window.removeEventListener('resize', updateWidth);
     };
   }, []);
@@ -848,6 +852,10 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* 배너 너비 측정용 숨김 div - 항상 렌더 */}
+      {bannerContainerWidth === 0 && (
+        <div ref={bannerContainerRef} style={{ width: '100%', height: 0, overflow: 'hidden' }} />
+      )}
       {banners.length > 0 && bannerContainerWidth > 0 && (
         <div className="py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 */}
