@@ -849,7 +849,7 @@ export default function Home() {
       </AnimatePresence>
 
       {banners.length > 0 && (
-        <div className="-mx-4 py-4" style={{ backgroundColor: '#000' }}>
+        <div className="max-w-screen-sm mx-auto py-4" style={{ backgroundColor: '#000' }}>
           {/* 캐러셀 트랙 */}
           <div
             ref={bannerContainerRef}
