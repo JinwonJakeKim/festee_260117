@@ -634,7 +634,7 @@ export default function Home() {
   // 경계에서 무한 루프 처리: transition 없이 반대쪽으로 점프
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
-  const [bannerContainerWidth, setBannerContainerWidth] = useState(window.innerWidth);
+  const [bannerContainerWidth, setBannerContainerWidth] = useState(Math.min(window.innerWidth, 640));
 
   useEffect(() => {
     const updateWidth = () => {
