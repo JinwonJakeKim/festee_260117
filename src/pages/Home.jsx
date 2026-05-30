@@ -957,7 +957,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="px-4 pt-4">
+      <div className="max-w-screen-sm mx-auto px-4 pt-4">
         {/* Top Festival Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
