@@ -1466,7 +1466,7 @@ export default function Home() {
       </div>
 
       {cherryBlossomFestivals.length > 0 && (
-        <div className="px-4 mb-8">
+        <div className="max-w-screen-sm mx-auto px-4 mb-8">
           <h2 className="text-white text-2xl font-bold mb-4">
             벚꽃의 계절이 다가오고있어요 🌸
           </h2>
@@ -1507,7 +1507,7 @@ export default function Home() {
       )}
 
       {foodFestivals.length > 0 && (
-        <div className="px-4 mb-8">
+        <div className="max-w-screen-sm mx-auto px-4 mb-8">
           <h2 className="text-white text-2xl font-bold mb-4">
             이런 음식축제는 어때요? 🍜
           </h2>
