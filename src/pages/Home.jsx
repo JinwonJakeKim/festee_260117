@@ -1466,12 +1466,12 @@ export default function Home() {
       </div>
 
       {cherryBlossomFestivals.length > 0 && (
-        <div className="max-w-screen-sm mx-auto px-4 mb-8">
-          <h2 className="text-white text-2xl font-bold mb-4">
+        <div className="max-w-screen-sm mx-auto mb-8">
+          <h2 className="text-white text-2xl font-bold mb-4 px-4">
             벚꽃의 계절이 다가오고있어요 🌸
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 pb-4">
+            <div className="flex gap-4 pb-4 px-4">
               {cherryBlossomFestivals.map((festival) => {
                 const localizedName = getLocalizedContent(festival, 'name');
                 return (
@@ -1507,12 +1507,12 @@ export default function Home() {
       )}
 
       {foodFestivals.length > 0 && (
-        <div className="max-w-screen-sm mx-auto px-4 mb-8">
-          <h2 className="text-white text-2xl font-bold mb-4">
+        <div className="max-w-screen-sm mx-auto mb-8">
+          <h2 className="text-white text-2xl font-bold mb-4 px-4">
             이런 음식축제는 어때요? 🍜
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 pb-4">
+            <div className="flex gap-4 pb-4 px-4">
               {foodFestivals.map((festival) => {
                 const localizedName = getLocalizedContent(festival, 'name');
                 return (
