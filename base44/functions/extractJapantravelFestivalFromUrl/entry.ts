@@ -176,18 +176,42 @@ Write only the summary, nothing else.`,
     const category = article.category?.name || article.category || article.type || null;
 
     // ===== 썸네일 =====
-    let thumbnailUrl = article.image || article.thumbnail || article.cover_image || article.main_image || '';
-    // 상대 URL 처리
-    if (thumbnailUrl && thumbnailUrl.startsWith('/')) {
-      thumbnailUrl = `https://en.japantravel.com${thumbnailUrl}`;
-    }
+    // assets.japantravel.com/photo/...webp 패턴, 가장 큰 해상도 우선 선택
+    let thumbnailUrl = '';
 
-    // og:image fallback
-    if (!thumbnailUrl) {
-      const ogMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i)
-        || html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:image"/i);
-      if (ogMatch) thumbnailUrl = ogMatch[1];
+    // article.cover가 1440x960 등 가장 큰 이미지이므로 최우선
+    const imageCandidates = [
+      article.cover,
+      article.bigcover,
+      article.image,
+      article.medium_thumbnail,
+      article.thumbnail,
+      article.cover_image,
+      article.main_image,
+      article.small_thumbnail,
+    ].filter(u => typeof u === 'string' && /^https:\/\/assets\.japantravel\.com\/photo\/.+\.webp$/.test(u));
+
+    if (imageCandidates.length > 0) {
+      // 해상도 숫자(WxH) 기준으로 가장 큰 것 선택
+      thumbnailUrl = imageCandidates.sort((a, b) => {
+        const sizeA = (a.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+        const sizeB = (b.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+        return (parseInt(sizeB[1]) * parseInt(sizeB[2])) - (parseInt(sizeA[1]) * parseInt(sizeA[2]));
+      })[0];
+    } else {
+      // HTML 전체에서 탐색 후 가장 큰 해상도 선택
+      const htmlMatches = html.match(/https:\/\/assets\.japantravel\.com\/photo\/[^\s"']+\.webp/g) || [];
+      if (htmlMatches.length > 0) {
+        thumbnailUrl = htmlMatches.sort((a, b) => {
+          const sizeA = (a.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+          const sizeB = (b.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+          return (parseInt(sizeB[1]) * parseInt(sizeB[2])) - (parseInt(sizeA[1]) * parseInt(sizeA[2]));
+        })[0];
+      }
     }
+    // 패턴을 찾지 못하면 thumbnailUrl은 빈 문자열 유지
+
+    console.log(`[Japantravel] Thumbnail: ${thumbnailUrl || '(없음)'}`);
 
     // ===== 이미지 갤러리 =====
     const imageGalleryUrls = [];
