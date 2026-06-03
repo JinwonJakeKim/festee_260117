@@ -1110,27 +1110,6 @@ export default function AdminUrlExtraction() {
                                   </select>
                                 </div>
 
-                                <div className="flex items-center gap-3">
-                                  <label className="text-gray-400 text-sm font-medium flex-shrink-0">최대 페이지:</label>
-                                  <select
-                                    value={selectedMaxPages[source.id] || 'auto'}
-                                    onChange={(e) => {
-                                      setSelectedMaxPages({
-                                        ...selectedMaxPages,
-                                        [source.id]: e.target.value
-                                      });
-                                    }}
-                                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                                  >
-                                    <option value="auto">자동 (마지막 페이지 감지)</option>
-                                    {[1, 2, 3, 5, 10, 15, 20, 25, 30].map((num) => (
-                                      <option key={num} value={num}>
-                                        {num}페이지
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-
                                 {/* 완성된 URL 미리보기 */}
                                 {selectedMonths[source.id] && (
                                   <div className="space-y-2">
@@ -1178,7 +1157,7 @@ export default function AdminUrlExtraction() {
                                     handleRunLinkExtraction({
                                       sourceUrlId: source.id,
                                       targetMonth: selectedMonths[source.id],
-                                      maxPages: selectedMaxPages[source.id] || 'auto'
+                                      maxPages: 'auto'
                                     });
                                   }}
                                   disabled={!selectedMonths[source.id] || runLinkExtractionMutation.isPending}
