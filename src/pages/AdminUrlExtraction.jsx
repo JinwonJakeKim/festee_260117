@@ -1136,8 +1136,8 @@ export default function AdminUrlExtraction() {
                                 {selectedMonths[source.id] && (
                                   <div className="space-y-2">
                                     <label className="text-gray-400 text-xs font-medium">대상 URL:</label>
-                                    <div className="bg-black/50 border border-cyan-400/30 rounded-lg p-3">
-                                      <p className="text-cyan-400 text-sm font-mono break-all">
+                                    <div className="bg-black/50 border border-cyan-400/30 rounded-lg p-3 select-text cursor-text">
+                                      <p className="text-cyan-400 text-sm font-mono break-all whitespace-pre-wrap word-break-break-word select-all">
                                         {(() => {
                                           const [year, month] = selectedMonths[source.id].split('-');
                                           const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
