@@ -1215,16 +1215,6 @@ export default function AdminUrlExtraction() {
                     )}
                   </div>
 
-              <div className="mt-6 p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
-                <h4 className="text-purple-400 font-bold mb-2 text-sm">📋 URL 추출 규칙</h4>
-                <ul className="text-gray-300 text-xs space-y-1">
-                  <li><strong className="text-white">container_selector</strong>: 축제 카드 목록을 감싸는 영역입니다. JapanTravel은 <code className="text-cyan-300">data-block-type="events-upcoming"</code> 영역을 최우선으로 추출합니다.</li>
-                  <li><strong className="text-white">link_selector</strong>: 컨테이너 안에서 축제 상세 링크를 찾는 선택자입니다. 지정한 선택자로 링크가 없으면 <code className="text-cyan-300">a[href]</code> 전체 링크를 검사합니다.</li>
-                  <li>추출 대상 URL은 <code className="text-cyan-300">https://en.japantravel.com/지역/축제명/숫자ID</code> 형식만 저장합니다.</li>
-                  <li>중복 URL은 자동으로 제거되며, 이미 저장된 링크는 새로 생성하지 않습니다.</li>
-                  <li>자동 모드는 다음 페이지 링크가 이전 페이지와 같거나 링크가 없을 때 마지막 페이지로 판단하고 중단합니다.</li>
-                </ul>
-              </div>
             </Card>
 
             <ExtractionLogSection />
