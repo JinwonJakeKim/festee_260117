@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import JapantravelRawDataTab from "@/components/admin/JapantravelRawDataTab";
 import ExtractionLogSection from "@/components/admin/ExtractionLogSection";
+import MultiUrlExtractHeader from "@/components/admin/MultiUrlExtractHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, RefreshCw, Trash2, CheckSquare, Square, ExternalLink, Loader2, Pencil, Database, XCircle, Search, Calendar, MapPin, ClipboardList } from "lucide-react";
@@ -900,13 +901,11 @@ export default function AdminUrlExtraction() {
           <TabsContent value="extract" className="mt-4 space-y-6">
             <Card className="bg-gray-900 border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div>
-                    <h3 className="text-white font-bold text-lg">멀티 URL 추출</h3>
-                    <p className="text-gray-400 text-sm mt-0.5">
-                      월별로 여러 축제 링크를 한 번에 추출 (자동 또는 수동 페이지 지정)
-                    </p>
-                  </div>
+                <div>
+                  <MultiUrlExtractHeader />
+                  <p className="text-gray-400 text-sm mt-0.5">
+                    월별로 여러 축제 링크를 한 번에 추출 (자동 또는 수동 페이지 지정)
+                  </p>
                 </div>
                     <Button
                       onClick={() => setShowAddUrlForm(!showAddUrlForm)}
@@ -1217,13 +1216,13 @@ export default function AdminUrlExtraction() {
                   </div>
 
               <div className="mt-6 p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
-                <h4 className="text-purple-400 font-bold mb-2 text-sm">💡 멀티 URL 추출이란?</h4>
+                <h4 className="text-purple-400 font-bold mb-2 text-sm">📋 URL 추출 규칙</h4>
                 <ul className="text-gray-300 text-xs space-y-1">
-                  <li>• 월별로 여러 축제가 나열된 목록 페이지에서 모든 링크를 한 번에 추출합니다</li>
-                  <li>• 월을 선택하면 날짜 파라미터가 적용된 URL이 생성됩니다</li>
-                  <li>• <strong className="text-cyan-400">"자동"</strong>을 선택하면 마지막 페이지를 자동으로 감지하여 모든 링크를 추출합니다</li>
-                  <li>• 특정 페이지 수를 선택하면 그 페이지까지만 추출하고 중단합니다</li>
-                  <li>• 추출된 링크는 "축제정보추출" 탭에서 확인 후 상세 정보를 추출할 수 있습니다</li>
+                  <li><strong className="text-white">container_selector</strong>: 축제 카드 목록을 감싸는 영역입니다. JapanTravel은 <code className="text-cyan-300">data-block-type="events-upcoming"</code> 영역을 최우선으로 추출합니다.</li>
+                  <li><strong className="text-white">link_selector</strong>: 컨테이너 안에서 축제 상세 링크를 찾는 선택자입니다. 지정한 선택자로 링크가 없으면 <code className="text-cyan-300">a[href]</code> 전체 링크를 검사합니다.</li>
+                  <li>추출 대상 URL은 <code className="text-cyan-300">https://en.japantravel.com/지역/축제명/숫자ID</code> 형식만 저장합니다.</li>
+                  <li>중복 URL은 자동으로 제거되며, 이미 저장된 링크는 새로 생성하지 않습니다.</li>
+                  <li>자동 모드는 다음 페이지 링크가 이전 페이지와 같거나 링크가 없을 때 마지막 페이지로 판단하고 중단합니다.</li>
                 </ul>
               </div>
             </Card>
