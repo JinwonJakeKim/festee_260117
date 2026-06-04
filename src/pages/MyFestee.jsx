@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useLanguage } from "@/lib/useLanguage";
+import { myFesteeTranslations } from "@/lib/myFesteeTranslations";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -46,6 +48,8 @@ const generateReferralCode = (userEmail) => {
 };
 
 export default function MyFestee() {
+  const { language } = useLanguage();
+  const t = myFesteeTranslations[language] || myFesteeTranslations.ko;
   const navigate = useNavigate();
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -184,7 +188,7 @@ export default function MyFestee() {
     },
     onError: (error) => {
       console.error('[MyFestee] 닉네임 업데이트 실패:', error);
-      alert('이름 변경에 실패했습니다. 다시 시도해주세요.');
+      alert(t.updateNameError);
     },
   });
 
@@ -309,12 +313,11 @@ export default function MyFestee() {
 
   const handleSubmitReferralCode = () => {
     if (!referralCodeInput.trim()) {
-      setReferralError("추천 코드를 입력해주세요");
+      setReferralError(t.referralEmptyError);
       return;
     }
-    // Prevent user from referring themselves
     if (user && generateReferralCode(user.email).toUpperCase() === referralCodeInput.trim().toUpperCase()) {
-      setReferralError("자신의 추천 코드를 사용할 수 없습니다.");
+      setReferralError(t.referralSelfError);
       return;
     }
     redeemReferralMutation.mutate(referralCodeInput);
@@ -335,7 +338,7 @@ export default function MyFestee() {
         {/* Header */}
         <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-white text-2xl font-bold">My Festee</h1>
+            <h1 className="text-white text-2xl font-bold">{t.title}</h1>
           </div>
 
           <div className="flex items-center gap-4 mb-6">
@@ -343,8 +346,8 @@ export default function MyFestee() {
               <User className="w-10 h-10 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-white text-xl font-bold mb-1">로그인이 필요합니다</h2>
-              <p className="text-gray-400 text-sm">Festee의 모든 기능을 이용해보세요</p>
+              <h2 className="text-white text-xl font-bold mb-1">{t.loginRequired}</h2>
+              <p className="text-gray-400 text-sm">{t.loginSubtitle}</p>
             </div>
           </div>
 
@@ -353,7 +356,7 @@ export default function MyFestee() {
             className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 h-12 text-base font-bold"
           >
             <Sparkles className="w-5 h-5 mr-2" />
-            로그인하기
+            {t.loginBtn}
           </Button>
         </div>
 
@@ -363,7 +366,7 @@ export default function MyFestee() {
             <div className="p-4 flex items-center justify-between opacity-50">
               <div className="flex items-center gap-3">
                 <MessageCircle className="w-5 h-5 text-cyan-400" />
-                <span className="text-white">메시지</span>
+                <span className="text-white">{t.messages}</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-500" />
             </div>
@@ -375,7 +378,7 @@ export default function MyFestee() {
                 <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                   <MessageCircle className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-white">댓글</span>
+                <span className="text-white">{t.comments}</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-500" />
             </div>
@@ -385,7 +388,7 @@ export default function MyFestee() {
             <div className="p-4 flex items-center justify-between opacity-50">
               <div className="flex items-center gap-3">
                 <Star className="w-5 h-5 text-yellow-400" />
-                <span className="text-white">내가 추천하는 축제</span>
+                <span className="text-white">{t.myRecommendations}</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-500" />
             </div>
@@ -398,7 +401,7 @@ export default function MyFestee() {
                   <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
                     <Lock className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-white font-medium">개인정보처리방침</span>
+                  <span className="text-white font-medium">{t.privacy}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-500" />
               </div>
@@ -410,34 +413,34 @@ export default function MyFestee() {
         <div className="px-4 py-4">
           <Card className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border-cyan-400/30">
             <div className="p-6">
-              <h3 className="text-white font-bold text-lg mb-4">로그인하면 이런 게 가능해요!</h3>
+              <h3 className="text-white font-bold text-lg mb-4">{t.loginBenefitsTitle}</h3>
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">•</span>
-                  <span>축제 현장에서 GPS 기반 Catch 인증</span>
+                  <span>{t.benefit1}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">•</span>
-                  <span>좋아하는 축제 저장 및 관리</span>
+                  <span>{t.benefit2}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">•</span>
-                  <span>축제 같이가기 모집 및 참여</span>
+                  <span>{t.benefit3}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">•</span>
-                  <span>커뮤니티 활동 (글, 댓글 작성)</span>
+                  <span>{t.benefit4}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">•</span>
-                  <span>FESTEE Coin 획득 및 랭커 도전</span>
+                  <span>{t.benefit5}</span>
                 </li>
               </ul>
               <Button
                 onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
                 className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 h-11"
               >
-                지금 시작하기
+                {t.startBtn}
               </Button>
             </div>
           </Card>
@@ -453,38 +456,38 @@ export default function MyFestee() {
   // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
     {
-      label: "관리자 대시보드",
+      label: t.adminDashboard,
       link: createPageUrl("AdminDashboard"),
       icon: Settings,
       bgColor: "bg-gradient-to-r from-purple-500 to-pink-500",
       adminOnly: true,
     },
     {
-      label: "내가 추천하는 축제",
+      label: t.myRecommendations,
       link: createPageUrl("MyRecommendations"),
       icon: Star,
       bgColor: "bg-yellow-500",
     },
     {
-      label: "메시지",
+      label: t.messages,
       link: createPageUrl("Messages"),
       icon: MessageCircle,
       bgColor: "bg-cyan-500",
     },
     {
-      label: "댓글",
+      label: t.comments,
       link: createPageUrl("MyComments"),
       icon: MessageCircle,
       bgColor: "bg-green-500",
     },
     {
-      label: "설정",
+      label: t.settings,
       link: createPageUrl("Settings"),
       icon: Settings,
       bgColor: "bg-gray-600",
     },
     {
-      label: "개인정보처리방침",
+      label: t.privacy,
       link: "/PrivacyPolicy",
       icon: Lock,
       bgColor: "bg-gray-700",
