@@ -18,6 +18,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useLanguage } from "@/lib/useLanguage";
+import { detailTranslations } from "@/lib/detailTranslations";
 import FestivalChatbot from "../components/FestivalChatbot";
 
 // 안전한 날짜 포맷팅 함수 추가
@@ -57,7 +58,7 @@ const festivalIcon = new L.Icon({
 });
 
 // Shorts Section Component
-function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, festival }) {
+function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, festival, moreLabel }) {
   const [playingIndex, setPlayingIndex] = React.useState(null);
   const [thumbnailErrors, setThumbnailErrors] = React.useState({});
 
@@ -144,7 +145,7 @@ function ShortsSection({ youtubeShortUrls, getYoutubeVideoId, festivalName, fest
           className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-cyan-400/50 rounded-lg transition-all flex flex-col items-center justify-center gap-2 text-cyan-400 font-medium px-6 snap-start w-[280px] h-[498px]"
           >
           <Youtube className="w-8 h-8" />
-          <span className="text-sm text-center">YouTube에서<br/>더보기</span>
+          <span className="text-sm text-center">{(moreLabel || 'YouTube에서\n더보기').split('\n').map((line, i) => <React.Fragment key={i}>{line}{i === 0 && <br/>}</React.Fragment>)}</span>
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
@@ -157,7 +158,8 @@ export default function FestivalDetail() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
-  const { getLocalizedContent } = useLanguage();
+  const { language, getLocalizedContent } = useLanguage();
+  const t = detailTranslations[language] || detailTranslations.ko;
   const [commentText, setCommentText] = useState("");
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
@@ -661,7 +663,7 @@ export default function FestivalDetail() {
             className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[110] bg-gray-900 border border-cyan-400 rounded-lg px-4 py-3 flex items-center gap-2 shadow-lg"
           >
             <Check className="w-5 h-5 text-cyan-400" />
-            <span className="text-white font-medium">링크가 복사되었습니다</span>
+            <span className="text-white font-medium">{t.linkCopied}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -766,7 +768,7 @@ export default function FestivalDetail() {
               className="absolute bottom-4 right-4 z-30 bg-black/70 backdrop-blur-sm hover:bg-black/90 rounded-lg px-4 py-2 flex items-center gap-2 transition-colors pointer-events-auto"
             >
               <Images className="w-4 h-4 text-white" />
-              <span className="text-white font-medium text-sm">갤러리</span>
+              <span className="text-white font-medium text-sm">{t.gallery}</span>
             </button>
           )}
         </div>
@@ -826,12 +828,12 @@ export default function FestivalDetail() {
             </span>
             {dateStatus === 'tentative' && (
               <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500 ml-1">
-                날짜 미확정
+                {t.dateTentative}
               </Badge>
             )}
             {dateStatus === 'estimated' && (
               <Badge variant="outline" className="text-xs border-orange-500 text-orange-500 ml-1">
-                추정
+                {t.dateEstimated}
               </Badge>
             )}
           </div>
@@ -849,7 +851,7 @@ export default function FestivalDetail() {
 
         <div className="text-white text-xl font-bold mb-3">
           {isFreeEntry ? (
-            <span className="text-green-400">₩0 (무료)</span>
+            <span className="text-green-400">{t.free}</span>
           ) : festival.country === 'Japan' && festival.price_yen ? (
             <div className="flex flex-col gap-1">
               <span>¥{festival.price_yen.toLocaleString()}</span>
@@ -946,7 +948,7 @@ export default function FestivalDetail() {
             {/* 축제 요약 */}
             {localizedSummary && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">축제 요약</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.summary}</h3>
                 <p className="text-gray-300 leading-relaxed text-base">
                   {localizedSummary}
                 </p>
@@ -956,7 +958,7 @@ export default function FestivalDetail() {
             {/* 하이라이트 */}
             {localizedHighlights && localizedHighlights.length > 0 && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">하이라이트</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.highlights}</h3>
                 <ul className="space-y-3">
                   {localizedHighlights.map((highlight, idx) => (
                     <li key={idx} className="text-gray-300 flex items-start gap-3 leading-relaxed">
@@ -970,7 +972,7 @@ export default function FestivalDetail() {
 
             {/* 소개 (상세 설명) - 줄바꿈 완전 보존 */}
             <div>
-              <h3 className="text-xl font-bold mb-3 text-cyan-400">소개</h3>
+              <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.intro}</h3>
               <pre className="text-gray-300 text-base font-sans leading-relaxed whitespace-pre-wrap">
                 {localizedDescription}
               </pre>
@@ -980,7 +982,7 @@ export default function FestivalDetail() {
             {localizedAccessInfo && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <h3 className="text-xl font-bold text-cyan-400">주소</h3>
+                  <h3 className="text-xl font-bold text-cyan-400">{t.address}</h3>
                   <a
                     href={getGoogleMapsUrl(localizedAccessInfo, festival.city, festival.country)}
                     target="_blank"
@@ -1001,7 +1003,7 @@ export default function FestivalDetail() {
             {/* 운영 시간 */}
             {localizedOpeningHours && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">운영 시간</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.openingHours}</h3>
                 <p className="text-gray-300">{localizedOpeningHours}</p>
               </div>
             )}
@@ -1009,7 +1011,7 @@ export default function FestivalDetail() {
             {/* 주최 정보 */}
             {festival.organizer && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">주최/주관</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.organizer}</h3>
                 <p className="text-gray-300">{festival.organizer}</p>
               </div>
             )}
@@ -1017,7 +1019,7 @@ export default function FestivalDetail() {
             {/* 연락처 */}
             {festival.contact && (festival.contact.phone || festival.contact.email) && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">연락처</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.contact}</h3>
                 <div className="space-y-2">
                   {festival.contact.phone && (
                     <p className="text-gray-300 flex items-center gap-2">
@@ -1038,7 +1040,7 @@ export default function FestivalDetail() {
             {/* SNS */}
             {festival.social_media && Object.values(festival.social_media).some(v => v) && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">SNS</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.sns}</h3>
                 <div className="flex gap-3">
                   {festival.social_media.facebook && (
                     <a href={festival.social_media.facebook} target="_blank" rel="noopener noreferrer"
@@ -1071,7 +1073,7 @@ export default function FestivalDetail() {
             {/* 웹사이트 */}
             {festival.website && (
               <div>
-                <h3 className="text-xl font-bold mb-3 text-cyan-400">공식 웹사이트</h3>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.website}</h3>
                 <a 
                   href={festival.website.startsWith('http') ? festival.website : `https://${festival.website}`}
                   target="_blank" 
@@ -1096,7 +1098,7 @@ export default function FestivalDetail() {
           {/* 라인업 */}
           {festival.lineup && festival.lineup.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-xl font-bold mb-3 text-cyan-400">라인업</h3>
+              <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.lineup}</h3>
               <div className="space-y-4">
                 {festival.lineup.map((day, idx) => (
                   <div key={idx} className="bg-gray-900 rounded-lg p-4">
@@ -1115,7 +1117,7 @@ export default function FestivalDetail() {
           {/* 일정 */}
           {festival.schedule && festival.schedule.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-xl font-bold mb-3 text-cyan-400">일정</h3>
+              <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.schedule}</h3>
               <div className="space-y-3">
                 {festival.schedule.map((item, idx) => (
                   <div key={idx} className="bg-gray-900 rounded-lg p-4">
@@ -1139,13 +1141,13 @@ export default function FestivalDetail() {
 
       {/* Comments Section */}
       <div className="px-4 py-6" ref={commentSectionRef}>
-        <h2 className="text-white text-xl font-bold mb-4">댓글 ({comments.length})</h2>
+        <h2 className="text-white text-xl font-bold mb-4">{t.comments} ({comments.length})</h2>
         
         <div className="mb-6">
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder={user ? "댓글을 작성하세요..." : "로그인 후 댓글을 작성할 수 있습니다"}
+            placeholder={user ? t.commentPlaceholder : t.commentLoginPlaceholder}
             className="bg-gray-900 border-gray-800 text-white mb-2"
             rows={3}
             disabled={!user}
@@ -1155,7 +1157,7 @@ export default function FestivalDetail() {
             disabled={!commentText.trim() && user}
             className="bg-cyan-500 hover:bg-cyan-600"
           >
-            {user ? '댓글 작성' : '로그인 필요'}
+            {user ? t.commentSubmit : t.commentLoginRequired}
           </Button>
         </div>
 
@@ -1175,7 +1177,7 @@ export default function FestivalDetail() {
 
         {comments.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            첫 댓글을 작성해보세요!
+            {t.commentEmpty}
           </div>
         )}
       </div>
@@ -1359,7 +1361,7 @@ export default function FestivalDetail() {
                           <div className="w-full aspect-video flex items-center justify-center bg-gray-900">
                             <div className="text-center">
                               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-2" />
-                              <p className="text-white">영상을 불러올 수 없습니다</p>
+                              <p className="text-white">{t.videoError}</p>
                             </div>
                           </div>
                         );
@@ -1403,9 +1405,9 @@ export default function FestivalDetail() {
                         {galleryPopupIndex + 1} / {allGalleryItems.length}
                       </p>
                       <Badge className="bg-gray-800 text-gray-300 border-gray-700">
-                        {allGalleryItems[galleryPopupIndex]?.type === 'youtube' && '영상'}
-                        {allGalleryItems[galleryPopupIndex]?.type === 'video' && '동영상'}
-                        {allGalleryItems[galleryPopupIndex]?.type === 'image' && '사진'}
+                        {allGalleryItems[galleryPopupIndex]?.type === 'youtube' && t.mediaTypeVideo}
+                        {allGalleryItems[galleryPopupIndex]?.type === 'video' && t.mediaTypeMovie}
+                        {allGalleryItems[galleryPopupIndex]?.type === 'image' && t.mediaTypePhoto}
                       </Badge>
                     </div>
                     {allGalleryItems[galleryPopupIndex]?.caption && (
@@ -1417,10 +1419,10 @@ export default function FestivalDetail() {
                     {allGalleryItems[galleryPopupIndex]?.type === 'youtube' && 
                      allGalleryItems[galleryPopupIndex]?.url === festival.video_url && 
                      festival.video_channel_name && (
-                      <p className="text-gray-400 text-xs mt-2">
-                        출처: {festival.video_channel_name}
-                      </p>
-                    )}
+                     <p className="text-gray-400 text-xs mt-2">
+                      {t.source} {festival.video_channel_name}
+                     </p>
+                     )}
                   </div>
                 </div>
 
