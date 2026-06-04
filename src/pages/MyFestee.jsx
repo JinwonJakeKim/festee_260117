@@ -501,7 +501,7 @@ export default function MyFestee() {
       {showCodeCopied && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 border border-cyan-400 rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
           <Check className="w-4 h-4 text-cyan-400" />
-          <span className="text-white text-sm font-medium">복사되었습니다</span>
+          <span className="text-white text-sm font-medium">{t.copiedMsg}</span>
         </div>
       )}
 
@@ -525,7 +525,7 @@ export default function MyFestee() {
               className="fixed bottom-0 left-0 right-0 bg-gray-950 rounded-t-3xl z-[70] max-h-[80vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-white text-xl font-bold">추천인 코드 입력</h2>
+                <h2 className="text-white text-xl font-bold">{t.referralModalTitle}</h2>
                 <button
                   onClick={() => setShowReferralModal(false)}
                   className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"
@@ -538,7 +538,7 @@ export default function MyFestee() {
                 {hasUsedReferralCode ? (
                   <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
                     <p className="text-green-400 text-center">
-                      ✅ 이미 추천 코드를 사용하여 500 코인을 받으셨습니다!
+                      {t.alreadyUsedReferral}
                     </p>
                   </div>
                 ) : (
@@ -547,11 +547,11 @@ export default function MyFestee() {
                       <div className="flex items-start gap-3 mb-3">
                         <Gift className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
                         <div>
-                          <h3 className="text-white font-bold mb-2">친구 추천 혜택</h3>
+                          <h3 className="text-white font-bold mb-2">{t.referralBenefitTitle}</h3>
                           <ul className="space-y-1 text-gray-300 text-sm">
-                            <li>• 친구의 추천 코드 입력 시 <span className="text-yellow-400 font-bold">500 코인</span> 획득</li>
-                            <li>• 추천한 친구도 <span className="text-yellow-400 font-bold">500 코인</span> 획득</li>
-                            <li>• 추천 혜택은 1회만 사용 가능합니다</li>
+                            <li>• {t.referralBenefit1(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
+                            <li>• {t.referralBenefit2(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
+                            <li>• {t.referralBenefit3}</li>
                           </ul>
                         </div>
                       </div>
@@ -560,7 +560,7 @@ export default function MyFestee() {
                     <div className="space-y-4">
                       <div>
                         <label className="text-white text-sm font-medium mb-2 block">
-                          추천인 코드 (6자리)
+                          {t.referralCodeLabel}
                         </label>
                         <Input
                           value={referralCodeInput}
@@ -568,7 +568,7 @@ export default function MyFestee() {
                             setReferralCodeInput(e.target.value.toUpperCase());
                             setReferralError("");
                           }}
-                          placeholder="예: ABC123"
+                          placeholder={t.referralPlaceholder}
                           className="bg-gray-900 border-gray-700 text-white text-lg tracking-wider text-center"
                           maxLength={6}
                         />
@@ -594,10 +594,10 @@ export default function MyFestee() {
                         {redeemReferralMutation.isPending ? (
                           <div className="flex items-center gap-2">
                             <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
-                            <span>처리 중...</span>
+                            <span>{t.processing}</span>
                           </div>
                         ) : (
-                          '코드 입력하고 500 코인 받기'
+                          t.referralSubmitBtn
                         )}
                       </Button>
                     </div>
@@ -612,7 +612,7 @@ export default function MyFestee() {
       {/* Profile Header - 톱니바퀴 제거 */}
       <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-white text-2xl font-bold">My Festee</h1>
+          <h1 className="text-white text-2xl font-bold">{t.title}</h1>
         </div>
 
         <div className="flex items-center gap-4 mb-4">
@@ -652,7 +652,7 @@ export default function MyFestee() {
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   className="bg-gray-800 border-gray-700 text-white h-9 text-lg font-bold flex-1"
-                  placeholder="이름 입력"
+                  placeholder={t.namePlaceholder}
                   autoFocus
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
@@ -694,7 +694,7 @@ export default function MyFestee() {
                   <MapPin className="w-4 h-4 text-cyan-400" />
                   <span className="text-cyan-400 text-base font-medium">{user.home_city}</span>
                   {user.city_verified && (
-                    <Badge className="bg-cyan-500 text-white text-xs ml-1">인증</Badge>
+                    <Badge className="bg-cyan-500 text-white text-xs ml-1">{t.verified}</Badge>
                   )}
                 </div>
               </Link>
@@ -703,7 +703,7 @@ export default function MyFestee() {
               <Link to={createPageUrl("SelectCity")}>
                 <div className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
                   <MapPin className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-500 text-base">도시 설정하기</span>
+                  <span className="text-gray-500 text-base">{t.setCity}</span>
                 </div>
               </Link>
             )}
@@ -718,7 +718,7 @@ export default function MyFestee() {
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-yellow-400" />
                 <div>
-                  <p className="text-gray-400 text-xs">내 추천코드</p>
+                  <p className="text-gray-400 text-xs">{t.myReferralCode}</p>
                   <p className="text-white font-bold text-lg tracking-wider">{referralCode}</p>
                 </div>
               </div>
@@ -751,12 +751,12 @@ export default function MyFestee() {
             
             {/* 추천 현황 표시 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-800">
-              <p className="text-gray-400 text-xs">내가 추천한 친구</p>
+              <p className="text-gray-400 text-xs">{t.referredFriends}</p>
               <p className="text-cyan-400 font-bold text-sm">
                 {(myReferralsLoading || myReferralsFetching) ? (
                   <span className="text-gray-600">-</span>
                 ) : (
-                  `${myReferrals?.length || 0}명`
+                  t.people(myReferrals?.length || 0)
                 )}
               </p>
             </div>
@@ -773,7 +773,7 @@ export default function MyFestee() {
                 myLikesCount || 0
               )}
             </p>
-            <p className="text-gray-400 text-xs">좋아요</p>
+            <p className="text-gray-400 text-xs">{t.likes}</p>
           </Link>
           <Link to={createPageUrl("MyCatches")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
@@ -783,7 +783,7 @@ export default function MyFestee() {
                 myCatches?.length || 0
               )}
             </p>
-            <p className="text-gray-400 text-xs">캐치</p>
+            <p className="text-gray-400 text-xs">{t.catches}</p>
           </Link>
           <Link to={createPageUrl("MyFollowers")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
@@ -793,7 +793,7 @@ export default function MyFestee() {
                 myFollowers?.length || 0
               )}
             </p>
-            <p className="text-gray-400 text-xs">팔로워</p>
+            <p className="text-gray-400 text-xs">{t.followers}</p>
           </Link>
           <Link to={createPageUrl("MyFollowing")} className="text-center hover:opacity-80 transition-opacity">
             <p className="text-white text-2xl font-bold">
@@ -803,13 +803,13 @@ export default function MyFestee() {
                 myFollowing?.length || 0
               )}
             </p>
-            <p className="text-gray-400 text-xs">팔로잉</p>
+            <p className="text-gray-400 text-xs">{t.following}</p>
           </Link>
           <div className="text-center">
             <p className="text-white text-2xl font-bold flex items-center justify-center gap-1">
               {userCoins}
             </p>
-            <p className="text-gray-400 text-xs">코인</p>
+            <p className="text-gray-400 text-xs">{t.coins}</p>
           </div>
         </div>
 
@@ -847,7 +847,7 @@ export default function MyFestee() {
           className="w-full bg-gray-900 hover:bg-gray-800 rounded-lg p-4 flex items-center gap-3 text-white transition-colors border border-gray-800"
         >
           <LogOut className="w-5 h-5 text-gray-400" />
-          <span>로그아웃</span>
+          <span>{t.logout}</span>
         </button>
       </div>
     </div>
