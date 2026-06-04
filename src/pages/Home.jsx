@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Heart, MessageCircle, Bell, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info } from "lucide-react";
+import { useLanguage } from "@/lib/useLanguage";
+import { homeTranslations } from "@/lib/homeTranslations";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -195,6 +197,9 @@ export default function Home() {
   const [showPopularityTooltip, setShowPopularityTooltip] = useState(false);
   const [showRankerTooltip, setShowRankerTooltip] = useState(false);
   const { getLocalizedContent } = useFestivalLocalizedContent();
+  const { language, changeLanguage } = useLanguage();
+  const t = homeTranslations[language];
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   // URL 업데이트 함수
   const updateUrl = (filters) => {
@@ -232,16 +237,10 @@ export default function Home() {
   }, [dateRange]);
 
   useEffect(() => {
-    const placeholders = [
-      "어디로 떠나볼까요?",
-      "무슨 축제 찾으세요?",
-      "다음 여행지는?",
-      "어떤 축제가 궁금해요?",
-      "축제 검색하기"
-    ];
+    const placeholders = t.searchPlaceholders;
     const randomPlaceholder = placeholders[Math.floor(Math.random() * placeholders.length)];
     setSearchPlaceholder(randomPlaceholder);
-  }, []);
+  }, [language]);
 
   // 베타 배너 sessionStorage 체크 (세션 단위로만 저장)
   useEffect(() => {
@@ -782,37 +781,71 @@ export default function Home() {
       </AnimatePresence>
 
       <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
-        <div className="flex items-center gap-3">
-          <Link to={createPageUrl("Search")} className="flex-1">
+        <div className="flex items-center gap-2">
+          <Link to={createPageUrl("Search")} className="flex-1 min-w-0">
             <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
               <input
                 type="text"
                 placeholder={searchPlaceholder}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl text-sm"
                 readOnly
               />
             </div>
           </Link>
-          <Link to={createPageUrl("Messages")}>
-            <button className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center relative flex-shrink-0">
+          <Link to={createPageUrl("Messages")} className="flex-shrink-0">
+            <button className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center relative">
               <MessageCircle className="w-5 h-5 text-gray-400" />
               {unreadMessagesCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-pink-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] bg-pink-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold">
                   {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                 </span>
               )}
             </button>
           </Link>
-          <Link to={createPageUrl("Notifications")}>
-            <button className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center relative flex-shrink-0">
+          <Link to={createPageUrl("Notifications")} className="flex-shrink-0">
+            <button className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center relative">
               <Bell className="w-5 h-5 text-gray-400" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-cyan-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] bg-cyan-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold">
                   {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
                 </span>
               )}
             </button>
           </Link>
+          {/* 언어 선택 버튼 */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowLangMenu(!showLangMenu)}
+              className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center"
+            >
+              <Globe className="w-5 h-5 text-gray-400" />
+            </button>
+            {showLangMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
+                <div className="absolute right-0 top-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden min-w-[100px]">
+                  {[
+                    { code: 'ko', label: '한국어' },
+                    { code: 'en', label: 'English' },
+                    { code: 'ja', label: '日本語' },
+                    { code: 'zh', label: '中文' },
+                  ].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => { changeLanguage(code); setShowLangMenu(false); }}
+                      className={`w-full px-4 py-3 text-sm text-left transition-colors ${
+                        language === code
+                          ? 'bg-cyan-500/20 text-cyan-400 font-bold'
+                          : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -829,10 +862,10 @@ export default function Home() {
                 <AlertCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">
-                    현재 베타 서비스 중입니다 🚀
+                    {t.betaBanner}
                   </p>
                   <p className="text-cyan-300 text-xs truncate">
-                    피드백을 남겨 더 나은 서비스를 만들어주세요!
+                    {t.betaBannerSub}
                   </p>
                 </div>
               </div>
@@ -930,7 +963,7 @@ export default function Home() {
                               {banner.name}
                             </p>
                             <p className="text-gray-200 text-sm drop-shadow">
-                              {banner.videoUrl ? '클릭하여 영상 시청하기' : 'Click to learn more'}
+                              {banner.videoUrl ? t.adClickToWatch : 'Click to learn more'}
                             </p>
                           </>
                         )}
@@ -962,7 +995,7 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 relative">
-              <h2 className="text-white text-2xl font-bold">축제 차트</h2>
+              <h2 className="text-white text-2xl font-bold">{t.festivalChart}</h2>
               <button
                 onClick={() => setShowPopularityTooltip(!showPopularityTooltip)}
                 className="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 text-gray-400 transition-colors flex-shrink-0"
@@ -977,14 +1010,14 @@ export default function Home() {
                   >
                     <X className="w-3 h-3" />
                   </button>
-                  <p className="font-bold text-cyan-400 mb-1 pr-4">인기도 순위의 기준은 무엇인가요?</p>
-                  <p className="text-gray-300">축제마다 관련성 기준으로 선정된<br/>영상의 각 조회수를 합산합니다</p>
+                  <p className="font-bold text-cyan-400 mb-1 pr-4">{t.popularityTooltipTitle}</p>
+                  <p className="text-gray-300">{t.popularityTooltipLine1}<br/>{t.popularityTooltipLine2}</p>
                 </div>
               )}
             </div>
             <Link to={createPageUrl("FestivalMore")}>
               <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                더보기 →
+                {t.moreButton}
               </Button>
             </Link>
           </div>
@@ -996,11 +1029,11 @@ export default function Home() {
               <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${countryFilter !== "all" ? "bg-cyan-500/20 border-cyan-400 text-cyan-400" : "bg-gray-900 border-gray-800 text-white"}`}>
                 <div className="flex items-center gap-1.5 text-xs">
                   <Globe className={`w-4 h-4 ${countryFilter !== "all" ? "text-cyan-400" : "text-cyan-400"}`} />
-                  <span>국가</span>
+                  <span>{t.countryLabel}</span>
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 국가</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.allCountries}</SelectItem>
                 {countries.map(country => (
                   <SelectItem key={country} value={country} className="text-white hover:bg-gray-800 focus:bg-gray-800">
                     {getCountryNameInKorean(country)}
@@ -1013,11 +1046,11 @@ export default function Home() {
               <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
                 <div className="flex items-center gap-1.5 text-xs">
                   <Tag className="w-4 h-4 text-purple-400" />
-                  <span>분류</span>
+                  <span>{t.categoryLabel}</span>
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.allCategories}</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
                     {category}
@@ -1031,7 +1064,7 @@ export default function Home() {
               className={`px-4 h-9 rounded-full whitespace-nowrap flex items-center gap-2 text-xs hover:bg-gray-800 transition-colors border ${dateRange.from && dateRange.to ? "bg-pink-500/20 border-pink-400 text-pink-400" : "bg-gray-900 border-gray-800 text-white"}`}
             >
               <Calendar className="w-4 h-4 text-pink-500" />
-              <span>날짜</span>
+              <span>{t.dateLabel}</span>
             </button>
 
             <DateRangeBottomSheet
@@ -1045,21 +1078,21 @@ export default function Home() {
               <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${sortOrder !== "popularity" ? "bg-yellow-500/20 border-yellow-400 text-yellow-400" : "bg-gray-900 border-gray-800 text-white"}`}>
                 <div className="flex items-center gap-1.5 text-xs">
                   <ArrowUpDown className="w-4 h-4 text-yellow-400" />
-                  <SelectValue placeholder="인기도순" />
+                  <SelectValue placeholder={t.popularityOrder} />
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">인기도순</SelectItem>
-                <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">좋아요순</SelectItem>
-                <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">날짜순</SelectItem>
-                <SelectItem value="updated" className="text-white hover:bg-gray-800 focus:bg-gray-800">업데이트순</SelectItem>
+                <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.popularityOrder}</SelectItem>
+                <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.likesOrder}</SelectItem>
+                <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.dateOrder}</SelectItem>
+                <SelectItem value="updated" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.updatedOrder}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
             <div className="mb-4 flex items-center gap-2 flex-wrap">
-              <span className="text-gray-400 text-xs">활성 필터:</span>
+              <span className="text-gray-400 text-xs">{t.activeFilters}</span>
               {categoryFilter !== "all" && (
                 <Badge 
                   variant="outline" 
@@ -1093,7 +1126,7 @@ export default function Home() {
                   className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
                   onClick={() => setHidePastFestivals(true)}
                 >
-                  지난 축제 포함 ✕
+                  {t.pastFestivalIncluded} ✕
                 </Badge>
               )}
               {selectedTags.map(tag => (
@@ -1119,7 +1152,7 @@ export default function Home() {
                 size="sm"
                 className="text-xs text-gray-400 hover:text-white h-6"
               >
-                모두 지우기
+                {t.clearAll}
               </Button>
               </div>
               )}
@@ -1150,7 +1183,7 @@ export default function Home() {
 
           {filteredFestivals.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-2">선택한 조건에 맞는 축제가 없습니다</p>
+              <p className="text-gray-500 mb-2">{t.noFestivalsMatch}</p>
               <Button
                 onClick={() => {
                   setCategoryFilter("all");
@@ -1163,7 +1196,7 @@ export default function Home() {
                 variant="outline"
                 className="bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
               >
-                필터 초기화
+                {t.resetFilters}
               </Button>
             </div>
           )}
@@ -1189,22 +1222,22 @@ export default function Home() {
                   <span className="text-2xl">💡</span>
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-bold">Festee를 개선해주세요!</h3>
-                  <p className="text-cyan-400 text-xs">여러분의 의견이 중요합니다</p>
+                  <h3 className="text-white text-lg font-bold">{t.feedbackTitle}</h3>
+                  <p className="text-cyan-400 text-xs">{t.feedbackSubtitle}</p>
                 </div>
               </div>
 
               <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-                여러분의 소중한 의견이 Festee를 만듭니다. 
+                {t.feedbackContent}
                 <br />
-                버그 제보, 기능 제안, 칭찬 등 자유롭게 남겨주세요!
+                {t.feedbackContent2}
               </p>
 
               <div className="flex gap-3">
                 <Link to={createPageUrl("FeedbackForm")} className="flex-1">
                   <Button className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold rounded-xl h-11">
                     <Send className="w-4 h-4 mr-2" />
-                    피드백 보내기
+                    {t.feedbackButton}
                   </Button>
                 </Link>
                 <Button
@@ -1212,12 +1245,12 @@ export default function Home() {
                   variant="outline"
                   className="border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl px-4"
                 >
-                  다음에
+                  {t.feedbackLater}
                 </Button>
               </div>
 
               <p className="text-gray-500 text-xs mt-3 text-center">
-                ⭐ 피드백을 주시면 더 나은 서비스로 보답하겠습니다
+                {t.feedbackNote}
               </p>
             </div>
           </Card>
@@ -1226,7 +1259,7 @@ export default function Home() {
         {topUsers.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 relative mb-4">
-              <h2 className="text-white text-2xl font-bold">페스티 랭커</h2>
+              <h2 className="text-white text-2xl font-bold">{t.festeeRankers}</h2>
               <button
                 onClick={() => setShowRankerTooltip(!showRankerTooltip)}
                 className="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 text-gray-400 transition-colors flex-shrink-0"
@@ -1241,8 +1274,8 @@ export default function Home() {
                   >
                     <X className="w-3 h-3" />
                   </button>
-                  <p className="font-bold text-cyan-400 mb-1 pr-4">페스티 랭커는 무엇인가요?</p>
-                  <p className="text-gray-300">축제 현장에 가서 캐치(축제 위치인증)을<br/>가장 많이한 유저입니다.</p>
+                  <p className="font-bold text-cyan-400 mb-1 pr-4">{t.rankerTooltipTitle}</p>
+                  <p className="text-gray-300">{t.rankerTooltipLine1}<br/>{t.rankerTooltipLine2}</p>
                 </div>
               )}
             </div>
@@ -1287,7 +1320,7 @@ export default function Home() {
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
               <Plane className="w-6 h-6 text-cyan-400" />
-              {user?.home_city || '서울'}에서 비행 3시간 이내 해외축제
+              {t.nearbyFestivals(user?.home_city)}
             </h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
@@ -1342,7 +1375,7 @@ export default function Home() {
         {europeFestivals.length > 0 && (
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4">
-              랭커들이 공통으로 추천하는 축제
+              {t.rankerRecommended}
             </h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
@@ -1385,7 +1418,7 @@ export default function Home() {
         {koreaPopularFestivals.length > 0 && (
           <div className="mb-8">
             <h2 className="text-white text-2xl font-bold mb-4">
-              대한민국에서 인기 있는 축제
+              {t.popularInKorea}
             </h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
@@ -1426,7 +1459,7 @@ export default function Home() {
         {japanPopularFestivals.length > 0 && (
           <div className="mb-8">
             <h2 className="text-white text-2xl font-bold mb-4">
-              일본에서 인기 있는 축제
+              {t.popularInJapan}
             </h2>
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-4">
@@ -1468,7 +1501,7 @@ export default function Home() {
       {cherryBlossomFestivals.length > 0 && (
         <div className="max-w-screen-sm mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
-            벚꽃의 계절이 다가오고있어요 🌸
+            {t.cherryBlossom}
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-4 pb-4 px-4">
@@ -1509,7 +1542,7 @@ export default function Home() {
       {foodFestivals.length > 0 && (
         <div className="max-w-screen-sm mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
-            이런 음식축제는 어때요? 🍜
+            {t.foodFestivals}
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-4 pb-4 px-4">
