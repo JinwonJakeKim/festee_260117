@@ -16,6 +16,8 @@ import { ko } from "date-fns/locale";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import DateRangeBottomSheet from "@/components/DateRangeBottomSheet";
+import { useLanguage } from "@/lib/useLanguage";
+import { mapTranslations } from "@/lib/mapTranslations";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -25,13 +27,13 @@ L.Icon.Default.mergeOptions({
 });
 
 const safeFormatDate = (dateString, formatString) => {
-  if (!dateString) return '날짜 미정';
+  if (!dateString) return '';
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '날짜 미정';
+    if (isNaN(date.getTime())) return '';
     return format(date, formatString, { locale: ko });
   } catch (e) {
-    return '날짜 미정';
+    return '';
   }
 };
 
@@ -53,7 +55,7 @@ function MapController({ center }) {
   return null;
 }
 
-function LocateButton({ userLocation, onLocate }) {
+function LocateButton({ userLocation, onLocate, locationError }) {
   const map = useMap();
 
   const handleClick = () => {
@@ -61,7 +63,7 @@ function LocateButton({ userLocation, onLocate }) {
       map.setView(userLocation, 13);
       onLocate();
     } else {
-      alert("위치 정보를 가져올 수 없습니다");
+      alert(locationError);
     }
   };
 
@@ -97,8 +99,25 @@ function LocateButton({ userLocation, onLocate }) {
   );
 }
 
-const getFestivalName = (festival) => {
+const getFestivalName = (festival, language = 'ko') => {
+  if (language === 'en') return festival.name_en || festival.name_ko || festival.name_original || festival.name || '';
+  if (language === 'ja') return festival.name_jp || festival.name_ko || festival.name_original || festival.name || '';
+  if (language === 'zh') return festival.name_zh || festival.name_ko || festival.name_original || festival.name || '';
   return festival.name_ko || festival.name_original || festival.name_en || festival.name || '';
+};
+
+const getLocalizedCity = (festival, language = 'ko') => {
+  if (language === 'en') return festival.city_en || festival.city || '';
+  if (language === 'ja') return festival.city_jp || festival.city_en || festival.city || '';
+  if (language === 'zh') return festival.city_zh || festival.city_en || festival.city || '';
+  return festival.city_ko || festival.city_en || festival.city || '';
+};
+
+const getLocalizedCountry = (festival, language = 'ko') => {
+  if (language === 'en') return festival.country_en || festival.country || '';
+  if (language === 'ja') return festival.country_jp || festival.country_en || festival.country || '';
+  if (language === 'zh') return festival.country_zh || festival.country_en || festival.country || '';
+  return festival.country_ko || festival.country_en || festival.country || '';
 };
 
 const removeDuplicateFestivals = (festivals) => {
@@ -140,6 +159,8 @@ const calculateInfoScore = (festival) => {
 
 export default function FestivalMap() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = mapTranslations[language] || mapTranslations.ko;
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState([20, 0]);
@@ -203,10 +224,10 @@ export default function FestivalMap() {
       if (result?.data?.success) {
         setMapCenter([result.data.latitude, result.data.longitude]);
       } else {
-        alert("위치를 찾을 수 없습니다.");
+        alert(t.searchError);
       }
     } catch (e) {
-      alert("검색 중 오류가 발생했습니다.");
+      alert(t.searchFail);
     } finally {
       setIsSearching(false);
     }
@@ -216,7 +237,7 @@ export default function FestivalMap() {
     if (userLocation) {
       setMapCenter(userLocation);
     } else {
-      alert("위치 정보를 가져올 수 없습니다");
+      alert(t.locationError);
     }
   };
 
@@ -230,7 +251,7 @@ export default function FestivalMap() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="지명을 검색하세요 (예: 오사카, 도쿄, 서울)"
+              placeholder={t.searchPlaceholder}
               className="festival-map-search-input w-full bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 rounded-xl"
             />
             {searchQuery && (
@@ -239,7 +260,7 @@ export default function FestivalMap() {
                 disabled={isSearching}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-400 text-xs font-bold disabled:opacity-50"
               >
-                {isSearching ? "검색중..." : "이동"}
+                {isSearching ? t.searching : t.go}
               </button>
             )}
           </div>
@@ -250,11 +271,11 @@ export default function FestivalMap() {
             <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
               <div className="flex items-center gap-1.5 text-xs">
                 <Tag className="w-4 h-4 text-purple-400" />
-                <span>{categoryFilter !== "all" ? categoryFilter : "분류"}</span>
+                <span>{categoryFilter !== "all" ? categoryFilter : t.categoryLabel}</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800 text-white">
-              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
+              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.categoryAll}</SelectItem>
               {categories.map(category => (
                 <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
                   {category}
@@ -268,7 +289,7 @@ export default function FestivalMap() {
             className={`px-4 h-9 rounded-full whitespace-nowrap flex items-center gap-2 text-xs hover:bg-gray-800 transition-colors border ${dateRange.from && dateRange.to ? "bg-pink-500/20 border-pink-400 text-pink-400" : "bg-gray-900 border-gray-800 text-white"}`}
           >
             <Calendar className="w-4 h-4 text-pink-500" />
-            <span>{dateRange.from && dateRange.to ? `${safeFormatDate(dateRange.from, 'M/d')}~${safeFormatDate(dateRange.to, 'M/d')}` : "날짜"}</span>
+            <span>{dateRange.from && dateRange.to ? `${safeFormatDate(dateRange.from, 'M/d')}~${safeFormatDate(dateRange.to, 'M/d')}` : t.dateLabel}</span>
           </button>
 
           <DateRangeBottomSheet
@@ -299,7 +320,7 @@ export default function FestivalMap() {
               attribution='&copy; OpenStreetMap contributors'
             />
             <MapController center={mapCenter} />
-            <LocateButton userLocation={userLocation} onLocate={() => setMapCenter(userLocation)} />
+            <LocateButton userLocation={userLocation} onLocate={() => setMapCenter(userLocation)} locationError={t.locationError} />
 
             {userLocation && (
               <Marker
@@ -312,7 +333,7 @@ export default function FestivalMap() {
               >
                 <Popup className="custom-popup">
                   <div className="bg-gray-900 p-2 rounded">
-                    <p className="text-white text-sm font-bold">내 위치</p>
+                    <p className="text-white text-sm font-bold">{t.myLocation}</p>
                   </div>
                 </Popup>
               </Marker>
@@ -334,23 +355,26 @@ export default function FestivalMap() {
                           className="w-full h-32 object-cover rounded-lg mb-2"
                         />
                       )}
-                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(festival)}</h3>
+                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(festival, language)}</h3>
                       <div className="space-y-1 text-sm">
                         <div className="flex items-center gap-2 text-gray-300">
                           <MapPin className="w-4 h-4 text-cyan-400" />
-                          {festival.city_ko || festival.city}, {festival.country_ko || festival.country}
+                          {getLocalizedCity(festival, language)}, {getLocalizedCountry(festival, language)}
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Calendar className="w-4 h-4 text-pink-500" />
-                          {safeFormatDate(festival.start_date, 'M월 d일')}
+                          {safeFormatDate(festival.start_date, language === 'ko' ? 'M월 d일' : 'MMM d')}
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Heart className="w-4 h-4 text-pink-500" />
-                          {festival.likes_count || 0} 좋아요
+                          {festival.likes_count || 0} {t.likes}
                         </div>
                       </div>
                       <Badge className="mt-2 bg-cyan-500 text-white">
-                        {festival.category}
+                        {language === 'en' ? festival.category_en || festival.category
+                          : language === 'ja' ? festival.category_jp || festival.category
+                          : language === 'zh' ? festival.category_zh || festival.category
+                          : festival.category}
                       </Badge>
                     </div>
                   </Link>
@@ -362,7 +386,7 @@ export default function FestivalMap() {
           <div className="flex items-center justify-center h-full bg-gray-900">
             <Card className="bg-gray-800 border-gray-700 p-8 text-center">
               <MapPin className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">위치 정보가 있는 축제가 없습니다</p>
+              <p className="text-gray-400">{t.noFestivals}</p>
             </Card>
           </div>
         )}
@@ -372,16 +396,16 @@ export default function FestivalMap() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-              <span className="text-white text-sm">축제</span>
+            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+            <span className="text-white text-sm">{t.festivalMarker}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-              <span className="text-white text-sm">내 위치</span>
+            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+            <span className="text-white text-sm">{t.myLocation}</span>
             </div>
           </div>
           <Badge variant="outline" className="text-cyan-400 border-cyan-400">
-            {festivalsWithLocation.length}개 축제
+            {t.festivalsCount(festivalsWithLocation.length)}
           </Badge>
         </div>
       </div>
