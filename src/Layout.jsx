@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Home, Map, Target, Users, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
+import { useLanguage } from "@/lib/useLanguage";
 
 // 페이지 전환 애니메이션 variants
 const isDetailPage = (pathname) => {
@@ -28,10 +29,19 @@ const getPageVariants = (pathname) => {
 
 const splashShown = { value: false };
 
+const navLabels = {
+  ko: { home: "홈", map: "지도", catch: "캐치", community: "커뮤니티", my: "MY" },
+  en: { home: "Home", map: "Map", catch: "Catch", community: "Community", my: "MY" },
+  ja: { home: "ホーム", map: "地図", catch: "キャッチ", community: "コミュニティ", my: "MY" },
+  zh: { home: "首页", map: "地图", catch: "打卡", community: "社区", my: "MY" },
+};
+
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = React.useState(!splashShown.value);
+  const { language } = useLanguage();
+  const labels = navLabels[language] || navLabels.ko;
 
   // 스플래시 화면 타이머 - 앱 최초 진입 시 1회만 표시
   React.useEffect(() => {
@@ -98,11 +108,11 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const navItems = [
-    { key: "home", name: "홈", icon: Home, url: createPageUrl("Home") },
-    { key: "map", name: "지도", icon: Map, url: createPageUrl("FestivalMap") },
-    { key: "catch", name: "캐치", icon: Target, url: createPageUrl("Catch") },
-    { key: "community", name: "커뮤니티", icon: Users, url: createPageUrl("Community") },
-    { key: "my", name: "MY", icon: User, url: createPageUrl("MyFestee") },
+    { key: "home", name: labels.home, icon: Home, url: createPageUrl("Home") },
+    { key: "map", name: labels.map, icon: Map, url: createPageUrl("FestivalMap") },
+    { key: "catch", name: labels.catch, icon: Target, url: createPageUrl("Catch") },
+    { key: "community", name: labels.community, icon: Users, url: createPageUrl("Community") },
+    { key: "my", name: labels.my, icon: User, url: createPageUrl("MyFestee") },
   ];
 
   const currentTabKey = getCurrentTabKey(location.pathname);

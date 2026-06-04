@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { useLanguage } from "@/lib/useLanguage";
+import { searchTranslations } from "@/lib/searchTranslations";
 
 // 중복 축제 제거 함수
 const removeDuplicateFestivals = (festivals) => {
@@ -132,6 +134,8 @@ export default function Search() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
+  const t = searchTranslations[language] || searchTranslations.ko;
 
   // URL에서 쿼리 파라미터 읽기 (URL이 변경될 때마다 재계산)
   const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -151,7 +155,7 @@ export default function Search() {
     setLocalSearchInput(searchQuery);
   }, [searchQuery]);
 
-  const [activeTab, setActiveTab] = useState("축제");
+  const [activeTab, setActiveTab] = useState("festival");
   const [showFilters, setShowFilters] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
@@ -726,7 +730,7 @@ export default function Search() {
               value={localSearchInput} // 로컬 상태 사용
               onChange={(e) => setLocalSearchInput(e.target.value)} // 로컬 상태 업데이트
               onKeyPress={(e) => e.key === 'Enter' && handleSearch(localSearchInput)} // Enter 시 로컬 상태로 검색
-              placeholder="국가, 도시, 축제명, 아티스트 검색"
+              placeholder={t.placeholder}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl"
               autoFocus
             />
@@ -751,7 +755,7 @@ export default function Search() {
               className={`rounded-full ${selectedCountry || selectedCity ? 'bg-cyan-400 border-cyan-400 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
             >
               <MapPin className="w-4 h-4 mr-1" />
-              위치 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
+              {t.location} <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
             </Button>
 
             <Button
@@ -761,7 +765,7 @@ export default function Search() {
               className={`rounded-full ${dateRange.from && dateRange.to ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
             >
               <CalendarIcon className="w-4 h-4 mr-1" />
-              날짜 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
+              {t.date} <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
             </Button>
 
             <DateRangeBottomSheet
@@ -776,14 +780,14 @@ export default function Search() {
                 <div className="flex items-center gap-1">
                   <ArrowUpDown className="w-4 h-4" />
                   <SelectValue>
-                    {sortOrder === "popularity" ? "인기도" : sortOrder === "likes" ? "좋아요" : "날짜"}
+                    {sortOrder === "popularity" ? t.sortPopularity : sortOrder === "likes" ? t.sortLikes : t.sortDate}
                   </SelectValue>
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">인기도순</SelectItem>
-                <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">좋아요순</SelectItem>
-                <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">날짜순</SelectItem>
+                <SelectItem value="popularity" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.sortPopularityFull}</SelectItem>
+                <SelectItem value="likes" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.sortLikesFull}</SelectItem>
+                <SelectItem value="date" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.sortDateFull}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -794,7 +798,7 @@ export default function Search() {
               className={`rounded-full ${showFilters || isFilterActive() ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-gray-900 border-gray-800 text-white'}`}
             >
               <Filter className="w-4 h-4 mr-1" />
-              필터 <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
+              {t.filter} <ChevronRight className="w-4 h-4 ml-1 -rotate-90" />
             </Button>
           </div>
         )}
@@ -809,8 +813,8 @@ export default function Search() {
             {searchHistory.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white font-bold">검색 기록</h3>
-                  <Badge className="bg-gray-800 text-white">삭제 가능</Badge>
+                  <h3 className="text-white font-bold">{t.searchHistory}</h3>
+                  <Badge className="bg-gray-800 text-white">{t.deletable}</Badge>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {searchHistory.map((keyword, idx) => (
@@ -838,7 +842,7 @@ export default function Search() {
 
             {/* Trending Keywords */}
             <div>
-              <h3 className="text-white font-bold mb-3">실시간 인기 검색어</h3>
+              <h3 className="text-white font-bold mb-3">{t.trending}</h3>
               {trendingKeywords.length > 0 ? (
                 <div className="space-y-2">
                   {trendingKeywords.map((item, idx) => (
@@ -858,14 +862,14 @@ export default function Search() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm bg-gray-900 rounded-lg p-3">아직 집계된 검색어가 없습니다</p>
+                <p className="text-gray-500 text-sm bg-gray-900 rounded-lg p-3">{t.noTrending}</p>
               )}
             </div>
 
             {/* Recommended Search */}
             <div className="mt-6">
               <h3 className="text-white font-bold mb-3">
-                {user && myLikes?.length > 0 ? "내 취향 추천 검색어" : "추천 검색어"}
+                {user && myLikes?.length > 0 ? t.myRecommended : t.recommended}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {recommendedSearchKeywords.map((keyword) => (
@@ -888,31 +892,31 @@ export default function Search() {
             {/* Tabs */}
             <div className="flex gap-2 mb-4">
               <Button
-                onClick={() => setActiveTab("축제")}
-                variant={activeTab === "축제" ? "default" : "outline"}
-                className={activeTab === "축제"
+                onClick={() => setActiveTab("festival")}
+                variant={activeTab === "festival" ? "default" : "outline"}
+                className={activeTab === "festival"
                   ? "bg-cyan-400 text-black hover:bg-cyan-500"
                   : "bg-gray-900 text-white border-gray-700 hover:bg-gray-800"
                 }
               >
-                축제
+                {t.tabFestival}
               </Button>
               <Button
-                onClick={() => setActiveTab("아티스트")}
-                variant={activeTab === "아티스트" ? "default" : "outline"}
-                className={activeTab === "아티스트"
+                onClick={() => setActiveTab("artist")}
+                variant={activeTab === "artist" ? "default" : "outline"}
+                className={activeTab === "artist"
                   ? "bg-cyan-400 text-black hover:bg-cyan-500"
                   : "bg-gray-900 text-white border-gray-700 hover:bg-gray-800"
                 }
               >
-                아티스트
+                {t.tabArtist}
               </Button>
             </div>
 
             {/* 지난 축제 숨김 토글 - 축제 탭에서만 표시, 리스트뷰 바로 위 */}
-            {activeTab === "축제" && (
+            {activeTab === "festival" && (
               <div className="flex items-center justify-end gap-3 mb-4 py-2">
-                <span className="text-white text-sm font-medium">지난 축제 숨기기</span>
+                <span className="text-white text-sm font-medium">{t.hidePast}</span>
                 <Switch
                   checked={hidePastFestivals}
                   onCheckedChange={setHidePastFestivals}
@@ -922,7 +926,7 @@ export default function Search() {
             )}
 
             {/* Results */}
-            {activeTab === "축제" && (
+            {activeTab === "festival" && (
               <div className="space-y-3">
                 {filteredFestivals.map((festival) => {
                   const starRating = getStarRating(festival);
@@ -947,7 +951,7 @@ export default function Search() {
                             </span>
                             {dateStatus === 'tentative' && (
                               <Badge variant="outline" className="text-[10px] h-4 px-1 border-yellow-500 text-yellow-500">
-                                미확정
+                                {t.dateTentative}
                               </Badge>
                             )}
                           </div>
@@ -962,15 +966,15 @@ export default function Search() {
                 })}
                 {filteredFestivals.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">검색 결과가 없습니다</p>
+                    <p className="text-gray-500">{t.noResults}</p>
                   </div>
                 )}
               </div>
             )}
 
-            {activeTab === "아티스트" && (
+            {activeTab === "artist" && (
               <div className="text-center py-12">
-                <p className="text-gray-500">아티스트 검색 기능은 준비중입니다</p>
+                <p className="text-gray-500">{t.artistComingSoon}</p>
               </div>
             )}
           </>
@@ -1026,7 +1030,7 @@ export default function Search() {
 
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
-                <h2 className="text-lg font-bold text-white">필터</h2>
+                <h2 className="text-lg font-bold text-white">{t.filterTitle}</h2>
                 <button onClick={() => setShowFilters(false)} className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
                   <X className="w-4 h-4 text-white" />
                 </button>
@@ -1035,7 +1039,7 @@ export default function Search() {
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
                 <div>
-                  <h3 className="text-white font-bold mb-2">카테고리</h3>
+                  <h3 className="text-white font-bold mb-2">{t.categoryTitle}</h3>
                   <div className="flex flex-wrap gap-2">
                     {categories.map(category => (
                       <Badge
@@ -1091,7 +1095,7 @@ export default function Search() {
                 </div>
 
                 <div>
-                  <h3 className="text-white font-bold mb-2">금액 (원)</h3>
+                  <h3 className="text-white font-bold mb-2">{t.priceLabel}</h3>
                   <div className="flex items-center gap-4">
                     <span className="text-gray-400 text-sm">₩{priceRange[0].toLocaleString()}</span>
                     <Slider value={priceRange} onValueChange={setPriceRange} max={500000} step={10000} className="flex-1" />
@@ -1114,10 +1118,10 @@ export default function Search() {
                   variant="outline"
                   className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
                 >
-                  초기화
+                  {t.resetFilter}
                 </Button>
                 <Button onClick={() => setShowFilters(false)} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white">
-                  적용
+                  {t.applyFilter}
                 </Button>
               </div>
             </motion.div>
