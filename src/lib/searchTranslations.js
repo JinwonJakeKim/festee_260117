@@ -28,6 +28,7 @@ export const searchTranslations = {
     resetFilter: "초기화",
     applyFilter: "적용",
     dateTentative: "미확정",
+    dateUnknown: "날짜 미정",
   },
   en: {
     placeholder: "Search country, city, festival, artist",
@@ -58,6 +59,7 @@ export const searchTranslations = {
     resetFilter: "Reset",
     applyFilter: "Apply",
     dateTentative: "Tentative",
+    dateUnknown: "Date TBD",
   },
   ja: {
     placeholder: "国、都市、フェス名、アーティストで検索",
@@ -88,6 +90,7 @@ export const searchTranslations = {
     resetFilter: "リセット",
     applyFilter: "適用",
     dateTentative: "未確定",
+    dateUnknown: "日程未定",
   },
   zh: {
     placeholder: "搜索国家、城市、节日、艺术家",
@@ -118,5 +121,6 @@ export const searchTranslations = {
     resetFilter: "重置",
     applyFilter: "应用",
     dateTentative: "待确认",
+    dateUnknown: "日期待定",
   },
 };

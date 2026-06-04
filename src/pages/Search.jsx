@@ -117,25 +117,24 @@ const safeStringIncludes = (str, search) => {
   }
 };
 
-// 안전한 날짜 포맷팅 함수
-const safeFormatDate = (dateString, formatString) => {
-  if (!dateString) return '날짜 미정';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '날짜 미정';
-    return format(date, formatString, { locale: ko });
-  } catch (e) {
-    console.error("Error in safeFormatDate:", e);
-    return '날짜 미정';
-  }
-};
-
 export default function Search() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
   const { language } = useLanguage();
   const t = searchTranslations[language] || searchTranslations.ko;
+
+  // 안전한 날짜 포맷팅 함수 (t에 접근 가능하도록 컴포넌트 내부에 정의)
+  const safeFormatDate = (dateString, formatStr) => {
+    if (!dateString) return t.dateUnknown;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return t.dateUnknown;
+      return format(date, formatStr, { locale: ko });
+    } catch (e) {
+      return t.dateUnknown;
+    }
+  };
 
   // URL에서 쿼리 파라미터 읽기 (URL이 변경될 때마다 재계산)
   const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -642,7 +641,16 @@ export default function Search() {
     ].filter(Boolean).filter((keyword, index, list) => list.indexOf(keyword) === index).slice(0, 6);
   }, [user, myLikes, festivals]);
 
-  const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제"];
+  const categoriesMap = {
+    ko: ["음악", "문화", "예술", "음식", "스포츠", "지역축제"],
+    en: ["Music", "Culture", "Art", "Food", "Sports", "Local Festival"],
+    ja: ["音楽", "文化", "アート", "フード", "スポーツ", "地域フェス"],
+    zh: ["音乐", "文化", "艺术", "美食", "体育", "地方节日"],
+  };
+  // 카테고리 필터는 DB 값(한국어)으로 필터링하므로, 표시명 → DB 값 매핑 필요
+  const categoryDbValues = ["음악", "문화", "예술", "음식", "스포츠", "지역축제"];
+  const categoryDisplayValues = categoriesMap[language] || categoriesMap.ko;
+  const categories = categoryDbValues; // 필터링용 DB 값 유지
   const tags = ["연인과", "Kpop", "반려동물", "가족과", "여름", "무료", "FESTEE추천", "불꽃놀이"];
 
   const handleSearch = (query) => {
@@ -705,7 +713,7 @@ export default function Search() {
       const countryDisplay = locationStats[selectedCountry]?.display || selectedCountry;
       return countryDisplay;
     }
-    return "위치";
+    return t.location;
   };
 
   const isFilterActive = () => {
@@ -941,9 +949,14 @@ export default function Search() {
                           className="w-16 h-16 rounded-lg object-cover"
                         />
                         <div className="flex-1">
-                          <h3 className="text-white font-bold text-sm mb-1">{festival.name_ko || festival.name_original || festival.name}</h3>
+                          <h3 className="text-white font-bold text-sm mb-1">
+                            {language === 'en' ? (festival.name_en || festival.name_ko || festival.name_original || festival.name)
+                              : language === 'ja' ? (festival.name_jp || festival.name_ko || festival.name_original || festival.name)
+                              : language === 'zh' ? (festival.name_zh || festival.name_ko || festival.name_original || festival.name)
+                              : (festival.name_ko || festival.name_original || festival.name)}
+                          </h3>
                           <p className="text-gray-400 text-xs">
-                            {getLocalizedCountry(festival)}, {getLocalizedCity(festival)}{festival.category ? ` / ${festival.category}` : ''}
+                            {getLocalizedCountry(festival)}, {getLocalizedCity(festival)}{festival.category ? ` / ${categoryDisplayValues[categoryDbValues.indexOf(festival.category)] || festival.category}` : ''}
                           </p>
                           <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
                             <span>
@@ -1041,13 +1054,13 @@ export default function Search() {
                 <div>
                   <h3 className="text-white font-bold mb-2">{t.categoryTitle}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {categories.map(category => (
+                    {categoryDbValues.map((category, idx) => (
                       <Badge
                         key={category}
                         onClick={() => toggleCategory(category)}
                         className={`cursor-pointer ${selectedCategories.includes(category) ? 'bg-cyan-400 text-black' : 'bg-gray-800 text-white'}`}
                       >
-                        {category}
+                        {categoryDisplayValues[idx] || category}
                       </Badge>
                     ))}
                   </div>
