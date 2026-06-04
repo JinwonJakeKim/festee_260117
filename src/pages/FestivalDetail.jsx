@@ -17,7 +17,7 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
+import { useLanguage } from "@/lib/useLanguage";
 import FestivalChatbot from "../components/FestivalChatbot";
 
 // 안전한 날짜 포맷팅 함수 추가
@@ -157,7 +157,7 @@ export default function FestivalDetail() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
-  const { getLocalizedContent } = useFestivalLocalizedContent();
+  const { getLocalizedContent } = useLanguage();
   const [commentText, setCommentText] = useState("");
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
