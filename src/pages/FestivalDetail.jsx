@@ -1093,7 +1093,8 @@ export default function FestivalDetail() {
                     getYoutubeVideoId={getYoutubeVideoId}
                     festivalName={localizedName}
                     festival={festival}
-                  />
+                    moreLabel={t.youtubeMore}
+                    />
             )}
           {/* 라인업 */}
           {festival.lineup && festival.lineup.length > 0 && (
