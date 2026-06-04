@@ -16,7 +16,7 @@ import { ko } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import LoginPromptModal from "../components/LoginPromptModal";
-import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
+
 import HomeChatbot from "../components/HomeChatbot";
 import FestivalListItem from "../components/FestivalListItem";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
@@ -196,8 +196,7 @@ export default function Home() {
   const [hidePastFestivals, setHidePastFestivals] = useState(urlParams.get('hidePast') !== 'false');
   const [showPopularityTooltip, setShowPopularityTooltip] = useState(false);
   const [showRankerTooltip, setShowRankerTooltip] = useState(false);
-  const { getLocalizedContent } = useFestivalLocalizedContent();
-  const { language, changeLanguage } = useLanguage();
+  const { language, changeLanguage, getLocalizedContent } = useLanguage();
   const t = homeTranslations[language];
   const [showLangMenu, setShowLangMenu] = useState(false);
 
