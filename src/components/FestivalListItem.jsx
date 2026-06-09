@@ -31,7 +31,7 @@ const getRankColor = (index) => {
   return "bg-gray-800 text-gray-400";
 };
 
-export default function FestivalListItem({ festival, index, isLiked, onLike, getLocalizedContent }) {
+export default function FestivalListItem({ festival, index, isLiked, onLike, getLocalizedContent, language }) {
   const dateStatus = festival.date_status || 'confirmed';
   const localizedName = getLocalizedContent(festival, 'name');
   const [likeAnimating, setLikeAnimating] = React.useState(false);
@@ -72,7 +72,7 @@ export default function FestivalListItem({ festival, index, isLiked, onLike, get
             {localizedName}
           </h3>
           <div className="text-gray-400 text-xs">
-            {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}{festival.category ? ` / ${festival.category}` : ''}
+            {getLocalizedContent(festival, 'country')}, {getLocalizedContent(festival, 'city')}{getLocalizedContent(festival, 'category') ? ` / ${getLocalizedContent(festival, 'category')}` : ''}
           </div>
           <div className="text-gray-500 text-xs flex items-center gap-1 flex-wrap">
             <span>

@@ -1171,6 +1171,7 @@ export default function Home() {
                         isLiked={myLikes.some(like => like.festival_id === festival.id)}
                         onLike={(id) => likeMutation.mutate(id)}
                         getLocalizedContent={getLocalizedContent}
+                        language={language}
                       />
                     ))}
                   </div>
