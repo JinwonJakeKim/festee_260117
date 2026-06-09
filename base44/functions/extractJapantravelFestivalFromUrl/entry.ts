@@ -253,10 +253,15 @@ Write only the summary, nothing else.`,
     }
 
     // ===== 기타 =====
-    const websiteArr = article.websites || [];
-    const website = article.website ||
-      (Array.isArray(websiteArr) && websiteArr.length > 0 ? (websiteArr[0]?.url || websiteArr[0]) : null) ||
-      article.external_url || null;
+    // websites는 언어코드 키 객체 (예: {"ja": "https://...", "en": "https://..."})
+    let websiteFromObj = null;
+    if (article.websites && typeof article.websites === 'object' && !Array.isArray(article.websites)) {
+      for (const lang of Object.keys(article.websites)) {
+        const u = article.websites[lang];
+        if (u && typeof u === 'string') { websiteFromObj = u; break; }
+      }
+    }
+    const website = article.website || websiteFromObj || article.external_url || null;
     const openingHours = article.opening_hours || article.hours || null;
     const address = article.address_en || article.address || article.location || article.event_venue?.name_en || article.event_venue?.name || null;
 
