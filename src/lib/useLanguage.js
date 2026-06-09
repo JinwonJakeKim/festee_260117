@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const LANG_KEY = 'festee_language';
 
@@ -13,11 +13,22 @@ export function useLanguage() {
     }
   });
 
+  // 다른 컴포넌트에서 언어를 변경할 때 감지 (같은 탭 내 커스텀 이벤트)
+  useEffect(() => {
+    const handleLangChange = (e) => {
+      setLanguage(e.detail || localStorage.getItem(LANG_KEY) || 'ko');
+    };
+    window.addEventListener('festee_lang_change', handleLangChange);
+    return () => window.removeEventListener('festee_lang_change', handleLangChange);
+  }, []);
+
   const changeLanguage = (lang) => {
     setLanguage(lang);
     try {
       localStorage.setItem(LANG_KEY, lang);
     } catch {}
+    // 같은 탭의 다른 컴포넌트에 언어 변경 알림
+    window.dispatchEvent(new CustomEvent('festee_lang_change', { detail: lang }));
   };
 
   // 언어 코드를 festival 필드 suffix로 변환 (ja -> jp)
