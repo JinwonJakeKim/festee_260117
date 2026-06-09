@@ -942,7 +942,7 @@ export default function AdminDashboard() {
                 <div className="mb-3 space-y-2">
                   <p className="text-cyan-400 text-sm font-medium">선택된 축제 ({featuredFestivalIds.length}개)</p>
                   {featuredFestivalIds.map((fid, idx) => {
-                    const f = allFestivals.find(f => f.id === fid);
+                    const f = allFestivals.find(f => f.id === fid) || festivals.find(f => f.id === fid);
                     if (!f) return null;
                     return (
                       <div key={fid} className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-2">
