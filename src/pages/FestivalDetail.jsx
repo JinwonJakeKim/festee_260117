@@ -874,12 +874,12 @@ export default function FestivalDetail() {
                 {festival.category === "스포츠" && <Trophy className="w-3.5 h-3.5" />}
                 {festival.category === "지역축제" && <MapPin className="w-3.5 h-3.5" />}
                 {!["음악", "문화", "예술", "음식", "스포츠", "지역축제"].includes(festival.category) && <MapPin className="w-3.5 h-3.5" />}
-                {festival.category}
+                {getLocalizedContent(festival, 'category') || festival.category}
               </Badge>
             )}
             
-            {/* 태그 - 홈화면과 동일한 외곽선 pill 모양 */}
-            {festival.tags_ko && festival.tags_ko.map((tag, idx) => (
+            {/* 태그 - 설정 언어에 맞는 태그 필드 사용 */}
+            {getLocalizedContent(festival, 'tags') && getLocalizedContent(festival, 'tags').map((tag, idx) => (
               <Badge 
                 key={idx} 
                 variant="outline" 
