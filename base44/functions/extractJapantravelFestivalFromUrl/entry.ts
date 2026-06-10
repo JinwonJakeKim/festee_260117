@@ -263,7 +263,7 @@ Write only the summary, nothing else.`,
     }
     const website = article.website || websiteFromObj || article.external_url || null;
     const openingHours = article.opening_hours || article.hours || null;
-    const address = article.address_en || article.address || article.location || article.event_venue?.name_en || article.event_venue?.name || null;
+    const address = article.address_en || article.address || article.event_venue?.name_en || article.event_venue?.name || null;
 
     // ===== YouTube URL =====
     let videoUrl = '';
