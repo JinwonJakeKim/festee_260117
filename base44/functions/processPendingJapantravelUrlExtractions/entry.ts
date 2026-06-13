@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.JapantravelLinks.update(stuckLink.id, {
             processing_status: 'failed',
             error_message: 'Stuck in processing state - auto reset',
-            update_time: new Date().toISOString()
+            update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
           });
         }
       }
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         // processing 상태로 업데이트
         await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
           processing_status: 'processing',
-          update_time: new Date().toISOString()
+          update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
         });
 
         // extractJapantravelFestivalFromUrl 함수 호출
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
             processing_status: 'processed',
             raw_data_id: rawDataRecords.length > 0 ? rawDataRecords[0].id : null,
             error_message: null,
-            update_time: new Date().toISOString()
+            update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
           });
           succeeded++;
           console.log(`[Japantravel] ✅ Successfully processed: ${link.url}`);
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
             error_message: failureReason,
-            update_time: new Date().toISOString()
+            update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
           });
           failed++;
           console.log(`[Japantravel] ❌ Failed to process: ${link.url} - ${failureReason}`);
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
             error_message: error.message || 'Unknown error',
-            update_time: new Date().toISOString()
+            update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
           });
         } catch (updateError) {
           console.error(`[Japantravel] ⚠️ Failed to update error status for ${link.url}:`, updateError);

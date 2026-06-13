@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'No entity_id' }, { status: 400 });
     }
 
-    const now = new Date().toISOString(); // YYYY-MM-DDTHH:mm:ss.sssZ
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19); // YYYY-MM-DD HH:mm:ss (KST)
 
     if (event.type === 'create') {
       await base44.asServiceRole.entities.JapantravelLinks.update(entityId, {
