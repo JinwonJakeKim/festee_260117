@@ -431,7 +431,7 @@ export default function AdminUrlExtraction() {
       return { data, linkId };
     },
     onSuccess: async ({ data, linkId }) => {
-      if (data.success && data.records_saved > 0) {
+      if (data.success && (data.raw_data_id || data.records_saved > 0)) {
         const rawDataRecords = await base44.entities.JapantravelRawData.filter({
           source_url: data.url || linksList.find(l => l.id === linkId)?.url
         }, '-created_date', 1);
