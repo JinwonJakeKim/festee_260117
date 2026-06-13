@@ -237,8 +237,8 @@ Write only the summary, nothing else.`,
     }
 
     // ===== 위도/경도 =====
-    let latitude = article.latitude || article.lat || null;
-    let longitude = article.longitude || article.lng || article.lon || null;
+    let latitude = article.latitude || article.lat || article.location?.lat || null;
+    let longitude = article.longitude || article.lng || article.lon || article.location?.lng || null;
 
     // lat/lng가 없으면 Google Maps 링크에서 추출 (HTML에서)
     if (!latitude) {
