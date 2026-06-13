@@ -75,7 +75,19 @@ Deno.serve(async (req) => {
     }
 
     // ===== 축제명 =====
-    const festivalName = article.title || article.name || '';
+    // 1순위: article.title (가장 정확, 연도 포함 버전)
+    // 2순위: article.event_name_en (이벤트 영문명)
+    // 3순위: article.name
+    // 4순위: props.schema.metadata.title 또는 article.metadata.title에서 ' - ' 앞부분 추출
+    let festivalName = article.title || article.event_name_en || article.name || '';
+
+    if (!festivalName) {
+      const metaTitle = props.schema?.metadata?.title || article.metadata?.title || '';
+      if (metaTitle) {
+        festivalName = metaTitle.split(' - ')[0].trim();
+        console.log(`[Japantravel] Name from metadata.title: ${festivalName}`);
+      }
+    }
     console.log(`[Japantravel] Name: ${festivalName}`);
 
     // ===== 요약 =====
