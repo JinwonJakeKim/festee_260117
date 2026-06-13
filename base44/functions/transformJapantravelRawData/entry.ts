@@ -567,8 +567,23 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     }
   }
 
-  // 주소 처리: rawAddress 그대로 사용
-  const accessInfo = festivalData.address || '';
+  // 주소 처리: rawData에 address가 있으면 그대로 사용, 없고 좌표가 있으면 Geocoding API로 생성
+  let accessInfo = festivalData.address || '';
+  if (!accessInfo && latitude && longitude) {
+    try {
+      const geocodingApiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
+      if (geocodingApiKey) {
+        const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&language=en&key=${geocodingApiKey}`);
+        const geoData = await geoRes.json();
+        if (geoData.status === 'OK' && geoData.results?.[0]) {
+          accessInfo = geoData.results[0].formatted_address;
+          console.log(`[Transform] Reverse geocoded address: ${accessInfo}`);
+        }
+      }
+    } catch (e) {
+      console.error('[Transform] Reverse geocode error:', e.message);
+    }
+  }
 
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
 

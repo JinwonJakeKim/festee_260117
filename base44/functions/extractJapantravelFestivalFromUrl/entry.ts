@@ -289,23 +289,8 @@ Write only the summary, nothing else.`,
       youtube: article.youtube || null,
     };
 
-    // ===== Reverse Geocoding (주소 없고 좌표 있는 경우) =====
-    let finalAccessInfo = address;
-    if (!finalAccessInfo && latitude && longitude) {
-      try {
-        const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
-        if (apiKey) {
-          const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&language=en&key=${apiKey}`);
-          const geoData = await geoRes.json();
-          if (geoData.status === 'OK' && geoData.results?.[0]) {
-            finalAccessInfo = geoData.results[0].formatted_address;
-            console.log(`[Japantravel] Reverse geocoded: ${finalAccessInfo}`);
-          }
-        }
-      } catch (e) {
-        console.error('[Japantravel] Reverse geocode error:', e.message);
-      }
-    }
+    // 주소는 원본 데이터 그대로 사용 (Geocoding은 변환 단계에서 처리)
+    const finalAccessInfo = address;
 
     // ===== 최종 레코드 저장 =====
     const currentTime = new Date().toISOString();
