@@ -293,7 +293,8 @@ Write only the summary, nothing else.`,
     const finalAccessInfo = address;
 
     // ===== 최종 레코드 저장 =====
-    const currentTime = new Date().toISOString();
+    const getKoreaTime = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
+    const currentTime = getKoreaTime();
     const rawDataRecord = {
       source_url: url,
       original_language: detectedLanguage,
@@ -330,7 +331,7 @@ Write only the summary, nothing else.`,
     if (existing && existing.length > 0) {
       const updateData = { ...rawDataRecord };
       delete updateData.create_time;
-      updateData.update_time = new Date().toISOString();
+      updateData.update_time = getKoreaTime();
       savedRecord = await base44.asServiceRole.entities.JapantravelRawData.update(existing[0].id, updateData);
       console.log(`[Japantravel] ✅ Updated: ${savedRecord.id}`);
     } else {
@@ -346,7 +347,7 @@ Write only the summary, nothing else.`,
           processing_status: 'processed',
           raw_data_id: savedRecord.id,
           error_message: null,
-          update_time: new Date().toISOString()
+          update_time: getKoreaTime()
         });
         console.log(`[Japantravel] ✅ JapantravelLinks updated to processed: ${matchingLinks[0].id}`);
       }
@@ -387,7 +388,7 @@ Write only the summary, nothing else.`,
     if (url) {
       try {
         const base44 = createClientFromRequest(req);
-        const currentTime = new Date().toISOString();
+        const currentTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
         const existing = await base44.asServiceRole.entities.JapantravelRawData.filter({ source_url: url });
         const failedRecord = {
           source_url: url,
@@ -420,7 +421,7 @@ Write only the summary, nothing else.`,
           await base44.asServiceRole.entities.JapantravelLinks.update(matchingLinks[0].id, {
             processing_status: 'failed',
             error_message: error.message || 'Unknown error',
-            update_time: new Date().toISOString()
+            update_time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19)
           });
         }
       } catch (e) {
