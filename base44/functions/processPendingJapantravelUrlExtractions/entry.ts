@@ -94,14 +94,38 @@ Deno.serve(async (req) => {
           succeeded++;
           console.log(`[Japantravel] ✅ Successfully processed: ${link.url}`);
         } else {
-          // 실패: failed 상태로 업데이트
+          // 실패: 구체적인 실패 이유 구성
+          let failureReason = extractResult?.error || 'Unknown error';
+          
+          // extractResult가 없거나 success가 false인 경우 상세 분석
+          if (!extractResult) {
+            failureReason = 'No response from extraction function';
+          } else if (!extractResult.success) {
+            failureReason = extractResult.error || 'Extraction returned success=false (unknown cause)';
+          } else if (!extractResult.raw_data_id) {
+            failureReason = 'Extraction succeeded but no raw_data_id returned (DB save may have failed)';
+          }
+
+          // 추출 품질 정보가 있으면 어떤 필드가 실패했는지 추가
+          if (extractResult?.extraction_quality) {
+            const q = extractResult.extraction_quality;
+            const missing = [];
+            if (!q.name_extracted) missing.push('name');
+            if (!q.dates_extracted) missing.push('dates');
+            if (!q.city_extracted) missing.push('city');
+            if (q.description_length === 0) missing.push('description');
+            if (missing.length > 0) {
+              failureReason += ` | Missing fields: ${missing.join(', ')}`;
+            }
+          }
+
           await base44.asServiceRole.entities.JapantravelLinks.update(link.id, {
             processing_status: 'failed',
-            error_message: extractResult?.error || 'No data extracted',
+            error_message: failureReason,
             update_time: new Date().toISOString()
           });
           failed++;
-          console.log(`[Japantravel] ❌ Failed to process: ${link.url} - ${extractResult?.error || 'No data extracted'}`);
+          console.log(`[Japantravel] ❌ Failed to process: ${link.url} - ${failureReason}`);
         }
       } catch (error) {
         // 예외 발생: failed 상태로 업데이트

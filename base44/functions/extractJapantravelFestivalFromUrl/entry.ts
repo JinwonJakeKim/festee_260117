@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     // ===== data-page JSON 파싱 (Inertia.js SPA 구조) =====
     const dataPageMatch = html.match(/id="app"\s+data-page="([^"]+)"/);
     if (!dataPageMatch) {
-      return Response.json({ success: false, error: 'data-page attribute not found. Page structure may have changed.' });
+      return Response.json({ success: false, error: '[Parse 실패] data-page 속성 없음 - 페이지 구조가 변경되었거나 SPA가 아닌 정적 페이지로 렌더링됨' });
     }
 
     // HTML entity decode
@@ -66,6 +66,13 @@ Deno.serve(async (req) => {
     const article = props.article || {};
 
     console.log(`[Japantravel] Article keys: ${Object.keys(article).join(', ')}`);
+
+    // ===== Article stub 감지 =====
+    const rawContent = article.content || article.body || article.description || '';
+    if (rawContent && rawContent.trim().toLowerCase().includes('article stub')) {
+      console.log(`[Japantravel] ⚠️ Article stub detected - description is placeholder only`);
+      // stub이어도 계속 진행하되, 나중에 extraction_quality에 반영
+    }
 
     // ===== 축제명 =====
     const festivalName = article.title || article.name || '';
@@ -362,6 +369,14 @@ Write only the summary, nothing else.`,
       console.error('[Japantravel] Failed to update JapantravelLinks:', e.message);
     }
 
+    const isStub = description.toLowerCase().includes('article stub');
+    const missingFields = [];
+    if (!festivalName) missingFields.push('name');
+    if (!startDate || !endDate) missingFields.push('dates');
+    if (!city || city === 'Unknown') missingFields.push('city');
+    if (description.length === 0) missingFields.push('description');
+    if (isStub) missingFields.push('description(stub - placeholder only)');
+
     return Response.json({
       success: true,
       source_url: url,
@@ -370,10 +385,13 @@ Write only the summary, nothing else.`,
       extraction_quality: {
         name_extracted: !!festivalName,
         description_length: description.length,
+        is_stub: isStub,
         dates_extracted: !!(startDate && endDate),
         city_extracted: !!(city && city !== 'Unknown'),
         images_count: imageGalleryUrls.length,
         lat_lng_extracted: !!(latitude && longitude),
+        missing_fields: missingFields,
+        quality_note: missingFields.length > 0 ? `주의: ${missingFields.join(', ')} 필드 누락 또는 불완전` : '정상 추출',
       }
     });
 
