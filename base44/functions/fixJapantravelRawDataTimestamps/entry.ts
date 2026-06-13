@@ -22,12 +22,12 @@ Deno.serve(async (req) => {
         .substring(0, 19);
     };
 
-    // 이미 한국 시간 형식(YYYY-MM-DD HH:mm:ss)이면 스킵
-    const isAlreadyKoreaFormat = (timeStr) => {
+    const isUTCFormat = (timeStr) => {
       if (!timeStr) return false;
-      return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeStr);
+      return timeStr.includes('T') || timeStr.includes('Z');
     };
 
+    // 전체 레코드를 페이지 단위로 가져와서 UTC 형식인 것만 변환
     const records = await base44.asServiceRole.entities.JapantravelRawData.list(
       'created_date', pageSize, startPage * pageSize
     );
@@ -40,24 +40,25 @@ Deno.serve(async (req) => {
         const createTime = record.create_time;
         const updateTime = record.update_time;
 
-        if (isAlreadyKoreaFormat(createTime) && isAlreadyKoreaFormat(updateTime)) {
+        const needsUpdate = isUTCFormat(createTime) || isUTCFormat(updateTime);
+
+        if (!needsUpdate) {
           totalSkipped++;
           continue;
         }
 
         const updatePayload = {};
-        if (createTime && !isAlreadyKoreaFormat(createTime)) {
+        if (isUTCFormat(createTime)) {
           updatePayload.create_time = toKoreaTime(createTime);
         }
-        if (updateTime && !isAlreadyKoreaFormat(updateTime)) {
+        if (isUTCFormat(updateTime)) {
           updatePayload.update_time = toKoreaTime(updateTime);
         }
 
-        if (Object.keys(updatePayload).length > 0) {
-          await base44.asServiceRole.entities.JapantravelRawData.update(record.id, updatePayload);
-          totalUpdated++;
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        await base44.asServiceRole.entities.JapantravelRawData.update(record.id, updatePayload);
+        totalUpdated++;
+        // Rate limit 방지를 위한 딜레이
+        await new Promise(resolve => setTimeout(resolve, 150));
       }
     }
 
@@ -72,8 +73,8 @@ Deno.serve(async (req) => {
       has_more: hasMore,
       next_page: hasMore ? startPage + 1 : null,
       message: hasMore
-        ? `페이지 ${startPage} 완료. 다음 실행 시 page: ${startPage + 1} 로 호출하세요.`
-        : `모든 데이터 변환 완료 (updated: ${totalUpdated}, skipped: ${totalSkipped})`
+        ? `페이지 ${startPage} 완료 (updated: ${totalUpdated}, skipped: ${totalSkipped}). 다음: page: ${startPage + 1}`
+        : `모든 데이터 처리 완료 (updated: ${totalUpdated}, skipped: ${totalSkipped})`
     });
 
   } catch (error) {
