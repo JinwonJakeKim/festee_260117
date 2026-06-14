@@ -29,7 +29,7 @@ export const homeTranslations = {
     rankerRecommended: "랭커들이 공통으로 추천하는 축제",
     popularInKorea: "대한민국에서 인기 있는 축제",
     popularInJapan: "일본에서 인기 있는 축제",
-    summerFestivals: "이런 축제 어때요? ☀️",
+    summerFestivals: "이번 여름, 이런 축제 어때요? ☀️",
     foodFestivals: "이런 음식축제는 어때요? 🍜",
     feedbackTitle: "Festee를 개선해주세요!",
     feedbackSubtitle: "여러분의 의견이 중요합니다",
