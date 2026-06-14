@@ -577,9 +577,18 @@ export default function Home() {
       .slice(0, 10);
   }, [festivals]);
 
-  const cherryBlossomFestivals = useMemo(() => {
+  const summerFestivals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const summerKeywords = ['여름', '불꽃', '불꽃놀이', 'summer', 'fireworks', '花火', '夏', '烟花', '夏祭り'];
     return festivals
-      .filter(f => (f.name_ko || f.name_original || '').includes('벚꽃'))
+      .filter(f => {
+        const name = (f.name_ko || f.name_original || f.name_en || '').toLowerCase();
+        const tags = (f.tags_ko || []).join(' ');
+        const hasKeyword = summerKeywords.some(kw => name.includes(kw.toLowerCase()) || tags.includes(kw));
+        const isUpcoming = f.end_date && new Date(f.end_date) >= today;
+        return hasKeyword && isUpcoming;
+      })
       .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 10);
   }, [festivals]);
@@ -1498,14 +1507,14 @@ export default function Home() {
         )}
       </div>
 
-      {cherryBlossomFestivals.length > 0 && (
+      {summerFestivals.length > 0 && (
         <div className="max-w-screen-sm mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
-            {t.cherryBlossom}
+            {t.summerFestivals}
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-4 pb-4 px-4">
-              {cherryBlossomFestivals.map((festival) => {
+              {summerFestivals.map((festival) => {
                 const localizedName = getLocalizedContent(festival, 'name');
                 return (
                   <Link
