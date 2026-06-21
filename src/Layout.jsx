@@ -621,9 +621,9 @@ export default function Layout({ children, currentPageName }) {
       <nav
         className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998]"
         style={{
-          paddingBottom: `${insets.bottom}px`,
-          paddingLeft: `${insets.left}px`,
-          paddingRight: `${insets.right}px`,
+          paddingBottom: '0px',
+          paddingLeft: '0px',
+          paddingRight: '0px',
         }}
       >
         <div className="max-w-screen-sm mx-auto">
