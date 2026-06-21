@@ -34,6 +34,13 @@ export default function useSafeAreaInsets() {
       const left = getInsetValue('safe-area-inset-left');
       const right = getInsetValue('safe-area-inset-right');
 
+      console.log("SAFE AREA", {
+        top,
+        bottom,
+        left,
+        right
+      });
+
       setInsets({
         top,
         bottom,
