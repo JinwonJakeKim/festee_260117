@@ -601,9 +601,16 @@ export default function Layout({ children, currentPageName }) {
       <div className="relative overflow-hidden">
         <main
           className={isMessageDetail ? "overflow-hidden" : "min-h-screen"}
-          style={isMessageDetail
-            ? { height: '100vh', paddingTop: `${insets.top}px` }
-            : { paddingTop: `${insets.top}px`, paddingBottom: `calc(4rem + ${insets.bottom}px)` }
+          style={
+            isMessageDetail
+              ? {
+                  height: '100vh',
+                  paddingTop: '0px'
+                }
+              : {
+                  paddingTop: '0px',
+                  paddingBottom: '4rem'
+                }
           }
         >
           {children}
