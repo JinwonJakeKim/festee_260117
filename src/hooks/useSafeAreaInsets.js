@@ -42,7 +42,7 @@ export default function useSafeAreaInsets() {
       });
 
       setInsets({
-        top: Math.min(top, 24),
+        top: 40,
         bottom,
         left,
         right,
