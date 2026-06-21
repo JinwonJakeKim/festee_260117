@@ -598,7 +598,7 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      <div className="relative overflow-hidden">
+      <div className="relative h-screen overflow-hidden">
         <main
           className={isMessageDetail ? "overflow-hidden" : ""}
           style={
