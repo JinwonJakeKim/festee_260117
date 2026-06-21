@@ -605,10 +605,10 @@ export default function Layout({ children, currentPageName }) {
             isMessageDetail
               ? {
                   height: '100vh',
-                  paddingTop: '0px'
+                  paddingTop: '24px'
                 }
               : {
-                  paddingTop: '0px',
+                  paddingTop: '24px',
                   paddingBottom: '4rem'
                 }
           }
