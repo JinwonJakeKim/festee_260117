@@ -20,104 +20,7 @@ import { communityTranslations } from "@/lib/communityTranslations";
 
 const dateFnsLocales = { ko, en: enUS, ja, zh: zhCN };
 
-// Sample GoTogether Posts
-const sampleGoTogetherPosts = [
-  {
-    id: 'sample-gotogether-1',
-    type: '같이가기',
-    title: '울트라 뮤직 페스티벌 코리아 같이 가실 분 구해요!',
-    content: 'UMF Korea 2024 같이 갈 친구 찾아요! EDM 좋아하고 신나게 놀 준비 되신 분 환영합니다!',
-    author_email: 'sample1@example.com',
-    author_name: '페스티벌러버1',
-    author_profile_image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=FestLover1',
-    festival_name: 'Ultra Music Festival Korea 2024',
-    festival_location: '서울',
-    festival_category: '음악',
-    festival_date: '2024-06-08T00:00:00Z',
-    temperature: 85,
-    view_count: 123,
-    comments_count: 15,
-    likes_count: 50,
-    created_date: '2024-05-20T10:00:00Z',
-    image_urls: []
-  },
-  {
-    id: 'sample-gotogether-2',
-    type: '같이가기',
-    title: '글래스톤베리 캠핑 같이 할 한국인 찾아요!',
-    content: '영국 글래스톤베리 페스티벌 2024 캠핑 존에서 같이 숙박하실 분 구합니다. 티켓은 각자 구매했어요!',
-    author_email: 'sample2@example.com',
-    author_name: '캠핑조아',
-    author_profile_image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=CampingJoha',
-    festival_name: 'Glastonbury Festival 2024',
-    festival_location: '영국',
-    festival_category: '음악',
-    festival_date: '2024-06-26T00:00:00Z',
-    temperature: 72,
-    view_count: 88,
-    comments_count: 8,
-    likes_count: 30,
-    created_date: '2024-05-18T14:30:00Z',
-    image_urls: []
-  },
-  {
-    id: 'sample-gotogether-3',
-    type: '같이가기',
-    title: '부산 국제 록 페스티벌 같이 즐겨요!',
-    content: '부산 록 페스티벌에 갈 예정인데 혼자 가기 아쉬워서 동행 찾아요! 락 음악 좋아하면 누구나 환영!',
-    author_email: 'sample3@example.com',
-    author_name: '락앤롤',
-    author_profile_image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=RockNRoll',
-    festival_name: '부산 국제 록 페스티벌 2024',
-    festival_location: '부산',
-    festival_category: '음악',
-    festival_date: '2024-08-10T00:00:00Z',
-    temperature: 60,
-    view_count: 55,
-    comments_count: 5,
-    likes_count: 20,
-    created_date: '2024-05-15T09:15:00Z',
-    image_urls: []
-  },
-  {
-    id: 'sample-gotogether-4',
-    type: '같이가기',
-    title: 'DMZ 평화콘서트 같이 갈 파티원 구함!',
-    content: 'DMZ 평화콘서트 가려고 하는데 같이 갈 친구 없나요? K-pop 팬이면 더 좋아요!',
-    author_email: 'sample4@example.com',
-    author_name: '평화메신저',
-    author_profile_image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PeaceMsg',
-    festival_name: 'DMZ 평화콘서트 2024',
-    festival_location: '파주',
-    festival_category: '음악',
-    festival_date: '2024-09-21T00:00:00Z',
-    temperature: 68,
-    view_count: 40,
-    comments_count: 3,
-    likes_count: 15,
-    created_date: '2024-05-12T11:00:00Z',
-    image_urls: []
-  },
-  {
-    id: 'sample-gotogether-5',
-    type: '같이가기',
-    title: '서울 재즈 페스티벌 같이 분위기 즐겨요!',
-    content: '서울 재즈 페스티벌 티켓 끊었는데 같이 재즈 들으면서 힐링하실 분 구해요~',
-    author_email: 'sample5@example.com',
-    author_name: '재즈홀릭',
-    author_profile_image: 'https://api.dicebear.com/7.x/adventurer/svg?seed=JazzHolic',
-    festival_name: '서울 재즈 페스티벌 2024',
-    festival_location: '서울',
-    festival_category: '음악',
-    festival_date: '2024-05-31T00:00:00Z',
-    temperature: 78,
-    view_count: 90,
-    comments_count: 10,
-    likes_count: 40,
-    created_date: '2024-05-22T16:00:00Z',
-    image_urls: []
-  }
-];
+
 
 // 안전한 날짜 포맷팅 함수 (언어별 locale 지원)
 const safeFormatDate = (dateString, formatString, locale, fallbackText = '날짜 미정') => {
@@ -244,14 +147,9 @@ export default function Community() {
     .filter(post => post.type === "같이가기")
     .filter(applyGlobalFilters);
 
-  if (goTogetherTabPosts.length === 0 && posts.length === 0) {
-    goTogetherTabPosts = sampleGoTogetherPosts.filter(applyGlobalFilters);
-  }
   goTogetherTabPosts.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
 
-  const allPossiblePostsForFilters = posts.length === 0
-    ? [...postsWithLatestAuthorInfo, ...sampleGoTogetherPosts]
-    : postsWithLatestAuthorInfo;
+  const allPossiblePostsForFilters = postsWithLatestAuthorInfo;
 
   const locations = [...new Set(allPossiblePostsForFilters.map(p => p.festival_location).filter(Boolean))];
   const categories = t.categories;
