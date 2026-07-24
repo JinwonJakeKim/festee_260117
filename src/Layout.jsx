@@ -599,6 +599,8 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
       
       <div className="relative h-screen overflow-hidden">
+        {/* 상단 시스템 상태바 영역 보호 마스크 (모든 페이지 공통) */}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 45, pointerEvents: 'none' }} />
         <main
           className={isMessageDetail ? "overflow-hidden" : ""}
           style={

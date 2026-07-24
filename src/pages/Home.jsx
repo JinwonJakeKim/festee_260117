@@ -21,7 +21,6 @@ import HomeChatbot from "../components/HomeChatbot";
 import FestivalListItem from "../components/FestivalListItem";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
 import PullToRefresh from "../components/PullToRefresh";
-import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
 
 // 앱 초기 로드 시 홈 페이지로 리다이렉트 처리
 if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
@@ -162,7 +161,6 @@ const getRankColor = (index) => {
 export default function Home() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const insets = useSafeAreaInsets();
   const urlParams = new URLSearchParams(window.location.search);
   
   // URL에서 필터 초기값 읽기
@@ -746,7 +744,6 @@ export default function Home() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen bg-black">
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 40, pointerEvents: 'none' }} />
       <LoginPromptModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
