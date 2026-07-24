@@ -1,0 +1,41 @@
+{
+  "name": "Koreatourapi_RawData_Transform_Auto",
+  "description": "5\ubd84\ub9c8\ub2e4 pending \uc0c1\ud0dc\uc758 TourApiRawData\ub97c \uc790\ub3d9\uc73c\ub85c Festival\ub85c \ubcc0\ud658\ud569\ub2c8\ub2e4",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-01-17T09:11:56.246000",
+      "ends_type": "on_date",
+      "ends_on_date": "2026-07-25T14:59:00",
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "koreatourapi_rawdata_transform_auto",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoTransformPendingData",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
