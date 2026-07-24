@@ -12,6 +12,7 @@
 
 /* 시스템 제스처/선택 비활성화 */
 html, body, #root {
+  color-scheme: dark;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
