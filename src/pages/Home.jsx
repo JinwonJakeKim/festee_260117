@@ -21,6 +21,7 @@ import HomeChatbot from "../components/HomeChatbot";
 import FestivalListItem from "../components/FestivalListItem";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
 import PullToRefresh from "../components/PullToRefresh";
+import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
 
 // 앱 초기 로드 시 홈 페이지로 리다이렉트 처리
 if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
@@ -161,6 +162,7 @@ const getRankColor = (index) => {
 export default function Home() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const urlParams = new URLSearchParams(window.location.search);
   
   // URL에서 필터 초기값 읽기
@@ -722,7 +724,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black">
-        <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ marginTop: '-40px', paddingTop: 'calc(2.5rem + env(safe-area-inset-top))' }}>
+        <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-3">
             <div className="flex-1 h-12 bg-gray-900 rounded-xl animate-pulse"></div>
             <div className="w-12 h-12 rounded-full bg-gray-900 animate-pulse"></div>
@@ -744,6 +746,7 @@ export default function Home() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen bg-black">
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 40, pointerEvents: 'none' }} />
       <LoginPromptModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
@@ -788,7 +791,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ marginTop: '-40px', paddingTop: 'calc(2.5rem + env(safe-area-inset-top))' }}>
+      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-2">
           <Link to={createPageUrl("Search")} className="flex-1 min-w-0">
             <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
