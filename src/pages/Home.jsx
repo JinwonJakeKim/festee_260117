@@ -724,7 +724,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black">
-        <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
+        <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: '0.3rem' }}>
           <div className="flex items-center gap-3">
             <div className="flex-1 h-12 bg-gray-900 rounded-xl animate-pulse"></div>
             <div className="w-12 h-12 rounded-full bg-gray-900 animate-pulse"></div>
@@ -791,7 +791,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
+      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: '0.3rem' }}>
         <div className="flex items-center gap-2">
           <Link to={createPageUrl("Search")} className="flex-1 min-w-0">
             <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
