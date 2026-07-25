@@ -1467,7 +1467,7 @@ export default function Home() {
       </div>
 
       {summerFestivals.length > 0 && (
-        <div className="max-w-screen-sm mx-auto mb-8">
+        <div className="max-w-screen-sm md:max-w-5xl mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
             {t.summerFestivals}
           </h2>
@@ -1508,7 +1508,7 @@ export default function Home() {
       )}
 
       {foodFestivals.length > 0 && (
-        <div className="max-w-screen-sm mx-auto mb-8">
+        <div className="max-w-screen-sm md:max-w-5xl mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
             {t.foodFestivals}
           </h2>
