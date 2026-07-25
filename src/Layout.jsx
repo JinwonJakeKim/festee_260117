@@ -651,7 +651,7 @@ export default function Layout({ children, currentPageName }) {
                 }
           }
         >
-          <div className={isDesktop ? "max-w-5xl mx-auto px-8 bg-black min-h-screen border-x border-gray-900/60" : ""}>
+          <div className={isDesktop ? "max-w-4xl mx-auto px-6 bg-black min-h-screen border-x border-gray-900/60" : ""}>
             {children}
           </div>
         </main>
