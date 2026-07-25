@@ -619,13 +619,15 @@ export default function Layout({ children, currentPageName }) {
           navItems={navItems}
           currentTabKey={currentTabKey}
           onTabClick={handleTabClick}
-          paddingTop={`${insets.top}px`}
+          paddingTop="0px"
         />
       )}
 
       <div className="relative h-screen overflow-hidden">
-        {/* 상단 시스템 상태바 영역 보호 마스크 (모든 페이지 공통) */}
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 45, pointerEvents: 'none' }} />
+        {/* 상단 시스템 상태바 영역 보호 마스크 (모바일 전용) */}
+        {!isDesktop && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 45, pointerEvents: 'none' }} />
+        )}
         <main
           className={isMessageDetail ? "overflow-hidden" : ""}
           style={
@@ -639,7 +641,7 @@ export default function Layout({ children, currentPageName }) {
               ? {
                   height: '100vh',
                   overflowY: 'auto',
-                  paddingTop: `calc(${insets.top}px + 4.5rem)`,
+                  paddingTop: '4.5rem',
                   background: '#1c1c1c',
                 }
               : {
