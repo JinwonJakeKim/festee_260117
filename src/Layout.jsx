@@ -6,6 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
 import { useLanguage } from "@/lib/useLanguage";
 
+// 데스크톱(768px 이상) 감지 훅
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= 768
+  );
+  React.useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isDesktop;
+}
+
 // 페이지 전환 애니메이션 variants
 const isDetailPage = (pathname) => {
   const detailPages = ['/FestivalDetail', '/FestivalMore', '/Search', '/RankerDetail', '/FestivalVenueMap', '/PostDetail', '/GoTogetherDetail'];
@@ -39,7 +52,8 @@ const navLabels = {
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSplash, setShowSplash] = React.useState(!splashShown.value);
+  const isDesktop = useIsDesktop();
+  const [showSplash, setShowSplash] = React.useState(!splashShown.value && !isDesktop);
   const { language } = useLanguage();
   const labels = navLabels[language] || navLabels.ko;
 
@@ -598,6 +612,55 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
+      {/* Desktop Top Navigation */}
+      {isDesktop && (
+        <header
+          className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
+          style={{ paddingTop: `${insets.top}px` }}
+        >
+          <div className="max-w-screen-xl mx-auto flex items-center justify-between px-6" style={{ height: '4rem' }}>
+            <Link to={createPageUrl("Home")} className="flex items-center cursor-pointer">
+              <span
+                className="text-3xl font-black"
+                style={{
+                  background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                FESTEE
+              </span>
+            </Link>
+            <nav className="flex items-center gap-10">
+              {navItems.map((item) => {
+                const isActive = currentTabKey === item.key;
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.key}
+                    href={item.url}
+                    onClick={(e) => handleTabClick(e, item.key, item.url)}
+                    className="flex items-center gap-2 transition-all duration-300 group"
+                  >
+                    <Icon
+                      className={`w-5 h-5 transition-all duration-300 ${
+                        isActive
+                          ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(0,212,255,0.8)]'
+                          : 'text-gray-500 group-hover:text-gray-300'
+                      }`}
+                    />
+                    <span className={`text-sm font-medium ${isActive ? 'text-cyan-400' : 'text-gray-400 group-hover:text-white'}`}>
+                      {item.name}
+                    </span>
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </header>
+      )}
+
       <div className="relative h-screen overflow-hidden">
         {/* 상단 시스템 상태바 영역 보호 마스크 (모든 페이지 공통) */}
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: insets.top + 'px', background: '#000', zIndex: 45, pointerEvents: 'none' }} />
@@ -610,6 +673,12 @@ export default function Layout({ children, currentPageName }) {
                   paddingTop: `${insets.top}px`,
                   overflowY: 'auto'
                 }
+              : isDesktop
+              ? {
+                  height: '100vh',
+                  overflowY: 'auto',
+                  paddingTop: `calc(${insets.top}px + 4rem)`,
+                }
               : {
                   height: '100vh',
                   overflowY: 'auto',
@@ -619,11 +688,14 @@ export default function Layout({ children, currentPageName }) {
                 }
           }
         >
-          {children}
+          <div className={isDesktop ? "max-w-screen-xl mx-auto px-6" : ""}>
+            {children}
+          </div>
         </main>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation (Mobile only) */}
+      {!isDesktop && (
       <nav
         className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998]"
         style={{
@@ -663,6 +735,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
       </nav>
+      )}
     </div>
   );
 }
