@@ -770,7 +770,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800" style={{ paddingTop: '0.3rem' }}>
+      <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800 pt-1 md:pt-3">
         <div className="flex items-center gap-2">
           <Link to={createPageUrl("Search")} className="flex-1 min-w-0">
             <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
