@@ -612,19 +612,27 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      {/* Desktop Top Navigation - 미니멀 모노톤 */}
+      {/* Desktop Top Navigation */}
       {isDesktop && (
         <header
-          className="fixed top-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-lg border-b border-white/5"
+          className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
           style={{ paddingTop: `${insets.top}px` }}
         >
-          <div className="max-w-screen-lg mx-auto flex items-center justify-between px-8" style={{ height: '3.75rem' }}>
+          <div className="max-w-screen-xl mx-auto flex items-center justify-between px-6" style={{ height: '4rem' }}>
             <Link to={createPageUrl("Home")} className="flex items-center cursor-pointer">
-              <span className="text-2xl font-bold tracking-tight text-white">
+              <span
+                className="text-3xl font-black"
+                style={{
+                  background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
                 FESTEE
               </span>
             </Link>
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-10">
               {navItems.map((item) => {
                 const isActive = currentTabKey === item.key;
                 const Icon = item.icon;
@@ -633,18 +641,16 @@ export default function Layout({ children, currentPageName }) {
                     key={item.key}
                     href={item.url}
                     onClick={(e) => handleTabClick(e, item.key, item.url)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-md transition-all duration-200 group ${
-                      isActive ? 'bg-white/5' : 'hover:bg-white/5'
-                    }`}
+                    className="flex items-center gap-2 transition-all duration-300 group"
                   >
                     <Icon
-                      className={`w-4 h-4 transition-colors duration-200 ${
-                        isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-200'
+                      className={`w-5 h-5 transition-all duration-300 ${
+                        isActive
+                          ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(0,212,255,0.8)]'
+                          : 'text-gray-500 group-hover:text-gray-300'
                       }`}
                     />
-                    <span className={`text-sm font-medium transition-colors duration-200 ${
-                      isActive ? 'text-cyan-400' : 'text-gray-400 group-hover:text-white'
-                    }`}>
+                    <span className={`text-sm font-medium ${isActive ? 'text-cyan-400' : 'text-gray-400 group-hover:text-white'}`}>
                       {item.name}
                     </span>
                   </a>
@@ -671,7 +677,7 @@ export default function Layout({ children, currentPageName }) {
               ? {
                   height: '100vh',
                   overflowY: 'auto',
-                  paddingTop: `calc(${insets.top}px + 3.75rem)`,
+                  paddingTop: `calc(${insets.top}px + 4rem)`,
                 }
               : {
                   height: '100vh',
