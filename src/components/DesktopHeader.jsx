@@ -10,7 +10,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
       className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
       style={{ paddingTop }}
     >
-      <div className="w-full flex items-center gap-12" style={{ height: '4.5rem', paddingLeft: '2.5rem', paddingRight: '2.5rem' }}>
+      <div className="w-full flex items-center gap-12" style={{ height: '4.5rem', paddingLeft: '4rem', paddingRight: '4rem' }}>
         {/* Logo */}
         <Link to={createPageUrl("Home")} className="flex items-center shrink-0 cursor-pointer">
           <span
