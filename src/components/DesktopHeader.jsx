@@ -60,10 +60,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
           })}
         </nav>
 
-        {/* Right utility text */}
-        <div className="ml-auto hidden lg:flex items-center shrink-0">
-          <span className="text-sm text-gray-500">세상의 모든 축제, 한 곳에서</span>
-        </div>
+
       </div>
     </header>
   );
