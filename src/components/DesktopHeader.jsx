@@ -1,20 +1,9 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function DesktopHeader({ navItems, currentTabKey, onTabClick, paddingTop }) {
-  const navigate = useNavigate();
-  const [query, setQuery] = React.useState("");
-
-  const onSearchSubmit = (e) => {
-    e.preventDefault();
-    navigate(query.trim()
-      ? createPageUrl(`Search?q=${encodeURIComponent(query.trim())}`)
-      : createPageUrl("Search"));
-  };
-
   return (
     <header
       className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
@@ -71,24 +60,10 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
           })}
         </nav>
 
-        {/* Search pill - pushed right, fills remaining horizontal space */}
-        <form onSubmit={onSearchSubmit} className="flex-1 max-w-md ml-auto">
-          <div className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="축제, 도시, 키워드 검색"
-              className="w-full h-10 pl-5 pr-12 rounded-full bg-gray-900 border border-gray-800 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
-            />
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-cyan-500 hover:bg-cyan-400 flex items-center justify-center transition-colors"
-            >
-              <Search className="w-4 h-4 text-black" />
-            </button>
-          </div>
-        </form>
+        {/* Right utility text */}
+        <div className="ml-auto hidden lg:flex items-center shrink-0">
+          <span className="text-sm text-gray-500">세상의 모든 축제, 한 곳에서</span>
+        </div>
       </div>
     </header>
   );
