@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
+import HomeHeaderActions from "@/components/HomeHeaderActions";
 
 export default function DesktopHeader({ navItems, currentTabKey, onTabClick, paddingTop }) {
   return (
@@ -60,7 +61,10 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
           })}
         </nav>
 
-
+        {/* 우측 액션 (메시지/알림/언어) */}
+        <div className="ml-auto">
+          <HomeHeaderActions variant="desktop" />
+        </div>
       </div>
     </header>
   );
