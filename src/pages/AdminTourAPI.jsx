@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -112,6 +112,9 @@ export default function AdminTourAPI() {
   const [filterMonth, setFilterMonth] = useState("all");
   const [selectedRawData, setSelectedRawData] = useState([]);
   const [transformingIds, setTransformingIds] = useState(new Set());
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
+  const [autoProcessedCount, setAutoProcessedCount] = useState(0);
+  const autoStopRef = useRef(false);
 
   // 최대 변환 개수 제한 제거 (자동화 모드)
   const MAX_TRANSFORM_COUNT = 999;
@@ -249,19 +252,42 @@ export default function AdminTourAPI() {
       }
     });
 
-    const startTransformNowMutation = useMutation({
-      mutationFn: async () => {
-        const response = await base44.functions.invoke('autoTransformPendingData', {});
-        return response.data;
-      },
-      onSuccess: (data) => {
-        refetchRawData();
-        alert(`✅ 변환이 시작되었습니다!\n\n처리된 축제: ${data.processed || 0}개`);
-      },
-      onError: (error) => {
-        alert(`변환 실패:\n\n${error.message}`);
+    // 자동 일괄 변환: 대기중인 데이터를 모두 처리할 때까지 백엔드 워크플로우 함수를 반복 호출
+    const runAutoTransformLoop = async () => {
+      if (isAutoRunning) return;
+      setIsAutoRunning(true);
+      autoStopRef.current = false;
+      setAutoProcessedCount(0);
+      let total = 0;
+      let safety = 0;
+      while (!autoStopRef.current && safety < 1000) {
+        safety++;
+        try {
+          const response = await base44.functions.invoke('autoTransformPendingData', {});
+          const data = response?.data || {};
+          if (data.success === false) {
+            if (data.error === 'YOUTUBE_API_LIMIT_REACHED') {
+              alert('⛔ YouTube API 일일 한도 초과로 자동 변환이 중단되었습니다.');
+            } else {
+              alert(`변환 중단: ${data.error || data.message || '알 수 없는 오류'}`);
+            }
+            break;
+          }
+          const processed = data.processed || data.dispatched || 0;
+          if (processed === 0) break; // 더 이상 대기 중인 데이터 없음
+          total += processed;
+          setAutoProcessedCount(total);
+          refetchRawData();
+        } catch (e) {
+          console.error('[AdminTourAPI] auto loop error:', e);
+          await new Promise(r => setTimeout(r, 3000));
+        }
       }
-    });
+      setIsAutoRunning(false);
+      refetchRawData();
+    };
+
+    const stopAutoLoop = () => { autoStopRef.current = true; };
 
   const areaCodes = [
     { value: "all", label: "전체" },
@@ -549,26 +575,25 @@ export default function AdminTourAPI() {
               <Card className="bg-purple-900/20 border-purple-400/30 p-4">
                 <h3 className="text-white font-bold mb-2">🤖 RawData 자동 일괄 변환</h3>
                 <p className="text-gray-400 text-sm mb-3">
-                  대기중인 RawData를 2개씩 자동 변환합니다 (5분 간격)
+                  버튼을 누르면 대기중인 RawData를 모두 순차 자동 변환합니다
                 </p>
                 <div className="bg-blue-900/20 border border-blue-400/30 rounded-lg p-3 mb-3">
                   <p className="text-blue-400 text-xs font-bold mb-1">⚡ 자동화 방식</p>
                   <ul className="text-gray-300 text-xs space-y-1">
-                    <li>• 첫 번째 배치 즉시 2개 변환 시작</li>
-                    <li>• 남은 RawData는 5분마다 2개씩 자동 변환</li>
-                    <li>• 브라우저를 닫아도 백엔드에서 계속 진행</li>
-                    <li>• 페이지를 새로고침하여 진행 상황 확인</li>
+                    <li>• 클릭 즉시 변환 시작 (남은 항목까지 백그라운드에서 순차 처리)</li>
+                    <li>• 5분 간격 스케줄 자동화도 백그라운드 병행</li>
+                    <li>• 실행 중 버튼이 "실행 중지"로 전환되어 중단 가능</li>
+                    <li>• 페이지 새로고침으로 진행 상황 확인</li>
                   </ul>
                 </div>
                 <Button
-                  onClick={() => startTransformNowMutation.mutate()}
-                  disabled={startTransformNowMutation.isPending}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
+                  onClick={isAutoRunning ? stopAutoLoop : runAutoTransformLoop}
+                  className={`w-full font-bold ${isAutoRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'}`}
                 >
-                  {startTransformNowMutation.isPending ? (
+                  {isAutoRunning ? (
                     <>
                       <Loader className="w-5 h-5 mr-2 animate-spin" />
-                      자동화 시작 중...
+                      실행 중지
                     </>
                   ) : (
                     <>
@@ -577,6 +602,18 @@ export default function AdminTourAPI() {
                     </>
                   )}
                 </Button>
+                {isAutoRunning && (
+                  <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-1">
+                      <Loader className="w-4 h-4 animate-spin" />
+                      자동 변환 실행 중...
+                    </div>
+                    <p className="text-gray-300 text-xs">
+                      지금까지 <span className="text-blue-300 font-bold">{autoProcessedCount}개</span> 변환 완료 · 백엔드 워크플로우에서 순차 처리 중
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">버튼을 다시 눌러 중단할 수 있습니다</p>
+                  </div>
+                )}
               </Card>
             )}
 
