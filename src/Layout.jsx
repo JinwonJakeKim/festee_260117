@@ -640,7 +640,7 @@ export default function Layout({ children, currentPageName }) {
                   height: '100vh',
                   overflowY: 'auto',
                   paddingTop: `calc(${insets.top}px + 4rem)`,
-                  background: '#141414',
+                  background: '#1c1c1c',
                 }
               : {
                   height: '100vh',
@@ -651,7 +651,7 @@ export default function Layout({ children, currentPageName }) {
                 }
           }
         >
-          <div className={isDesktop ? "max-w-screen-xl mx-auto px-6 bg-black min-h-screen" : ""}>
+          <div className={isDesktop ? "max-w-5xl mx-auto px-8 bg-black min-h-screen border-x border-gray-900/60" : ""}>
             {children}
           </div>
         </main>
