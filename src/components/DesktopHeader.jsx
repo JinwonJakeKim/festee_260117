@@ -9,11 +9,11 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
       className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
       style={{ paddingTop }}
     >
-      <div className="w-full flex items-center gap-8" style={{ height: '4rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
+      <div className="w-full flex items-center gap-12" style={{ height: '4.5rem', paddingLeft: '2.5rem', paddingRight: '2.5rem' }}>
         {/* Logo */}
         <Link to={createPageUrl("Home")} className="flex items-center shrink-0 cursor-pointer">
           <span
-            className="text-2xl font-black tracking-tight"
+            className="text-3xl font-black tracking-tight"
             style={{
               background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
               WebkitBackgroundClip: 'text',
@@ -26,7 +26,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
         </Link>
 
         {/* Horizontal nav */}
-        <nav className="flex items-center gap-8 shrink-0">
+        <nav className="flex items-center gap-12 shrink-0">
           {navItems.map((item) => {
             const isActive = currentTabKey === item.key;
             const Icon = item.icon;
@@ -35,10 +35,10 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
                 key={item.key}
                 href={item.url}
                 onClick={(e) => onTabClick(e, item.key, item.url)}
-                className="relative flex items-center gap-1.5 text-sm font-medium transition-colors group py-5"
+                className="relative flex items-center gap-2.5 text-lg font-medium transition-colors group py-6"
               >
                 <Icon
-                  className={`w-4 h-4 transition-colors ${
+                  className={`w-6 h-6 transition-colors ${
                     isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'
                   }`}
                 />

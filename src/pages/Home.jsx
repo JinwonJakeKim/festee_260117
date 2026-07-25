@@ -642,6 +642,8 @@ export default function Home() {
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
   const [bannerContainerWidth, setBannerContainerWidth] = useState(Math.min(window.innerWidth, 640));
+  const chartWrapperRef = useRef(null);
+  const [chartPageWidth, setChartPageWidth] = useState(Math.min(window.innerWidth, 896));
 
   useEffect(() => {
     const updateWidth = () => {
@@ -655,6 +657,20 @@ export default function Home() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateChartWidth = () => {
+      if (chartWrapperRef.current) {
+        setChartPageWidth(chartWrapperRef.current.clientWidth);
+      }
+    };
+    const raf = requestAnimationFrame(updateChartWidth);
+    window.addEventListener('resize', updateChartWidth);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updateChartWidth);
     };
   }, []);
 
@@ -1166,10 +1182,10 @@ export default function Home() {
               )}
 
           {/* Festival List - 5개씩 4페이지 가로 스크롤, 20위까지 */}
-          <div className="overflow-x-auto scrollbar-hide -mx-4 pl-4">
+          <div className="overflow-x-auto scrollbar-hide" ref={chartWrapperRef}>
             <div className="flex" style={{ width: 'max-content' }}>
               {[0, 1, 2, 3].map((pageIdx) => (
-                <div key={pageIdx} className="flex pr-4" style={{ width: 'calc(100vw - 40px)', flexShrink: 0 }}>
+                <div key={pageIdx} className="flex pr-4" style={{ width: chartPageWidth, flexShrink: 0 }}>
                   {/* 현재 페이지 아이템 */}
                   <div className="space-y-1 flex-1 min-w-0">
                     {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
