@@ -27,6 +27,24 @@ Deno.serve(async (req) => {
       }, { status: 429 });
     }
     
+    // 10분 이상 processing에 머문 카드는 런타임 취소로 멈춘 것으로 간주 → pending으로 복구
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const stale = await base44.asServiceRole.entities.TourApiRawData.filter(
+      { processing_status: 'processing' },
+      'updated_date',
+      50
+    ).catch(() => []);
+    const staleIds = stale.filter(r => {
+      const t = r.updated_date ? new Date(r.updated_date).getTime() : 0;
+      return t > 0 && t < Date.parse(tenMinAgo);
+    }).map(r => r.id);
+    if (staleIds.length > 0) {
+      console.log(`[AutoTransform] Recovering ${staleIds.length} stuck processing records -> pending`);
+      for (const id of staleIds) {
+        await base44.asServiceRole.entities.TourApiRawData.update(id, { processing_status: 'pending' });
+      }
+    }
+
     // pending 상태의 원본 데이터 조회 (1개씩 처리 - 타임아웃 방지)
     const pendingData = await base44.asServiceRole.entities.TourApiRawData.filter(
       { processing_status: 'pending' },
@@ -53,22 +71,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // transformTourApiData를 fire-and-forget으로 백그라운드 실행
-    // (await 없이 호출 - 응답을 기다리지 않음)
-    console.log(`[AutoTransform] Firing transformTourApiData in background (no await)...`);
-    base44.asServiceRole.functions.invoke('transformTourApiData', {
-      rawDataIds: rawDataIds,
-      retransform: false
-    }).catch(err => {
-      console.error('[AutoTransform] Background transform error:', err.message);
-    });
+    // transformTourApiData를 await로 실행 (워크플로우 런타임은 반환 시 백그라운드 작업을 취소하므로
+    // fire-and-forget 대신 반드시 완료를 기다려야 함)
+    console.log(`[AutoTransform] Awaiting transformTourApiData (rawDataIds: ${rawDataIds.join(',')})...`);
+    try {
+      const result = await base44.asServiceRole.functions.invoke('transformTourApiData', {
+        rawDataIds: rawDataIds,
+        retransform: false
+      });
+      console.log('[AutoTransform] transformTourApiData completed:', JSON.stringify(result).slice(0, 300));
+    } catch (err) {
+      console.error('[AutoTransform] transformTourApiData error:', err.message);
+      // 실패 시 해당 레코드를 다시 pending으로 되돌려 재시도 대상으로 유지
+      for (const id of rawDataIds) {
+        await base44.asServiceRole.entities.TourApiRawData.update(id, { processing_status: 'pending' });
+      }
+      return Response.json({
+        success: false,
+        error: err.message,
+        ids: rawDataIds
+      }, { status: 500 });
+    }
 
-    console.log('[AutoTransform] ========== DISPATCHED - returning immediately ==========');
+    console.log('[AutoTransform] ========== COMPLETED ==========');
 
     return Response.json({
       success: true,
-      message: `${rawDataIds.length}개의 축제 변환을 백그라운드에서 시작했습니다.`,
-      dispatched: rawDataIds.length,
+      message: `${rawDataIds.length}개의 축제 변환을 완료했습니다.`,
+      processed: rawDataIds.length,
       ids: rawDataIds
     });
 
