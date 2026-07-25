@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
         rawDataIds: rawDataIds,
         retransform: false
       });
-      console.log('[AutoTransform] transformTourApiData completed:', JSON.stringify(result).slice(0, 300));
+      const safeResult = (typeof result === 'string') ? result : '[object]';
+      console.log('[AutoTransform] transformTourApiData completed:', safeResult.toString().slice(0, 300));
     } catch (err) {
       console.error('[AutoTransform] transformTourApiData error:', err.message);
       // 실패 시 해당 레코드를 다시 pending으로 되돌려 재시도 대상으로 유지
