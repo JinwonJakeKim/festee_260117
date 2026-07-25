@@ -20,11 +20,8 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
       className="fixed top-0 left-0 right-0 z-[9999] bg-black/90 backdrop-blur-lg border-b border-gray-800"
       style={{ paddingTop }}
     >
-      {/* Row 1: Main bar - logo, search pill, utilities */}
-      <div
-        className="max-w-screen-xl mx-auto px-6 flex items-center gap-6"
-        style={{ height: '4rem' }}
-      >
+      <div className="w-full flex items-center gap-8" style={{ height: '4rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
+        {/* Logo */}
         <Link to={createPageUrl("Home")} className="flex items-center shrink-0 cursor-pointer">
           <span
             className="text-2xl font-black tracking-tight"
@@ -39,33 +36,8 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
           </span>
         </Link>
 
-        {/* Search pill */}
-        <form onSubmit={onSearchSubmit} className="flex-1 max-w-2xl">
-          <div className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="축제, 도시, 키워드 검색"
-              className="w-full h-11 pl-5 pr-12 rounded-full bg-gray-900 border border-gray-800 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
-            />
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-cyan-500 hover:bg-cyan-400 flex items-center justify-center transition-colors"
-            >
-              <Search className="w-4 h-4 text-black" />
-            </button>
-          </div>
-        </form>
-
-        <div className="hidden lg:flex items-center shrink-0">
-          <span className="text-sm text-gray-400">세상의 모든 축제</span>
-        </div>
-      </div>
-
-      {/* Row 2: Category sub-menu */}
-      <div className="max-w-screen-xl mx-auto px-6">
-        <nav className="flex items-center gap-8 h-12 overflow-x-auto scrollbar-hide">
+        {/* Horizontal nav */}
+        <nav className="flex items-center gap-8 shrink-0">
           {navItems.map((item) => {
             const isActive = currentTabKey === item.key;
             const Icon = item.icon;
@@ -74,7 +46,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
                 key={item.key}
                 href={item.url}
                 onClick={(e) => onTabClick(e, item.key, item.url)}
-                className="relative flex items-center gap-1.5 text-sm font-medium transition-colors group shrink-0 py-3"
+                className="relative flex items-center gap-1.5 text-sm font-medium transition-colors group py-5"
               >
                 <Icon
                   className={`w-4 h-4 transition-colors ${
@@ -98,6 +70,25 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
             );
           })}
         </nav>
+
+        {/* Search pill - pushed right, fills remaining horizontal space */}
+        <form onSubmit={onSearchSubmit} className="flex-1 max-w-md ml-auto">
+          <div className="relative">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="축제, 도시, 키워드 검색"
+              className="w-full h-10 pl-5 pr-12 rounded-full bg-gray-900 border border-gray-800 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-cyan-500 hover:bg-cyan-400 flex items-center justify-center transition-colors"
+            >
+              <Search className="w-4 h-4 text-black" />
+            </button>
+          </div>
+        </form>
       </div>
     </header>
   );

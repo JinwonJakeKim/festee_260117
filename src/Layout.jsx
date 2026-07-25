@@ -639,7 +639,7 @@ export default function Layout({ children, currentPageName }) {
               ? {
                   height: '100vh',
                   overflowY: 'auto',
-                  paddingTop: `calc(${insets.top}px + 7rem)`,
+                  paddingTop: `calc(${insets.top}px + 4rem)`,
                 }
               : {
                   height: '100vh',
