@@ -586,34 +586,45 @@ export default function AdminTourAPI() {
                     <li>• 페이지 새로고침으로 진행 상황 확인</li>
                   </ul>
                 </div>
-                <Button
-                  onClick={isAutoRunning ? stopAutoLoop : runAutoTransformLoop}
-                  className={`w-full font-bold ${isAutoRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'}`}
-                >
-                  {isAutoRunning ? (
+                {(() => {
+                  const isWorkflowRunning = isAutoRunning || processingData.length > 0;
+                  return (
                     <>
-                      <Loader className="w-5 h-5 mr-2 animate-spin" />
-                      실행 중지
+                      <Button
+                        onClick={isAutoRunning ? stopAutoLoop : runAutoTransformLoop}
+                        disabled={isWorkflowRunning && !isAutoRunning}
+                        className={`w-full font-bold ${isWorkflowRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'}`}
+                      >
+                        {isWorkflowRunning ? (
+                          <>
+                            <Loader className="w-5 h-5 mr-2 animate-spin" />
+                            {isAutoRunning ? '실행 중지' : '일괄 변환 진행중'}
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-5 h-5 mr-2" />
+                            자동 일괄 변환 시작
+                          </>
+                        )}
+                      </Button>
+                      {isWorkflowRunning && (
+                        <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-1">
+                            <Loader className="w-4 h-4 animate-spin" />
+                            {isAutoRunning ? '자동 변환 실행 중...' : '백엔드 워크플로우 변환 중...'}
+                          </div>
+                          <p className="text-gray-300 text-xs">
+                            {isAutoRunning
+                              ? <>지금까지 <span className="text-blue-300 font-bold">{autoProcessedCount}개</span> 변환 완료 · 백엔드 워크플로우에서 순차 처리 중</>
+                              : <>현재 <span className="text-blue-300 font-bold">{processingData.length}개</span> 처리 중 · 5분 간격 스케줄 자동화가 진행 중</>
+                            }
+                          </p>
+                          {isAutoRunning && <p className="text-gray-500 text-xs mt-1">버튼을 다시 눌러 중단할 수 있습니다</p>}
+                        </div>
+                      )}
                     </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-5 h-5 mr-2" />
-                      자동 일괄 변환 시작
-                    </>
-                  )}
-                </Button>
-                {isAutoRunning && (
-                  <div className="mt-3 bg-blue-900/20 border border-blue-400/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-1">
-                      <Loader className="w-4 h-4 animate-spin" />
-                      자동 변환 실행 중...
-                    </div>
-                    <p className="text-gray-300 text-xs">
-                      지금까지 <span className="text-blue-300 font-bold">{autoProcessedCount}개</span> 변환 완료 · 백엔드 워크플로우에서 순차 처리 중
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">버튼을 다시 눌러 중단할 수 있습니다</p>
-                  </div>
-                )}
+                  );
+                })()}
               </Card>
             )}
 
