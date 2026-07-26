@@ -1,0 +1,50 @@
+{
+  "name": "AutomationSetting",
+  "type": "object",
+  "properties": {
+    "automation_name": {
+      "type": "string",
+      "description": "\uc790\ub3d9\ud654 \uc2dd\ubcc4\uc790 (\uc608: japantravel_extract, japantravel_transform)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "\uc790\ub3d9\ud654 \ud65c\uc131\ud654 \uc5ec\ubd80"
+    },
+    "active_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\ud65c\uc131 \ub9cc\ub8cc \uc2dc\uac04 (ISO 8601)"
+    },
+    "last_started_by": {
+      "type": "string",
+      "description": "\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ud65c\uc131\ud654\ud55c \uad00\ub9ac\uc790 \uc774\uba54\uc77c"
+    }
+  },
+  "required": [
+    "automation_name",
+    "is_active"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

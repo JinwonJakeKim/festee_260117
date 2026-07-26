@@ -1,20 +1,53 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
+
+    // 워크플로우(스케줄러) 호출은 Authorization 헤더가 없고
+    // base44.auth.me()가 null을 반환합니다. 이 경우 관리자 검사를 건너뛰고
+    // 서비스 역할로 처리를 진행합니다. 앱 사용자가 직접 호출한 경우에만
+    // 관리자 권한을 검사합니다.
+    const authHeader = req.headers.get('Authorization');
+    let user = null;
+    if (authHeader) {
+      try { user = await base44.auth.me(); } catch (e) { user = null; }
+    }
+    if (authHeader && (!user || user.role !== 'admin')) {
+      return Response.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }
 
+    const AUTOMATION_NAME = 'japantravel_extract';
     const { batchSize = 1, linkIds } = await req.json();
+
+    // 자동 일괄 추출이 활성화되어 있는지 확인 (linkIds가 명시된 수동 호출은 검사 생략)
+    if (!linkIds || !Array.isArray(linkIds) || linkIds.length === 0) {
+      const settings = await base44.asServiceRole.entities.AutomationSetting.filter(
+        { automation_name: AUTOMATION_NAME },
+        '-updated_date',
+        5
+      );
+      const setting = settings[0];
+      const isActive = setting?.is_active === true &&
+        !!setting.active_until &&
+        new Date(setting.active_until).getTime() > Date.now();
+
+      if (!isActive) {
+        return Response.json({
+          success: true,
+          skipped: true,
+          message: 'Automation inactive - skipped',
+          processed: 0,
+          succeededCount: 0,
+          failedCount: 0
+        });
+      }
+    }
 
     console.log(`[Japantravel] Starting to process pending links (batch size: ${batchSize})`);
 
     let pendingLinks;
-    
+
     // linkIds가 제공되면 해당 링크들만 처리, 없으면 pending/failed 상태 링크 조회
     if (linkIds && Array.isArray(linkIds) && linkIds.length > 0) {
       console.log(`[Japantravel] Processing specific link IDs: ${linkIds.length} links`);
@@ -31,7 +64,7 @@ Deno.serve(async (req) => {
       const stuckLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
         processing_status: 'processing'
       }, '-updated_date', 20);
-      
+
       for (const stuckLink of stuckLinks) {
         if (stuckLink.updated_date && new Date(stuckLink.updated_date) < new Date(thirtyMinutesAgo)) {
           console.log(`[Japantravel] Resetting stuck processing link: ${stuckLink.url}`);
@@ -50,6 +83,20 @@ Deno.serve(async (req) => {
     }
 
     if (!pendingLinks || pendingLinks.length === 0) {
+      // 더 이상 처리할 링크가 없으면 자동화 자동 비활성화
+      const existingSettings = await base44.asServiceRole.entities.AutomationSetting.filter(
+        { automation_name: AUTOMATION_NAME },
+        '-updated_date',
+        5
+      );
+      if (existingSettings[0]?.id && existingSettings[0].is_active) {
+        await base44.asServiceRole.entities.AutomationSetting.update(
+          existingSettings[0].id,
+          { is_active: false, active_until: null }
+        );
+        console.log('[Japantravel] Automation auto-deactivated: no pending links left');
+      }
+
       return Response.json({
         success: true,
         message: 'No pending links to process',
@@ -96,7 +143,7 @@ Deno.serve(async (req) => {
         } else {
           // 실패: 구체적인 실패 이유 구성
           let failureReason = extractResult?.error || 'Unknown error';
-          
+
           // extractResult가 없거나 success가 false인 경우 상세 분석
           if (!extractResult) {
             failureReason = 'No response from extraction function';
@@ -146,6 +193,28 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    // 처리 완료 후 남은 pending/failed 링크 확인 → 없으면 자동화 자동 비활성화
+    if (!linkIds || linkIds.length === 0) {
+      const remaining = await base44.asServiceRole.entities.JapantravelLinks.filter({
+        processing_status: { $in: ['pending', 'failed'] }
+      }, '-created_date', 1);
+
+      if (!remaining || remaining.length === 0) {
+        const existingSettings = await base44.asServiceRole.entities.AutomationSetting.filter(
+          { automation_name: AUTOMATION_NAME },
+          '-updated_date',
+          5
+        );
+        if (existingSettings[0]?.id && existingSettings[0].is_active) {
+          await base44.asServiceRole.entities.AutomationSetting.update(
+            existingSettings[0].id,
+            { is_active: false, active_until: null }
+          );
+          console.log('[Japantravel] Automation auto-deactivated: all links processed');
+        }
+      }
+    }
+
     return Response.json({
       success: true,
       message: `Processed ${pendingLinks.length} links`,
@@ -156,7 +225,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[Japantravel] Processing error:', error);
-    return Response.json({ 
+    return Response.json({
       success: false,
       error: error.message || 'Unknown error',
       details: error.toString()

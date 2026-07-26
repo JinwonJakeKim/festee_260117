@@ -104,18 +104,26 @@ export default function AdminUrlExtraction() {
     initialData: [],
   });
 
-  const { data: automationsList } = useQuery({
-    queryKey: ['automations'],
+  // japantravel_extract 자동화 활성 상태 조회 (10초 폴링)
+  const { data: extractSetting } = useQuery({
+    queryKey: ['automationSetting', 'japantravel_extract'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('listScheduledTasks');
-      return data.tasks || [];
+      const records = await base44.entities.AutomationSetting.filter(
+        { automation_name: 'japantravel_extract' },
+        '-updated_date',
+        1
+      );
+      return records[0] || null;
     },
-    initialData: [],
+    initialData: null,
     refetchInterval: 10000,
   });
 
-  // Japantravel_Extract_Auto 자동화가 백엔드에서 실제 동작 중인지 여부
-  const isAutoExtractActive = automationsList.find(a => a.name === 'Japantravel_Extract_Auto')?.is_active === true;
+  // 자동화가 활성이면서 아직 만료되지 않았으면 "진행 중"
+  const isAutoExtractActive = !!extractSetting &&
+    extractSetting.is_active === true &&
+    !!extractSetting.active_until &&
+    new Date(extractSetting.active_until).getTime() > Date.now();
 
 
 
@@ -374,7 +382,7 @@ export default function AdminUrlExtraction() {
       if (data.success) {
         alert(data.message);
         queryClient.invalidateQueries({ queryKey: ['japantravelRawData'] });
-        queryClient.invalidateQueries({ queryKey: ['automations'] });
+        queryClient.invalidateQueries({ queryKey: ['automationSetting'] });
       } else {
         alert(`❌ 자동 변환 실패\n\n${data.error || data.message}`);
       }
@@ -395,22 +403,22 @@ export default function AdminUrlExtraction() {
       return;
     }
 
-    // Japantravel_Extract_Auto 자동화 활성화 및 종료 날짜 설정
-    const extractAutoAutomation = automationsList.find(a => a.name === 'Japantravel_Extract_Auto');
-    if (extractAutoAutomation) {
-      try {
-        const { data } = await base44.functions.invoke('enableAutomationWithEndDate', {
-          automationId: extractAutoAutomation.id
-        });
-        console.log('Automation enabled:', data);
-        queryClient.invalidateQueries({ queryKey: ['automations'] });
-      } catch (error) {
-        console.error('Failed to enable automation:', error);
-        alert(`❌ 자동화 활성화 실패\n\n${error.message || error}`);
-        return;
-      }
-    } else {
-      alert('❌ Japantravel_Extract_Auto 자동화를 찾을 수 없습니다.\n목록을 새로고침 후 다시 시도하세요.');
+    // 자동화 활성화 (오늘 23:59 KST까지) — AutomationSetting 엔티티 기반
+    const nowUtc = new Date();
+    const kstNow = new Date(nowUtc.getTime() + 9 * 60 * 60 * 1000);
+    const kstEndOfDay = new Date(kstNow);
+    kstEndOfDay.setHours(23, 59, 0, 0);
+    const activeUntilISO = new Date(kstEndOfDay.getTime() - 9 * 60 * 60 * 1000).toISOString();
+
+    try {
+      await base44.functions.invoke('setAutomationActive', {
+        automation_name: 'japantravel_extract',
+        active_until: activeUntilISO
+      });
+      queryClient.invalidateQueries({ queryKey: ['automationSetting', 'japantravel_extract'] });
+    } catch (error) {
+      console.error('Failed to enable automation:', error);
+      alert(`❌ 자동화 활성화 실패\n\n${error.message || error}`);
       return;
     }
 
@@ -641,12 +649,19 @@ export default function AdminUrlExtraction() {
   const handleAutoTransform = async () => {
     const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
     if (pendingCount === 0) { alert('변환할 대기중인 데이터가 없습니다'); return; }
-    const transformAuto = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
-    if (transformAuto) {
-      try { await base44.functions.invoke('enableAutomationWithEndDate', { automationId: transformAuto.id }); } catch (e) { console.error('자동화 활성화 실패:', e); }
-    } else {
-      console.error('Japantravel_RawData_Transform_Auto 자동화를 찾을 수 없습니다');
-    }
+    // 자동 변환 활성화 (오늘 23:59 KST까지) — AutomationSetting 엔티티 기반
+    try {
+      const nowUtc = new Date();
+      const kstNow = new Date(nowUtc.getTime() + 9 * 60 * 60 * 1000);
+      const kstEndOfDay = new Date(kstNow);
+      kstEndOfDay.setHours(23, 59, 0, 0);
+      const activeUntilISO = new Date(kstEndOfDay.getTime() - 9 * 60 * 60 * 1000).toISOString();
+      await base44.functions.invoke('setAutomationActive', {
+        automation_name: 'japantravel_transform',
+        active_until: activeUntilISO
+      });
+      queryClient.invalidateQueries({ queryKey: ['automationSetting', 'japantravel_transform'] });
+    } catch (e) { console.error('자동화 활성화 실패:', e); }
     autoTransformMutation.mutate();
   };
 

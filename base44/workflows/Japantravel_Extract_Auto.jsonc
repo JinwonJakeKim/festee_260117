@@ -14,7 +14,7 @@
       "interval_unit": "minutes",
       "interval_anchor": "2026-02-11T08:26:57.245000",
       "ends_type": "on_date",
-      "ends_on_date": "2026-06-14T14:59:00",
+      "ends_on_date": "2030-12-31T23:59:00",
       "ends_after_count": null
     }
   },
