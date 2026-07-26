@@ -111,7 +111,11 @@ export default function AdminUrlExtraction() {
       return data.tasks || [];
     },
     initialData: [],
+    refetchInterval: 10000,
   });
+
+  // Japantravel_Extract_Auto 자동화가 백엔드에서 실제 동작 중인지 여부
+  const isAutoExtractActive = automationsList.find(a => a.name === 'Japantravel_Extract_Auto')?.is_active === true;
 
 
 
@@ -399,9 +403,15 @@ export default function AdminUrlExtraction() {
           automationId: extractAutoAutomation.id
         });
         console.log('Automation enabled:', data);
+        queryClient.invalidateQueries({ queryKey: ['automations'] });
       } catch (error) {
         console.error('Failed to enable automation:', error);
+        alert(`❌ 자동화 활성화 실패\n\n${error.message || error}`);
+        return;
       }
+    } else {
+      alert('❌ Japantravel_Extract_Auto 자동화를 찾을 수 없습니다.\n목록을 새로고침 후 다시 시도하세요.');
+      return;
     }
 
     setBatchExtractionAborted(false);
@@ -1342,13 +1352,13 @@ export default function AdminUrlExtraction() {
                 </div>
                 <Button
                   onClick={handleBatchExtraction}
-                  disabled={batchExtractionProgress.isExtracting}
+                  disabled={isAutoExtractActive || processBatchMutation.isPending || batchExtractionProgress.isExtracting}
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
                 >
-                  {batchExtractionProgress.isExtracting ? (
+                  {isAutoExtractActive || processBatchMutation.isPending ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      자동화 시작 중...
+                      {isAutoExtractActive ? '자동 추출 진행 중... (5분 간격)' : '자동화 시작 중...'}
                     </>
                   ) : (
                     <>

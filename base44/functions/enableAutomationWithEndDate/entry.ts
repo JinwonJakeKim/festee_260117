@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         is_active: true,
-        ends_type: 'on',
+        ends_type: 'on_date',
         ends_on_date: endsOnDate,
         ends_after_count: null
       })
