@@ -1,26 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
-  const VERSION = "AUTO-DETECT-V2";
+  const VERSION = "AUTO-DETECT-V3-REGEX";
   const startTime = Date.now();
   const MAX_PESSIMISTIC_PAGES = 50; // 무한 루프 방지용 최대값
   const TIME_LIMIT = 30000;
-  
-  console.log(`[${VERSION}] START - Auto-detect or manual pages`);
-  
+
+  // 이벤트 상세 링크 정규식: https://en.japantravel.com/{region}/{slug}/{id}
+  const EVENT_LINK_REGEX = /https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?#\s"'<>]+\/[^/?#\s"'<>]+\/\d{3,}\/?/g;
+
+  console.log(`[${VERSION}] START - Regex-based link extraction`);
+
   try {
     const base44 = createClientFromRequest(req);
-    
+
     const user = await base44.auth.me();
-    
+
     if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
     const { sourceUrlId, targetMonth, maxPages } = await req.json();
     const logStart = Date.now();
-    
+
     if (!sourceUrlId) {
       return Response.json({ success: false, error: 'sourceUrlId required' }, { status: 400 });
     }
@@ -39,7 +41,7 @@ Deno.serve(async (req) => {
         .replace(/{MM}/g, month)
         .replace(/{LAST_DAY}/g, lastDay.toString());
     }
-    
+
     // baseUrl에서 기존 p/page 파라미터 제거 (루프에서 동적으로 추가)
     try {
       const cleanUrl = new URL(baseUrl);
@@ -49,26 +51,25 @@ Deno.serve(async (req) => {
     } catch (e) {
       // URL 파싱 실패 시 원본 유지
     }
-    
+
     // maxPages 처리: "auto" 또는 null이면 자동 감지, 숫자면 그 페이지까지만
     const useAutoDetect = !maxPages || maxPages === "auto";
     const maxPagesToProcess = useAutoDetect ? MAX_PESSIMISTIC_PAGES : parseInt(maxPages);
-    
+
     console.log(`[${VERSION}] URL: ${baseUrl}`);
     console.log(`[${VERSION}] Mode: ${useAutoDetect ? 'Auto-detect' : `Manual (${maxPagesToProcess} pages)`}`);
 
     const allLinks = [];
-    let prevPageLinks = null;
     let actualPagesProcessed = 0;
-    
+
     for (let page = 1; page <= maxPagesToProcess; page++) {
       console.log(`[${VERSION}] Page ${page}/${useAutoDetect ? '?' : maxPagesToProcess}`);
-      
+
       if (Date.now() - startTime > TIME_LIMIT) {
         console.log(`[${VERSION}] Timeout`);
         break;
       }
-      
+
       const urlObj = new URL(baseUrl);
       urlObj.searchParams.set('page', page.toString());
       const pageUrl = urlObj.toString();
@@ -77,12 +78,12 @@ Deno.serve(async (req) => {
       try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 8000);
-        
+
         const response = await fetch(pageUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
           signal: controller.signal,
         });
-        
+
         if (!response.ok) break;
         html = await response.text();
       } catch (e) {
@@ -90,43 +91,20 @@ Deno.serve(async (req) => {
         break;
       }
 
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      if (!doc) break;
-
-      const configuredContainer = sourceUrl.container_selector ? doc.querySelector(sourceUrl.container_selector) : null;
-      const upcomingContainer = doc.querySelector('div[data-block-type="events-upcoming"]');
-      const configuredUpcomingContainer = configuredContainer?.querySelector?.('div[data-block-type="events-upcoming"]') || null;
-      const fallbackContainer = doc.querySelector('div[data-block-type="events-upcoming"], div.grid, div[data-block-type="events-masonry"]');
-      const searchRoots = [configuredUpcomingContainer, upcomingContainer, configuredContainer, fallbackContainer, doc].filter(Boolean);
-      
       // "Sorry, no events found" 메시지 감지 → 즉시 중단
-      const noEventsEl = doc.querySelector('h3.text-\\[24px\\], h3[class*="text-[24px]"]');
-      const noEventsText = doc.body?.textContent || '';
-      if (noEventsText.includes('Sorry, no events found')) {
+      if (html.includes('Sorry, no events found')) {
         console.log(`[${VERSION}] "Sorry, no events found" detected on page ${page}. Stopping.`);
         break;
       }
 
+      // 정규식으로 이벤트 링크 추출 (DOM 파서 불필요)
+      const matches = html.match(EVENT_LINK_REGEX) || [];
       const currentPageLinks = [];
-      for (const root of searchRoots) {
-        const configuredLinkElements = sourceUrl.link_selector ? root.querySelectorAll(sourceUrl.link_selector) : [];
-        const fallbackLinkElements = root.querySelectorAll('a[href]');
-        const linkElements = configuredLinkElements.length > 0 ? configuredLinkElements : fallbackLinkElements;
-        for (const linkElement of linkElements) {
-          const href = linkElement.getAttribute('href');
-          if (!href) continue;
-
-          let url = href.startsWith('/') ? 'https://en.japantravel.com' + href : href;
-          
-          if (/^https?:\/\/[a-z]{2}\.japantravel\.com\/[^/?]+\/[^/?]+\/\d{3,}\/?$/.test(url)) {
-            url = url.replace(/\/$/, '');
-            if (!currentPageLinks.includes(url)) currentPageLinks.push(url);
-          }
-        }
-        if (currentPageLinks.length > 0) break;
+      for (let url of matches) {
+        url = url.replace(/\/$/, '');
+        if (!currentPageLinks.includes(url)) currentPageLinks.push(url);
       }
-      
+
       // 링크가 하나도 없으면 중단
       if (currentPageLinks.length === 0) {
         console.log(`[${VERSION}] No links found on page ${page}. Stopping.`);
@@ -141,12 +119,11 @@ Deno.serve(async (req) => {
           pageLinksAdded++;
         }
       }
-      
-      console.log(`[${VERSION}] ${pageLinksAdded} new links from page ${page} (total: ${currentPageLinks.length} links on page)`);
-      
-      prevPageLinks = currentPageLinks;
+
+      console.log(`[${VERSION}] ${pageLinksAdded} new links from page ${page} (total on page: ${currentPageLinks.length})`);
+
       actualPagesProcessed++;
-      
+
       await new Promise(r => setTimeout(r, 500));
     }
 
@@ -182,7 +159,7 @@ Deno.serve(async (req) => {
     });
 
     const resultMessage = `${useAutoDetect ? '자동 감지' : `${maxPagesToProcess}페이지 지정`}: ${actualPagesProcessed}개 페이지에서 ${allLinks.length}개 링크 추출 완료 (신규 ${toCreate.length}개)`;
-    
+
     // 추출 로그 저장 (한국시간)
     const koreaTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
     await base44.asServiceRole.entities.JapantravelExtractionLog.create({
