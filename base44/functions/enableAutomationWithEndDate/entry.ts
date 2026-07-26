@@ -15,12 +15,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'automationId required' }, { status: 400 });
     }
 
-    // 다음날 23:59 (KST = UTC+9) 기준 → UTC로 변환
+    // 오늘 23:59 (KST = UTC+9) 기준 → UTC로 변환
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(14, 59, 0, 0); // KST 23:59 = UTC 14:59
-    const endsOnDate = tomorrow.toISOString();
+    const today = new Date(now);
+    today.setHours(14, 59, 0, 0); // KST 23:59 = UTC 14:59
+    const endsOnDate = today.toISOString();
 
     console.log(`Enabling automation ${automationId}, ends_on_date: ${endsOnDate}`);
 
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `자동화 활성화 완료. 종료 예정: 내일 23:59 (KST)`,
+      message: `자동화 활성화 완료. 종료 예정: 오늘 23:59 (KST)`,
       is_active: updated.is_active,
       ends_on_date: updated.ends_on_date
     });
