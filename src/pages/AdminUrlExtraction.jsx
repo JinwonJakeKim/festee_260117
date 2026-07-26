@@ -631,7 +631,12 @@ export default function AdminUrlExtraction() {
   const handleAutoTransform = async () => {
     const pendingCount = rawDataList.filter(r => r.processing_status === 'pending' && r.name_original && r.name_original !== "").length;
     if (pendingCount === 0) { alert('변환할 대기중인 데이터가 없습니다'); return; }
-    try { await base44.functions.invoke('enableAutomationWithEndDate', { automationId: '699038fa8d0cf8ae0977327e' }); } catch (e) { console.error('자동화 활성화 실패:', e); }
+    const transformAuto = automationsList.find(a => a.name === 'Japantravel_RawData_Transform_Auto');
+    if (transformAuto) {
+      try { await base44.functions.invoke('enableAutomationWithEndDate', { automationId: transformAuto.id }); } catch (e) { console.error('자동화 활성화 실패:', e); }
+    } else {
+      console.error('Japantravel_RawData_Transform_Auto 자동화를 찾을 수 없습니다');
+    }
     autoTransformMutation.mutate();
   };
 
