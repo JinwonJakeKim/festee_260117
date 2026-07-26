@@ -16,10 +16,12 @@ Deno.serve(async (req) => {
     }
 
     // 오늘 23:59 (KST = UTC+9) 기준 → UTC로 변환
-    const now = new Date();
-    const today = new Date(now);
-    today.setHours(14, 59, 0, 0); // KST 23:59 = UTC 14:59
-    const endsOnDate = today.toISOString();
+    // KST 날짜를 정확히 구하기 위해 UTC에 +9h 후 그날 23:59를 잡고 다시 -9h
+    const nowUtc = new Date();
+    const kstNow = new Date(nowUtc.getTime() + 9 * 60 * 60 * 1000);
+    const kstEndOfDay = new Date(kstNow);
+    kstEndOfDay.setHours(23, 59, 0, 0);
+    const endsOnDate = new Date(kstEndOfDay.getTime() - 9 * 60 * 60 * 1000).toISOString();
 
     console.log(`Enabling automation ${automationId}, ends_on_date: ${endsOnDate}`);
 
