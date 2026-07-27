@@ -11,7 +11,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
       style={{ paddingTop }}
     >
       <div
-        className="mx-auto max-w-7xl flex items-center justify-between px-6 lg:px-10"
+        className="mx-auto max-w-5xl flex items-center justify-between px-10 lg:px-14"
         style={{ height: '3.75rem' }}
       >
         {/* Logo */}
