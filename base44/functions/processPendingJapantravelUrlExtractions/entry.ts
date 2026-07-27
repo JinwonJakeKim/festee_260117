@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[Japantravel] Starting to process pending links (batch size: ${batchSize})`);
+    console.log(`[Japantravel] ⏰ Starting to process pending links (batch size: ${batchSize})`);
 
     let pendingLinks;
 
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
         }
       }
     } else {
-      // 30분 이상 processing 상태로 멈춰있는 링크를 먼저 failed로 리셋
+      // 30분(이 간격) 이상 processing 상태로 멈춰있는 링크를 먼저 failed로 리셋
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
       const stuckLinks = await base44.asServiceRole.entities.JapantravelLinks.filter({
         processing_status: 'processing'
@@ -83,20 +83,9 @@ Deno.serve(async (req) => {
     }
 
     if (!pendingLinks || pendingLinks.length === 0) {
-      // 더 이상 처리할 링크가 없으면 자동화 자동 비활성화
-      const existingSettings = await base44.asServiceRole.entities.AutomationSetting.filter(
-        { automation_name: AUTOMATION_NAME },
-        '-updated_date',
-        5
-      );
-      if (existingSettings[0]?.id && existingSettings[0].is_active) {
-        await base44.asServiceRole.entities.AutomationSetting.update(
-          existingSettings[0].id,
-          { is_active: false, active_until: null }
-        );
-        console.log('[Japantravel] Automation auto-deactivated: no pending links left');
-      }
-
+      // 처리할 링크가 일시적으로 없더라도 자동화 상태는 유지
+      // (TTL active_until로 만료 관리 → 이후 새로 pending이 유입되면 자동으로 이어서 처리)
+      console.log('[Japantravel] No pending links right now - automation stays active (TTL-managed)');
       return Response.json({
         success: true,
         message: 'No pending links to process',
@@ -193,28 +182,7 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // 처리 완료 후 남은 pending/failed 링크 확인 → 없으면 자동화 자동 비활성화
-    if (!linkIds || linkIds.length === 0) {
-      const remaining = await base44.asServiceRole.entities.JapantravelLinks.filter({
-        processing_status: { $in: ['pending', 'failed'] }
-      }, '-created_date', 1);
-
-      if (!remaining || remaining.length === 0) {
-        const existingSettings = await base44.asServiceRole.entities.AutomationSetting.filter(
-          { automation_name: AUTOMATION_NAME },
-          '-updated_date',
-          5
-        );
-        if (existingSettings[0]?.id && existingSettings[0].is_active) {
-          await base44.asServiceRole.entities.AutomationSetting.update(
-            existingSettings[0].id,
-            { is_active: false, active_until: null }
-          );
-          console.log('[Japantravel] Automation auto-deactivated: all links processed');
-        }
-      }
-    }
-
+    // 처리 완료 - 자동화는 TTL(active_until)로 자동 만료되므로 여기서 비활성화하지 않음
     return Response.json({
       success: true,
       message: `Processed ${pendingLinks.length} links`,
