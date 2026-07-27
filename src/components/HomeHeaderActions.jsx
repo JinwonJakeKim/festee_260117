@@ -48,12 +48,12 @@ export default function HomeHeaderActions({ variant = "mobile" }) {
   });
 
   const btnClass = isDesktop
-    ? "w-11 h-11 rounded-full hover:bg-gray-800"
+    ? "w-9 h-9 rounded-full hover:bg-white/[0.06]"
     : "w-10 h-10 rounded-full bg-gray-900";
-  const iconClass = isDesktop ? "w-6 h-6 text-gray-400" : "w-5 h-5 text-gray-400";
+  const iconClass = isDesktop ? "w-[18px] h-[18px] text-gray-400" : "w-5 h-5 text-gray-400";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <Link to={createPageUrl("Messages")} className="flex-shrink-0">
         <button className={`flex items-center justify-center relative transition-colors ${btnClass}`}>
           <MessageCircle className={iconClass} />

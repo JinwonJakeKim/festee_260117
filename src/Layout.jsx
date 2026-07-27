@@ -268,6 +268,7 @@ export default function Layout({ children, currentPageName }) {
           margin: 0 !important;
           padding: 0 !important;
           color: #fff !important;
+          font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif !important;
           overscroll-behavior-y: none !important;
           -webkit-user-select: none !important;
           -moz-user-select: none !important;
@@ -641,7 +642,7 @@ export default function Layout({ children, currentPageName }) {
               ? {
                   height: '100vh',
                   overflowY: 'auto',
-                  paddingTop: '4.5rem',
+                  paddingTop: '3.75rem',
                   background: '#1c1c1c',
                 }
               : {
