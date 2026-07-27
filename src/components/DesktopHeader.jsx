@@ -17,7 +17,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
         {/* Logo */}
         <Link to={createPageUrl("Home")} className="flex items-center shrink-0 cursor-pointer">
           <span
-            className="text-xl font-bold leading-none tracking-[-0.04em]"
+            className="text-3xl font-bold leading-none tracking-[-0.04em]"
             style={{
               background: 'linear-gradient(92deg, #00C846 0%, #78D800 14%, #FFD000 28%, #FF9500 42%, #FF4400 56%, #FF0070 72%, #9000FF 86%, #0088FF 100%)',
               WebkitBackgroundClip: 'text',
@@ -39,7 +39,7 @@ export default function DesktopHeader({ navItems, currentTabKey, onTabClick, pad
                 key={item.key}
                 href={item.url}
                 onClick={(e) => onTabClick(e, item.key, item.url)}
-                className="relative flex items-center gap-1.5 px-3.5 lg:px-4 py-2 rounded-full text-[13px] font-medium transition-colors cursor-pointer"
+                className="relative flex items-center gap-1.5 px-4 lg:px-5 py-2 rounded-full text-base font-medium transition-colors cursor-pointer"
               >
                 {isActive && (
                   <motion.span
