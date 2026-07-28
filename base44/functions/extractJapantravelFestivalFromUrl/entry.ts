@@ -195,7 +195,13 @@ Write only the summary, nothing else.`,
     const category = article.category?.name || article.category || article.type || null;
 
     // ===== 썸네일 =====
-    // assets.japantravel.com/photo/...webp 패턴, 가장 큰 해상도 우선 선택
+    // japantravel 이미지 CDN URL 패턴 (2026-07-27 이전: assets.japantravel.com, 이후: a0/a1/a2.cdn.japantravel.com)
+    // 경로 패턴: /photo/<id>-<hash>/<W>x<H>!/name.webp  (신규 패턴은 ! 대신 URL-encoded %21 사용)
+    const japantravelImgRegex = /^https:\/\/(?:assets|[a-z0-9]+\.cdn)\.japantravel\.com\/photo\/.+\.(webp|jpg|jpeg|png)$/i;
+    const japantravelImgHtmlRegex = /https:\/\/(?:assets|[a-z0-9]+\.cdn)\.japantravel\.com\/photo\/[^\s"']+\.(?:webp|jpg|jpeg|png)/gi;
+    // 사이즈 추출 정규식: /WxH!/ (구 패턴) 또는 /WxH%21/ (신규 URL-encoded 패턴)
+    const imageSizeRegex = /\/(\d+)x(\d+)(?:!|%21)\//;
+
     let thumbnailUrl = '';
 
     // article.cover가 1440x960 등 가장 큰 이미지이므로 최우선
@@ -208,24 +214,34 @@ Write only the summary, nothing else.`,
       article.cover_image,
       article.main_image,
       article.small_thumbnail,
-    ].filter(u => typeof u === 'string' && /^https:\/\/assets\.japantravel\.com\/photo\/.+\.webp$/.test(u));
+    ].filter(u => typeof u === 'string' && japantravelImgRegex.test(u));
 
     if (imageCandidates.length > 0) {
       // 해상도 숫자(WxH) 기준으로 가장 큰 것 선택
       thumbnailUrl = imageCandidates.sort((a, b) => {
-        const sizeA = (a.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
-        const sizeB = (b.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+        const sizeA = (a.match(imageSizeRegex) || [0, 0, 0]);
+        const sizeB = (b.match(imageSizeRegex) || [0, 0, 0]);
         return (parseInt(sizeB[1]) * parseInt(sizeB[2])) - (parseInt(sizeA[1]) * parseInt(sizeA[2]));
       })[0];
     } else {
       // HTML 전체에서 탐색 후 가장 큰 해상도 선택
-      const htmlMatches = html.match(/https:\/\/assets\.japantravel\.com\/photo\/[^\s"']+\.webp/g) || [];
+      const htmlMatches = html.match(japantravelImgHtmlRegex) || [];
       if (htmlMatches.length > 0) {
         thumbnailUrl = htmlMatches.sort((a, b) => {
-          const sizeA = (a.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
-          const sizeB = (b.match(/\/(\d+)x(\d+)!\//) || [0, 0, 0]);
+          const sizeA = (a.match(imageSizeRegex) || [0, 0, 0]);
+          const sizeB = (b.match(imageSizeRegex) || [0, 0, 0]);
           return (parseInt(sizeB[1]) * parseInt(sizeB[2])) - (parseInt(sizeA[1]) * parseInt(sizeA[2]));
         })[0];
+      }
+    }
+    // 썸네일을 찾지 못한 경우 og:image/twitter:image 메타에서 시도 (최후 폴백)
+    if (!thumbnailUrl) {
+      const ogImageMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+      const twitterImgMatch = html.match(/<meta[^>]+name="twitter:image"[^>]+content="([^"]+)"/i);
+      const metaUrl = twitterImgMatch?.[1] || ogImageMatch?.[1];
+      if (metaUrl && japantravelImgRegex.test(metaUrl)) {
+        thumbnailUrl = metaUrl;
+        console.log(`[Japantravel] Thumbnail from meta (og/twitter:image): ${thumbnailUrl}`);
       }
     }
     // 패턴을 찾지 못하면 thumbnailUrl은 빈 문자열 유지
