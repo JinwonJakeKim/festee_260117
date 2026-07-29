@@ -133,8 +133,18 @@ export default function PrivacyPolicy() {
           <Item>개인 검색 기록은 서비스 내 삭제 기능을 통해 직접 삭제할 수 있습니다.</Item>
         </Section>
 
-        {/* 9. 문의 */}
-        <Section icon={Mail} iconColor="text-cyan-400" title="10. 개인정보 관련 문의">
+        {/* 9. YouTube 데이터 및 API 이용 */}
+        <Section icon={Search} iconColor="text-red-400" title="10. YouTube 데이터 및 API 이용">
+          <p>Festee는 축제 관련 영상 정보를 제공하기 위해 YouTube Data API v3를 활용합니다.</p>
+          <Item><strong className="text-gray-300">표시 영상</strong>: 축제 상세 페이지에 하이라이트 영상과 Shorts 영상 URL을 표시하며, 해당 영상은 YouTube 플랫폼에서 직접 재생됩니다.</Item>
+          <Item><strong className="text-gray-300">수집 정보</strong>: 검색 결과로 표시되는 영상의 제목, 채널명, 조회수, 영상 ID 등 공개 메타데이터만 활용합니다.</Item>
+          <Item><strong className="text-gray-300">사용자 데이터</strong>: Festee는 YouTube API 호출 시 사용자의 개인 식별 정보나 시청 기록을 YouTube에 전송하지 않으며, API 사용은 YouTube API 서비스 약관(https://developers.google.com/youtube/terms/api-services-terms-of-service) 및 개인정보처리방침(https://policies.google.com/privacy)을 준수합니다.</Item>
+          <Item><strong className="text-gray-300">영상 소유권</strong>: 표시되는 모든 영상의 소유권과 저작권은 원작자 및 YouTube에 귀속되며, Festee는 임베드된 영상을 링크 형태로만 제공합니다.</Item>
+          <Item>YouTube API를 통해 가져온 영상 메타데이터는 서비스 품질 향상(축제 인기도 산출 등)을 위해 보존되며, 사용자는 언제든지 동의 철회 및 열람을 요청할 수 있습니다.</Item>
+        </Section>
+
+        {/* 10. 문의 */}
+        <Section icon={Mail} iconColor="text-cyan-400" title="11. 개인정보 관련 문의">
           <p>개인정보 처리에 관한 문의사항은 앱 내 <strong className="text-gray-300">설정 → 피드백 보내기</strong>를 통해 접수해 주세요.</p>
           <p className="mt-2 text-gray-500">Festee는 본 방침을 변경할 경우 앱 내 공지사항을 통해 7일 전 사전 안내합니다.</p>
         </Section>
