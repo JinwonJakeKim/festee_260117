@@ -98,7 +98,7 @@ export default function PrivacyPolicy() {
           <Item>사용자가 직접 동의한 경우</Item>
           <Item>법령에 의거하거나 수사기관의 적법한 요청이 있는 경우</Item>
           <p className="mt-2">서비스 운영을 위해 아래 외부 서비스를 활용합니다.</p>
-          <Item><strong className="text-gray-300">Google API</strong>: 지도, 번역, 유튜브 영상 제공</Item>
+          <Item><strong className="text-gray-300">Google API</strong>: 지도, 번역, 유튜브 영상 제공 (Google 개인정보처리방침: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">https://policies.google.com/privacy</a>)</Item>
           <Item><strong className="text-gray-300">Base44 플랫폼</strong>: 데이터 저장 및 인증 (서비스 제공자)</Item>
         </Section>
 
