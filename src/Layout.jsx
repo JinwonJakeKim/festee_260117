@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Home, Map, Target, Users, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import useSafeAreaInsets from "@/hooks/useSafeAreaInsets";
 import { useLanguage } from "@/lib/useLanguage";
 import DesktopHeader from "@/components/DesktopHeader";
@@ -19,6 +20,29 @@ function useIsDesktop() {
   return isDesktop;
 }
 
+// 페이지 전환 애니메이션 variants
+const isDetailPage = (pathname) => {
+  const detailPages = ['/FestivalDetail', '/FestivalMore', '/Search', '/RankerDetail', '/FestivalVenueMap', '/PostDetail', '/GoTogetherDetail'];
+  return detailPages.some(p => pathname.includes(p));
+};
+
+const getPageVariants = (pathname) => {
+  if (isDetailPage(pathname)) {
+    return {
+      initial: { x: '100%' },
+      animate: { x: 0 },
+      exit: { x: '100%' },
+    };
+  }
+  return {
+    initial: { opacity: 1 },
+    animate: { opacity: 1 },
+    exit: { opacity: 1 },
+  };
+};
+
+const splashShown = { value: false };
+
 const navLabels = {
   ko: { home: "홈", map: "지도", catch: "캐치", community: "커뮤니티", my: "MY" },
   en: { home: "Home", map: "Map", catch: "Catch", community: "Community", my: "MY" },
@@ -30,8 +54,20 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
+  const [showSplash, setShowSplash] = React.useState(!splashShown.value && !isDesktop);
   const { language } = useLanguage();
   const labels = navLabels[language] || navLabels.ko;
+
+  // 스플래시 화면 타이머 - 앱 최초 진입 시 1회만 표시
+  React.useEffect(() => {
+    if (!splashShown.value) {
+      splashShown.value = true;
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
 
 
@@ -96,8 +132,109 @@ export default function Layout({ children, currentPageName }) {
 
   const currentTabKey = getCurrentTabKey(location.pathname);
 
+  const pageVariants = getPageVariants(location.pathname);
+
   return (
     <div className="min-h-screen bg-black">
+      {/* Splash Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          >
+            {/* 파티클 효과 배경 */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    background: ['#00C846', '#78D800', '#FFD000', '#FF9500', '#FF4400', '#FF0070', '#9000FF', '#0088FF'][i % 8],
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    y: [0, -30, 0],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.5, 0],
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* 로고 및 텍스트 */}
+            <div className="relative z-10 text-center px-8">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <motion.h1
+                  className="text-7xl font-black mb-4"
+                  style={{
+                    background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  FESTEE
+                </motion.h1>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="h-8"
+              >
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-gray-400 text-sm font-medium"
+                >
+                  세상의 모든 축제를 한 곳에서
+                </motion.p>
+              </motion.div>
+
+              {/* 로딩 점 애니메이션 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex justify-center gap-2 mt-8"
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-3 h-3 rounded-full"
+                    style={{ background: ['#FF9500', '#00C8AF', '#2060FF'][i] }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       <style>{`
         /* Festee 테마 색상 */
         :root {

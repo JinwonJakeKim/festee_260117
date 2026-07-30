@@ -10,9 +10,57 @@
   <meta name="color-scheme" content="dark" />
 
   <title>FESTEE</title>
+  <style id="hide-platform-loader">
+    /* 플랫폼 기본 로딩 스피너(8분할 컬러 스피너) 강제 숨김 - 리액트 마운트 전까지 표시되는 것 방지 */
+    html, body { background: #000 !important; margin: 0 !important; padding: 0 !important; }
+    #app-loader, #app-loading, .app-loader, .app-loading,
+    #platform-loader, .platform-loader, .platform-loading,
+    #base44-loader, .base44-loader, .base44-loading,
+    #initial-loader, .initial-loader, .initial-loading,
+    #loading-screen, .loading-screen, #loadingSpinner, .loading-spinner,
+    #splash-loader, .splash-loader,
+    [data-app-loader], [data-loader], [data-loading],
+    body > #loader, body > .loader, body > div.loader {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+  <div id="root"></div>
+  <script>
+    /* 런타임에 주입될 수 있는 플랫폼 로더 요소(body/html의 직계 자식 중 #root가 아닌 div)를 즉시 숨김 */
+    (function () {
+      function nuke(el) {
+        if (!el || el.id === 'root') return;
+        try { el.style.setProperty('display', 'none', 'important'); } catch (e) {}
+      }
+      function scanAndNuke(parent) {
+        for (var i = 0; i < parent.children.length; i++) {
+          var el = parent.children[i];
+          if (el.tagName === 'DIV' && el.id !== 'root') nuke(el);
+        }
+      }
+      var targets = [document.documentElement, document.body].filter(Boolean);
+      targets.forEach(function (t) { scanAndNuke(t); });
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+          for (var i = 0; i < m.addedNodes.length; i++) {
+            var node = m.addedNodes[i];
+            if (node.nodeType === 1 && node.tagName === 'DIV' && node.id !== 'root') {
+              nuke(node);
+            }
+          }
+        });
+      });
+      targets.forEach(function (t) {
+        observer.observe(t, { childList: true });
+      });
+      setTimeout(function () { observer.disconnect(); }, 3000);
+    })();
+  </script>
+  <script type="module" src="/src/main.jsx"></script>
   </body>
-</html>
+  </html>
