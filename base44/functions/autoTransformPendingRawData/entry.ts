@@ -6,11 +6,41 @@ Deno.serve(async (req) => {
 
   try {
     const base44 = createClientFromRequest(req);
-    
-    // Admin 권한 확인
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin only' }, { status: 401 });
+
+    // 워크플로우(스케줄러) 호출은 Authorization 헤더가 없고 base44.auth.me()가 null을 반환합니다.
+    // 앱 사용자가 직접 호출한 경우에만 관리자 권한을 검사합니다.
+    const authHeader = req.headers.get('Authorization');
+    let user = null;
+    if (authHeader) {
+      try { user = await base44.auth.me(); } catch (e) { user = null; }
+    }
+    if (authHeader && (!user || user.role !== 'admin')) {
+      return Response.json({ error: 'Forbidden - Admin only' }, { status: 403 });
+    }
+
+    // 자동화(스케줄러) 호출 시 AutomationSetting(japantravel_transform) 활성 상태 확인
+    // — 버튼 클릭(admin) 호출은 항상 즉시 처리, 워크플로우 호출은 활성화된 기간에만 처리
+    const AUTOMATION_NAME = 'japantravel_transform';
+    if (!authHeader) {
+      const settings = await base44.asServiceRole.entities.AutomationSetting.filter(
+        { automation_name: AUTOMATION_NAME },
+        '-updated_date',
+        5
+      );
+      const setting = settings[0];
+      const isActive = setting?.is_active === true &&
+        !!setting.active_until &&
+        new Date(setting.active_until).getTime() > Date.now();
+      if (!isActive) {
+        console.log(`[AUTO-TRANSFORM-V1] Automation inactive - skipped`);
+        return Response.json({
+          success: true,
+          skipped: true,
+          message: 'Automation inactive - skipped',
+          processed: 0,
+          remaining: 0
+        });
+      }
     }
 
     // YouTube API 일일 한도 사전 체크

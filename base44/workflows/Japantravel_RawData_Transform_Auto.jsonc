@@ -12,9 +12,9 @@
       "timezone": "UTC",
       "interval_value": 5,
       "interval_unit": "minutes",
-      "interval_anchor": "2026-02-14T08:57:30.638000",
+      "interval_anchor": "2026-07-30T12:00:00",
       "ends_type": "on_date",
-      "ends_on_date": "2026-06-17T14:59:00",
+      "ends_on_date": "2030-12-31T23:59:00",
       "ends_after_count": null
     }
   },

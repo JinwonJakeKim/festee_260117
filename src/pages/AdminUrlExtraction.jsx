@@ -125,6 +125,27 @@ export default function AdminUrlExtraction() {
     !!extractSetting.active_until &&
     new Date(extractSetting.active_until).getTime() > Date.now();
 
+  // japantravel_transform 자동화 활성 상태 조회 (10초 폴링)
+  const { data: transformSetting } = useQuery({
+    queryKey: ['automationSetting', 'japantravel_transform'],
+    queryFn: async () => {
+      const records = await base44.entities.AutomationSetting.filter(
+        { automation_name: 'japantravel_transform' },
+        '-updated_date',
+        1
+      );
+      return records[0] || null;
+    },
+    initialData: null,
+    refetchInterval: 10000,
+  });
+
+  const isAutoTransformActive = !!transformSetting &&
+    transformSetting.is_active === true &&
+    !!transformSetting.active_until &&
+    new Date(transformSetting.active_until).getTime() > Date.now();
+
+
 
 
   React.useEffect(() => {
@@ -1982,6 +2003,7 @@ export default function AdminUrlExtraction() {
               handleRetransform={handleRetransform}
               handleDelete={handleDelete}
               handleAutoTransform={handleAutoTransform}
+              isAutoTransformActive={isAutoTransformActive}
               handleSelectItem={handleSelectItem}
               rawDataSearchQuery={rawDataSearchQuery}
               setRawDataSearchQuery={setRawDataSearchQuery}

@@ -31,6 +31,7 @@ export default function JapantravelRawDataTab({
   handleRetransform,
   handleDelete,
   handleAutoTransform,
+  isAutoTransformActive,
   handleSelectItem,
   rawDataSearchQuery,
   setRawDataSearchQuery,
@@ -165,15 +166,23 @@ export default function JapantravelRawDataTab({
           </div>
           <Button
             onClick={handleAutoTransform}
-            disabled={autoTransformMutation.isPending}
+            disabled={isAutoTransformActive || autoTransformMutation.isPending}
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold"
           >
-            {autoTransformMutation.isPending ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" />자동화 시작 중...</>
+            {isAutoTransformActive || autoTransformMutation.isPending ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                {isAutoTransformActive ? '자동 변환 진행 중... (5분 간격)' : '자동화 시작 중...'}
+              </>
             ) : (
               <><RefreshCw className="w-5 h-5 mr-2" />자동 일괄 변환 시작</>
             )}
           </Button>
+          {isAutoTransformActive && (
+            <p className="text-cyan-400 text-xs text-center mt-2">
+              ⏱️ 오늘 23:59 KST까지 진행됩니다. 페이지를 새로고침해도 계속 처리됩니다.
+            </p>
+          )}
         </Card>
       )}
 
