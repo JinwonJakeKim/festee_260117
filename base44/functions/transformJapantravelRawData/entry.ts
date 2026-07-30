@@ -54,7 +54,24 @@ async function processSingleRecord(base44, rawDataId, retransform, blacklistedTe
 
   const festivalData = rawData;
   let thumbnailUrl = festivalData.thumbnail_url;
-  let mediaUrls = festivalData.image_gallery_urls || [];
+
+  // image_gallery_urls가 비어있더라도 썸네일이 있으면 최소한 썸네일은 갤러리에 노출되도록 보정
+  let properImageGallery = Array.isArray(festivalData.image_gallery_urls) ? festivalData.image_gallery_urls : [];
+  if (properImageGallery.length === 0 && thumbnailUrl) {
+    properImageGallery = [{
+      originimgurl: thumbnailUrl,
+      smallimageurl: thumbnailUrl,
+      imgname: `${festivalData.name_original || ''} - 메인`
+    }];
+    console.log(`[Transform] 🖼️ image_gallery_urls was empty, fallback to thumbnail: ${thumbnailUrl}`);
+  }
+
+  // media_urls 스키마({type, url, caption})에 맞게 이미지 갤러리를 변환
+  const mediaUrls = properImageGallery.map((img, i) => ({
+    type: 'image',
+    url: img?.originimgurl || img?.smallimageurl,
+    caption: img?.imgname || `${festivalData.name_original || ''} - 이미지 ${i + 1}`
+  })).filter(m => m.url);
 
   let latitude = festivalData.latitude;
   let longitude = festivalData.longitude;
@@ -648,7 +665,7 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
     thumbnail_url: thumbnailUrl,
     video_url: videoUrl,
     video_channel_name: videoChannelName,
-    image_gallery_urls: festivalData.image_gallery_urls,
+    image_gallery_urls: properImageGallery,
     media_urls: mediaUrls,
     youtube_shorts_urls: (() => {
       // score >= 2 AND LLM != N인 숏츠만 채택 (최대 5개)
