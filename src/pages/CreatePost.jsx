@@ -43,10 +43,14 @@ export default function CreatePost() {
   });
 
   const { data: festivals } = useQuery({
-    queryKey: ['festivals'],
-    queryFn: () => base44.entities.Festival.list(),
+    queryKey: ['festivalsForCreatePost'],
+    queryFn: () => base44.entities.Festival.filter({ show: 'Y' }, '-likes_count', 200),
     initialData: [],
   });
+
+  const getFestivalDisplayName = (festival) => {
+    return festival?.name_ko || festival?.name_en || festival?.name_original || festival?.name_jp || festival?.name_zh || '이름 없음';
+  };
 
   // 비로그인 상태면 로그인 모달 표시
   useEffect(() => {
@@ -101,8 +105,8 @@ export default function CreatePost() {
       setFormData(prev => ({
         ...prev,
         festival_id: festival.id,
-        festival_name: festival.name,
-        festival_location: `${festival.city}, ${festival.country}`,
+        festival_name: getFestivalDisplayName(festival),
+        festival_location: `${festival.city || ''}, ${festival.country || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || '-',
         festival_category: festival.category,
         festival_date: festival.start_date,
       }));
@@ -202,9 +206,14 @@ export default function CreatePost() {
                 <SelectValue placeholder="축제를 선택하세요" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 max-h-60">
+                {festivals.length === 0 && (
+                  <div className="px-3 py-6 text-center text-gray-500 text-sm">
+                    표시 중인 축제가 없습니다.
+                  </div>
+                )}
                 {festivals.map(festival => (
                   <SelectItem key={festival.id} value={festival.id} className="text-white">
-                    {festival.name}
+                    {getFestivalDisplayName(festival)}
                   </SelectItem>
                 ))}
               </SelectContent>
