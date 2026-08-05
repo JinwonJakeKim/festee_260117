@@ -50,6 +50,42 @@ export default function ReportPostModal({
         reason: selectedReason,
         description: description.trim() || undefined,
       });
+      // 관리자에게 이메일 발송
+      try {
+        const admins = await base44.entities.User.filter({ role: "admin" });
+        const subject = `[FESTEE 신고 접수] ${selectedReason}`;
+        const body = [
+          `신고가 접수되었습니다.`,
+          ``,
+          `■ 신고 대상`,
+          `유형: ${postType === "gotogether" ? "같이가기" : "게시글"}`,
+          `제목: ${postTitle || "(제목 없음)"}`,
+          `작성자: ${postAuthorName || ""} (${postAuthorEmail || ""})`,
+          ``,
+          `■ 신고자`,
+          `${user.full_name || ""} (${user.email})`,
+          ``,
+          `■ 신고 사유`,
+          `${selectedReason}`,
+          ``,
+          `■ 상세 내용`,
+          `${description.trim() || "(입력되지 않음)"}`,
+          ``,
+          `관리자 대시보드에서 확인해주세요.`,
+        ].join("\n");
+        await Promise.all(
+          (admins || []).map((a) =>
+            base44.integrations.Core.SendEmail({
+              to: a.email,
+              subject,
+              body,
+            })
+          )
+        );
+      } catch (e) {
+        // 이메일 발송 실패는 신고 접수 자체에 영향을 주지 않음
+        console.warn("신고 이메일 발송 실패", e);
+      }
     },
     onSuccess: () => {
       setSelectedReason("");
