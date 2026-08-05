@@ -79,10 +79,10 @@ export default function ReportPostModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000]"
             onClick={handleClose}
           />
-          <div className="fixed inset-0 z-[201] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[10001] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
             <motion.div
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -207,7 +207,7 @@ export default function ReportPostModal({
               </div>
 
               {/* 푸터 */}
-              <div className="sticky bottom-0 bg-gray-900 border-t border-gray-800 px-5 py-4 flex gap-2">
+              <div className="sticky bottom-0 bg-gray-900 border-t border-gray-800 px-5 pt-4 pb-[5.5rem] sm:pb-4 flex gap-2">
                 <Button
                   onClick={handleClose}
                   disabled={reportMutation.isLoading}
