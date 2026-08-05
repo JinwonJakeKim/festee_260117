@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { updateShortsViewsTotal } from "@/functions/updateShortsViewsTotal";
-import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical, Zap } from "lucide-react";
+import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical, Zap, Flag } from "lucide-react";
+import AdminReportsTab from "@/components/admin/AdminReportsTab";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -590,7 +591,7 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="px-4 py-4">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-5">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-6">
             <TabsTrigger value="festivals" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               축제 관리
             </TabsTrigger>
@@ -599,6 +600,10 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="feedback" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               피드백
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="data-[state=active]:bg-red-400 data-[state=active]:text-black text-xs">
+              <Flag className="w-3 h-3 mr-1" />
+              신고
             </TabsTrigger>
             <TabsTrigger value="ads" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               배너 관리
@@ -1476,6 +1481,11 @@ export default function AdminDashboard() {
                 <li>• TourAPI와 Eventbrite는 충분한 무료 한도를 제공합니다</li>
               </ul>
             </Card>
+          </TabsContent>
+
+          {/* 신고 관리 탭 */}
+          <TabsContent value="reports" className="mt-4">
+            <AdminReportsTab user={user} />
           </TabsContent>
         </Tabs>
       </div>

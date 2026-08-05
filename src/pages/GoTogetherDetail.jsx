@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Star, Calendar } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Star, Calendar, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import ReportPostModal from "../components/ReportPostModal";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -30,6 +30,7 @@ export default function GoTogetherDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const postId = urlParams.get('id');
   const [commentText, setCommentText] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // 페이지 진입 시 스크롤 초기화
   useEffect(() => {
@@ -163,8 +164,25 @@ export default function GoTogetherDetail() {
           <button className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
             <Share2 className="w-5 h-5 text-white" />
           </button>
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+            aria-label="게시글 신고"
+          >
+            <Flag className="w-5 h-5 text-red-400" />
+          </button>
         </div>
       </div>
+
+      <ReportPostModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        postId={postId}
+        postType="gotogether"
+        postTitle={post?.title}
+        postAuthorEmail={post?.author_email}
+        postAuthorName={post?.author_name}
+      />
 
       {/* Post Content */}
       <div className="px-4 py-6">

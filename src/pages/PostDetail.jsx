@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Send, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
+import ReportPostModal from "../components/ReportPostModal";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -33,6 +33,7 @@ export default function PostDetail() {
   const [commentText, setCommentText] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMessage, setLoginModalMessage] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -124,9 +125,25 @@ export default function PostDetail() {
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <h1 className="text-xl font-bold text-white">게시글</h1>
-          <div className="w-10" />
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+            aria-label="게시글 신고"
+          >
+            <Flag className="w-5 h-5 text-red-400" />
+          </button>
         </div>
       </div>
+
+      <ReportPostModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        postId={postId}
+        postType="post"
+        postTitle={post?.title}
+        postAuthorEmail={post?.author_email}
+        postAuthorName={post?.author_name}
+      />
 
       <div className="px-4 py-6"> {/* Changed py-4 to py-6 to match original padding logic */}
         <Card className="bg-gray-900 border-gray-800 p-4 mb-6">

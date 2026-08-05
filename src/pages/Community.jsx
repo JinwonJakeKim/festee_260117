@@ -5,7 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Heart, MessageCircle, TrendingUp, Eye, Globe, Tag, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Heart, MessageCircle, TrendingUp, Eye, Globe, Tag, Calendar as CalendarIcon, Flag } from "lucide-react";
+import ReportPostModal from "../components/ReportPostModal";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +45,7 @@ export default function Community() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null);
 
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -297,7 +299,14 @@ export default function Community() {
             <div className="space-y-3">
               {trendingPosts.map((post) => (
                 <Link key={post.id} to={createPageUrl(`PostDetail?id=${post.id}`)}>
-                  <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all duration-300 overflow-hidden">
+                  <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all duration-300 overflow-hidden relative">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTarget(post); }}
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-800/80 hover:bg-gray-700 flex items-center justify-center z-10 transition-colors"
+                      aria-label="게시글 신고"
+                    >
+                      <Flag className="w-4 h-4 text-gray-400 hover:text-red-400" />
+                    </button>
                     <div className="p-4">
                       <div className="flex items-center gap-3 mb-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${typeColors[post.type]}`}>
@@ -363,7 +372,14 @@ export default function Community() {
           <div className="space-y-3">
             {remainingPosts.map((post) => (
               <Link key={post.id} to={createPageUrl(`PostDetail?id=${post.id}`)}>
-                <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4">
+                <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 relative">
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTarget(post); }}
+                    className="absolute top-3 right-3 w-7 h-7 rounded-full bg-gray-800/80 hover:bg-gray-700 flex items-center justify-center z-10 transition-colors"
+                    aria-label="게시글 신고"
+                  >
+                    <Flag className="w-3.5 h-3.5 text-gray-400 hover:text-red-400" />
+                  </button>
                   <div className="flex items-start gap-3">
                     <Link to={createPageUrl(`UserProfile?email=${post.author_email}`)} onClick={(e) => e.stopPropagation()}>
                       {post.author_profile_image ? (
@@ -491,6 +507,16 @@ export default function Community() {
           </Link>
         </Card>
       )}
+
+      <ReportPostModal
+        isOpen={!!reportTarget}
+        onClose={() => setReportTarget(null)}
+        postId={reportTarget?.id}
+        postType="post"
+        postTitle={reportTarget?.title}
+        postAuthorEmail={reportTarget?.author_email}
+        postAuthorName={reportTarget?.author_name}
+      />
     </div>
   );
 }
