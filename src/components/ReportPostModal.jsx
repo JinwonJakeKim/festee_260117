@@ -53,14 +53,40 @@ export default function ReportPostModal({
       // 관리자에게 이메일 발송
       try {
         const admins = await base44.entities.User.filter({ role: "admin" });
+        // 게시글 본문 조회
+        let postContent = "(본문 조회 불가)";
+        let postExtra = "";
+        try {
+          const post = await base44.entities.Post.get(postId);
+          postContent = post?.content || "(본문 없음)";
+          const extraLines = [];
+          if (post?.festival_name) extraLines.push(`관련 축제: ${post.festival_name}`);
+          if (post?.festival_location) extraLines.push(`축제 위치: ${post.festival_location}`);
+          if (post?.festival_date) extraLines.push(`축제 날짜: ${post.festival_date}`);
+          if (post?.type) extraLines.push(`게시글 유형: ${post.type}`);
+          if (Array.isArray(post?.image_urls) && post.image_urls.length) {
+            extraLines.push(`이미지: ${post.image_urls.length}장`);
+          }
+          if (post?.max_participants) extraLines.push(`최대 참여인원: ${post.max_participants}명`);
+          if (Array.isArray(post?.participant_emails) && post.participant_emails.length) {
+            extraLines.push(`참여자: ${post.participant_emails.length}명`);
+          }
+          postExtra = extraLines.length ? extraLines.join("\n") : "";
+        } catch (e) {
+          console.warn("게시글 본문 조회 실패", e);
+        }
         const subject = `[FESTEE 신고 접수] ${selectedReason}`;
         const body = [
           `신고가 접수되었습니다.`,
           ``,
           `■ 신고 대상`,
           `유형: ${postType === "gotogether" ? "같이가기" : "게시글"}`,
+          `게시글 ID: ${postId}`,
           `제목: ${postTitle || "(제목 없음)"}`,
           `작성자: ${postAuthorName || ""} (${postAuthorEmail || ""})`,
+          ...(postExtra ? [``, `■ 게시글 추가 정보`, postExtra, ``] : []),
+          `■ 게시글 본문`,
+          `${postContent}`,
           ``,
           `■ 신고자`,
           `${user.full_name || ""} (${user.email})`,
