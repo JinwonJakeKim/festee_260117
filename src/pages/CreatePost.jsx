@@ -15,11 +15,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
+import FestivalPickerModal from "../components/FestivalPickerModal";
+import { Search } from "lucide-react";
 
 export default function CreatePost() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showFestivalPicker, setShowFestivalPicker] = useState(false);
 
   const [formData, setFormData] = useState({
     type: "같이가기",
@@ -40,12 +43,6 @@ export default function CreatePost() {
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     retry: false,
-  });
-
-  const { data: festivals } = useQuery({
-    queryKey: ['festivalsForCreatePost'],
-    queryFn: () => base44.entities.Festival.filter({ show: 'Y' }, '-likes_count', 200),
-    initialData: [],
   });
 
   const getFestivalDisplayName = (festival) => {
@@ -99,8 +96,7 @@ export default function CreatePost() {
     }));
   };
 
-  const handleFestivalSelect = (festivalId) => {
-    const festival = festivals.find(f => f.id === festivalId);
+  const handleFestivalSelect = (festival) => {
     if (festival) {
       setFormData(prev => ({
         ...prev,
@@ -111,6 +107,17 @@ export default function CreatePost() {
         festival_date: festival.start_date,
       }));
     }
+  };
+
+  const handleFestivalClear = () => {
+    setFormData(prev => ({
+      ...prev,
+      festival_id: "",
+      festival_name: "",
+      festival_location: "",
+      festival_category: "",
+      festival_date: null,
+    }));
   };
 
   const handleSubmit = async () => {
@@ -201,40 +208,58 @@ export default function CreatePost() {
           {/* Festival Selection */}
           <div>
             <label className="text-white text-sm font-bold mb-2 block">관련 축제 (선택)</label>
-            <Select value={formData.festival_id} onValueChange={handleFestivalSelect}>
-              <SelectTrigger className="bg-gray-900 border-gray-800 text-white">
-                <SelectValue placeholder="축제를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-800 max-h-60">
-                {festivals.length === 0 && (
-                  <div className="px-3 py-6 text-center text-gray-500 text-sm">
-                    표시 중인 축제가 없습니다.
+            {formData.festival_name ? (
+              <Card className="bg-gray-900 border-gray-800 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white text-sm font-medium truncate">{formData.festival_name}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                      <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                      <span className="truncate">{formData.festival_location}</span>
+                    </div>
+                    {formData.festival_date && (
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                        <CalendarIcon className="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
+                        <span>{format(new Date(formData.festival_date), 'yy.M.d', { locale: ko })}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-                {festivals.map(festival => (
-                  <SelectItem key={festival.id} value={festival.id} className="text-white">
-                    {getFestivalDisplayName(festival)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formData.festival_name && (
-              <Card className="bg-gray-900 border-gray-800 p-3 mt-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-cyan-400" />
-                  <span className="text-gray-400">{formData.festival_location}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setShowFestivalPicker(true)}
+                      className="text-xs text-cyan-400 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                    >
+                      변경
+                    </button>
+                    <button
+                      onClick={handleFestivalClear}
+                      className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700"
+                    >
+                      <X className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+                  </div>
                 </div>
-                {formData.festival_date && (
-                  <div className="flex items-center gap-2 text-sm mt-1">
-                    <CalendarIcon className="w-4 h-4 text-pink-500" />
-                    <span className="text-gray-400">
-                      {format(new Date(formData.festival_date), 'yy.M.d', { locale: ko })}
-                    </span>
-                  </div>
-                )}
               </Card>
+            ) : (
+              <button
+                onClick={() => setShowFestivalPicker(true)}
+                className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 flex items-center justify-between text-sm hover:bg-gray-800/60 transition-colors"
+              >
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Search className="w-4 h-4" />
+                  축제 선택하기
+                </span>
+                <span className="text-gray-600 text-xs">선택</span>
+              </button>
             )}
           </div>
+
+          <FestivalPickerModal
+            isOpen={showFestivalPicker}
+            onClose={() => setShowFestivalPicker(false)}
+            onSelect={handleFestivalSelect}
+            selectedFestivalId={formData.festival_id}
+          />
 
           {/* Title */}
           <div>
