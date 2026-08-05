@@ -71,17 +71,14 @@ export default function FestivalPickerModal({ isOpen, onClose, onSelect, selecte
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="축제명, 지역, 카테고리로 검색"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="축제명, 지역, 카테고리로 검색"
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+              />
             </div>
 
             {/* List */}
