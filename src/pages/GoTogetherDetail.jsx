@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Star, Calendar, Flag, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Flag, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import ReportPostModal from "../components/ReportPostModal";
+import FestivalListItem from "@/components/FestivalListItem";
+import { useLanguage } from "@/lib/useLanguage";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -32,6 +34,7 @@ export default function GoTogetherDetail() {
   const [commentText, setCommentText] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { language, getLocalizedContent } = useLanguage();
 
   // 페이지 진입 시 스크롤 초기화
   useEffect(() => {
@@ -65,6 +68,64 @@ export default function GoTogetherDetail() {
     queryKey: ['festival', post?.festival_id],
     queryFn: () => post?.festival_id ? base44.entities.Festival.filter({ id: post.festival_id }).then(res => res[0]) : null,
     enabled: !!post?.festival_id,
+  });
+
+  const { data: myLikes = [] } = useQuery({
+    queryKey: ['myLikes', user?.email],
+    queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async (festivalId) => {
+      if (!user) {
+        navigate(createPageUrl('Home'));
+        return;
+      }
+      const existing = myLikes.find(like => like.festival_id === festivalId);
+      if (existing) {
+        await base44.entities.FestivalLike.delete(existing.id);
+        await base44.entities.Festival.update(festivalId, {
+          likes_count: Math.max(0, (festival?.likes_count || 0) - 1)
+        });
+      } else {
+        await base44.entities.FestivalLike.create({ festival_id: festivalId, user_email: user.email });
+        await base44.entities.Festival.update(festivalId, {
+          likes_count: (festival?.likes_count || 0) + 1
+        });
+      }
+    },
+    onMutate: async (festivalId) => {
+      if (!user) return;
+      await queryClient.cancelQueries({ queryKey: ['myLikes', user.email] });
+      await queryClient.cancelQueries({ queryKey: ['festival', post?.festival_id] });
+
+      const prevLikes = queryClient.getQueryData(['myLikes', user.email]);
+      const prevFestival = queryClient.getQueryData(['festival', post?.festival_id]);
+
+      const existing = prevLikes?.find(like => like.festival_id === festivalId);
+
+      queryClient.setQueryData(['myLikes', user.email], (old = []) =>
+        existing
+          ? old.filter(l => l.festival_id !== festivalId)
+          : [...old, { festival_id: festivalId, user_email: user.email, id: 'optimistic' }]
+      );
+
+      queryClient.setQueryData(['festival', post?.festival_id], (old) =>
+        old ? { ...old, likes_count: existing ? Math.max(0, (old.likes_count || 0) - 1) : (old.likes_count || 0) + 1 } : old
+      );
+
+      return { prevLikes, prevFestival };
+    },
+    onError: (err, festivalId, context) => {
+      if (context?.prevLikes) queryClient.setQueryData(['myLikes', user.email], context.prevLikes);
+      if (context?.prevFestival) queryClient.setQueryData(['festival', post?.festival_id], context.prevFestival);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['festival', post?.festival_id] });
+      queryClient.invalidateQueries({ queryKey: ['myLikes'] });
+    },
   });
 
   const { data: comments } = useQuery({
@@ -148,22 +209,6 @@ export default function GoTogetherDetail() {
     if (temp >= 70) return 'text-orange-500';
     if (temp >= 50) return 'text-yellow-500';
     return 'text-cyan-400';
-  };
-
-  // 모든 축제 별점을 1~5로 변경
-  const getStarRating = (festival) => {
-    if (festival?.star_rating) {
-      return Math.min(5, Math.max(1, festival.star_rating));
-    }
-    
-    // Fallback to a hash-based rating if star_rating is not available
-    let hash = 0;
-    const id = festival?.id || festival?.name || '0';
-    for (let i = 0; i < id.length; i++) {
-      hash = id.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    return Math.abs(hash % 5) + 1; // Returns a number between 1 and 5
   };
 
   if (isLoading || !post) {
@@ -311,54 +356,18 @@ export default function GoTogetherDetail() {
           </div>
         </div>
         
-        {/* Festival Info (from post object - if denormalized) */}
-        {post.festival_name && (
-          <div className="mb-6">
-            <h3 className="text-white font-bold mb-3">관련 축제 정보</h3>
-            <Card className="bg-gray-900 border-gray-800 p-4">
-              <h4 className="text-white font-bold mb-2">{post.festival_name}</h4>
-              {post.festival_date && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Calendar className="w-4 h-4 text-pink-500" />
-                  <span>{safeFormatDate(post.festival_date, 'yy.M.d')}</span>
-                </div>
-              )}
-            </Card>
-          </div>
-        )}
-
         {/* Festival Card (from linked festival entity) */}
         {festival && (
           <div className="mb-6">
             <h3 className="text-white font-bold mb-3">축제</h3>
-            <Link to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-              <Card className="bg-gray-900 border-gray-800 hover:border-purple-400/50 transition-all overflow-hidden">
-                <div className="flex gap-3 p-3">
-                  <img
-                    src={festival.thumbnail_url}
-                    alt={festival.name}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1 mb-1">
-                      <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                      <span className="text-cyan-400 text-xs font-bold">
-                        {getStarRating(festival)}
-                      </span>
-                    </div>
-                    <h4 className="text-white font-bold mb-1 line-clamp-1">{festival.name}</h4>
-                    <p className="text-gray-400 text-xs">{festival.country} {festival.city}</p>
-                    <p className="text-gray-500 text-xs">
-                      {safeFormatDate(festival.start_date, 'yy.M.d')}-{safeFormatDate(festival.end_date, 'M.d')}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center">
-                    <Heart className="w-5 h-5 text-pink-500 fill-pink-500 mb-1" />
-                    <span className="text-xs text-gray-400">{festival.likes_count || 0}</span>
-                  </div>
-                </div>
-              </Card>
-            </Link>
+            <FestivalListItem
+              festival={festival}
+              index={0}
+              isLiked={myLikes.some(like => like.festival_id === festival.id)}
+              onLike={(id) => likeMutation.mutate(id)}
+              getLocalizedContent={getLocalizedContent}
+              language={language}
+            />
           </div>
         )}
 
