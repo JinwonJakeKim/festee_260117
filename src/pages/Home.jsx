@@ -288,6 +288,39 @@ export default function Home() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // 배너에 지정된 축제 ID 목록 (인기도순 500위 밖의 축제도 조회하기 위함)
+  const featuredFestivalIds = useMemo(() => {
+    const ids = [];
+    advertisements.forEach(ad => {
+      if (ad.featured_festival_ids) {
+        ad.featured_festival_ids.forEach(fid => ids.push(fid));
+      }
+    });
+    return [...new Set(ids)];
+  }, [advertisements]);
+
+  // 배너 지정 축제를 ID로 직접 조회 (rawFestivals 500위 제한과 무관)
+  const { data: featuredFestivals = [] } = useQuery({
+    queryKey: ['featuredFestivals', featuredFestivalIds],
+    queryFn: async () => {
+      if (featuredFestivalIds.length === 0) return [];
+      const results = await Promise.all(
+        featuredFestivalIds.map(id => base44.entities.Festival.get(id).catch(() => null))
+      );
+      return results.filter(Boolean);
+    },
+    enabled: featuredFestivalIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // 배너 조회용 축제 맵 (rawFestivals + featuredFestivals 병합)
+  const bannerFestivalMap = useMemo(() => {
+    const map = new Map();
+    rawFestivals?.forEach(f => map.set(f.id, f));
+    featuredFestivals.forEach(f => map.set(f.id, f));
+    return map;
+  }, [rawFestivals, featuredFestivals]);
+
   const { data: myLikes = [] } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
@@ -468,11 +501,11 @@ export default function Home() {
         link: ad.link_url,
       });
 
-      // 이 광고에 지정된 축제들 추가 (원본 데이터에서 조회하여
-      // 숨김/중복제거로 인한 누락 방지)
+      // 이 광고에 지정된 축제들 추가 (전용 맵에서 조회하여
+      // 숨김/중복제거/인기도순 500위 제한으로 인한 누락 방지)
       if (ad.featured_festival_ids && ad.featured_festival_ids.length > 0) {
         ad.featured_festival_ids.forEach(fid => {
-          const festival = rawFestivals?.find(f => f.id === fid);
+          const festival = bannerFestivalMap.get(fid);
           if (festival) result.push(makeFestivalBanner(festival));
         });
       }
@@ -487,7 +520,7 @@ export default function Home() {
     }
 
     return result;
-  }, [filteredFestivals, festivals, rawFestivals, advertisements, getLocalizedContent]);
+  }, [filteredFestivals, festivals, rawFestivals, bannerFestivalMap, advertisements, getLocalizedContent]);
 
   const countries = [...new Set(festivals.map(f => f.country))];
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
