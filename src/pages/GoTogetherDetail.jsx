@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import ReportPostModal from "../components/ReportPostModal";
 import FestivalListItem from "@/components/FestivalListItem";
+import UserSearchModal from "../components/UserSearchModal";
 import { useLanguage } from "@/lib/useLanguage";
 
 // 안전한 날짜 포맷팅 함수
@@ -34,6 +35,7 @@ export default function GoTogetherDetail() {
   const [commentText, setCommentText] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUserSearch, setShowUserSearch] = useState(false);
   const { language, getLocalizedContent } = useLanguage();
 
   // 페이지 진입 시 스크롤 초기화
@@ -75,6 +77,28 @@ export default function GoTogetherDetail() {
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
     enabled: !!user,
     staleTime: 1000 * 60 * 2,
+  });
+
+  const participantEmails = post?.participant_emails || (post ? [post.author_email] : []);
+
+  const { data: participantProfiles = [] } = useQuery({
+    queryKey: ['participantProfiles', participantEmails.join(',')],
+    queryFn: async () => {
+      if (!participantEmails.length) return [];
+      const res = await base44.functions.invoke('searchUsers', { emails: participantEmails });
+      return res.data.users || [];
+    },
+    enabled: participantEmails.length > 0,
+  });
+
+  const addParticipantMutation = useMutation({
+    mutationFn: async (selectedUser) => {
+      const newEmails = [...new Set([...participantEmails, selectedUser.email])];
+      await base44.entities.Post.update(postId, { participant_emails: newEmails });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+    },
   });
 
   const likeMutation = useMutation({
@@ -272,6 +296,13 @@ export default function GoTogetherDetail() {
         postAuthorName={post?.author_name}
       />
 
+      <UserSearchModal
+        isOpen={showUserSearch}
+        onClose={() => setShowUserSearch(false)}
+        onAdd={(selectedUser) => addParticipantMutation.mutate(selectedUser)}
+        existingEmails={participants}
+      />
+
       {/* 삭제 확인 모달 */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -341,16 +372,46 @@ export default function GoTogetherDetail() {
 
         {/* Members Section */}
         <div className="mb-6">
-          <h3 className="text-white font-bold mb-3">멤버</h3>
-          <div className="flex items-center gap-3">
-            {participants.map((email, idx) => (
-              <div key={idx} className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                {email?.[0]?.toUpperCase() || 'U'}
-              </div>
+          <h3 className="text-white font-bold mb-3">멤버 ({participants.length})</h3>
+          <div className="flex items-start gap-3 flex-wrap">
+            {participantProfiles.map((profile) => (
+              <Link
+                key={profile.email}
+                to={createPageUrl(`UserProfile?email=${profile.email}`)}
+                className="flex flex-col items-center gap-1 w-16"
+              >
+                {profile.profile_image ? (
+                  <img
+                    src={profile.profile_image}
+                    alt={profile.full_name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold">
+                    {profile.full_name?.[0] || profile.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <span className="text-xs text-gray-300 truncate w-full text-center">{profile.full_name || profile.email}</span>
+              </Link>
             ))}
-            {(!post.max_participants || participants.length < post.max_participants) && (
-              <button className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center hover:border-purple-400 transition-colors">
-                <Plus className="w-6 h-6 text-gray-600" />
+            {participantProfiles.length < participants.length &&
+              participants.slice(participantProfiles.length).map((email, idx) => (
+                <div key={`unknown-${idx}`} className="flex flex-col items-center gap-1 w-16">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold">
+                    {email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-xs text-gray-500 truncate w-full text-center">{email}</span>
+                </div>
+              ))}
+            {isAuthor && (!post.max_participants || participants.length < post.max_participants) && (
+              <button
+                onClick={() => setShowUserSearch(true)}
+                className="flex flex-col items-center gap-1 w-16"
+              >
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center hover:border-purple-400 transition-colors">
+                  <Plus className="w-6 h-6 text-gray-400" />
+                </div>
+                <span className="text-xs text-gray-500">초대</span>
               </button>
             )}
           </div>
