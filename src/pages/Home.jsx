@@ -468,10 +468,11 @@ export default function Home() {
         link: ad.link_url,
       });
 
-      // 이 광고에 지정된 축제들 추가
+      // 이 광고에 지정된 축제들 추가 (원본 데이터에서 조회하여
+      // 숨김/중복제거로 인한 누락 방지)
       if (ad.featured_festival_ids && ad.featured_festival_ids.length > 0) {
         ad.featured_festival_ids.forEach(fid => {
-          const festival = festivals.find(f => f.id === fid);
+          const festival = rawFestivals?.find(f => f.id === fid);
           if (festival) result.push(makeFestivalBanner(festival));
         });
       }
@@ -486,7 +487,7 @@ export default function Home() {
     }
 
     return result;
-  }, [filteredFestivals, festivals, advertisements, getLocalizedContent]);
+  }, [filteredFestivals, festivals, rawFestivals, advertisements, getLocalizedContent]);
 
   const countries = [...new Set(festivals.map(f => f.country))];
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
