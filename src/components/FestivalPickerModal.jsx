@@ -20,7 +20,7 @@ export default function FestivalPickerModal({ isOpen, onClose, onSelect, selecte
 
   const { data: festivals = [], isLoading } = useQuery({
     queryKey: ["festivalsForPicker"],
-    queryFn: () => base44.entities.Festival.filter({ show: "Y" }, "-likes_count", 500),
+    queryFn: () => base44.entities.Festival.filter({ show: "Y" }, "-popularity", 9999),
     enabled: isOpen,
   });
 
