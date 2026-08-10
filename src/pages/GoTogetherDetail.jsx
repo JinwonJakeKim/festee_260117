@@ -356,18 +356,40 @@ export default function GoTogetherDetail() {
           </div>
         </div>
         
-        {/* Festival Card (from linked festival entity) */}
-        {festival && (
+        {/* Festival Card */}
+        {(festival || post.festival_name) && (
           <div className="mb-6">
             <h3 className="text-white font-bold mb-3">축제</h3>
-            <FestivalListItem
-              festival={festival}
-              index={0}
-              isLiked={myLikes.some(like => like.festival_id === festival.id)}
-              onLike={(id) => likeMutation.mutate(id)}
-              getLocalizedContent={getLocalizedContent}
-              language={language}
-            />
+            {festival ? (
+              <FestivalListItem
+                festival={festival}
+                index={0}
+                isLiked={myLikes.some(like => like.festival_id === festival.id)}
+                onLike={(id) => likeMutation.mutate(id)}
+                getLocalizedContent={getLocalizedContent}
+                language={language}
+              />
+            ) : (
+              <Link to={post.festival_id ? createPageUrl(`FestivalDetail?id=${post.festival_id}`) : '#'}>
+                <div className="flex items-center py-3 pr-3 rounded-2xl bg-gray-900/50 hover:bg-gray-900 transition-all">
+                  <div className="flex-shrink-0 w-6 text-center">
+                    <span className="text-gray-600 font-bold text-lg leading-none">1</span>
+                  </div>
+                  <div className="flex-shrink-0 ml-0.5">
+                    <img
+                      src={post.festival_image || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
+                      alt={post.festival_name}
+                      className="w-16 h-16 rounded-xl object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 ml-3">
+                    <h3 className="text-white font-bold text-sm truncate mb-1">{post.festival_name}</h3>
+                    <div className="text-gray-400 text-xs">{post.festival_location || ''}</div>
+                    <div className="text-gray-500 text-xs">{post.festival_date || ''}</div>
+                  </div>
+                </div>
+              </Link>
+            )}
           </div>
         )}
 
