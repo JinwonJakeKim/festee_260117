@@ -773,16 +773,16 @@ export default function Home() {
       <div className="sticky top-0 z-50 bg-black px-4 pb-3 border-b border-gray-800 pt-1 md:pt-3">
         <div className="flex items-center gap-2">
           <Link to={createPageUrl("Search")} className="flex-1 min-w-0">
-            <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
+            <div className="flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12 w-full min-w-0">
               <input
                 type="text"
                 placeholder={searchPlaceholder}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl text-sm"
+                className="flex-1 min-w-0 w-full bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl text-sm"
                 readOnly
               />
             </div>
           </Link>
-          <div className="md:hidden">
+          <div className="md:hidden flex-shrink-0">
             <HomeHeaderActions variant="mobile" />
           </div>
         </div>
