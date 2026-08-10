@@ -732,14 +732,14 @@ export default function Search() {
           </button>
 
           {/* 검색창 - X 버튼 제거 */}
-          <div className="flex-1 relative flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
+          <div className="flex-1 min-w-0 relative flex items-center bg-gray-900 rounded-xl border border-gray-800 h-12">
             <input
               type="text"
               value={localSearchInput} // 로컬 상태 사용
               onChange={(e) => setLocalSearchInput(e.target.value)} // 로컬 상태 업데이트
               onKeyPress={(e) => e.key === 'Enter' && handleSearch(localSearchInput)} // Enter 시 로컬 상태로 검색
               placeholder={t.placeholder}
-              className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl"
+              className="flex-1 min-w-0 w-full bg-transparent border-none outline-none text-white placeholder:text-gray-500 px-4 h-full rounded-xl"
               autoFocus
             />
           </div>
