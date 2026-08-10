@@ -79,7 +79,7 @@ export default function GoTogetherDetail() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const participantEmails = post?.participant_emails || (post ? [post.author_email] : []);
+  const participantEmails = post ? Array.from(new Set([...(post.participant_emails || []), post.author_email].filter(Boolean))) : [];
 
   const { data: participantProfiles = [] } = useQuery({
     queryKey: ['participantProfiles', participantEmails.join(',')],
@@ -243,7 +243,7 @@ export default function GoTogetherDetail() {
     );
   }
 
-  const participants = post.participant_emails || [post.author_email];
+  const participants = Array.from(new Set([...(post.participant_emails || []), post.author_email].filter(Boolean)));
   const authorProfileImage = author?.profile_image || post.author_profile_image;
   const authorName = author?.full_name || post.author_name;
 
