@@ -58,6 +58,7 @@ import AdminUrlExtraction from './pages/AdminUrlExtraction';
 import Catch from './pages/Catch';
 import Community from './pages/Community';
 import CreatePost from './pages/CreatePost';
+import EditPost from './pages/EditPost';
 import FeedbackDetail from './pages/FeedbackDetail';
 import FeedbackForm from './pages/FeedbackForm';
 import FestivalDetail from './pages/FestivalDetail';
@@ -98,6 +99,7 @@ export const PAGES = {
     "Catch": Catch,
     "Community": Community,
     "CreatePost": CreatePost,
+    "EditPost": EditPost,
     "FeedbackDetail": FeedbackDetail,
     "FeedbackForm": FeedbackForm,
     "FestivalDetail": FestivalDetail,

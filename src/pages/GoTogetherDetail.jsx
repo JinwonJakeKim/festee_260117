@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Star, Calendar, Flag } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Share2, MapPin, Users, Plus, Star, Calendar, Flag, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,7 @@ export default function GoTogetherDetail() {
   const postId = urlParams.get('id');
   const [commentText, setCommentText] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // 페이지 진입 시 스크롤 초기화
   useEffect(() => {
@@ -118,6 +119,30 @@ export default function GoTogetherDetail() {
     }
   };
 
+  const deletePostMutation = useMutation({
+    mutationFn: async () => {
+      await base44.entities.Post.delete(postId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      navigate(createPageUrl("Community"));
+    },
+  });
+
+  const handleEdit = () => {
+    navigate(createPageUrl(`EditPost?id=${postId}`));
+  };
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    deletePostMutation.mutate();
+  };
+
+  const isAuthor = user && post && user.email === post.author_email;
+
   const getTemperatureColor = (temp) => {
     if (temp >= 90) return 'text-red-500';
     if (temp >= 70) return 'text-orange-500';
@@ -160,7 +185,25 @@ export default function GoTogetherDetail() {
         <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-        <div className="flex gap-2">
+        <div className="flex gap-1 items-center">
+          {isAuthor && (
+            <>
+              <button
+                onClick={handleEdit}
+                className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+                aria-label="게시글 수정"
+              >
+                <Pencil className="w-5 h-5 text-cyan-400" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+                aria-label="게시글 삭제"
+              >
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </button>
+            </>
+          )}
           <button className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
             <Share2 className="w-5 h-5 text-white" />
           </button>
@@ -183,6 +226,33 @@ export default function GoTogetherDetail() {
         postAuthorEmail={post?.author_email}
         postAuthorName={post?.author_name}
       />
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-white text-lg font-bold mb-2">게시글 삭제</h3>
+            <p className="text-gray-400 text-sm mb-6">정말로 이 게시글을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.</p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletePostMutation.isLoading}
+              >
+                취소
+              </Button>
+              <Button
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                onClick={confirmDelete}
+                disabled={deletePostMutation.isLoading}
+              >
+                {deletePostMutation.isLoading ? "삭제 중..." : "삭제"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Post Content */}
       <div className="px-4 py-6">
