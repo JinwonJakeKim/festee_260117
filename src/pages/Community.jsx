@@ -298,7 +298,7 @@ export default function Community() {
             <p className="text-gray-500 text-xs mb-3">{t.trendingDesc}</p>
             <div className="space-y-3">
               {trendingPosts.map((post) => (
-                <Link key={post.id} to={createPageUrl(`PostDetail?id=${post.id}`)}>
+                <Link key={post.id} to={createPageUrl(`${post.type === '같이가기' ? 'GoTogetherDetail' : 'PostDetail'}?id=${post.id}`)}>
                   <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all duration-300 overflow-hidden relative">
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTarget(post); }}
@@ -371,7 +371,7 @@ export default function Community() {
           <h3 className="text-white font-bold text-lg mb-3">{t.allPostsTitle}</h3>
           <div className="space-y-3">
             {remainingPosts.map((post) => (
-              <Link key={post.id} to={createPageUrl(`PostDetail?id=${post.id}`)}>
+              <Link key={post.id} to={createPageUrl(`${post.type === '같이가기' ? 'GoTogetherDetail' : 'PostDetail'}?id=${post.id}`)}>
                 <Card className="bg-gray-900 border-gray-800 hover:border-cyan-400/50 transition-all p-4 relative">
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTarget(post); }}
