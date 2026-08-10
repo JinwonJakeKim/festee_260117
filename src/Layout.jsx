@@ -82,12 +82,10 @@ export default function Layout({ children, currentPageName }) {
       createPageUrl("Search"),
       createPageUrl("RankerDetail"),
       createPageUrl("FestivalVenueMap"),
-      createPageUrl("PostDetail"),
-      createPageUrl("GoTogetherDetail"),
     ],
     map: [createPageUrl("FestivalMap")],
     catch: [createPageUrl("Catch"), createPageUrl("NearbyCatch")],
-    community: [createPageUrl("Community"), createPageUrl("CreatePost")],
+    community: [createPageUrl("Community"), createPageUrl("CreatePost"), createPageUrl("PostDetail"), createPageUrl("GoTogetherDetail")],
     my: [
       createPageUrl("MyFestee"),
       createPageUrl("Settings"),
