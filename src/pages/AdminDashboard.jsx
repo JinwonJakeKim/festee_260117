@@ -972,12 +972,11 @@ export default function AdminDashboard() {
               )}
 
               {/* 축제 검색 */}
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <div className="mb-2">
                 <input
                   value={festivalBannerSearch}
                   onChange={(e) => setFestivalBannerSearch(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan-400"
                   placeholder="축제 이름, 도시, 국가로 검색..."
                 />
               </div>
