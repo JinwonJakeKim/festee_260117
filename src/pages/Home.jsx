@@ -284,7 +284,7 @@ export default function Home() {
 
   const { data: advertisements = [] } = useQuery({
     queryKey: ['advertisements'],
-    queryFn: () => base44.entities.Advertisement.filter({ is_active: true }, 'order'),
+    queryFn: () => base44.entities.Advertisement.list('order'),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -491,31 +491,42 @@ export default function Home() {
 
     const result = [];
 
-    advertisements.filter(ad => ad.is_active !== false).forEach(ad => {
-      // 광고 배너 추가
-      result.push({
-        type: 'ad',
-        name: ad.name || 'Advertisement',
-        image: ad.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-        videoUrl: ad.video_url,
-        link: ad.link_url,
-      });
-
-      // 이 광고에 지정된 축제들 추가 (전용 맵에서 조회하여
-      // 숨김/중복제거/인기도순 500위 제한으로 인한 누락 방지)
+    // 배너 축제: 모든 광고에서 지정된 축제를 먼저 수집 (활성화 여부 무관)
+    const featuredBanners = [];
+    advertisements.forEach(ad => {
       if (ad.featured_festival_ids && ad.featured_festival_ids.length > 0) {
         ad.featured_festival_ids.forEach(fid => {
           const festival = bannerFestivalMap.get(fid);
-          if (festival) result.push(makeFestivalBanner(festival));
+          if (festival) featuredBanners.push(makeFestivalBanner(festival));
         });
       }
     });
 
+    // 활성화된 상업 광고만 배너로 표시
+    const activeAds = advertisements.filter(ad => ad.is_active === true);
+
+    if (featuredBanners.length > 0 && activeAds.length === 0) {
+      // 배너 축제만 있고 활성 광고가 없으면 축제 배너만 표시
+      result.push(...featuredBanners);
+    } else {
+      // 활성 광고 + 배너 축제 순서대로 배치
+      activeAds.forEach(ad => {
+        result.push({
+          type: 'ad',
+          name: ad.name || 'Advertisement',
+          image: ad.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+          videoUrl: ad.video_url,
+          link: ad.link_url,
+        });
+      });
+      result.push(...featuredBanners);
+    }
+
     // 광고가 없거나 지정 축제가 없으면 인기 축제 자동 배치
     if (result.length === 0) {
       filteredFestivals.slice(0, 3).forEach(f => result.push(makeFestivalBanner(f)));
-    } else if (!advertisements.some(ad => ad.featured_festival_ids?.length > 0)) {
-      // 광고는 있지만 지정 축제가 하나도 없으면 인기 축제 추가
+    } else if (activeAds.length === 0 && featuredBanners.length === 0) {
+      // 광고는 있지만 활성 광고도 없고 지정 축제도 없으면 인기 축제 추가
       filteredFestivals.slice(0, 3).forEach(f => result.push(makeFestivalBanner(f)));
     }
 
