@@ -200,31 +200,70 @@ export default function Catch() {
     }
   };
 
+  const convertImageToDataUrl = async (url) => {
+    // CORS 프록시를 통해 이미지를 data URL로 변환
+    const proxyUrls = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    ];
+    for (let i = 0; i < proxyUrls.length; i++) {
+      try {
+        const res = await fetch(proxyUrls[i]);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+        if (dataUrl) return dataUrl;
+      } catch (e) { /* try next proxy */ }
+    }
+    return null;
+  };
+
   const handleDownloadImage = async () => {
     const containerEl = document.getElementById('catch-history-container');
     if (!containerEl) return;
     try {
-      // 컨테이너 내 모든 이미지 로드 대기
-      const images = containerEl.querySelectorAll('img');
-      await Promise.all(
-        Array.from(images).map((img) => {
-          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-            setTimeout(resolve, 5000);
-          });
-        })
-      );
+      // 컨테이너 내 모든 이미지를 data URL로 변환
+      const images = Array.from(containerEl.querySelectorAll('img'));
+      const originalSrcs = images.map((img) => img.src);
+
+      await Promise.all(images.map(async (img) => {
+        const src = img.src;
+        if (!src || src.startsWith('data:')) return;
+        const dataUrl = await convertImageToDataUrl(src);
+        if (dataUrl) {
+          img.src = dataUrl;
+        }
+      }));
+
+      // 변환된 이미지 로드 대기
+      await Promise.all(images.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+          setTimeout(resolve, 5000);
+        });
+      }));
 
       const canvas = await html2canvas(containerEl, {
         backgroundColor: '#211e1b',
         scale: 2,
-        useCORS: true,
+        useCORS: false,
         allowTaint: false,
         imageTimeout: 15000,
         logging: false,
       });
+
+      // 원본 src 복원
+      images.forEach((img, i) => {
+        if (originalSrcs[i]) img.src = originalSrcs[i];
+      });
+
       const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = dataUrl;

@@ -69,6 +69,12 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
         .catch-stack-ctx a {
           color: #000 !important;
         }
+        .festee-logo span:nth-child(1) { color: #7b3dff !important; }
+        .festee-logo span:nth-child(2) { color: #4285f4 !important; }
+        .festee-logo span:nth-child(3) { color: #34a853 !important; }
+        .festee-logo span:nth-child(4) { color: #fbbc05 !important; }
+        .festee-logo span:nth-child(5) { color: #ea4335 !important; }
+        .festee-logo span:nth-child(6) { color: #d93025 !important; }
       `}</style>
       {/* 축제 분위기 배경 - 전구 줄 + 보케 */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #2a241e 0%, #1a1612 45%, #0d0a08 100%)' }}>
@@ -188,8 +194,6 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                             src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
                             alt={catchItem.festival_name}
                             className="w-full h-full object-cover"
-                            crossOrigin="anonymous"
-                            referrerPolicy="no-referrer"
                           />
                         </div>
                       </div>
@@ -226,13 +230,13 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
         <p className="text-[9px] tracking-[0.12em] font-medium text-white/70 leading-none">
           세상의 모든 축제를 한 곳에서
         </p>
-        <p className="text-lg font-black tracking-[0.15em] leading-none mt-1">
-          <span style={{ color: '#7b3dff' }}>F</span>
-          <span style={{ color: '#4285f4' }}>E</span>
-          <span style={{ color: '#34a853' }}>S</span>
-          <span style={{ color: '#fbbc05' }}>T</span>
-          <span style={{ color: '#ea4335' }}>E</span>
-          <span style={{ color: '#d93025' }}>E</span>
+        <p className="festee-logo text-lg font-black tracking-[0.15em] leading-none mt-1">
+          <span>F</span>
+          <span>E</span>
+          <span>S</span>
+          <span>T</span>
+          <span>E</span>
+          <span>E</span>
         </p>
       </div>
     </div>
