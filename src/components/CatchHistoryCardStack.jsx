@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function CatchHistoryCardStack({ catches, festivals, catchCount, emptyMessage }) {
-  const TOTAL_SLOTS = 5;
+  const TOTAL_SLOTS = 7;
   const realCatches = catches.slice(0, TOTAL_SLOTS);
   const blankCount = TOTAL_SLOTS - realCatches.length;
   const hasNoCatches = realCatches.length === 0;
@@ -35,8 +35,10 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
     ...Array.from({ length: blankCount }, (_, i) => ({ type: 'blank', id: `blank-${i}`, data: null })),
   ];
 
-  const cardWidth = 200;
-  const offsetStep = 32;
+  const cardWidth = 190;
+  const offsetStep = 36;
+  const offsetYStep = -16;
+  const scaleStep = 0.05;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
@@ -61,8 +63,9 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
       {/* 카드 스택 */}
       <div className="relative h-full">
         {stackItems.map((item, index) => {
-          const offset = index * offsetStep;
-          const scale = 1 - index * 0.03;
+          const offsetX = index * offsetStep;
+          const offsetY = index * offsetYStep;
+          const scale = 1 - index * scaleStep;
           const zIndex = stackItems.length - index;
           const isBlank = item.type === 'blank';
           const catchItem = item.data;
@@ -75,7 +78,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
               className="absolute top-1/2"
               style={{
                 left: '24px',
-                transform: `translateX(${offset}px) translateY(-50%) scale(${scale})`,
+                transform: `translateX(${offsetX}px) translateY(calc(-50% + ${offsetY}px)) scale(${scale})`,
                 zIndex,
                 width: `${cardWidth}px`,
                 transformOrigin: 'left center',
