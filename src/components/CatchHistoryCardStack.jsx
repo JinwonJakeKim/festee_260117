@@ -40,6 +40,23 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   const offsetYStep = 0;
   const scaleStep = 0.05;
 
+  // 새 캐치 추가 감지
+  const prevFrontIdRef = React.useRef(null);
+  const [isNewCard, setIsNewCard] = React.useState(false);
+
+  React.useEffect(() => {
+    const frontId = catches[0]?.id;
+    if (frontId !== prevFrontIdRef.current) {
+      if (prevFrontIdRef.current !== null && frontId) {
+        setIsNewCard(true);
+        const timer = setTimeout(() => setIsNewCard(false), 700);
+        prevFrontIdRef.current = frontId;
+        return () => clearTimeout(timer);
+      }
+      prevFrontIdRef.current = frontId;
+    }
+  }, [catches]);
+
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
       {/* 축제 분위기 배경 - 전구 줄 + 보케 */}
@@ -114,12 +131,21 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                 zIndex,
                 width: `${cardWidth}px`,
                 transformOrigin: 'left center',
+                transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             >
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.08, duration: 0.4 }}
+                initial={
+                  isNewCard && index === 0 && !isBlank
+                    ? { opacity: 0, y: -80, scale: 0.5, rotateZ: -10 }
+                    : { opacity: 0 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1, rotateZ: 0 }}
+                transition={
+                  isNewCard && index === 0 && !isBlank
+                    ? { duration: 0.6, type: "spring", stiffness: 200, damping: 14 }
+                    : { delay: index * 0.08, duration: 0.4 }
+                }
               >
                 {isBlank ? (
                   <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
