@@ -201,19 +201,20 @@ export default function Catch() {
   };
 
   const handleDownloadImage = async () => {
-    const cardEl = document.getElementById('catch-front-card');
-    if (!cardEl) return;
+    const containerEl = document.getElementById('catch-history-container');
+    if (!containerEl) return;
     try {
-      const canvas = await html2canvas(cardEl, {
-        backgroundColor: null,
+      const canvas = await html2canvas(containerEl, {
+        backgroundColor: '#211e1b',
         scale: 2,
         useCORS: true,
         allowTaint: true,
+        logging: false,
       });
       const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = dataUrl;
-      a.download = `${catches[0]?.festival_name || 'catch'}.png`;
+      a.download = `${catches[0]?.festival_name || 'festee-catch'}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

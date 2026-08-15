@@ -60,7 +60,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   }, [catches]);
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
+    <div id="catch-history-container" className="relative w-full overflow-hidden" style={{ height: '400px' }}>
       <style>{`
         .catch-stack-ctx,
         .catch-stack-ctx span,
