@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { useLanguage } from "@/lib/useLanguage";
 
 const safeFormatDate = (dateString, formatString) => {
   if (!dateString) return '날짜 미정';
@@ -41,6 +43,22 @@ export default function HomeChatbot({ festivals = [] }) {
     role: "assistant",
     content: "안녕하세요! Festee AI 도우미입니다 🎉\n\nFestee에 있는 모든 축제 정보를 알고 있고, 날짜·위치·카테고리 기반으로 딱 맞는 축제를 추천해드려요.\n\n어떤 축제가 궁금하신가요?",
   };
+
+  const { language } = useLanguage();
+
+  // 사용자 정보 및 좋아요한 축제 조회
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+    retry: false,
+  });
+
+  const { data: myLikes = [] } = useQuery({
+    queryKey: ['myLikes', user?.email],
+    queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
+    enabled: !!user,
+    initialData: [],
+  });
 
   const loadMessages = () => {
     try {
@@ -86,8 +104,8 @@ export default function HomeChatbot({ festivals = [] }) {
     setIsLoading(true);
 
     try {
-      // 관련 축제만 필터링해서 보내기 (최대 80개, 핵심 필드만)
-      const festivalSummaries = festivals.slice(0, 80).map(f => ({
+      // 모든 축제의 핵심 필드 전송 (최대 120개)
+      const festivalSummaries = festivals.slice(0, 120).map(f => ({
         id: f.id,
         name_ko: f.name_ko,
         name_en: f.name_en,
@@ -102,7 +120,12 @@ export default function HomeChatbot({ festivals = [] }) {
         tags_ko: f.tags_ko,
         summary_ko: f.summary_ko,
         likes_count: f.likes_count,
+        popularity: f.popularity,
+        star_rating: f.star_rating,
       }));
+
+      // 사용자가 좋아요한 축제 ID 목록
+      const likedFestivalIds = myLikes.map(like => like.festival_id);
 
       const response = await base44.functions.invoke("homeChatbot", {
         question: userMessage,
@@ -111,6 +134,8 @@ export default function HomeChatbot({ festivals = [] }) {
           role: m.role,
           content: m.content
         })),
+        userLanguage: language,
+        likedFestivalIds,
       });
 
       const data = response.data;

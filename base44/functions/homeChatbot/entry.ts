@@ -28,7 +28,7 @@ function isTimeSensitive(question) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { question, festivals = [], conversationHistory = [] } = await req.json();
+    const { question, festivals = [], conversationHistory = [], userLanguage = 'ko', userLocation = null, likedFestivalIds = [] } = await req.json();
 
     if (!question) {
       return Response.json({ error: 'question is required' }, { status: 400 });
@@ -101,17 +101,43 @@ Deno.serve(async (req) => {
     }
 
     // LLM 호출
+    // 과거 축제 필터링: 이미 종료된 축제는 별도 표시
+    const todayDate = new Date(today);
+    const upcomingFestivals = [];
+    const pastFestivals = [];
+    
+    for (const f of festivals) {
+      if (f.end_date && new Date(f.end_date) < todayDate) {
+        pastFestivals.push(f);
+      } else {
+        upcomingFestivals.push(f);
+      }
+    }
+
     const festivalListText = festivals.map(f => {
       const name = f.name_ko || f.name_en || f.name_original || '이름 없음';
       const dateStr = f.start_date && f.end_date ? `${f.start_date} ~ ${f.end_date}` : '날짜 미정';
       const priceStr = f.price ? `${f.price.toLocaleString()}원` : '무료/미정';
       const tags = f.tags_ko?.join(', ') || '';
-      return `[ID:${f.id}] ${name} | 위치: ${f.city_ko || f.city}, ${f.country} | 카테고리: ${f.category || '기타'} | 날짜: ${dateStr} | 가격: ${priceStr} | 좋아요: ${f.likes_count || 0} | 태그: ${tags}`;
+      const summary = f.summary_ko ? f.summary_ko.substring(0, 100) : '';
+      const popularity = f.popularity || 0;
+      const starRating = f.star_rating || '';
+      const isPast = f.end_date && new Date(f.end_date) < todayDate;
+      const status = isPast ? '[종료됨]' : '';
+      const liked = likedFestivalIds.includes(f.id) ? '[좋아요한 축제]' : '';
+      return `[ID:${f.id}] ${status} ${liked} ${name} | 위치: ${f.city_ko || f.city}, ${f.country} | 카테고리: ${f.category || '기타'} | 날짜: ${dateStr} | 가격: ${priceStr} | 인기도: ${popularity} | 별점: ${starRating} | 좋아요: ${f.likes_count || 0} | 태그: ${tags}${summary ? ' | 요약: ' + summary : ''}`;
     }).join('\n');
 
     const historyText = conversationHistory.length > 0
       ? conversationHistory.map(m => `${m.role === 'user' ? '사용자' : 'AI'}: ${m.content}`).join('\n')
       : '';
+
+    // 사용자 언어에 따른 답변 언어 설정
+    const languageMap = { ko: '한국어', en: 'English', ja: '日本語', zh: '中文' };
+    const responseLanguage = languageMap[userLanguage] || '한국어';
+    
+    // 사용자 위치 컨텍스트
+    const locationContext = userLocation ? `\n## 사용자 위치\n${userLocation}\n(사용자가 위치 기반 추천을 원할 경우 이 위치를 기준으로 가까운 축제를 우선 추천하세요)\n` : '';
 
     const prompt = `당신은 Festee 앱의 AI 축제 추천 도우미입니다.
 아래에 Festee 앱에 등록된 축제 목록이 있습니다. 이 데이터를 기반으로 사용자의 질문에 답하세요.
@@ -120,7 +146,11 @@ Festee 데이터에 없는 내용이라면 인터넷에서 찾아서 알려주�
 ## 현재 날짜
 ${today} (한국 서울 기준)
 
-## Festee 축제 데이터 (${festivals.length}개)
+## 사용자 선호 언어
+답변은 ${responseLanguage}로 작성하세요.
+
+${locationContext}
+## Festee 축제 데이터 (${festivals.length}개, 종료된 축제 ${pastFestivals.length}개 포함)
 ${festivalListText}
 
 ## 이전 대화
@@ -131,12 +161,18 @@ ${question}
 
 ## 답변 지침
 1. 사용자가 특정 조건(날짜, 지역, 카테고리, 위치)을 언급하면 해당 조건으로 축제를 필터링해서 추천하세요.
-2. 위치 추천의 경우: 예를 들어 "성남에서 서울 가는 길"처럼 지리적 근접성을 고려하세요.
-3. 추천 축제는 최대 3개까지만 상세히 설명하세요.
-4. Festee 데이터에 없는 일반적인 축제 정보(역사, 배경 등)는 알고 있는 지식으로 답변하세요.
-5. 친근하고 자연스러운 한국어로 답변하세요.
-6. 이모지를 적절히 사용해서 읽기 쉽게 만드세요.
-7. 답변은 너무 길지 않게 (300자 이내) 핵심만 말하세요.
+2. 위치 추천의 경우: 사용자 위치나 언급된 지리적 근접성을 고려하세요. 예: "성남에서 서울 가는 길" → 성남 근처 축제 우선.
+3. 추천 우선순위:
+   - 현재 진행 중이거나 다가오는 축제를 종료된 축제보다 우선 추천하세요.
+   - 인기도(popularity)와 별점(star_rating)이 높은 축제를 우선 추천하세요.
+   - 사용자가 좋아요한 축제와 비슷한 카테고리/태그를 가진 축제를 우선 추천하세요.
+   - 날짜가 명시되지 않은 경우, 다가오는 축제(현재 날짜 이후)를 우선 추천하세요.
+4. 추천 축제는 최대 3개까지만 상세히 설명하세요.
+5. Festee 데이터에 없는 일반적인 축제 정보(역사, 배경 등)는 알고 있는 지식으로 답변하세요.
+6. 친근하고 자연스러운 ${responseLanguage}로 답변하세요.
+7. 이모지를 적절히 사용해서 읽기 쉽게 만드세요.
+8. 답변은 너무 길지 않게 (300자 이내) 핵심만 말하세요.
+9. 추천 이유를 간단히 덧붙여 사용자가 왜 이 축제가 추천되었는지 알 수 있게 하세요.
 
 ## 응답 형식
 반드시 아래 JSON 형식으로 응답하세요:
