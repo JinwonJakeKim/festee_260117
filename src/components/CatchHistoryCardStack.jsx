@@ -213,18 +213,28 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
         </div>
       )}
 
-      {/* 우측 하단 카운트 + 미니멀 워터마크 */}
-      <div className="absolute bottom-5 right-5 text-right z-50">
-        <p className="text-white/80 text-xs font-medium tracking-wide">FESTEE Catch</p>
-        <p className="text-white text-4xl font-black leading-none mt-1">{catchCount}</p>
-        <div className="mt-3 opacity-40">
-          <p className="text-[10px] font-bold tracking-[0.2em] text-white leading-none">
-            FESTEE
-          </p>
-          <p className="text-[8px] tracking-[0.15em] font-light text-white italic mt-0.5">
-            세상의 모든 축제를 한 곳에서
-          </p>
-        </div>
+      {/* 우측 상단 카운트 */}
+      <div className="absolute top-4 right-4 text-right z-50">
+        <p className="text-white/90 text-xs font-medium tracking-wide">FESTEE Catch</p>
+        <p className="text-white text-4xl font-black leading-none mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{catchCount}</p>
+      </div>
+
+      {/* 좌측 하단 미니멀 워터마크: 슬로건 → 로고 */}
+      <div className="absolute bottom-5 left-5 z-50">
+        <p className="text-[9px] tracking-[0.12em] font-medium text-white/70 leading-none">
+          세상의 모든 축제를 한 곳에서
+        </p>
+        <p
+          className="text-lg font-black tracking-[0.15em] leading-none mt-1"
+          style={{
+            background: 'linear-gradient(90deg, #00C846 0%, #78D800 15%, #FFD000 30%, #FF9500 45%, #FF4400 60%, #FF0070 75%, #9000FF 88%, #0088FF 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          FESTEE
+        </p>
       </div>
     </div>
   );
