@@ -38,7 +38,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   ];
 
   const cardWidth = 150;
-  const offsetStep = 32;
+  const offsetStep = 37;
   const offsetYStep = 6;
   const scaleStep = 0.08;
 
