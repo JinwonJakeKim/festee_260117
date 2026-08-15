@@ -204,11 +204,25 @@ export default function Catch() {
     const containerEl = document.getElementById('catch-history-container');
     if (!containerEl) return;
     try {
+      // 컨테이너 내 모든 이미지 로드 대기
+      const images = containerEl.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 5000);
+          });
+        })
+      );
+
       const canvas = await html2canvas(containerEl, {
         backgroundColor: '#211e1b',
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
+        imageTimeout: 15000,
         logging: false,
       });
       const dataUrl = canvas.toDataURL('image/png');
@@ -220,6 +234,7 @@ export default function Catch() {
       document.body.removeChild(a);
     } catch (e) {
       console.error('Download failed:', e);
+      alert(t?.downloadError || '이미지 저장에 실패했습니다.');
     }
   };
 
