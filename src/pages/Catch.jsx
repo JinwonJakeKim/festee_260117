@@ -12,6 +12,7 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useLanguage } from "@/lib/useLanguage";
 import { catchTranslations } from "@/lib/catchTranslations";
 import FestivalListItem from "@/components/FestivalListItem";
+import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
@@ -309,35 +310,43 @@ export default function Catch() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
-        <div className="text-center mb-6">
-          <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 1,
-            }}
-          >
-            <Target className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-          </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent mb-2">
-            Catch
-          </h1>
-          <p className="text-gray-400">{t.headerDesc}</p>
-        </div>
-
-        {user && (
-          <div className="bg-gray-900 rounded-lg p-4 text-center">
-            <p className="text-gray-400 text-sm mb-1">{t.myCatchCount}</p>
-            <p className="text-cyan-400 text-3xl font-bold">{user.catches_count || 0}</p>
+      {/* History Card Stack or Header */}
+      {user && catches.length > 0 ? (
+        <CatchHistoryCardStack
+          catches={catches}
+          festivals={festivals}
+          catchCount={user.catches_count || catches.length}
+        />
+      ) : (
+        <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
+          <div className="text-center mb-6">
+            <motion.div
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 1,
+              }}
+            >
+              <Target className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+            </motion.div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent mb-2">
+              Catch
+            </h1>
+            <p className="text-gray-400">{t.headerDesc}</p>
           </div>
-        )}
-      </div>
+
+          {user && (
+            <div className="bg-gray-900 rounded-lg p-4 text-center">
+              <p className="text-gray-400 text-sm mb-1">{t.myCatchCount}</p>
+              <p className="text-cyan-400 text-3xl font-bold">{user.catches_count || 0}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Location Status */}
       <div className="px-4 py-4">
