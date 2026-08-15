@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigation, CheckCircle, AlertCircle, Target, Trophy, Instagram, Facebook } from "lucide-react";
@@ -11,9 +11,10 @@ import { createPageUrl } from "@/utils";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { useLanguage } from "@/lib/useLanguage";
 import { catchTranslations } from "@/lib/catchTranslations";
+import FestivalListItem from "@/components/FestivalListItem";
 
 export default function Catch() {
-  const { language } = useLanguage();
+  const { language, getLocalizedContent } = useLanguage();
   const t = catchTranslations[language] || catchTranslations.ko;
 
   const [userLocation, setUserLocation] = useState(null);
@@ -40,6 +41,46 @@ export default function Catch() {
     queryFn: () => user ? base44.entities.Catch.filter({ user_email: user.email }, '-created_date') : [],
     enabled: !!user, // Only fetch if user is logged in
     initialData: [],
+  });
+
+  const { data: festivals = [] } = useQuery({
+    queryKey: ['festivals'],
+    queryFn: () => base44.entities.Festival.list('-popularity', 500),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: myLikes = [] } = useQuery({
+    queryKey: ['myLikes', user?.email],
+    queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async (festivalId) => {
+      if (!user) {
+        setShowLoginModal(true);
+        return;
+      }
+      const existing = myLikes.find(like => like.festival_id === festivalId);
+      if (existing) {
+        await base44.entities.FestivalLike.delete(existing.id);
+        const festival = festivals.find(f => f.id === festivalId);
+        await base44.entities.Festival.update(festivalId, {
+          likes_count: Math.max(0, (festival?.likes_count || 0) - 1)
+        });
+      } else {
+        await base44.entities.FestivalLike.create({ festival_id: festivalId, user_email: user.email });
+        const festival = festivals.find(f => f.id === festivalId);
+        await base44.entities.Festival.update(festivalId, {
+          likes_count: (festival?.likes_count || 0) + 1
+        });
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['festivals'] });
+      queryClient.invalidateQueries({ queryKey: ['myLikes'] });
+    },
   });
 
   // GPS 위치 가져오기
@@ -168,6 +209,34 @@ export default function Catch() {
         break;
     }
   };
+
+  // 캐치한 축제들을 FestivalListItem용 축제 객체로 변환
+  const catchFestivals = useMemo(() => {
+    const festivalMap = new Map();
+    festivals.forEach(f => festivalMap.set(f.id, f));
+    return catches
+      .map(c => {
+        const festival = festivalMap.get(c.festival_id);
+        if (festival) return festival;
+        // 삭제된 축제인 경우 캐치 데이터로 폴백 객체 생성
+        const [city, ...countryParts] = (c.location || '').split(', ');
+        const country = countryParts.join(', ');
+        return {
+          id: c.festival_id,
+          name_ko: c.festival_name,
+          name_en: c.festival_name,
+          name_jp: c.festival_name,
+          name_zh: c.festival_name,
+          thumbnail_url: c.image_url,
+          city,
+          country,
+          city_ko: city,
+          country_ko: country,
+          likes_count: 0,
+        };
+      })
+      .filter(Boolean);
+  }, [catches, festivals]);
 
   return (
     <div className="min-h-screen bg-black pb-20">
@@ -320,31 +389,18 @@ export default function Catch() {
         </h2>
 
         {user ? (
-          catches.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {catches.map((catchItem) => (
-                <Link
-                  key={catchItem.id}
-                  to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}
-                  className="block"
-                >
-                  <div className="relative rounded-xl overflow-hidden group">
-                    <div className="relative aspect-[3/4]">
-                      <img
-                        src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
-                        alt={catchItem.festival_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <h3 className="text-white text-base font-bold mb-1 line-clamp-2">
-                          {catchItem.festival_name}
-                        </h3>
-                        <p className="text-gray-300 text-xs">{catchItem.location}</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+          catchFestivals.length > 0 ? (
+            <div className="space-y-1">
+              {catchFestivals.map((festival, i) => (
+                <FestivalListItem
+                  key={festival.id}
+                  festival={festival}
+                  index={i}
+                  isLiked={myLikes.some(like => like.festival_id === festival.id)}
+                  onLike={(id) => likeMutation.mutate(id)}
+                  getLocalizedContent={getLocalizedContent}
+                  language={language}
+                />
               ))}
             </div>
           ) : (
