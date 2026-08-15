@@ -13,6 +13,7 @@ import { useLanguage } from "@/lib/useLanguage";
 import { catchTranslations } from "@/lib/catchTranslations";
 import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
+import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
 
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
@@ -389,6 +390,16 @@ export default function Catch() {
           )}
         </Card>
       </div>
+
+      {/* Nearby Festivals - Catch Section */}
+      <NearbyFestivalsSection
+        userLocation={userLocation}
+        festivals={festivals}
+        catches={catches}
+        onCatch={catchMutation.mutate}
+        isCatching={catchMutation.isPending}
+        t={t}
+      />
 
       {/* My Catch History - Festival Card Format */}
       <div className="px-4 py-6">

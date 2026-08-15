@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function CatchHistoryCardStack({ catches, festivals, catchCount }) {
-  const stackCatches = catches.slice(0, 6);
+  const stackCatches = catches.slice(0, 5);
 
   const festivalMap = React.useMemo(() => {
     const map = new Map();
@@ -29,7 +29,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount }
   if (stackCatches.length === 0) return null;
 
   const cardWidth = 200;
-  const offsetStep = 26;
+  const offsetStep = 32;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
@@ -52,7 +52,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount }
       </div>
 
       {/* 카드 스택 */}
-      <div className="relative h-full flex items-center">
+      <div className="relative h-full">
         {stackCatches.map((catchItem, index) => {
           const festival = festivalMap.get(catchItem.festival_id);
           const dateRange = formatDateRange(festival);
@@ -61,11 +61,8 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount }
           const zIndex = stackCatches.length - index;
 
           return (
-            <motion.div
+            <div
               key={catchItem.id}
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.4 }}
               className="absolute top-1/2"
               style={{
                 left: '24px',
@@ -75,29 +72,35 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount }
                 transformOrigin: 'left center',
               }}
             >
-              <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
-                  <div className="text-center pt-3 pb-2">
-                    <span className="text-base font-black tracking-[0.2em]" style={{ color: '#1A2A40' }}>
-                      CATCH
-                    </span>
-                  </div>
-                  <div className="px-3 pb-3">
-                    <div className="rounded-lg overflow-hidden aspect-[3/4]">
-                      <img
-                        src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
-                        alt={catchItem.festival_name}
-                        className="w-full h-full object-cover"
-                      />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.08, duration: 0.4 }}
+              >
+                <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
+                  <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
+                    <div className="text-center pt-3 pb-2">
+                      <span className="text-base font-black tracking-[0.2em]" style={{ color: '#1A2A40' }}>
+                        CATCH
+                      </span>
+                    </div>
+                    <div className="px-3 pb-3">
+                      <div className="rounded-lg overflow-hidden aspect-[3/4]">
+                        <img
+                          src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
+                          alt={catchItem.festival_name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    <div className="px-4 pb-3">
+                      <p className="font-bold text-black text-sm line-clamp-1">{catchItem.festival_name}</p>
+                      <p className="text-black text-xs mt-0.5">{dateRange}</p>
                     </div>
                   </div>
-                  <div className="px-4 pb-3">
-                    <p className="font-bold text-black text-sm line-clamp-1">{catchItem.festival_name}</p>
-                    <p className="text-black text-xs mt-0.5">{dateRange}</p>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
+                </Link>
+              </motion.div>
+            </div>
           );
         })}
       </div>
