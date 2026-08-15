@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function CatchHistoryCardStack({ catches, festivals, catchCount, emptyMessage }) {
-  const TOTAL_SLOTS = 7;
+  const TOTAL_SLOTS = 6;
   const realCatches = catches.slice(0, TOTAL_SLOTS);
   const blankCount = TOTAL_SLOTS - realCatches.length;
   const hasNoCatches = realCatches.length === 0;
@@ -35,29 +35,61 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
     ...Array.from({ length: blankCount }, (_, i) => ({ type: 'blank', id: `blank-${i}`, data: null })),
   ];
 
-  const cardWidth = 190;
-  const offsetStep = 36;
-  const offsetYStep = -16;
+  const cardWidth = 150;
+  const offsetStep = 40;
+  const offsetYStep = 0;
   const scaleStep = 0.05;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
-      {/* 보케 배경 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-black to-gray-900">
-        {[...Array(15)].map((_, i) => (
+      {/* 축제 분위기 배경 - 전구 줄 + 보케 */}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #2a241e 0%, #1a1612 45%, #0d0a08 100%)' }}>
+        {/* 보케 효과 */}
+        {[...Array(20)].map((_, i) => (
           <div
-            key={i}
+            key={`bokeh-${i}`}
             className="absolute rounded-full blur-2xl"
             style={{
-              width: `${30 + (i * 13) % 50}px`,
-              height: `${30 + (i * 13) % 50}px`,
-              background: i % 3 === 0 ? '#FFA500' : i % 3 === 1 ? '#FFD700' : '#FF8C00',
-              left: `${(i * 37) % 100}%`,
-              top: `${(i * 53) % 100}%`,
-              opacity: 0.15 + ((i * 7) % 20) / 100,
+              width: `${18 + (i * 17) % 40}px`,
+              height: `${18 + (i * 17) % 40}px`,
+              background: '#f7d685',
+              left: `${(i * 31) % 100}%`,
+              top: `${(i * 47) % 100}%`,
+              opacity: 0.06 + ((i * 11) % 14) / 100,
             }}
           />
         ))}
+        {/* 상단 전구 줄 (festoon lights) */}
+        <div className="absolute top-0 left-0 right-0 z-10" style={{ height: '50px' }}>
+          <svg className="absolute top-0 w-full" style={{ height: '40px' }} preserveAspectRatio="none" viewBox="0 0 100 40">
+            <path d="M0,6 Q25,26 50,18 T100,10" stroke="rgba(140,120,90,0.35)" strokeWidth="0.5" fill="none" />
+          </svg>
+          {[...Array(9)].map((_, i) => {
+            const t = i / 8;
+            const sag = Math.sin(t * Math.PI) * 14;
+            return (
+              <div
+                key={`light-${i}`}
+                className="absolute"
+                style={{
+                  left: `${t * 100}%`,
+                  top: `${6 + sag}px`,
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    background: '#f7d685',
+                    boxShadow: '0 0 5px 2px rgba(247, 214, 133, 0.8), 0 0 10px 4px rgba(247, 214, 133, 0.3)',
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 카드 스택 */}
