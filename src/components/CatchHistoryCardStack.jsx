@@ -213,10 +213,18 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
         </div>
       )}
 
-      {/* 우측 하단 카운트 */}
+      {/* 우측 하단 카운트 + 미니멀 워터마크 */}
       <div className="absolute bottom-5 right-5 text-right z-50">
         <p className="text-white/80 text-xs font-medium tracking-wide">FESTEE Catch</p>
         <p className="text-white text-4xl font-black leading-none mt-1">{catchCount}</p>
+        <div className="mt-3 opacity-40">
+          <p className="text-[10px] font-bold tracking-[0.2em] text-white leading-none">
+            FESTEE
+          </p>
+          <p className="text-[8px] tracking-[0.15em] font-light text-white italic mt-0.5">
+            세상의 모든 축제를 한 곳에서
+          </p>
+        </div>
       </div>
     </div>
   );
