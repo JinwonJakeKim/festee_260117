@@ -149,7 +149,7 @@ export default function Catch() {
       // Catch 생성
       await base44.entities.Catch.create({
         festival_id: festival.id,
-        festival_name: festival.name,
+        festival_name: getLocalizedContent(festival, 'name'),
         user_email: user.email,
         user_name: user.full_name,
         image_url: festival.thumbnail_url,

@@ -2,8 +2,10 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useLanguage } from "@/lib/useLanguage";
 
 export default function CatchHistoryCardStack({ catches, festivals, catchCount, emptyMessage }) {
+  const { getLocalizedContent } = useLanguage();
   const TOTAL_SLOTS = 6;
   const realCatches = catches.slice(0, TOTAL_SLOTS);
   const blankCount = TOTAL_SLOTS - realCatches.length;
@@ -119,6 +121,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
           const isBlank = item.type === 'blank';
           const catchItem = item.data;
           const festival = catchItem ? festivalMap.get(catchItem.festival_id) : null;
+          const festivalName = festival ? getLocalizedContent(festival, 'name') : catchItem.festival_name;
           const dateRange = formatDateRange(festival);
 
           return (
@@ -180,7 +183,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                         </div>
                       </div>
                       <div className="px-4 pb-3">
-                        <p className="font-bold text-black text-sm line-clamp-1">{catchItem.festival_name}</p>
+                        <p className="font-bold text-black text-sm line-clamp-1">{festivalName || catchItem.festival_name}</p>
                         <p className="text-black text-xs mt-0.5">{dateRange}</p>
                       </div>
                     </div>
