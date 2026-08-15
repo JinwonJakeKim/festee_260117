@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigation, CheckCircle, AlertCircle, Target, Trophy, Share2, Download } from "lucide-react";
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
@@ -200,19 +201,22 @@ export default function Catch() {
   };
 
   const handleDownloadImage = async () => {
-    const latestCatch = catches[0];
-    if (!latestCatch || !latestCatch.image_url) return;
+    const cardEl = document.getElementById('catch-front-card');
+    if (!cardEl) return;
     try {
-      const response = await fetch(latestCatch.image_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const canvas = await html2canvas(cardEl, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+      const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${latestCatch.festival_name || 'festival'}.jpg`;
+      a.href = dataUrl;
+      a.download = `${catches[0]?.festival_name || 'catch'}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Download failed:', e);
     }

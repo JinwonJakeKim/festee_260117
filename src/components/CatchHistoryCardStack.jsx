@@ -167,7 +167,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                   </div>
                 ) : (
                   <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                    <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
+                    <div id={index === 0 ? 'catch-front-card' : undefined} className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
                       <div className="text-center pt-3 pb-2">
                         <span className="text-base font-black tracking-[0.2em]" style={{ color: '#1A2A40' }}>
                           CATCH
