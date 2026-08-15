@@ -125,7 +125,9 @@ Deno.serve(async (req) => {
       const isPast = f.end_date && new Date(f.end_date) < todayDate;
       const status = isPast ? '[종료됨]' : '';
       const liked = likedFestivalIds.includes(f.id) ? '[좋아요한 축제]' : '';
-      return `[ID:${f.id}] ${status} ${liked} ${name} | 위치: ${f.city_ko || f.city}, ${f.country} | 카테고리: ${f.category || '기타'} | 날짜: ${dateStr} | 가격: ${priceStr} | 인기도: ${popularity} | 별점: ${starRating} | 좋아요: ${f.likes_count || 0} | 태그: ${tags}${summary ? ' | 요약: ' + summary : ''}`;
+      const dateStatus = f.date_status || 'confirmed';
+      const dateStatusTag = dateStatus === 'confirmed' ? '' : `[날짜${dateStatus === 'tentative' ? '미확정' : '추정'}]`;
+      return `[ID:${f.id}] ${status} ${liked} ${dateStatusTag} ${name} | 위치: ${f.city_ko || f.city}, ${f.country} | 카테고리: ${f.category || '기타'} | 날짜: ${dateStr} | 날짜상태: ${dateStatus} | 가격: ${priceStr} | 인기도: ${popularity} | 별점: ${starRating} | 좋아요: ${f.likes_count || 0} | 태그: ${tags}${summary ? ' | 요약: ' + summary : ''}`;
     }).join('\n');
 
     const historyText = conversationHistory.length > 0
@@ -167,6 +169,7 @@ ${question}
 5. 위치 추천의 경우: 사용자 위치나 언급된 지리적 근접성을 고려하세요. 예: "성남에서 서울 가는 길" → 성남 근처 축제 우선.
 6. 추천 우선순위:
    - 현재 진행 중이거나 다가오는 축제를 종료된 축제보다 우선 추천하세요.
+   - 날짜가 확정된(confirmed) 축제를 날짜 미확정(tentative, estimated) 축제보다 우선 추천하세요. 날짜 미확정 축제는 가장 마지막 순위로 추천하세요.
    - 인기도(popularity)와 별점(star_rating)이 높은 축제를 우선 추천하세요.
    - 사용자가 좋아요한 축제와 비슷한 카테고리/태그를 가진 축제를 우선 추천하세요.
    - 날짜가 명시되지 않은 경우, 다가오는 축제(현재 날짜 이후)를 우선 추천하세요.

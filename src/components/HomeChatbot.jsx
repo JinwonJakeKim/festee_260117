@@ -123,6 +123,7 @@ export default function HomeChatbot({ festivals = [] }) {
         popularity: f.popularity,
         star_rating: f.star_rating,
         thumbnail_url: f.thumbnail_url,
+        date_status: f.date_status,
       }));
 
       // 사용자가 좋아요한 축제 ID 목록
