@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, CheckCircle, AlertCircle, Target, Trophy, Instagram, Facebook } from "lucide-react";
-import { XIcon } from "lucide-react";
+import { Navigation, CheckCircle, AlertCircle, Target, Trophy, Share2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,8 +21,6 @@ export default function Catch() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [catchedFestival, setCatchedFestival] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -169,17 +166,11 @@ export default function Catch() {
 
       return festival;
     },
-    onSuccess: (festival) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catches'] });
-      queryClient.invalidateQueries({ queryKey: ['allCatches'] }); // Invalidate all catches too
+      queryClient.invalidateQueries({ queryKey: ['allCatches'] });
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       queryClient.invalidateQueries({ queryKey: ['festivals'] });
-      setCatchedFestival(festival);
-      setShowSuccess(true);
-      
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
     },
     onError: (error) => {
         console.error("Catch mutation failed:", error);
@@ -191,24 +182,39 @@ export default function Catch() {
     base44.auth.redirectToLogin(window.location.pathname);
   };
 
-  const handleShare = (platform) => {
-    if (!catchedFestival) return;
-    
-    const text = `🎉 ${catchedFestival.name}에서 Catch 성공! #Festee #${catchedFestival.name}`;
-    const url = window.location.origin + createPageUrl(`FestivalDetail?id=${catchedFestival.id}`); // Link to festival detail
-    
-    switch(platform) {
-      case 'instagram':
-        alert('Instagram 앱으로 이동하여 공유해주세요!');
-        break;
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-        break;
-      case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-        break;
-      default:
-        break;
+  const handleShareCatch = async () => {
+    const latestCatch = catches[0];
+    if (!latestCatch) return;
+    const festival = festivals.find(f => f.id === latestCatch.festival_id);
+    const name = festival ? getLocalizedContent(festival, 'name') : latestCatch.festival_name;
+    const text = `🎉 ${name}에서 Catch 성공! #Festee`;
+    const url = window.location.origin + createPageUrl(`FestivalDetail?id=${latestCatch.festival_id}`);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text, url });
+      } catch (e) { /* cancelled */ }
+    } else {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    const latestCatch = catches[0];
+    if (!latestCatch || !latestCatch.image_url) return;
+    try {
+      const response = await fetch(latestCatch.image_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${latestCatch.festival_name || 'festival'}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Download failed:', e);
     }
   };
 
@@ -250,67 +256,6 @@ export default function Catch() {
         message={t.loginMessage}
       />
 
-      {/* Success Animation */}
-      <AnimatePresence>
-        {showSuccess && catchedFestival && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="text-center px-6"
-            >
-              <motion.div
-                animate={{
-                  rotate: [0, 360],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: 2,
-                }}
-                className="text-8xl mb-4"
-              >
-                🎉
-              </motion.div>
-              <h2 className="text-white text-4xl font-bold mb-2">Catch!</h2>
-              <p className="text-cyan-400 text-2xl mb-6">{catchedFestival.name}</p>
-              
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex justify-center gap-4"
-              >
-                <button
-                  onClick={() => handleShare('instagram')}
-                  className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center hover:from-purple-600 hover:to-pink-600 transition-colors"
-                >
-                  <Instagram className="w-6 h-6 text-white" />
-                </button>
-                <button
-                  onClick={() => handleShare('twitter')}
-                  className="w-14 h-14 rounded-full bg-black border-2 border-white flex items-center justify-center hover:bg-gray-900 transition-colors"
-                >
-                  <XIcon className="w-6 h-6 text-white" />
-                </button>
-                <button
-                  onClick={() => handleShare('facebook')}
-                  className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors"
-                >
-                  <Facebook className="w-6 h-6 text-white" />
-                </button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* History Card Stack or Header */}
       {user ? (
         <CatchHistoryCardStack
@@ -340,6 +285,27 @@ export default function Catch() {
             </h1>
             <p className="text-gray-400">{t.headerDesc}</p>
           </div>
+        </div>
+      )}
+
+      {/* Share & Download Buttons */}
+      {user && catches.length > 0 && (
+        <div className="px-4 py-3 flex gap-2">
+          <Button
+            onClick={handleShareCatch}
+            className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            {t.share}
+          </Button>
+          <Button
+            onClick={handleDownloadImage}
+            variant="outline"
+            className="flex-1 border-gray-700 text-cyan-400 hover:bg-gray-800 font-bold"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {t.downloadImage}
+          </Button>
         </div>
       )}
 
