@@ -80,7 +80,10 @@ Deno.serve(async (req) => {
               id: f.id,
               name: f.name_ko || f.name_en || f.name_original,
               city: f.city_ko || f.city,
-              date: f.start_date ? f.start_date.slice(0, 10) : '날짜 미정',
+              country: f.country || '',
+              category: f.category || '',
+              start_date: f.start_date ? f.start_date.slice(0, 10) : null,
+              end_date: f.end_date ? f.end_date.slice(0, 10) : null,
               thumbnail_url: f.thumbnail_url || null,
             };
           })
@@ -164,7 +167,10 @@ ${question}
           id: f.id,
           name: f.name_ko || f.name_en || f.name_original,
           city: f.city_ko || f.city,
-          date: f.start_date ? f.start_date.slice(0, 10) : '날짜 미정',
+          country: f.country || '',
+          category: f.category || '',
+          start_date: f.start_date ? f.start_date.slice(0, 10) : null,
+          end_date: f.end_date ? f.end_date.slice(0, 10) : null,
           thumbnail_url: f.thumbnail_url || null,
         };
       })

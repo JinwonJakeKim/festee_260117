@@ -1,11 +1,32 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Sparkles, ChevronRight, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+
+const safeFormatDate = (dateString, formatString) => {
+  if (!dateString) return '날짜 미정';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '날짜 미정';
+    return format(date, formatString, { locale: ko });
+  } catch (e) {
+    return '날짜 미정';
+  }
+};
+
+const formatDateRange = (startDate, endDate) => {
+  if (!startDate && !endDate) return '날짜 미정';
+  if (startDate && endDate) {
+    return `${safeFormatDate(startDate, 'yyyy.MM.dd')} - ${safeFormatDate(endDate, 'MM.dd')}`;
+  }
+  return safeFormatDate(startDate || endDate, 'yyyy.MM.dd');
+};
 
 const QUICK_QUESTIONS = [
   "3월에 한국 축제 추천해줘",
@@ -235,28 +256,34 @@ export default function HomeChatbot({ festivals = [] }) {
                             onClick={() => setIsOpen(false)}
                             className="block"
                           >
-                            <div className="bg-gray-800 border border-cyan-500/30 hover:border-cyan-400 rounded-xl overflow-hidden flex items-center gap-0 transition-all active:scale-95">
-                              {f.thumbnail_url ? (
-                                <img
-                                  src={f.thumbnail_url}
-                                  alt={f.name}
-                                  className="w-16 h-16 object-cover flex-shrink-0"
-                                  onError={(e) => { e.target.style.display='none'; }}
-                                />
-                              ) : (
-                                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-2xl">🎉</span>
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0 px-3 py-2">
-                                <p className="text-white text-xs font-bold truncate">{f.name}</p>
-                                <p className="text-gray-400 text-xs mt-0.5 truncate">📍 {f.city}</p>
-                                <p className="text-cyan-400 text-xs mt-0.5">📅 {f.date}</p>
+                            <div className="flex items-center py-2.5 pr-3 rounded-2xl bg-gray-900/70 hover:bg-gray-900 border border-gray-800 hover:border-cyan-500/40 transition-all active:scale-[0.98]">
+                              <div className="flex-shrink-0 ml-2.5">
+                                {f.thumbnail_url ? (
+                                  <img
+                                    src={f.thumbnail_url}
+                                    alt={f.name}
+                                    className="w-14 h-14 rounded-xl object-cover"
+                                    onError={(e) => { e.target.style.display='none'; }}
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+                                    <span className="text-xl">🎉</span>
+                                  </div>
+                                )}
                               </div>
-                              <div className="pr-3 flex-shrink-0">
-                                <div className="bg-cyan-500/20 rounded-full p-1.5">
-                                  <span className="text-cyan-400 text-xs font-bold">›</span>
+                              <div className="flex-1 min-w-0 ml-3">
+                                <h3 className="text-white font-bold text-sm truncate mb-1">{f.name}</h3>
+                                <div className="text-gray-400 text-xs flex items-center gap-1 mb-0.5">
+                                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{f.country ? `${f.country}, ` : ''}{f.city}{f.category ? ` / ${f.category}` : ''}</span>
                                 </div>
+                                <div className="text-gray-500 text-xs flex items-center gap-1">
+                                  <Calendar className="w-3 h-3 flex-shrink-0" />
+                                  <span>{formatDateRange(f.start_date, f.end_date)}</span>
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0 pr-1">
+                                <ChevronRight className="w-5 h-5 text-gray-600" />
                               </div>
                             </div>
                           </Link>
