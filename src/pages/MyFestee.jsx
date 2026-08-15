@@ -514,16 +514,15 @@ export default function MyFestee() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowReferralModal(false)}
-              className="fixed inset-0 bg-black/80 z-[60]"
-            />
-
-            <motion.div
+              className="fixed inset-0 bg-black/80 z-[10000]"
+              />
+              <motion.div
               initial={{ y: "100%" }}
               animate={{ y: "0%" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 bg-gray-950 rounded-t-3xl z-[70] max-h-[80vh] overflow-y-auto"
-            >
+              className="fixed bottom-0 left-0 right-0 bg-gray-950 rounded-t-3xl z-[10001] max-h-[85vh] overflow-y-auto pb-24"
+              >
               <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
                 <h2 className="text-white text-xl font-bold">{t.referralModalTitle}</h2>
                 <button
