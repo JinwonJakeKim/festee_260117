@@ -38,7 +38,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   ];
 
   const cardWidth = 150;
-  const offsetStep = 37;
+  const offsetStep = 44;
   const offsetYStep = 6;
   const scaleStep = 0.08;
 
@@ -153,12 +153,12 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                 {isBlank ? (
                   <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
                     <div className="text-center pt-3 pb-2">
-                      <span className="text-base font-black tracking-[0.2em]" style={{ color: '#1A2A40' }}>
-                        CATCH
-                      </span>
-                    </div>
-                    <div className="px-3 pb-3">
-                      <div className="rounded-lg aspect-[3/4] bg-gray-400/30" />
+                      <span className="text-base font-black tracking-[0.2em] text-black">
+                          CATCH
+                        </span>
+                      </div>
+                      <div className="px-3 pb-3">
+                        <div className="rounded-lg aspect-[3/4] bg-gray-400/30" />
                     </div>
                     <div className="px-4 pb-3">
                       <div className="h-4 bg-gray-500/30 rounded mb-1.5" />
@@ -169,7 +169,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                   <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
                     <div id={index === 0 ? 'catch-front-card' : undefined} className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
                       <div className="text-center pt-3 pb-2">
-                        <span className="text-base font-black tracking-[0.2em]" style={{ color: '#1A2A40' }}>
+                        <span className="text-base font-black tracking-[0.2em] text-black">
                           CATCH
                         </span>
                       </div>
