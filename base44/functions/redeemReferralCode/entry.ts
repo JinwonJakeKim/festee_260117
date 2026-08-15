@@ -44,13 +44,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: '본인의 추천 코드는 사용할 수 없습니다' }, { status: 400 });
     }
 
-    // 2. 이미 추천 코드를 사용한 적이 있는지 확인
-    const existingReferral = await base44.entities.ReferralLog.filter({
+    // 2. 같은 추천 코드를 이미 사용했는지 확인 (중복 사용 방지, 다른 코드는 추가 가능)
+    const existingReferrals = await base44.asServiceRole.entities.ReferralLog.filter({
       referred_email: currentUser.email
     });
 
-    if (existingReferral.length > 0) {
-      return Response.json({ error: '이미 추천 코드를 사용하셨습니다' }, { status: 400 });
+    const alreadyUsedThisCode = existingReferrals.some(r => r.referrer_code === trimmedCode);
+    if (alreadyUsedThisCode) {
+      return Response.json({ error: '이미 사용한 추천 코드입니다' }, { status: 400 });
     }
 
     // 3. 모든 사용자 조회하여 추천 코드가 일치하는 사용자 찾기

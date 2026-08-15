@@ -451,7 +451,7 @@ export default function MyFestee() {
 
   const referralCode = generateReferralCode(user.email);
   const userCoins = user.coins || 0;
-  const hasUsedReferralCode = (myReferralUsage?.length || 0) > 0;
+  const usedReferralCount = (myReferralUsage?.length || 0);
 
   // 수정된 menuItems - 순서 변경, 좋아요 제거, 댓글 색상 변경, 설정 추가
   const menuItems = [
@@ -535,74 +535,82 @@ export default function MyFestee() {
               </div>
 
               <div className="p-6">
-                {hasUsedReferralCode ? (
-                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
-                    <p className="text-green-400 text-center">
-                      {t.alreadyUsedReferral}
-                    </p>
+                <div className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Gift className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-white font-bold mb-2">{t.referralBenefitTitle}</h3>
+                      <ul className="space-y-1 text-gray-300 text-sm">
+                        <li>• {t.referralBenefit1(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
+                        <li>• {t.referralBenefit2(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
+                        <li>• {t.referralBenefit3}</li>
+                      </ul>
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4 mb-6">
-                      <div className="flex items-start gap-3 mb-3">
-                        <Gift className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
-                        <div>
-                          <h3 className="text-white font-bold mb-2">{t.referralBenefitTitle}</h3>
-                          <ul className="space-y-1 text-gray-300 text-sm">
-                            <li>• {t.referralBenefit1(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
-                            <li>• {t.referralBenefit2(500).split('500').map((part, i, arr) => i < arr.length - 1 ? <span key={i}>{part}<span className="text-yellow-400 font-bold">500</span></span> : part)}</li>
-                            <li>• {t.referralBenefit3}</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
+                </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-white text-sm font-medium mb-2 block">
-                          {t.referralCodeLabel}
-                        </label>
-                        <Input
-                          value={referralCodeInput}
-                          onChange={(e) => {
-                            setReferralCodeInput(e.target.value.toUpperCase());
-                            setReferralError("");
-                          }}
-                          placeholder={t.referralPlaceholder}
-                          className="bg-gray-900 border-gray-700 text-white text-lg tracking-wider text-center"
-                          maxLength={6}
-                        />
-                      </div>
-
-                      {referralError && (
-                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
-                          <p className="text-red-400 text-sm">{referralError}</p>
-                        </div>
-                      )}
-
-                      {referralSuccess && (
-                        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3">
-                          <p className="text-green-400 text-sm">{referralSuccess}</p>
-                        </div>
-                      )}
-
-                      <Button
-                        onClick={handleSubmitReferralCode}
-                        disabled={redeemReferralMutation.isPending || !referralCodeInput.trim()}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 h-12 text-base font-bold"
-                      >
-                        {redeemReferralMutation.isPending ? (
+                {/* 이미 사용한 추천 코드 목록 */}
+                {usedReferralCount > 0 && (
+                  <div className="mb-4">
+                    <p className="text-gray-400 text-xs mb-2">사용한 추천 코드 ({usedReferralCount}개)</p>
+                    <div className="space-y-1.5">
+                      {myReferralUsage.map((r, i) => (
+                        <div key={i} className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2">
                           <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
-                            <span>{t.processing}</span>
+                            <span className="text-cyan-400 font-bold text-sm tracking-wider">{r.referrer_code}</span>
+                            <span className="text-gray-500 text-xs">· {r.referrer_name || r.referrer_email}</span>
                           </div>
-                        ) : (
-                          t.referralSubmitBtn
-                        )}
-                      </Button>
+                          <span className="text-yellow-400 text-xs font-bold">+{r.coins_awarded || 500}</span>
+                        </div>
+                      ))}
                     </div>
-                  </>
+                  </div>
                 )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-white text-sm font-medium mb-2 block">
+                      {t.referralCodeLabel}
+                    </label>
+                    <Input
+                      value={referralCodeInput}
+                      onChange={(e) => {
+                        setReferralCodeInput(e.target.value.toUpperCase());
+                        setReferralError("");
+                      }}
+                      placeholder={t.referralPlaceholder}
+                      className="bg-gray-900 border-gray-700 text-white text-lg tracking-wider text-center"
+                      maxLength={6}
+                    />
+                  </div>
+
+                  {referralError && (
+                    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                      <p className="text-red-400 text-sm">{referralError}</p>
+                    </div>
+                  )}
+
+                  {referralSuccess && (
+                    <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3">
+                      <p className="text-green-400 text-sm">{referralSuccess}</p>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleSubmitReferralCode}
+                    disabled={redeemReferralMutation.isPending || !referralCodeInput.trim()}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 h-12 text-base font-bold"
+                  >
+                    {redeemReferralMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
+                        <span>{t.processing}</span>
+                      </div>
+                    ) : (
+                      t.referralSubmitBtn
+                    )}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </>
@@ -737,15 +745,13 @@ export default function MyFestee() {
                 >
                   <Share2 className="w-4 h-4 text-white" />
                 </button>
-                {!hasUsedReferralCode && (
-                  <button
-                    onClick={handleOpenReferralModal}
-                    className="w-9 h-9 rounded-lg bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center transition-colors"
-                    aria-label="추천인 코드 입력"
-                  >
-                    <Gift className="w-4 h-4 text-white" />
-                  </button>
-                )}
+                <button
+                  onClick={handleOpenReferralModal}
+                  className="w-9 h-9 rounded-lg bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center transition-colors"
+                  aria-label="추천인 코드 입력"
+                >
+                  <Gift className="w-4 h-4 text-white" />
+                </button>
               </div>
             </div>
             
