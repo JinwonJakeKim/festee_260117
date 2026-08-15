@@ -221,7 +221,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
 
       {/* 우측 하단 카운트 */}
       <div className="absolute bottom-5 right-5 text-right z-50">
-        <p className="text-white/90 text-xs font-medium tracking-wide">FESTEE Catch</p>
+        <p className="text-white/90 text-xs font-medium tracking-wide">Catch</p>
         <p className="text-white text-4xl font-black leading-none mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{catchCount}</p>
       </div>
 
