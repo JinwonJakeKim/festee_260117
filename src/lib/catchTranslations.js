@@ -1,6 +1,7 @@
 export const catchTranslations = {
   ko: {
     headerDesc: "축제 현장에서 500m 이내에 있으면 인증하세요!",
+    emptyCardMessage: "축제를 캐치해서 히스토리카드를 완성하세요",
     myCatchCount: "내 인증 수",
     myLocation: "내 위치",
     refresh: "새로고침",
@@ -40,6 +41,7 @@ export const catchTranslations = {
   },
   en: {
     headerDesc: "Get certified when you're within 500m of a festival!",
+    emptyCardMessage: "Catch festivals to complete your history cards",
     myCatchCount: "My Catches",
     myLocation: "My Location",
     refresh: "Refresh",
@@ -79,6 +81,7 @@ export const catchTranslations = {
   },
   ja: {
     headerDesc: "フェス会場から500m以内にいれば認証できます！",
+    emptyCardMessage: "フェスをCatchしてヒストリーカードを完成させよう",
     myCatchCount: "認証数",
     myLocation: "現在地",
     refresh: "更新",
@@ -118,6 +121,7 @@ export const catchTranslations = {
   },
   zh: {
     headerDesc: "在节日会场500m以内即可认证！",
+    emptyCardMessage: "Catch节日来完成你的历史卡片",
     myCatchCount: "我的认证数",
     myLocation: "我的位置",
     refresh: "刷新",

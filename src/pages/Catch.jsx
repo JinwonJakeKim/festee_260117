@@ -312,11 +312,12 @@ export default function Catch() {
       </AnimatePresence>
 
       {/* History Card Stack or Header */}
-      {user && catches.length > 0 ? (
+      {user ? (
         <CatchHistoryCardStack
           catches={catches}
           festivals={festivals}
           catchCount={user.catches_count || catches.length}
+          emptyMessage={t.emptyCardMessage}
         />
       ) : (
         <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
@@ -339,13 +340,6 @@ export default function Catch() {
             </h1>
             <p className="text-gray-400">{t.headerDesc}</p>
           </div>
-
-          {user && (
-            <div className="bg-gray-900 rounded-lg p-4 text-center">
-              <p className="text-gray-400 text-sm mb-1">{t.myCatchCount}</p>
-              <p className="text-cyan-400 text-3xl font-bold">{user.catches_count || 0}</p>
-            </div>
-          )}
         </div>
       )}
 
