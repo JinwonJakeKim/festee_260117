@@ -14,6 +14,7 @@ import { catchTranslations } from "@/lib/catchTranslations";
 import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
+import { proxyImages } from "@/functions/proxyImages";
 
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
@@ -200,45 +201,26 @@ export default function Catch() {
     }
   };
 
-  const convertImageToDataUrl = async (url) => {
-    // CORS 프록시를 통해 이미지를 data URL로 변환
-    const proxyUrls = [
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    ];
-    for (let i = 0; i < proxyUrls.length; i++) {
-      try {
-        const res = await fetch(proxyUrls[i]);
-        if (!res.ok) continue;
-        const blob = await res.blob();
-        const dataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(blob);
-        });
-        if (dataUrl) return dataUrl;
-      } catch (e) { /* try next proxy */ }
-    }
-    return null;
-  };
-
   const handleDownloadImage = async () => {
     const containerEl = document.getElementById('catch-history-container');
     if (!containerEl) return;
     try {
-      // 컨테이너 내 모든 이미지를 data URL로 변환
       const images = Array.from(containerEl.querySelectorAll('img'));
       const originalSrcs = images.map((img) => img.src);
+      const urlsToConvert = originalSrcs.filter((src) => src && !src.startsWith('data:'));
 
-      await Promise.all(images.map(async (img) => {
-        const src = img.src;
-        if (!src || src.startsWith('data:')) return;
-        const dataUrl = await convertImageToDataUrl(src);
-        if (dataUrl) {
-          img.src = dataUrl;
-        }
-      }));
+      // 백엔드 함수로 모든 이미지를 한 번에 base64로 변환
+      if (urlsToConvert.length > 0) {
+        const res = await proxyImages({ urls: urlsToConvert });
+        const urlToDataUrl = new Map();
+        (res.data?.results || []).forEach((r) => {
+          if (r.dataUrl) urlToDataUrl.set(r.url, r.dataUrl);
+        });
+        images.forEach((img) => {
+          const dataUrl = urlToDataUrl.get(img.src);
+          if (dataUrl) img.src = dataUrl;
+        });
+      }
 
       // 변환된 이미지 로드 대기
       await Promise.all(images.map((img) => {
