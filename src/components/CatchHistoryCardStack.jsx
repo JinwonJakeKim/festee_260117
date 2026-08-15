@@ -62,11 +62,11 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
       <style>{`
-        .catch-stack-card,
-        .catch-stack-card span,
-        .catch-stack-card p,
-        .catch-stack-card div,
-        .catch-stack-card a {
+        .catch-stack-ctx,
+        .catch-stack-ctx span,
+        .catch-stack-ctx p,
+        .catch-stack-ctx div,
+        .catch-stack-ctx a {
           color: #000 !important;
         }
       `}</style>
@@ -160,7 +160,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                 }
               >
                 {isBlank ? (
-                  <div className="catch-stack-card rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
+                  <div className="catch-stack-ctx rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
                     <div className="text-center pt-3 pb-2">
                       <span className="text-base font-black tracking-[0.2em] text-black">
                           CATCH
@@ -176,7 +176,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                   </div>
                 ) : (
                   <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                    <div id={index === 0 ? 'catch-front-card' : undefined} className="catch-stack-card rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
+                    <div id={index === 0 ? 'catch-front-card' : undefined} className="catch-stack-ctx rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
                       <div className="text-center pt-3 pb-2">
                         <span className="text-base font-black tracking-[0.2em] text-black">
                           CATCH
