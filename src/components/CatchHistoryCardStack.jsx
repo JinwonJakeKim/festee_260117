@@ -38,9 +38,9 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   ];
 
   const cardWidth = 150;
-  const offsetStep = 40;
-  const offsetYStep = 0;
-  const scaleStep = 0.05;
+  const offsetStep = 32;
+  const offsetYStep = 6;
+  const scaleStep = 0.08;
 
   // 새 캐치 추가 감지
   const prevFrontIdRef = React.useRef(null);
