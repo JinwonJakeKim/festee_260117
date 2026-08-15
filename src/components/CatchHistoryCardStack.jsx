@@ -60,7 +60,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
   }, [catches]);
 
   return (
-    <div id="catch-history-container" className="relative w-full overflow-hidden" style={{ height: '340px' }}>
+    <div id="catch-history-container" className="relative w-full overflow-hidden" style={{ height: '400px' }}>
       <style>{`
         .catch-stack-ctx,
         .catch-stack-ctx span,
@@ -173,7 +173,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                         </span>
                       </div>
                       <div className="px-3 pb-3">
-                        <div className="rounded-lg bg-gray-400/30" style={{ aspectRatio: '4/5' }} />
+                        <div className="rounded-lg bg-gray-400/30" style={{ aspectRatio: '1/1' }} />
                     </div>
                     <div className="px-4 pb-3">
                       <div className="h-4 bg-gray-500/30 rounded mb-1.5" />
@@ -189,7 +189,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                         </span>
                       </div>
                       <div className="px-3 pb-3">
-                        <div className="rounded-lg overflow-hidden" style={{ aspectRatio: '4/5' }}>
+                        <div className="rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
                           <img
                             src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
                             alt={catchItem.festival_name}
