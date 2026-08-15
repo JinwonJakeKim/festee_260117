@@ -61,6 +61,12 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
+      <style>{`
+        .catch-stack-card span,
+        .catch-stack-card p {
+          color: #000 !important;
+        }
+      `}</style>
       {/* 축제 분위기 배경 - 전구 줄 + 보케 */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #2a241e 0%, #1a1612 45%, #0d0a08 100%)' }}>
         {/* 보케 효과 */}
@@ -151,7 +157,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                 }
               >
                 {isBlank ? (
-                  <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
+                  <div className="catch-stack-card rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
                     <div className="text-center pt-3 pb-2">
                       <span className="text-base font-black tracking-[0.2em] text-black">
                           CATCH
@@ -167,7 +173,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                   </div>
                 ) : (
                   <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                    <div id={index === 0 ? 'catch-front-card' : undefined} className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
+                    <div id={index === 0 ? 'catch-front-card' : undefined} className="catch-stack-card rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9' }}>
                       <div className="text-center pt-3 pb-2">
                         <span className="text-base font-black tracking-[0.2em] text-black">
                           CATCH
