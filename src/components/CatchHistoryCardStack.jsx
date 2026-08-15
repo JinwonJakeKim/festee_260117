@@ -121,7 +121,7 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
           const isBlank = item.type === 'blank';
           const catchItem = item.data;
           const festival = catchItem ? festivalMap.get(catchItem.festival_id) : null;
-          const festivalName = festival ? getLocalizedContent(festival, 'name') : catchItem.festival_name;
+          const festivalName = festival ? getLocalizedContent(festival, 'name') : (catchItem?.festival_name || '');
           const dateRange = formatDateRange(festival);
 
           return (
