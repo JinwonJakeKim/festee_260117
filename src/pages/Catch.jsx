@@ -292,20 +292,13 @@ export default function Catch() {
         </div>
       )}
 
-      {/* Share & Download Buttons */}
+      {/* Download Button */}
       {user && catches.length > 0 && (
-        <div className="px-4 py-3 flex gap-2">
-          <Button
-            onClick={handleShareCatch}
-            className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            {t.share}
-          </Button>
+        <div className="px-4 py-3">
           <Button
             onClick={handleDownloadImage}
             variant="outline"
-            className="flex-1 border-gray-700 text-cyan-400 hover:bg-gray-800 font-bold"
+            className="w-full border-gray-700 text-cyan-400 hover:bg-gray-800 font-bold"
           >
             <Download className="w-4 h-4 mr-2" />
             {t.downloadImage}
