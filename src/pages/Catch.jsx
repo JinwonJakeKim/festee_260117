@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, MapPin, CheckCircle, AlertCircle, Target, Trophy, Share2, Instagram, Facebook, ChevronRight, User } from "lucide-react";
+import { Navigation, CheckCircle, AlertCircle, Target, Trophy, Instagram, Facebook } from "lucide-react";
 import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -15,33 +12,8 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useLanguage } from "@/lib/useLanguage";
 import { catchTranslations } from "@/lib/catchTranslations";
 
-// 두 좌표 간 거리 계산 (Haversine formula) - 미터 단위
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371000; // 지구 반경 (미터)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // 미터 단위
-};
-
-// 안전한 날짜 포맷팅 함수
-const safeFormatDate = (dateString, formatString) => {
-  if (!dateString) return '날짜 미정';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '날짜 미정';
-    return format(date, formatString, { locale: ko });
-  } catch (e) {
-    return '날짜 미정';
-  }
-};
-
 export default function Catch() {
-  const { language, getLocalizedContent } = useLanguage();
+  const { language } = useLanguage();
   const t = catchTranslations[language] || catchTranslations.ko;
 
   const [userLocation, setUserLocation] = useState(null);
@@ -49,9 +21,7 @@ export default function Catch() {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [catchedFestival, setCatchedFestival] = useState(null);
-  const [nearbyFestivals, setNearbyFestivals] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('explore');
   const queryClient = useQueryClient();
 
   // 페이지 진입 시 스크롤 초기화
@@ -65,22 +35,11 @@ export default function Catch() {
     retry: false, // Don't retry if user fetch fails (user not logged in)
   });
 
-  const { data: festivals } = useQuery({
-    queryKey: ['festivals'],
-    queryFn: () => base44.entities.Festival.list(),
-    initialData: [],
-  });
-
   const { data: catches = [] } = useQuery({ // Renamed to myCatches logically
     queryKey: ['catches', user?.email],
     queryFn: () => user ? base44.entities.Catch.filter({ user_email: user.email }, '-created_date') : [],
     enabled: !!user, // Only fetch if user is logged in
     initialData: [],
-  });
-
-  const { data: allCatches = [] } = useQuery({ // New query for all catches
-    queryKey: ['allCatches'],
-    queryFn: () => base44.entities.Catch.list('-created_date'), // Fetch all catches, sorted by creation date
   });
 
   // GPS 위치 가져오기
@@ -136,41 +95,6 @@ export default function Catch() {
     getUserLocation();
   }, []);
 
-  // 근처 축제 계산 - 중복 제거 로직 추가
-  useEffect(() => {
-    if (userLocation && festivals.length > 0) {
-      // 축제 이름을 key로 하는 Map을 사용하여 중복 제거
-      const festivalMap = new Map();
-      
-      festivals
-        .filter(f => f.latitude && f.longitude && f.name) // 위치와 이름이 있는 축제만
-        .forEach(festival => {
-          const distance = calculateDistance(
-            userLocation.latitude,
-            userLocation.longitude,
-            festival.latitude,
-            festival.longitude
-          );
-          
-          // 5km 이내만
-          if (distance <= 5000) {
-            const existingFestival = festivalMap.get(festival.name);
-            
-            // 같은 이름의 축제가 없거나, 기존 축제보다 더 가까우면 업데이트
-            if (!existingFestival || distance < existingFestival.distance) {
-              festivalMap.set(festival.name, { ...festival, distance });
-            }
-          }
-        });
-      
-      // Map을 배열로 변환하고 거리순으로 정렬
-      const nearby = Array.from(festivalMap.values())
-        .sort((a, b) => a.distance - b.distance);
-      
-      setNearbyFestivals(nearby);
-    }
-  }, [userLocation, festivals]);
-
   const catchMutation = useMutation({
     mutationFn: async (festival) => {
       // Check if user is logged in before attempting to catch
@@ -224,16 +148,6 @@ export default function Catch() {
     base44.auth.redirectToLogin(window.location.pathname);
   };
 
-  const handleCatch = (festival) => {
-    if (festival.distance <= 500) {
-      catchMutation.mutate(festival);
-    }
-  };
-
-  const isCatched = (festivalId) => {
-    return catches.some(c => c.festival_id === festivalId);
-  };
-
   const handleShare = (platform) => {
     if (!catchedFestival) return;
     
@@ -254,10 +168,6 @@ export default function Catch() {
         break;
     }
   };
-
-  // 표시할 축제는 최대 3개
-  const displayedFestivals = nearbyFestivals.slice(0, 3);
-  const hasMoreFestivals = nearbyFestivals.length > 3;
 
   return (
     <div className="min-h-screen bg-black pb-20">
@@ -402,237 +312,59 @@ export default function Catch() {
         </Card>
       </div>
 
-      {/* Nearby Festivals */}
-      <div className="px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white text-xl font-bold flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-pink-500" />
-            {t.nearbyTitle}
-          </h2>
-          {hasMoreFestivals && (
-            <Link to={createPageUrl("NearbyCatch")}>
-              <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
-                {t.more} <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          )}
-        </div>
-
-        {!userLocation || isLoadingLocation ? (
-          <Card className="bg-gray-900 border-gray-800 p-8 text-center">
-            <Navigation className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">{t.loadingLocation}</p>
-          </Card>
-        ) : displayedFestivals.length === 0 ? (
-          <Card className="bg-gray-900 border-gray-800 p-8 text-center">
-            <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">{t.noNearby}</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {displayedFestivals.map((festival) => {
-              const canCatch = festival.distance <= 500;
-              const alreadyCatched = isCatched(festival.id);
-              const distanceKm = (festival.distance / 1000).toFixed(1);
-              const distanceM = Math.round(festival.distance);
-              
-              return (
-                <Card
-                  key={festival.id}
-                  className={`border transition-all ${
-                    canCatch && !alreadyCatched
-                      ? 'bg-gradient-to-r from-cyan-900/30 to-pink-900/30 border-cyan-400'
-                      : 'bg-gray-900 border-gray-800'
-                  }`}
-                >
-                  <div className="p-3">
-                    <Link to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
-                      <div className="flex items-center gap-3 mb-2 cursor-pointer">
-                        <img
-                          src={festival.thumbnail_url}
-                          alt={festival.name}
-                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold text-sm truncate mb-1 hover:text-cyan-400 transition-colors">
-                            {getLocalizedContent(festival, 'name')}
-                          </h3>
-                          <p className="text-gray-400 text-xs mb-1 truncate">
-                            {getLocalizedContent(festival, 'city')}, {getLocalizedContent(festival, 'country')}
-                          </p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge
-                              className={`text-xs ${
-                                canCatch
-                                  ? 'bg-green-500 text-white'
-                                  : distanceM < 1000
-                                  ? 'bg-yellow-500 text-black'
-                                  : 'bg-gray-700 text-white'
-                              }`}
-                            >
-                              {distanceM < 1000 ? `${distanceM}m` : `${distanceKm}km`}
-                            </Badge>
-                            {alreadyCatched && (
-                              <Badge className="bg-cyan-500 text-white text-xs">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                {t.done}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    
-                    {canCatch && !alreadyCatched ? (
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault(); // Prevent Link navigation when button is clicked
-                          handleCatch(festival);
-                        }}
-                        disabled={catchMutation.isLoading}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold h-10 text-sm"
-                      >
-                        {catchMutation.isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
-                            {t.catching}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4" />
-                            {t.catchNow}
-                          </div>
-                        )}
-                      </Button>
-                    ) : alreadyCatched ? (
-                      <div className="w-full bg-gray-800 text-gray-400 font-bold h-10 rounded-lg flex items-center justify-center text-sm">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {t.alreadyCatched}
-                      </div>
-                    ) : (
-                      <div className="w-full bg-gray-800 text-gray-400 font-bold h-10 rounded-lg flex items-center justify-center text-xs">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        {distanceM < 1000 ? t.needCloserM(distanceM) : t.needCloserKm(distanceKm)}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Catch Explore & My History Tabs */}
+      {/* My Catch History - Festival Card Format */}
       <div className="px-4 py-6">
-        <div className="flex justify-center mb-6">
-          <Button
-            variant={activeTab === 'explore' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('explore')}
-            className={`flex-1 rounded-r-none ${activeTab === 'explore' ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'}`}
-          >
-            {t.allCatch}
-          </Button>
-          <Button
-            variant={activeTab === 'my' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('my')}
-            className={`flex-1 rounded-l-none ${activeTab === 'my' ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'}`}
-          >
-            {t.myCatch(catches.length)}
-          </Button>
-        </div>
+        <h2 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-cyan-400" />
+          {t.myCatch(catches.length)}
+        </h2>
 
-        {activeTab === "explore" && (
-          <div className="space-y-4">
-            {allCatches.length > 0 ? (
-              allCatches.map((catchItem) => (
-                <Card key={catchItem.id} className="bg-gray-900 border-gray-800 overflow-hidden">
-                  <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)} className="block">
-                    <img
-                      src={catchItem.image_url}
-                      alt={catchItem.festival_name}
-                      className="w-full h-48 object-cover"
-                    />
-                  </Link>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${catchItem.user_email}`}
-                          alt={catchItem.user_name}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <div>
-                          <p className="text-white font-bold text-sm">{catchItem.user_name}</p>
-                          <p className="text-gray-500 text-xs">{safeFormatDate(catchItem.created_date, 'yyyy.MM.dd')}</p>
-                        </div>
-                      </div>
-                      {/* Likes placeholder removed as it's not core functionality */}
-                    </div>
-                    <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                      <h3 className="text-white font-bold text-lg mb-1 hover:text-cyan-400 transition-colors">{catchItem.festival_name}</h3>
-                      <p className="text-gray-400 text-sm">{catchItem.location}</p>
-                    </Link>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 mb-3">{t.noCatches}</p>
-                <p className="text-gray-600 text-sm">{t.beFirst}</p>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {activeTab === "my" && (
-          user ? (
-            catches.length > 0 ? (
-              <div className="space-y-4">
-                {catches.map((catchItem) => (
-                  <Card key={catchItem.id} className="bg-gray-900 border-gray-800 overflow-hidden">
-                    <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)} className="block">
+        {user ? (
+          catches.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {catches.map((catchItem) => (
+                <Link
+                  key={catchItem.id}
+                  to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}
+                  className="block"
+                >
+                  <div className="relative rounded-xl overflow-hidden group">
+                    <div className="relative aspect-[3/4]">
                       <img
-                        src={catchItem.image_url}
+                        src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
                         alt={catchItem.festival_name}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    </Link>
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-gray-500 text-xs">{safeFormatDate(catchItem.created_date, 'yyyy.MM.dd HH:mm')}</p>
-                        </div>
-                        {/* Likes placeholder removed as it's not core functionality */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <h3 className="text-white text-base font-bold mb-1 line-clamp-2">
+                          {catchItem.festival_name}
+                        </h3>
+                        <p className="text-gray-300 text-xs">{catchItem.location}</p>
                       </div>
-                      <Link to={createPageUrl(`FestivalDetail?id=${catchItem.festival_id}`)}>
-                        <h3 className="text-white font-bold text-lg mb-1 hover:text-cyan-400 transition-colors">{catchItem.festival_name}</h3>
-                        <p className="text-gray-400 text-sm">{catchItem.location}</p>
-                      </Link>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-                <Target className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 mb-3">{t.noMyCatch}</p>
-                <p className="text-gray-600 text-sm">{t.beFirst}</p>
-              </Card>
-            )
+                  </div>
+                </Link>
+              ))}
+            </div>
           ) : (
             <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-              <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 mb-3">{t.loginForHistory}</p>
-              <Button
-                  onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
-              >
-                  {t.login}
-              </Button>
+              <Target className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 mb-3">{t.noMyCatch}</p>
+              <p className="text-gray-600 text-sm">{t.beFirst}</p>
             </Card>
           )
+        ) : (
+          <Card className="bg-gray-900 border-gray-800 p-12 text-center">
+            <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 mb-3">{t.loginForHistory}</p>
+            <Button
+              onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
+            >
+              {t.login}
+            </Button>
+          </Card>
         )}
       </div>
 
