@@ -29,6 +29,7 @@ export default function NearbyFestivalsSection({ userLocation, festivals, catche
         distance: calcDistance(userLocation.latitude, userLocation.longitude, f.latitude, f.longitude),
         isCaught: caughtIds.has(f.id),
       }))
+      .filter(f => f.distance <= 1)
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 5);
   }, [userLocation, festivals, catches]);
