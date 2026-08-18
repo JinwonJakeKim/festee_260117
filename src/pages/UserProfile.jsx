@@ -33,6 +33,8 @@ export default function UserProfile() {
   const [newPost, setNewPost] = useState("");
 
   useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
     window.scrollTo(0, 0);
   }, [profileUserEmail]);
 
