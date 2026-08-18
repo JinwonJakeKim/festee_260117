@@ -1,0 +1,45 @@
+{
+  "name": "TourAPI_Transform_Monthly",
+  "description": "\ub9e4\uc6d4 2\uc77c TourAPI \uc6d0\ubcf8 \ub370\uc774\ud130 \ubcc0\ud658\uc744 \uc2e4\ud589\ud569\ub2c8\ub2e4. Koreatourapi_RawData_Transform_Auto(5\ubd84 \uac04\uaca9)\uac00 \uc774\ud6c4 \ucc98\ub9ac\ub97c \uc774\uc5b4\ubc1b\uc2b5\ub2c8\ub2e4.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 0 2 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "tourapi_transform_monthly",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "transform_pending": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoTransformPendingData",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\uc6d0\ubcf8 \ub370\uc774\ud130 \ubcc0\ud658 \uc2e4\ud589",
+            "description": "TourApiRawData pending \u2192 Festival \ubcc0\ud658"
+          }
+        }
+      }
+    ]
+  }
+}
