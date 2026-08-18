@@ -83,15 +83,26 @@ Deno.serve(async (req) => {
     }
 
     if (!pendingLinks || pendingLinks.length === 0) {
-      // 처리할 링크가 일시적으로 없더라도 자동화 상태는 유지
-      // (TTL active_until로 만료 관리 → 이후 새로 pending이 유입되면 자동으로 이어서 처리)
-      console.log('[Japantravel] No pending links right now - automation stays active (TTL-managed)');
+      // 처리할 pending 링크가 없으면 자동화 비활성화 (End 조건: pending = 0)
+      console.log('[Japantravel] No pending links - deactivating automation (end condition met)');
+      const settings = await base44.asServiceRole.entities.AutomationSetting.filter(
+        { automation_name: AUTOMATION_NAME },
+        '-updated_date',
+        5
+      );
+      if (settings[0]) {
+        await base44.asServiceRole.entities.AutomationSetting.update(settings[0].id, {
+          is_active: false,
+          active_until: new Date().toISOString()
+        });
+      }
       return Response.json({
         success: true,
-        message: 'No pending links to process',
+        message: 'No pending links to process - automation deactivated',
         processed: 0,
         succeededCount: 0,
-        failedCount: 0
+        failedCount: 0,
+        automation_deactivated: true
       });
     }
 
