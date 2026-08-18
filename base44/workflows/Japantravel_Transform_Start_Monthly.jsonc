@@ -1,0 +1,48 @@
+{
+  "name": "Japantravel_Transform_Start_Monthly",
+  "description": "\ub9e4\uc6d4 5\uc77c 13:00 KST Japantravel Rawdata \ubcc0\ud658 \uc790\ub3d9\ud654\ub97c \ud65c\uc131\ud654\ud569\ub2c8\ub2e4. Japantravel_RawData_Transform_Auto(5\ubd84 \uac04\uaca9)\uac00 \ub300\uae30 \uc911\uc778 \ub370\uc774\ud130\uac00 \uc5c6\uc744 \ub54c\uae4c\uc9c0 \ucc98\ub9ac\ud569\ub2c8\ub2e4.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 13 5 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "japantravel_transform_start_monthly",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "activate_transform": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "activateAutomationForRun",
+            "args": {
+              "automation_name": "japantravel_transform",
+              "ttl_days": 7
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Rawdata \ubcc0\ud658 \uc790\ub3d9\ud654 \ud65c\uc131\ud654",
+            "description": "japantravel_transform AutomationSetting \ud65c\uc131\ud654 (TTL 7\uc77c)"
+          }
+        }
+      }
+    ]
+  }
+}

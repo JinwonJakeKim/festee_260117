@@ -1,0 +1,48 @@
+{
+  "name": "Japantravel_Extract_Start_Monthly",
+  "description": "\ub9e4\uc6d4 5\uc77c 12:00 KST Japantravel \ucd95\uc81c\uc815\ubcf4\ucd94\ucd9c \uc790\ub3d9\ud654\ub97c \ud65c\uc131\ud654\ud569\ub2c8\ub2e4. Japantravel_Extract_Auto(5\ubd84 \uac04\uaca9)\uac00 \ub300\uae30 \uc911\uc778 \ub9c1\ud06c\uac00 \uc5c6\uc744 \ub54c\uae4c\uc9c0 \ucc98\ub9ac\ud569\ub2c8\ub2e4.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 12 5 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "japantravel_extract_start_monthly",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "activate_extract": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "activateAutomationForRun",
+            "args": {
+              "automation_name": "japantravel_extract",
+              "ttl_days": 7
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ucd95\uc81c\uc815\ubcf4\ucd94\ucd9c \uc790\ub3d9\ud654 \ud65c\uc131\ud654",
+            "description": "japantravel_extract AutomationSetting \ud65c\uc131\ud654 (TTL 7\uc77c)"
+          }
+        }
+      }
+    ]
+  }
+}

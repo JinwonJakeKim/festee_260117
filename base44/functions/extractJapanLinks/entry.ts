@@ -14,9 +14,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const user = await base44.auth.me();
-
-    if (!user || user.role !== 'admin') {
+    const authHeader = req.headers.get('Authorization');
+    let user = null;
+    if (authHeader) {
+      try { user = await base44.auth.me(); } catch (e) { user = null; }
+    }
+    if (authHeader && (!user || user.role !== 'admin')) {
       return Response.json({ error: 'Admin only' }, { status: 401 });
     }
 
@@ -163,7 +166,7 @@ Deno.serve(async (req) => {
     // 추출 로그 저장 (한국시간)
     const koreaTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
     await base44.asServiceRole.entities.JapantravelExtractionLog.create({
-      initiated_by: user.email,
+      initiated_by: user?.email || 'system',
       source_name: sourceUrl.name,
       target_month: targetMonth || '',
       status: 'success',

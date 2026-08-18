@@ -1,0 +1,45 @@
+{
+  "name": "Japantravel_UrlExtract_Monthly",
+  "description": "\ub9e4\uc6d4 5\uc77c 00:00 KST Japantravel\uc5d0\uc11c \ub2e4\uc74c \ub2ec \ucd95\uc81c \ub9c1\ud06c \uc815\ubcf4\ub97c \ucd94\ucd9c\ud569\ub2c8\ub2e4. (\uc608: 9\uc6d4 5\uc77c \u2192 10\uc6d4 \ub9c1\ud06c, 12\uc6d4 5\uc77c \u2192 \ub2e4\uc74c\ud574 1\uc6d4 \ub9c1\ud06c)",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 0 5 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "japantravel_urlextract_monthly",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "extract_links": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "startMonthlyJapantravelLinkExtraction",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ub2e4\uc74c \ub2ec \ub9c1\ud06c \ucd94\ucd9c",
+            "description": "Japantravel\uc5d0\uc11c \ub2e4\uc74c \ub2ec \ucd95\uc81c \ub9c1\ud06c \uc815\ubcf4 \ucd94\ucd9c"
+          }
+        }
+      }
+    ]
+  }
+}
