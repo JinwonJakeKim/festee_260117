@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -135,12 +134,15 @@ export default function RankerDetail() {
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Background Image */}
-      <div className="relative h-48">
+      <div className="relative h-48 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        {ranker.background_image && (
         <img
-          src={ranker.background_image || "https://images.unsplash.com/photo-1470229722913?w=800"}
+          src={ranker.background_image}
           alt="Background"
           className="w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; }}
         />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
         
         <button

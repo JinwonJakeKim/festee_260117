@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -221,7 +220,7 @@ export default function UserProfile() {
   const isOwnProfile = currentUser && currentUser.email === profileUserEmail;
   const displayName = profileUser.full_name || profileUserEmail.split('@')[0];
   const profileImage = profileUser.profile_image;
-  const backgroundImage = ranker?.background_image || "https://images.unsplash.com/photo-1470229722913?w=800";
+  const backgroundImage = ranker?.background_image;
   const bio = profileUser.bio || ranker?.bio;
   const catchesCount = profileUser.catches_count || 0;
   const followersCount = ranker?.followers_count || 0;
@@ -232,12 +231,15 @@ export default function UserProfile() {
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Background Image */}
-      <div className="relative h-48">
+      <div className="relative h-48 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        {backgroundImage && (
         <img
           src={backgroundImage}
           alt="Background"
           className="w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; }}
         />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
         
         <button
