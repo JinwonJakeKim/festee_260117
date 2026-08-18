@@ -179,6 +179,9 @@ export default function FestivalDetail() {
   const commentSectionRef = useRef(null);
 
   useEffect(() => {
+    // 실제 스크롤 컨테이너인 main 요소를 최상단으로 스크롤
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
     window.scrollTo(0, 0);
     setYoutubeError(false);
   }, [festivalId]);
