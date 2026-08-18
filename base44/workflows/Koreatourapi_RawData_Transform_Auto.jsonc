@@ -1,6 +1,6 @@
 {
   "name": "Koreatourapi_RawData_Transform_Auto",
-  "description": "5\ubd84\ub9c8\ub2e4 pending \uc0c1\ud0dc\uc758 TourApiRawData\ub97c \uc790\ub3d9\uc73c\ub85c Festival\ub85c \ubcc0\ud658\ud569\ub2c8\ub2e4",
+  "description": "5\ubd84\ub9c8\ub2e4 pending \uc0c1\ud0dc\uc758 TourApiRawData\ub97c Festival\ub85c \uc790\ub3d9 \ubcc0\ud658\ud569\ub2c8\ub2e4. pending\uc774 0\uc774\uba74 \uc885\ub8cc\ub418\uba70, YouTube API \uc81c\ud55c \uc2dc \ub2e4\uc74c \ub0a0 \ud55c\uad6d\uc2dc\uac04 19\uc2dc\uae4c\uc9c0 \ub300\uae30 \ud6c4 1\ud68c \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.",
   "trigger": {
     "condition": null,
     "config": {
@@ -14,7 +14,7 @@
       "interval_unit": "minutes",
       "interval_anchor": "2026-01-17T09:11:56.246000",
       "ends_type": "on_date",
-      "ends_on_date": "2026-07-25T14:59:00",
+      "ends_on_date": "2026-12-31T23:59:00",
       "ends_after_count": null
     }
   },
@@ -27,13 +27,76 @@
     },
     "do": [
       {
-        "run_function": {
+        "process_pending": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "autoTransformPendingData",
             "args": {}
           },
-          "then": "end"
+          "then": "check_result",
+          "x-base44": {
+            "title": "\ub300\uae30 \uc911 \ub370\uc774\ud130 \ubcc0\ud658",
+            "description": "autoTransformPendingData \ud638\ucd9c"
+          }
+        }
+      },
+      {
+        "check_result": {
+          "switch": [
+            {
+              "when": "${ .process_pending.error == \"YOUTUBE_API_LIMIT_REACHED\" }",
+              "then": "compute_wait_seconds",
+              "x-base44": {
+                "title": "\uc720\ud29c\ube0c API \uc81c\ud55c?",
+                "description": "\uc81c\ud55c \uc2dc \ub2e4\uc74c \ub0a0 19\uc2dc KST\uae4c\uc9c0 \ub300\uae30"
+              }
+            },
+            {
+              "when": "${ true }",
+              "then": "end",
+              "x-base44": {
+                "title": "\uc644\ub8cc",
+                "description": "\ucc98\ub9ac \uc644\ub8cc \ub610\ub294 pending \uc5c6\uc74c"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "compute_wait_seconds": {
+          "call": "compute_seconds_until",
+          "with": {
+            "target_iso": "${ .process_pending.next_run_iso }"
+          },
+          "then": "wait_until_19kst",
+          "x-base44": {
+            "title": "\ub300\uae30 \uc2dc\uac04 \uacc4\uc0b0",
+            "description": "\ub2e4\uc74c \ub0a0 19\uc2dc KST\uae4c\uc9c0 \ub0a8\uc740 \uc2dc\uac04"
+          }
+        }
+      },
+      {
+        "wait_until_19kst": {
+          "wait": "PT${ .compute_wait_seconds.seconds }S",
+          "then": "retry_process",
+          "x-base44": {
+            "title": "19\uc2dc KST\uae4c\uc9c0 \ub300\uae30",
+            "description": "\uc720\ud29c\ube0c API \uc81c\ud55c \ud574\uc81c\uae4c\uc9c0 \ub300\uae30"
+          }
+        }
+      },
+      {
+        "retry_process": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoTransformPendingData",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\ub300\uae30 \ud6c4 \uc7ac\uc2dc\ub3c4",
+            "description": "19\uc2dc KST \uc774\ud6c4 1\ud68c \uc7ac\uc2e4\ud589"
+          }
         }
       }
     ]

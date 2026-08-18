@@ -20,10 +20,23 @@ Deno.serve(async (req) => {
     const ytCount = ytLogs[0]?.count || 0;
     if (ytCount >= 95) {
       console.warn(`[AutoTransform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/95) - 자동 변환 중단`);
+      // 다음 날 한국시간 19시 (KST = UTC+9, 즉 10:00 UTC) ISO 계산
+      const kstMs = Date.now() + 9 * 60 * 60 * 1000;
+      const kstDate = new Date(kstMs);
+      const tomorrowKst = new Date(Date.UTC(
+        kstDate.getUTCFullYear(),
+        kstDate.getUTCMonth(),
+        kstDate.getUTCDate() + 1,
+        19, 0, 0, 0
+      ));
+      const nextRunUtc = new Date(tomorrowKst.getTime() - 9 * 60 * 60 * 1000);
+      const nextRunIso = nextRunUtc.toISOString();
+      console.log(`[AutoTransform] Next scheduled run (KST 19:00): ${nextRunIso}`);
       return Response.json({
         success: false,
         error: 'YOUTUBE_API_LIMIT_REACHED',
-        message: `YouTube API 일일 한도 초과 (${ytCount}/95). 날짜가 바뀌면 자동으로 재개됩니다.`
+        message: `YouTube API 일일 한도 초과 (${ytCount}/95). 다음 날 한국시간 19시에 자동으로 재개됩니다.`,
+        next_run_iso: nextRunIso
       }, { status: 429 });
     }
     
