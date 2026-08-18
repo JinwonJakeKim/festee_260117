@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 const EXIT_TIMEOUT = 2000;
+const GUARD_HASH = "#exit-guard";
 
 export default function BackButtonExitHandler() {
   const location = useLocation();
@@ -10,8 +11,8 @@ export default function BackButtonExitHandler() {
   const toastRef = useRef(toast);
   const backPressedOnce = useRef(false);
   const timeoutRef = useRef(null);
+  const handlingRef = useRef(false);
 
-  // toast 참조를 최신으로 유지 (이펙트 재실행 방지)
   useEffect(() => {
     toastRef.current = toast;
   }, [toast]);
@@ -26,18 +27,30 @@ export default function BackButtonExitHandler() {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
+      // 홈이 아닌 경우 해시 제거 (replaceState로 뒤로가기 히스토리 남기지 않음)
+      if (window.location.hash === GUARD_HASH) {
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState(null, "", cleanUrl);
+      }
       return;
     }
 
-    // 더미 히스토리 상태를 푸시하여 뒤로가기 버튼 인터셉트
-    // location.href를 사용해야 Android WebView에서 popstate가 정상 발생함
-    window.history.pushState({ exitGuard: true }, "", window.location.href);
+    // 가드 상태 설정: 해시를 포함한 URL로 pushState
+    // 해시 기반은 WebView에서 pushState만 사용할 때보다 popstate/hashchange 발생률이 높음
+    const guardUrl = window.location.pathname + window.location.search + GUARD_HASH;
+    window.history.pushState({ exitGuard: true }, "", guardUrl);
 
-    const handlePopState = () => {
+    const handleBack = () => {
+      // popstate + hashchange 중복 실행 방지
+      if (handlingRef.current) return;
+      handlingRef.current = true;
+      setTimeout(() => { handlingRef.current = false; }, 300);
+
       if (!backPressedOnce.current) {
-        // 첫 번째 뒤로가기 - 토스트 표시 후 다시 가드 상태 푸시
+        // 첫 번째 뒤로가기 - 토스트 표시 후 가드 재설정
         backPressedOnce.current = true;
-        window.history.pushState({ exitGuard: true }, "", window.location.href);
+        const reGuardUrl = window.location.pathname + window.location.search + GUARD_HASH;
+        window.history.pushState({ exitGuard: true }, "", reGuardUrl);
 
         toastRef.current({
           title: "앱 종료",
@@ -57,26 +70,33 @@ export default function BackButtonExitHandler() {
         }
         backPressedOnce.current = false;
 
-        // 가드 상태를 제거하지 않고 뒤로가기 시도
-        // WebView에서 history.back() 호출 시 더 이상 뒤로 갈 곳이 없으면
-        // native onBackPressed가 앱을 종료함
         if (typeof navigator.app?.exitApp === "function") {
           navigator.app.exitApp();
         } else if (window.Capacitor?.exitApp) {
           window.Capacitor.exitApp();
         } else {
-          // WebView fallback: 남은 가드 상태를 지우고 뒤로가기
-          // popstate로 인해 이미 [initial] 상태이므로
-          // go(-1) 시도 → WebView에 history가 없으면 native가 종료 처리
+          // WebView fallback: 가드 상태를 지우고 뒤로가기
+          // WebView에 더 이상 history가 없으면 native onBackPressed가 앱 종료
           window.history.go(-1);
         }
       }
     };
 
+    // popstate (표준 History API) + hashchange (WebView 백업)
+    const handlePopState = () => handleBack();
+    const handleHashChange = () => {
+      // 해시가 제거된 경우만 = 뒤로가기 버튼 눌림
+      if (window.location.hash !== GUARD_HASH) {
+        handleBack();
+      }
+    };
+
     window.addEventListener("popstate", handlePopState);
+    window.addEventListener("hashchange", handleHashChange);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("hashchange", handleHashChange);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
