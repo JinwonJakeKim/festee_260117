@@ -661,8 +661,9 @@ export default function Layout({ children, currentPageName }) {
       {/* Bottom Navigation (Mobile only) */}
       {!isDesktop && (
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[9998]"
+        className="fixed bottom-0 left-0 right-0 border-t border-gray-800 z-[9998]"
         style={{
+          background: '#000',
           paddingBottom: '0px',
           paddingLeft: '0px',
           paddingRight: '0px',
@@ -685,11 +686,11 @@ export default function Layout({ children, currentPageName }) {
                     className={`w-6 h-6 transition-all duration-300 ${
                       isActive 
                         ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(0,212,255,0.8)]' 
-                        : 'text-gray-500'
+                        : 'text-white'
                     }`}
                   />
                   <span className={`text-xs font-medium ${
-                    isActive ? 'text-cyan-400' : 'text-gray-500'
+                    isActive ? 'text-cyan-400' : 'text-white'
                   }`}>
                     {item.name}
                   </span>
