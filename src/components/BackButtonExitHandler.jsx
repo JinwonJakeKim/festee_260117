@@ -7,8 +7,14 @@ const EXIT_TIMEOUT = 2000;
 export default function BackButtonExitHandler() {
   const location = useLocation();
   const { toast } = useToast();
+  const toastRef = useRef(toast);
   const backPressedOnce = useRef(false);
   const timeoutRef = useRef(null);
+
+  // toast 참조를 최신으로 유지 (이펙트 재실행 방지)
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
 
   const isHomePage =
     location.pathname === "/" || location.pathname === "/Home";
@@ -24,15 +30,16 @@ export default function BackButtonExitHandler() {
     }
 
     // 더미 히스토리 상태를 푸시하여 뒤로가기 버튼 인터셉트
-    window.history.pushState({ exitGuard: true }, "");
+    // location.href를 사용해야 Android WebView에서 popstate가 정상 발생함
+    window.history.pushState({ exitGuard: true }, "", window.location.href);
 
     const handlePopState = () => {
       if (!backPressedOnce.current) {
         // 첫 번째 뒤로가기 - 토스트 표시 후 다시 가드 상태 푸시
         backPressedOnce.current = true;
-        window.history.pushState({ exitGuard: true }, "");
+        window.history.pushState({ exitGuard: true }, "", window.location.href);
 
-        toast({
+        toastRef.current({
           title: "앱 종료",
           description: "뒤로 버튼을 한 번 더 누르면 앱이 종료됩니다.",
           duration: EXIT_TIMEOUT,
@@ -48,13 +55,20 @@ export default function BackButtonExitHandler() {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
         }
+        backPressedOnce.current = false;
+
+        // 가드 상태를 제거하지 않고 뒤로가기 시도
+        // WebView에서 history.back() 호출 시 더 이상 뒤로 갈 곳이 없으면
+        // native onBackPressed가 앱을 종료함
         if (typeof navigator.app?.exitApp === "function") {
           navigator.app.exitApp();
         } else if (window.Capacitor?.exitApp) {
           window.Capacitor.exitApp();
         } else {
-          // 웹 fallback: 더 이상 뒤로 갈 곳이 없으면 webview가 종료됨
-          window.history.back();
+          // WebView fallback: 남은 가드 상태를 지우고 뒤로가기
+          // popstate로 인해 이미 [initial] 상태이므로
+          // go(-1) 시도 → WebView에 history가 없으면 native가 종료 처리
+          window.history.go(-1);
         }
       }
     };
@@ -68,7 +82,7 @@ export default function BackButtonExitHandler() {
         timeoutRef.current = null;
       }
     };
-  }, [isHomePage, toast]);
+  }, [isHomePage]);
 
   return null;
 }
