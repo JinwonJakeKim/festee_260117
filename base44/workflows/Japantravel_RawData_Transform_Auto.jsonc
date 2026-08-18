@@ -1,6 +1,6 @@
 {
   "name": "Japantravel_RawData_Transform_Auto",
-  "description": "JapantravelUrlExtractionRawData\uc758 pending \uc0c1\ud0dc \ub370\uc774\ud130\ub97c 5\ubd84\ub9c8\ub2e4 1\uac1c\uc529 \uc790\ub3d9 \ubcc0\ud658",
+  "description": "JapantravelRawData pending \ub370\uc774\ud130\ub97c 5\ubd84\ub9c8\ub2e4 1\uac1c\uc529 \uc790\ub3d9 \ubcc0\ud658. pending=0\uc774\uba74 \uc790\ub3d9\ud654 \ube44\ud65c\uc131\ud654, YouTube API \uc81c\ud55c \uc2dc \ub2e4\uc74c \ub0a0 19:00 KST\uc5d0 \uc7ac\uac1c (\ud568\uc218 \ub0b4\uc5d0\uc11c resume_at \uc81c\uc5b4)",
   "trigger": {
     "condition": null,
     "config": {
@@ -9,13 +9,13 @@
       "schedule_mode": "interval",
       "cron_expression": null,
       "one_time_date": null,
-      "timezone": "UTC",
+      "timezone": "Asia/Seoul",
       "interval_value": 5,
       "interval_unit": "minutes",
-      "interval_anchor": "2026-07-30T12:00:00",
-      "ends_type": "on_date",
-      "ends_on_date": "2030-12-31T23:59:00",
-      "ends_after_count": null
+      "interval_anchor": "2026-08-18T09:00:00Z",
+      "ends_type": "after_count",
+      "ends_on_date": null,
+      "ends_after_count": 100000
     }
   },
   "definition": {
@@ -27,13 +27,17 @@
     },
     "do": [
       {
-        "run_function": {
+        "transform_one": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "autoTransformPendingRawData",
             "args": {}
           },
-          "then": "end"
+          "then": "end",
+          "x-base44": {
+            "title": "\ucd95\uc81c \ubcc0\ud658 \uc2e4\ud589",
+            "description": "pending \ub370\uc774\ud130 1\uac1c \ubcc0\ud658 (5\ubd84\ub9c8\ub2e4)"
+          }
         }
       }
     ]
