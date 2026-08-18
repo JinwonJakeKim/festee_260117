@@ -398,13 +398,13 @@ export default function UserProfile() {
 
       {/* Tabs for Catches & Posts */}
       <div className="px-4 py-6">
-        <Tabs defaultValue="catches" className="w-full">
+        <Tabs defaultValue="posts" className="w-full">
           <TabsList className="w-full bg-gray-900 mb-4">
-            <TabsTrigger value="catches" className="flex-1 data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
-              캐치 ({userCatches.length})
-            </TabsTrigger>
             <TabsTrigger value="posts" className="flex-1 data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
               게시글 ({userPosts.length})
+            </TabsTrigger>
+            <TabsTrigger value="catches" className="flex-1 data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
+              캐치 ({userCatches.length})
             </TabsTrigger>
             {ranker && (
               <TabsTrigger value="feed" className="flex-1 data-[state=active]:bg-cyan-400 data-[state=active]:text-black">
