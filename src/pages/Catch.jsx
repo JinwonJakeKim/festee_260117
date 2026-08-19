@@ -14,7 +14,7 @@ import { catchTranslations } from "@/lib/catchTranslations";
 import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
-import { proxyImages } from "@/functions/proxyImages";
+
 
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
@@ -211,16 +211,18 @@ export default function Catch() {
 
       // 백엔드 함수로 모든 이미지를 한 번에 base64로 변환
       if (urlsToConvert.length > 0) {
-        const res = await proxyImages({ urls: urlsToConvert });
-        const urlToDataUrl = new Map();
-        (res.data?.results || []).forEach((r) => {
-          if (r.dataUrl) urlToDataUrl.set(r.url, r.dataUrl);
-        });
-        images.forEach((img) => {
-          const dataUrl = urlToDataUrl.get(img.src);
-          if (dataUrl) img.src = dataUrl;
-        });
-      }
+  const res = await base44.functions.invoke("proxyImages", {
+    urls: urlsToConvert
+  });
+  const urlToDataUrl = new Map();
+  (res.data?.results || []).forEach((r) => {
+    if (r.dataUrl) urlToDataUrl.set(r.url, r.dataUrl);
+  });
+  images.forEach((img) => {
+    const dataUrl = urlToDataUrl.get(img.src);
+    if (dataUrl) img.src = dataUrl;
+  });
+}
 
       // 변환된 이미지 로드 대기
       await Promise.all(images.map((img) => {

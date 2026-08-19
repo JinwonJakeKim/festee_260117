@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, Heart, Search, Tag } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
-import { geocodePlace } from "@/functions/geocodePlace";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -220,7 +219,9 @@ export default function FestivalMap() {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const result = await geocodePlace({ query: searchQuery });
+      const result = await base44.functions.invoke("geocodePlace", {
+  query: searchQuery
+});
       if (result?.data?.success) {
         setMapCenter([result.data.latitude, result.data.longitude]);
       } else {
