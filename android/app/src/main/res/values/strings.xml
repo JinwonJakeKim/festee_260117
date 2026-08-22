@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Festee</string>
+    <string name="title_activity_main">Festee</string>
+    <string name="package_name">com.base68e839a7fae23682478cedbe.app</string>
+    <string name="custom_url_scheme">com.base68e839a7fae23682478cedbe.app</string>
+</resources>

@@ -29,3 +29,8 @@ dist-ssr
 
 .env
 base44/.app.jsonc
+
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
