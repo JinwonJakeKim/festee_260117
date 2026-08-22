@@ -212,6 +212,13 @@ export default function FestivalDetail() {
     initialData: [],
   });
 
+  // 일본 축제 원본 소스 URL (japantravel) 조회
+  const { data: japantravelRaw } = useQuery({
+    queryKey: ['japantravelRaw', festivalId],
+    queryFn: () => base44.entities.JapantravelRawData.filter({ festival_id: festivalId }).then(res => res[0]),
+    enabled: !!festivalId && festival?.country === 'Japan',
+  });
+
   const likeMutation = useMutation({
     mutationFn: async () => {
       if (!user) {
@@ -1070,6 +1077,22 @@ export default function FestivalDetail() {
                     </a>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* 축제정보원본 (일본 축제 - japantravel 원본 링크) */}
+            {festival.country === 'Japan' && japantravelRaw?.source_url && (
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.originalSource}</h3>
+                <a
+                  href={japantravelRaw.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800 max-w-full"
+                >
+                  <ExternalLink className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                  <span className="text-cyan-400 hover:underline truncate">{japantravelRaw.source_url}</span>
+                </a>
               </div>
             )}
 
