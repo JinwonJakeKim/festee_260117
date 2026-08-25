@@ -7,7 +7,7 @@ android {
         applicationId "com.base68e839a7fae23682478cedbe.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
+        versionCode 26
         versionName "2.131675.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -16,14 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
+signingConfigs {
+    release {
+        storeFile file(project.findProperty("FESTEE_UPLOAD_STORE_FILE"))
+        storePassword project.findProperty("FESTEE_UPLOAD_STORE_PASSWORD")
+        keyAlias project.findProperty("FESTEE_UPLOAD_KEY_ALIAS")
+        keyPassword project.findProperty("FESTEE_UPLOAD_KEY_PASSWORD")
     }
 }
-
+    buildTypes {
+    release {
+        minifyEnabled false
+        signingConfig signingConfigs.release
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+}
+}
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
