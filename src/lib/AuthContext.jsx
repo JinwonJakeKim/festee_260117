@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
         setAppPublicSettings(publicSettings);
         setIsLoadingPublicSettings(false);
 
-        if (appParams.token) {
+        if (base44.auth.hasToken()) {
           await checkUserAuth();
         } else {
           setIsLoadingAuth(false);
@@ -92,6 +92,25 @@ export const AuthProvider = ({ children }) => {
     base44.auth.redirectToLogin(window.location.href);
   };
 
+  const completeNativeLogin = useCallback(async (accessToken) => {
+    base44.setToken(accessToken);
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      setIsAuthenticated(true);
+      setIsLoadingAuth(false);
+      setAuthError(null);
+      return currentUser;
+    } catch (error) {
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoadingAuth(false);
+      throw error;
+    }
+  }, []);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -102,7 +121,8 @@ export const AuthProvider = ({ children }) => {
       appPublicSettings,
       logout,
       navigateToLogin,
-      checkAppState
+      checkAppState,
+      completeNativeLogin
     }}>
       {children}
     </AuthContext.Provider>
