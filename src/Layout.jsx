@@ -72,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
 
 
   const insets = useSafeAreaInsets();
+  const androidBottomInset = insets.isNativeAndroid ? insets.bottom : 0;
   const isMessageDetail = currentPageName === "MessageDetail";
 
   const tabGroups = {
@@ -648,7 +649,7 @@ export default function Layout({ children, currentPageName }) {
                   overflowY: 'auto',
                   WebkitOverflowScrolling: 'touch',
                   paddingTop: `${insets.top}px`,
-                  paddingBottom: '4rem'
+                  paddingBottom: `${64 + androidBottomInset}px`
                 }
           }
         >
@@ -664,7 +665,7 @@ export default function Layout({ children, currentPageName }) {
         className="fixed bottom-0 left-0 right-0 border-t border-gray-800 z-[9998]"
         style={{
           background: '#000',
-          paddingBottom: '0px',
+          paddingBottom: `${androidBottomInset}px`,
           paddingLeft: '0px',
           paddingRight: '0px',
         }}
