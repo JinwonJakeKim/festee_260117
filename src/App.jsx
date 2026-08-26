@@ -11,6 +11,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import NativeAuthCallback from './pages/NativeAuthCallback';
+import NativeAuthStart from './pages/NativeAuthStart';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -69,6 +71,8 @@ function App() {
           <Routes>
             <Route path="/PrivacyPolicy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
             <Route path="/privacy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
+            <Route path="/NativeAuthStart" element={<NativeAuthStart />} />
+            <Route path="/NativeAuthCallback" element={<NativeAuthCallback />} />
             <Route path="*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>
