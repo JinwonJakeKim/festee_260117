@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useLanguage } from "@/lib/useLanguage";
 import { myFesteeTranslations } from "@/lib/myFesteeTranslations";
+import { useAuth } from "@/lib/AuthContext";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -48,6 +49,7 @@ const generateReferralCode = (userEmail) => {
 };
 
 export default function MyFestee() {
+  const { logout } = useAuth();
   const { language } = useLanguage();
   const t = myFesteeTranslations[language] || myFesteeTranslations.ko;
   const navigate = useNavigate();
@@ -258,7 +260,7 @@ export default function MyFestee() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    void logout();
   };
 
   // 추천코드 복사 핸들러

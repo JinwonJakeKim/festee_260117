@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, resetNativeAuthClient } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+import { queryClientInstance } from '@/lib/query-client';
+import { isNativeAndroid } from '@/lib/nativeAuth';
 
 const AuthContext = createContext();
 
@@ -82,9 +84,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+
+    if (isNativeAndroid()) {
+      setIsLoadingAuth(false);
+      setAuthError(null);
+
+      const pendingQueryCancellation = queryClientInstance.cancelQueries(
+        undefined,
+        { revert: false }
+      );
+      queryClientInstance.setQueryData(['currentUser'], null);
+      resetNativeAuthClient();
+      queryClientInstance.removeQueries({
+        predicate: (query) => query.queryKey[0] !== 'currentUser',
+      });
+      queryClientInstance.getMutationCache().clear();
+      await pendingQueryCancellation;
+      return;
+    }
+
     base44.auth.logout(shouldRedirect ? window.location.href : undefined);
   };
 

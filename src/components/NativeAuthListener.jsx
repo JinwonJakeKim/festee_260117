@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { useAuth } from '@/lib/AuthContext';
@@ -11,6 +12,7 @@ import {
 
 export default function NativeAuthListener() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { completeNativeLogin } = useAuth();
 
   useEffect(() => {
@@ -31,7 +33,9 @@ export default function NativeAuthListener() {
 
       isHandling = true;
       try {
-        await completeNativeLogin(callback.accessToken);
+        const currentUser = await completeNativeLogin(callback.accessToken);
+        await queryClient.cancelQueries({ queryKey: ['currentUser'] });
+        queryClient.setQueryData(['currentUser'], currentUser);
         await Browser.close().catch(() => {});
         if (!disposed) navigate(request.returnPath, { replace: true });
       } catch {
@@ -59,7 +63,7 @@ export default function NativeAuthListener() {
       disposed = true;
       if (listenerHandle) void listenerHandle.remove();
     };
-  }, [completeNativeLogin, navigate]);
+  }, [completeNativeLogin, navigate, queryClient]);
 
   return null;
 }
