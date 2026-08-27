@@ -88,10 +88,10 @@ export default function Catch() {
   });
 
   // GPS 위치 가져오기
-  const getUserLocation = () => {
+  const getUserLocation = (useHighAccuracy = true) => {
     setLocationError("");
     setIsLoadingLocation(true);
-    
+
     if (!navigator.geolocation) {
       setLocationError(t.locationUnsupported);
       setIsLoadingLocation(false);
@@ -124,8 +124,15 @@ export default function Catch() {
         }
       },
       (error) => {
+        // 고정밀도 시도에서 타임아웃/실패 시 저정밀도로 자동 재시도
+        if (useHighAccuracy && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE)) {
+          console.warn("High accuracy failed, retrying with low accuracy...", error.code);
+          getUserLocation(false);
+          return;
+        }
+
         let errorMessage = t.locationFailPrefix;
-        
+
         switch(error.code) {
           case error.PERMISSION_DENIED:
             errorMessage += t.locationDenied;
@@ -139,7 +146,7 @@ export default function Catch() {
           default:
             errorMessage += t.locationUnknown;
         }
-        
+
         setLocationError(errorMessage);
         setIsLoadingLocation(false);
         setIsLoadingAddress(false);
@@ -147,9 +154,9 @@ export default function Catch() {
         console.error("Geolocation error:", error);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 20000, // 20초로 증가
-        maximumAge: 30000 // 30초 이내의 캐시된 위치도 허용
+        enableHighAccuracy: useHighAccuracy,
+        timeout: useHighAccuracy ? 15000 : 30000,
+        maximumAge: useHighAccuracy ? 0 : 60000
       }
     );
   };
