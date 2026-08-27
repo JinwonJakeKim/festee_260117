@@ -18,6 +18,7 @@ import { ko, enUS, ja, zhCN } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { useLanguage } from "@/lib/useLanguage";
 import { communityTranslations } from "@/lib/communityTranslations";
+import CategoryMultiSelect from "@/components/CategoryMultiSelect";
 
 const dateFnsLocales = { ko, en: enUS, ja, zh: zhCN };
 
@@ -42,7 +43,8 @@ export default function Community() {
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const toggleCategory = (category) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
@@ -120,7 +122,7 @@ export default function Community() {
       post.festival_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const locationMatch = locationFilter === "all" || post.festival_location?.includes(locationFilter);
-    const categoryMatch = categoryFilter === "all" || post.festival_category === categoryFilter;
+    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(post.festival_category);
 
     let dateMatch = true;
     if (dateRange && dateRange.from && dateRange.to && post.festival_date) {
@@ -244,24 +246,12 @@ export default function Community() {
             </SelectContent>
           </Select>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-auto min-w-[120px] bg-gray-900 border-gray-800 text-white rounded-full h-9">
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-4 h-4 text-purple-400" />
-                <SelectValue>
-                  {categoryFilter === "all" ? t.categoryLabel : categoryFilter}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800">
-              <SelectItem value="all" className="text-white">{t.allCategories}</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category} className="text-white">
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryMultiSelect
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onToggleCategory={toggleCategory}
+            label={t.categoryLabel}
+          />
 
           <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
             <PopoverTrigger asChild>
