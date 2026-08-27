@@ -287,6 +287,39 @@ export default function FestivalDetail() {
   });
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [externalLinkModal, setExternalLinkModal] = useState(null);
+
+  // 여러 전화번호가 붙어 있는 경우 구분자로 분리
+  const formatPhoneNumbers = (phoneStr) => {
+    if (!phoneStr) return phoneStr;
+    const trimmed = phoneStr.trim();
+    // 이미 구분자(쉼표, 슬래시, 줄바꿈, 파이프)가 있는 경우 분리
+    if (/[,/\n|]/.test(trimmed)) {
+      const parts = trimmed.split(/[,/\n|]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length > 1) return parts.join(' / ');
+    }
+    // 하이픈 포함 한국 전화번호 패턴 추출 (예: 031-123-4567)
+    const matches = trimmed.match(/\d{2,3}-\d{3,4}-\d{4}/g);
+    if (matches && matches.length > 1) {
+      return matches.join(' / ');
+    }
+    return trimmed;
+  };
+
+  // 외부 링크 클릭 시 확인 모달 표시
+  const handleExternalLinkClick = (e, url) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+    setExternalLinkModal(fullUrl);
+  };
+
+  const confirmExternalLink = () => {
+    if (externalLinkModal) {
+      window.open(externalLinkModal, '_blank', 'noopener,noreferrer');
+    }
+    setExternalLinkModal(null);
+  };
 
   const handleLike = () => {
     if (!user) {
@@ -838,10 +871,10 @@ export default function FestivalDetail() {
           
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
-            target="_blank"
+            onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(festival.access_info, festival.city, festival.country))}
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
-            >
+          >
             <MapPin className="w-4 h-4 text-pink-500" />
             <span className="text-sm underline">{localizedCity} {localizedCountry}</span>
           </a>
@@ -919,7 +952,7 @@ export default function FestivalDetail() {
           </button>
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
-            target="_blank"
+            onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(festival.access_info, festival.city, festival.country))}
             rel="noopener noreferrer"
             className="flex items-center gap-2"
           >
@@ -983,7 +1016,7 @@ export default function FestivalDetail() {
                   <h3 className="text-xl font-bold text-cyan-400">{t.address}</h3>
                   <a
                     href={getGoogleMapsUrl(localizedAccessInfo, festival.city, festival.country)}
-                    target="_blank"
+                    onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(localizedAccessInfo, festival.city, festival.country))}
                     rel="noopener noreferrer"
                     title="Google Maps에서 보기"
                   >
@@ -1022,7 +1055,7 @@ export default function FestivalDetail() {
                   {festival.contact.phone && (
                     <p className="text-gray-300 flex items-center gap-2">
                       <span className="text-cyan-400">📞</span>
-                      {festival.contact.phone}
+                      {formatPhoneNumbers(festival.contact.phone)}
                     </p>
                   )}
                   {festival.contact.email && (
@@ -1041,25 +1074,25 @@ export default function FestivalDetail() {
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.sns}</h3>
                 <div className="flex gap-3">
                   {festival.social_media.facebook && (
-                    <a href={festival.social_media.facebook} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.facebook} onClick={(e) => handleExternalLinkClick(e, festival.social_media.facebook)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                       <span className="text-white font-bold">f</span>
                     </a>
                   )}
                   {festival.social_media.instagram && (
-                    <a href={festival.social_media.instagram} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.instagram} onClick={(e) => handleExternalLinkClick(e, festival.social_media.instagram)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity">
                       <span className="text-white font-bold">📷</span>
                     </a>
                   )}
                   {festival.social_media.twitter && (
-                    <a href={festival.social_media.twitter} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.twitter} onClick={(e) => handleExternalLinkClick(e, festival.social_media.twitter)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-gray-900 border border-gray-700 transition-colors">
                       <span className="text-white font-bold">𝕏</span>
                     </a>
                   )}
                   {festival.social_media.youtube && (
-                    <a href={festival.social_media.youtube} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.youtube} onClick={(e) => handleExternalLinkClick(e, festival.social_media.youtube)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
                       <span className="text-white font-bold">▶</span>
                     </a>
@@ -1074,7 +1107,7 @@ export default function FestivalDetail() {
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.originalSource}</h3>
                 <a
                   href={japantravelRaw.source_url}
-                  target="_blank"
+                  onClick={(e) => handleExternalLinkClick(e, japantravelRaw.source_url)}
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800 max-w-full"
                 >
@@ -1090,7 +1123,7 @@ export default function FestivalDetail() {
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.website}</h3>
                 <a 
                   href={festival.website.startsWith('http') ? festival.website : `https://${festival.website}`}
-                  target="_blank" 
+                  onClick={(e) => handleExternalLinkClick(e, festival.website)}
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800"
                 >
@@ -1489,6 +1522,56 @@ export default function FestivalDetail() {
                 </div>
               </motion.div>
             </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 외부 링크 이동 확인 모달 */}
+      <AnimatePresence>
+        {externalLinkModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4"
+              onClick={() => setExternalLinkModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-sm w-full"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center mb-4">
+                    <ExternalLink className="w-7 h-7 text-cyan-400" />
+                  </div>
+                  <h3 className="text-white text-lg font-bold mb-2">{t.externalLinkNotice}</h3>
+                  <p className="text-gray-400 text-sm mb-6 whitespace-pre-line">
+                    {t.externalLinkConfirm}
+                  </p>
+                  <p className="text-gray-500 text-xs mb-6 truncate max-w-full">
+                    {externalLinkModal}
+                  </p>
+                  <div className="flex gap-3 w-full">
+                    <button
+                      onClick={() => setExternalLinkModal(null)}
+                      className="flex-1 py-3 rounded-xl bg-gray-800 text-white font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      {t.externalLinkCancel}
+                    </button>
+                    <button
+                      onClick={confirmExternalLink}
+                      className="flex-1 py-3 rounded-xl bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
+                    >
+                      {t.externalLinkOpen}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>

@@ -31,6 +31,10 @@ export const detailTranslations = {
     source: "출처:",
     lineup: "라인업",
     schedule: "일정",
+    externalLinkNotice: "외부 사이트로 이동",
+    externalLinkConfirm: "외부 사이트로 이동합니다.\n계속하시겠습니까?",
+    externalLinkCancel: "취소",
+    externalLinkOpen: "이동",
   },
   en: {
     dateUnset: "Date TBD",
@@ -64,6 +68,10 @@ export const detailTranslations = {
     source: "Source:",
     lineup: "Lineup",
     schedule: "Schedule",
+    externalLinkNotice: "Open External Site",
+    externalLinkConfirm: "You are about to open an external site.\nContinue?",
+    externalLinkCancel: "Cancel",
+    externalLinkOpen: "Open",
   },
   ja: {
     dateUnset: "日程未定",
@@ -97,6 +105,10 @@ export const detailTranslations = {
     source: "出典:",
     lineup: "ラインナップ",
     schedule: "スケジュール",
+    externalLinkNotice: "外部サイトに移動",
+    externalLinkConfirm: "外部サイトに移動します。\n続行しますか？",
+    externalLinkCancel: "キャンセル",
+    externalLinkOpen: "開く",
   },
   zh: {
     dateUnset: "日期待定",
@@ -130,5 +142,9 @@ export const detailTranslations = {
     source: "来源:",
     lineup: "阵容",
     schedule: "日程",
+    externalLinkNotice: "打开外部网站",
+    externalLinkConfirm: "即将打开外部网站。\n是否继续？",
+    externalLinkCancel: "取消",
+    externalLinkOpen: "打开",
   },
 };
