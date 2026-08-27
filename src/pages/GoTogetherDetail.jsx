@@ -55,13 +55,13 @@ export default function GoTogetherDetail() {
     enabled: !!postId,
   });
 
-  // 작성자의 최신 프로필 정보 가져오기
+  // 작성자의 최신 프로필 정보 가져오기 (searchUsers 백엔드 함수 사용 - RLS 우회)
   const { data: author } = useQuery({
     queryKey: ['author', post?.author_email],
     queryFn: async () => {
       if (!post?.author_email) return null;
-      const users = await base44.entities.User.filter({ email: post.author_email });
-      return users[0];
+      const res = await base44.functions.invoke('searchUsers', { emails: [post.author_email] });
+      return res.data?.users?.[0] || null;
     },
     enabled: !!post?.author_email,
   });
@@ -153,8 +153,8 @@ export default function GoTogetherDetail() {
   });
 
   const { data: comments } = useQuery({
-    queryKey: ['comments', postId],
-    queryFn: () => base44.entities.Comment.filter({ festival_id: postId }), // Assuming festival_id field is used to link comments to GoTogether posts
+    queryKey: ['postComments', postId],
+    queryFn: () => base44.entities.Comment.filter({ post_id: postId }),
     enabled: !!postId,
     initialData: [],
   });
@@ -162,7 +162,7 @@ export default function GoTogetherDetail() {
   const commentMutation = useMutation({
     mutationFn: async (content) => {
       await base44.entities.Comment.create({
-        festival_id: postId,
+        post_id: postId,
         user_email: user.email,
         user_name: user.full_name,
         content,
@@ -191,8 +191,8 @@ export default function GoTogetherDetail() {
     },
     onSuccess: () => {
       setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['comments', postId] }); // Invalidate specific comments query
-      queryClient.invalidateQueries({ queryKey: ['post', postId] });     // Invalidate specific post query
+      queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
     },
