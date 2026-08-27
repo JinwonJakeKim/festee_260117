@@ -89,14 +89,14 @@ export default function UserSearchModal({ isOpen, onClose, onAdd, existingEmails
                     }`}
                   >
                     {user.profile_image ? (
-                      <img src={user.profile_image} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                      <img src={user.profile_image} alt={user.nickname || user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                        {user.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                        {(user.nickname || user.full_name)?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
                       </div>
                     )}
                     <div className="flex-1 text-left min-w-0">
-                      <div className="text-white font-medium text-sm truncate">{user.full_name}</div>
+                      <div className="text-white font-medium text-sm truncate">{user.nickname || user.full_name}</div>
                       <div className="text-gray-500 text-xs truncate">{user.email}</div>
                     </div>
                     {alreadyAdded && <span className="text-xs text-gray-500 flex-shrink-0">추가됨</span>}

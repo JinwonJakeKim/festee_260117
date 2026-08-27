@@ -425,15 +425,15 @@ export default function GoTogetherDetail() {
                 {profile.profile_image ? (
                   <img
                     src={profile.profile_image}
-                    alt={profile.full_name}
+                    alt={profile.nickname || profile.full_name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                    {profile.full_name?.[0] || profile.email?.[0]?.toUpperCase() || 'U'}
+                    {(profile.nickname || profile.full_name)?.[0] || profile.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
-                <span className="text-xs text-gray-300 truncate w-full text-center">{profile.full_name || profile.email}</span>
+                <span className="text-xs text-gray-300 truncate w-full text-center">{profile.nickname || profile.full_name || profile.email}</span>
               </Link>
             ))}
             {participantProfiles.length < participants.length &&

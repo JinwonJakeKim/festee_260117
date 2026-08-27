@@ -122,7 +122,7 @@ export default function Settings() {
               </div>
               <div className="p-4">
                 <p className="text-gray-400 text-sm mb-1">{t('name')}</p>
-                <p className="text-white">{user?.full_name || t('loginRequired')}</p>
+                <p className="text-white">{user?.nickname || user?.full_name || t('loginRequired')}</p>
               </div>
             </div>
           </Card>

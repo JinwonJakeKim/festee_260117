@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -132,9 +131,10 @@ export default function MessageDetail() {
       console.log('내용:', content);
       
       // 1. 메시지 생성
+      const senderName = user.nickname || user.full_name;
       await base44.entities.Message.create({
         sender_email: user.email,
-        sender_name: user.full_name,
+        sender_name: senderName,
         sender_profile_image: user.profile_image,
         receiver_email: otherUserEmail,
         receiver_name: otherUserName,
@@ -161,11 +161,11 @@ export default function MessageDetail() {
             user_email: otherUserEmail,
             type: 'new_message',
             title: '새 메시지',
-            content: `${user.full_name}님이 메시지를 보냈습니다: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+            content: `${user.nickname || user.full_name}님이 메시지를 보냈습니다: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
             sender_email: user.email,
-            sender_name: user.full_name,
+            sender_name: user.nickname || user.full_name,
             sender_profile_image: user.profile_image || '',
-            link_url: createPageUrl(`MessageDetail?user=${user.email}&name=${encodeURIComponent(user.full_name)}&image=${encodeURIComponent(user.profile_image || '')}`),
+            link_url: createPageUrl(`MessageDetail?user=${user.email}&name=${encodeURIComponent(user.nickname || user.full_name)}&image=${encodeURIComponent(user.profile_image || '')}`),
           };
           
           console.log('알림 생성 데이터:', notificationData);

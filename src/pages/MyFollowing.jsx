@@ -81,7 +81,8 @@ export default function MyFollowing() {
 
   // 검색 필터링
   const filteredFollowing = followingUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -135,12 +136,12 @@ export default function MyFollowing() {
                           {followingUser.profile_image ? (
                             <img
                               src={followingUser.profile_image}
-                              alt={followingUser.full_name}
+                              alt={followingUser.nickname || followingUser.full_name}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <span className="text-white font-bold text-lg">
-                              {followingUser.full_name.charAt(0).toUpperCase()}
+                              {(followingUser.nickname || followingUser.full_name).charAt(0).toUpperCase()}
                             </span>
                           )}
                         </div>
@@ -149,7 +150,7 @@ export default function MyFollowing() {
                       <Link to={createPageUrl(`UserProfile?email=${followingUser.email}`)} className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-white font-bold text-base truncate hover:text-cyan-400 transition-colors">
-                            {followingUser.full_name}
+                            {followingUser.nickname || followingUser.full_name}
                           </h3>
                           {followingUser.role === 'admin' && (
                             <Badge className="bg-purple-500 text-white text-xs">Admin</Badge>
@@ -164,7 +165,7 @@ export default function MyFollowing() {
                       </Link>
 
                       <Button
-                        onClick={() => handleUnfollow(followingUser.email, followingUser.full_name)}
+                        onClick={() => handleUnfollow(followingUser.email, followingUser.nickname || followingUser.full_name)}
                         disabled={unfollowMutation.isLoading}
                         size="sm"
                         variant="outline"

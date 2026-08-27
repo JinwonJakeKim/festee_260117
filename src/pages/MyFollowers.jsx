@@ -113,7 +113,8 @@ export default function MyFollowers() {
 
   // 검색 필터링
   const filteredFollowers = followerUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -170,12 +171,12 @@ export default function MyFollowers() {
                             {follower.profile_image ? (
                               <img
                                 src={follower.profile_image}
-                                alt={follower.full_name}
+                                alt={follower.nickname || follower.full_name}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <span className="text-white font-bold text-lg">
-                                {follower.full_name.charAt(0).toUpperCase()}
+                                {(follower.nickname || follower.full_name).charAt(0).toUpperCase()}
                               </span>
                             )}
                           </div>
@@ -184,7 +185,7 @@ export default function MyFollowers() {
                         <Link to={createPageUrl(`UserProfile?email=${follower.email}`)} className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-white font-bold text-base truncate hover:text-cyan-400 transition-colors">
-                              {follower.full_name}
+                              {follower.nickname || follower.full_name}
                             </h3>
                             {follower.role === 'admin' && (
                               <Badge className="bg-purple-500 text-white text-xs">Admin</Badge>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -121,11 +120,12 @@ export default function Messages() {
     return allUsers
       .filter(u => 
         u.email !== user.email && 
-        u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+        (u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()))
       )
       .map(u => ({
         email: u.email,
-        name: u.full_name,
+        name: u.nickname || u.full_name,
         profileImage: u.profile_image,
         hasConversation: conversations.some(conv => conv.email === u.email),
       }));

@@ -1305,7 +1305,7 @@ export default function Home() {
                         <div className="relative w-20 h-20 mx-auto mb-3">
                           <img
                             src={user.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
-                            alt={user.full_name}
+                            alt={user.nickname || user.full_name}
                             className="w-full h-full rounded-full object-cover border-2 border-cyan-400"
                           />
                           <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center border-2 border-black">
@@ -1315,7 +1315,7 @@ export default function Home() {
                           </div>
                         </div>
                         <h3 className="text-white font-bold text-sm mb-1 truncate">
-                          {user.full_name}
+                          {user.nickname || user.full_name}
                         </h3>
                         <p className="text-gray-500 text-xs truncate">
                           {user.catches_count || 0} catches

@@ -218,7 +218,7 @@ export default function UserProfile() {
   }
 
   const isOwnProfile = currentUser && currentUser.email === profileUserEmail;
-  const displayName = profileUser.full_name || profileUserEmail.split('@')[0];
+  const displayName = profileUser.nickname || profileUser.full_name || profileUserEmail.split('@')[0];
   const profileImage = profileUser.profile_image;
   const backgroundImage = ranker?.background_image;
   const bio = profileUser.bio || ranker?.bio;

@@ -637,7 +637,7 @@ export default function MyFestee() {
                 </div>
               ) : user.profile_image ? (
                 <>
-                  <img src={user.profile_image} alt={user.full_name} className="w-full h-full object-cover" />
+                  <img src={user.profile_image} alt={user.nickname || user.full_name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Camera className="w-8 h-8 text-white" />
                   </div>
