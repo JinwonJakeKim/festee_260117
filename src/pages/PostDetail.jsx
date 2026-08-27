@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { motion } from "framer-motion";
 import LoginPromptModal from "../components/LoginPromptModal";
 import ReportPostModal from "../components/ReportPostModal";
 import CommentItem from "@/components/CommentItem";
 import { useCommentActions } from "@/hooks/useCommentActions";
+import { usePostLike } from "@/hooks/usePostLike";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -91,6 +93,29 @@ export default function PostDetail() {
   });
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+
+  // 게시글 좋아요 (Optimistic UI)
+  const { isLiked, likeCount, toggleLike, isLiking } = usePostLike({
+    postId,
+    user,
+    onLoginRequired: () => {
+      setLoginModalMessage("게시글에 좋아요를 누르려면 로그인이 필요합니다");
+      setShowLoginModal(true);
+    },
+  });
+
+  const handleLike = () => {
+    if (!user) {
+      setLoginModalMessage("게시글에 좋아요를 누르려면 로그인이 필요합니다");
+      setShowLoginModal(true);
+      return;
+    }
+    if (navigator.vibrate) navigator.vibrate(30);
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 400);
+    toggleLike();
+  };
 
   const handleComment = () => {
     if (!user) {
@@ -269,10 +294,20 @@ export default function PostDetail() {
           )}
 
           <div className="flex items-center gap-4 text-gray-400 text-sm">
-            <div className="flex items-center gap-1">
-              <Heart className="w-5 h-5" />
-              {post.likes_count || 0}
-            </div>
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className="flex items-center gap-1 transition-colors"
+              aria-label="좋아요"
+            >
+              <motion.span
+                animate={likeAnimating ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Heart className={`w-5 h-5 transition-colors ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400 hover:text-pink-400'}`} />
+              </motion.span>
+              <span className={isLiked ? 'text-pink-500 font-medium' : ''}>{likeCount}</span>
+            </button>
             <div className="flex items-center gap-1">
               <MessageCircle className="w-5 h-5" />
               {comments.length}

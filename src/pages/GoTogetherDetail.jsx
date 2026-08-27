@@ -15,7 +15,9 @@ import FestivalListItem from "@/components/FestivalListItem";
 import UserSearchModal from "../components/UserSearchModal";
 import CommentItem from "@/components/CommentItem";
 import { useCommentActions } from "@/hooks/useCommentActions";
+import { usePostLike } from "@/hooks/usePostLike";
 import { useLanguage } from "@/lib/useLanguage";
+import { motion } from "framer-motion";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -197,6 +199,25 @@ export default function GoTogetherDetail() {
   });
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+
+  // 게시글 좋아요 (Optimistic UI)
+  const { isLiked, likeCount, toggleLike, isLiking } = usePostLike({
+    postId,
+    user,
+    onLoginRequired: () => navigate(createPageUrl('Home')),
+  });
+
+  const handleLike = () => {
+    if (!user) {
+      navigate(createPageUrl('Home'));
+      return;
+    }
+    if (navigator.vibrate) navigator.vibrate(30);
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 400);
+    toggleLike();
+  };
 
   const handleComment = () => {
     if (!user) return;
@@ -367,7 +388,29 @@ export default function GoTogetherDetail() {
 
         {/* Title & Content */}
         <h1 className="text-white text-2xl font-bold mb-4">{post.title}</h1>
-        <p className="text-gray-300 leading-relaxed mb-6 whitespace-pre-wrap">{post.content}</p>
+        <p className="text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
+
+        {/* Like & Comment Count Bar */}
+        <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-800">
+          <button
+            onClick={handleLike}
+            disabled={isLiking}
+            className="flex items-center gap-2 transition-colors"
+            aria-label="좋아요"
+          >
+            <motion.span
+              animate={likeAnimating ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Heart className={`w-6 h-6 transition-colors ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400 hover:text-pink-400'}`} />
+            </motion.span>
+            <span className={`font-medium ${isLiked ? 'text-pink-500' : 'text-white'}`}>{likeCount}</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-6 h-6 text-gray-400" />
+            <span className="text-white font-medium">{comments.length}</span>
+          </div>
+        </div>
 
         {/* Members Section */}
         <div className="mb-6">
