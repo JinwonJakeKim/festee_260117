@@ -303,6 +303,38 @@ export default function FestivalDetail() {
     if (matches && matches.length > 1) {
       return matches.join(' / ');
     }
+    // 두 전화번호가 구분자 없이 붙어있는 경우 (예: 031-290-3622031-5191-3084)
+    if (trimmed.includes('-')) {
+      const tokens = trimmed.split('-').filter(Boolean);
+      const phones = [];
+      let i = tokens.length;
+      // 끝에서부터 3개 토큰씩 전화번호 추출
+      while (i >= 3) {
+        const last = tokens[i - 1];
+        const mid = tokens[i - 2];
+        const first = tokens[i - 3];
+        if (/^\d{4}$/.test(last) && /^\d{3,4}$/.test(mid) && /^\d{2,3}$/.test(first)) {
+          phones.unshift(`${first}-${mid}-${last}`);
+          i -= 3;
+        } else {
+          break;
+        }
+      }
+      // 남은 토큰이 3개이고 마지막 토큰이 5자리 이상이면 분리 시도
+      if (phones.length > 0 && i === 3) {
+        const [r1, r2, r3] = tokens.slice(0, 3);
+        if (/^\d{2,3}$/.test(r1) && /^\d{3,4}$/.test(r2) && r3.length > 4) {
+          const frontNum = r3.slice(0, 4);
+          const rest = r3.slice(4);
+          if (/^\d{2,3}$/.test(rest)) {
+            phones.unshift(`${r1}-${r2}-${frontNum}`);
+          }
+        }
+      }
+      if (phones.length > 1) {
+        return phones.join(' / ');
+      }
+    }
     return trimmed;
   };
 
