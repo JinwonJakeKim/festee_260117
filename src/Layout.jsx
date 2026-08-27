@@ -114,10 +114,15 @@ export default function Layout({ children, currentPageName }) {
     return null;
   };
 
-  // 탭 클릭 핸들러: 각 탭은 항상 최상위 페이지로 이동
+  // 탭 클릭 핸들러: 모바일 앱 방식의 bottom tab navigation
+  // - Home에서 다른 탭으로 이동 시 push (Home을 history root로 유지)
+  // - 그 외 위치(다른 메인 탭, 상세 페이지)에서 탭 전환 시 replace (탭 간 history 누적 방지)
+  // 이렇게 하면 메인 탭에서 뒤로가기 시 항상 Home으로 이동하고,
+  // 상세 페이지는 기존 history 구조가 유지됩니다.
   const handleTabClick = (e, tabKey, defaultUrl) => {
     e.preventDefault();
-    navigate(defaultUrl);
+    const isOnHome = location.pathname === "/" || location.pathname.toLowerCase() === "/home";
+    navigate(defaultUrl, { replace: !isOnHome });
   };
 
   const navItems = [
