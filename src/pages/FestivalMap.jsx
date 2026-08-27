@@ -246,7 +246,6 @@ export default function FestivalMap() {
       <div className="bg-black border-b border-gray-800 py-3 px-4 flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

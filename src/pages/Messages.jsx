@@ -173,12 +173,11 @@ export default function Messages() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="사용자 이름으로 검색..."
-            className="pl-10 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
           />
         </div>
       </div>

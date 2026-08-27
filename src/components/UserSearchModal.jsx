@@ -63,12 +63,11 @@ export default function UserSearchModal({ isOpen, onClose, onAdd, existingEmails
               </button>
             </div>
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 value={query}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="이메일 또는 이름으로 검색"
-                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-cyan-400"
+                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan-400"
                 autoFocus
               />
             </div>

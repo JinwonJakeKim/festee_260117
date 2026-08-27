@@ -105,13 +105,12 @@ export default function MyFollowing() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             type="text"
             placeholder="이름 또는 이메일 검색"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            className="w-full bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
           />
         </div>
       </div>
