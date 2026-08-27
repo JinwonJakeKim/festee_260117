@@ -70,7 +70,7 @@ export default function PostDetail() {
       await base44.entities.Comment.create({
         post_id: postId,
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         content,
       });
 

@@ -164,7 +164,7 @@ export default function GoTogetherDetail() {
       await base44.entities.Comment.create({
         post_id: postId,
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         content,
       });
       await base44.entities.Post.update(postId, {
@@ -245,7 +245,7 @@ export default function GoTogetherDetail() {
 
   const participants = Array.from(new Set([...(post.participant_emails || []), post.author_email].filter(Boolean)));
   const authorProfileImage = author?.profile_image || post.author_profile_image;
-  const authorName = author?.full_name || post.author_name;
+  const authorName = author?.nickname || author?.full_name || post.author_name;
 
   return (
     <div className="min-h-screen bg-black pb-20">

@@ -280,7 +280,7 @@ export default function FestivalDetail() {
       await base44.entities.Comment.create({
         festival_id: festivalId,
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         content,
       });
       await base44.entities.Festival.update(festivalId, {

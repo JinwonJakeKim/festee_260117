@@ -84,7 +84,7 @@ export default function Community() {
     return {
       ...post,
       author_profile_image: author?.profile_image || post.author_profile_image,
-      author_name: author?.full_name || post.author_name,
+      author_name: author?.nickname || author?.full_name || post.author_name,
     };
   });
 

@@ -140,7 +140,7 @@ ${feedbackData.content}
     
     const feedbackData = {
       user_email: user.email,
-      user_name: user.full_name,
+      user_name: user.nickname || user.full_name,
       category,
       subject: subject.trim(),
       content: content.trim(),

@@ -134,7 +134,7 @@ export default function CreatePost() {
     const postData = {
       ...formData,
       author_email: user.email,
-      author_name: user.full_name,
+      author_name: user.nickname || user.full_name,
       author_profile_image: user.profile_image,
       temperature: user.temperature || 36.5,
       participant_emails: formData.type === "같이가기" ? [user.email] : [],
