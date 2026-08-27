@@ -356,8 +356,7 @@ export default function Catch() {
         <div className="px-4 py-3">
           <Button
             onClick={handleDownloadImage}
-            variant="outline"
-            className="w-full border-gray-700 text-cyan-400 hover:bg-gray-800 font-bold"
+            className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold border-none"
           >
             <Download className="w-4 h-4 mr-2" />
             {t.downloadImage}
