@@ -31,6 +31,7 @@ export default async function(req) {
       users: result.map(u => ({
         email: u.email,
         full_name: u.full_name,
+        nickname: u.nickname || null,
         profile_image: u.profile_image || null
       }))
     });

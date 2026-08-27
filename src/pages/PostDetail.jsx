@@ -59,6 +59,20 @@ export default function PostDetail() {
     initialData: [],
   });
 
+  // 작성자의 최신 닉네임을 가져오기 위해 searchUsers 함수 사용
+  // (post.author_name은 생성 시점 스냅샷이므로 닉네임 변경 시 최신화되지 않음)
+  const { data: authorInfo } = useQuery({
+    queryKey: ['authorInfo', post?.author_email],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('searchUsers', { emails: [post.author_email] });
+      return res.data?.users?.[0] || null;
+    },
+    enabled: !!post?.author_email,
+  });
+
+  // 작성자 표시명: 최신 닉네임 우선, 없으면 저장된 author_name, 최종 fallback
+  const authorDisplayName = authorInfo?.nickname || authorInfo?.full_name || post?.author_name || '사용자';
+
   const commentMutation = useMutation({
     mutationFn: async (content) => {
       if (!user) {
@@ -226,18 +240,18 @@ export default function PostDetail() {
                 {post.author_profile_image ? (
                   <img
                     src={post.author_profile_image}
-                    alt={post.author_name}
+                    alt={authorDisplayName}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                    {post.author_name?.[0] || 'U'}
+                    {authorDisplayName?.[0] || 'U'}
                   </div>
                 )}
               </Link>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white font-bold">{post.author_name}</span>
+                  <span className="text-white font-bold">{authorDisplayName}</span>
                   <Badge className="bg-cyan-500 text-white text-xs">{post.type}</Badge>
                 </div>
               </div>
