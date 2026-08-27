@@ -20,6 +20,8 @@ import "leaflet/dist/leaflet.css";
 import { useLanguage } from "@/lib/useLanguage";
 import { detailTranslations } from "@/lib/detailTranslations";
 import FestivalChatbot from "../components/FestivalChatbot";
+import CommentItem from "@/components/CommentItem";
+import { useCommentActions } from "@/hooks/useCommentActions";
 
 // 안전한 날짜 포맷팅 함수 추가
 const safeFormatDate = (dateString, formatString) => {
@@ -160,7 +162,6 @@ export default function FestivalDetail() {
   const festivalId = urlParams.get('id');
   const { language, getLocalizedContent } = useLanguage();
   const t = detailTranslations[language] || detailTranslations.ko;
-  const [commentText, setCommentText] = useState("");
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showFreeEntryAlert, setShowFreeEntryAlert] = useState(false);
@@ -196,13 +197,6 @@ export default function FestivalDetail() {
     queryKey: ['festival', festivalId],
     queryFn: () => base44.entities.Festival.filter({ id: festivalId }).then(res => res[0]),
     enabled: !!festivalId,
-  });
-
-  const { data: comments } = useQuery({
-    queryKey: ['comments', festivalId],
-    queryFn: () => base44.entities.Comment.filter({ festival_id: festivalId }),
-    enabled: !!festivalId,
-    initialData: [],
   });
 
   const { data: myLikes } = useQuery({
@@ -269,30 +263,30 @@ export default function FestivalDetail() {
     },
   });
 
-  const commentMutation = useMutation({
-    mutationFn: async (content) => {
-      if (!user) {
-        setLoginModalMessage("댓글을 작성하려면 로그인이 필요합니다");
-        setShowLoginModal(true);
-        return;
-      }
-
-      await base44.entities.Comment.create({
-        festival_id: festivalId,
-        user_email: user.email,
-        user_name: user.nickname || user.full_name,
-        content,
-      });
-      await base44.entities.Festival.update(festivalId, {
-        comments_count: (festival?.comments_count || 0) + 1
-      });
-    },
-    onSuccess: () => {
-      setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['comments'] });
-      queryClient.invalidateQueries({ queryKey: ['festival'] });
-    },
+  // 공통 댓글 훅 (Optimistic UI + 작성자 닉네임 동기화 + 수정/삭제)
+  const {
+    comments,
+    commentText,
+    setCommentText,
+    submitComment,
+    isSubmitting,
+    deleteComment,
+    isDeleting,
+    editingCommentId,
+    editText,
+    setEditText,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    isEditing,
+  } = useCommentActions({
+    entityId: festivalId,
+    entityType: "Festival",
+    commentLinkField: "festival_id",
+    user,
   });
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const handleLike = () => {
     if (!user) {
@@ -306,19 +300,13 @@ export default function FestivalDetail() {
     likeMutation.mutate();
   };
 
-  const handleComment = () => {
-    if (commentText.trim() && user) {
-      commentMutation.mutate(commentText);
-    }
-  };
-
   const handleCommentSubmit = () => {
     if (!user) {
       setLoginModalMessage("댓글을 작성하려면 로그인이 필요합니다");
       setShowLoginModal(true);
       return;
     }
-    handleComment();
+    submitComment();
   };
 
   const handleLoginRedirect = () => {
@@ -927,7 +915,7 @@ export default function FestivalDetail() {
             className="flex items-center gap-2"
           >
             <MessageCircle className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
-            <span className="text-white font-medium">{festival.comments_count || 0}</span>
+            <span className="text-white font-medium">{comments.length}</span>
           </button>
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
@@ -1181,24 +1169,38 @@ export default function FestivalDetail() {
           />
           <Button
             onClick={handleCommentSubmit}
-            disabled={!commentText.trim() && user}
+            disabled={!commentText.trim() || isSubmitting || !user}
             className="bg-cyan-500 hover:bg-cyan-600"
           >
-            {user ? t.commentSubmit : t.commentLoginRequired}
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                등록 중...
+              </span>
+            ) : (
+              user ? t.commentSubmit : t.commentLoginRequired
+            )}
           </Button>
         </div>
 
         <div className="space-y-4">
           {comments.map((comment) => (
-            <Card key={comment.id} className="bg-gray-900 border-gray-800 p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="font-bold text-white">{comment.user_name}</div>
-                <div className="text-xs text-gray-500">
-                  {safeFormatDate(comment.created_date, 'yy.MM.dd HH:mm')}
-                </div>
-              </div>
-              <p className="text-gray-300">{comment.content}</p>
-            </Card>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              currentUser={user}
+              editingCommentId={editingCommentId}
+              editText={editText}
+              setEditText={setEditText}
+              startEdit={startEdit}
+              cancelEdit={cancelEdit}
+              submitEdit={submitEdit}
+              deleteComment={deleteComment}
+              isEditing={isEditing}
+              isDeleting={isDeleting}
+              confirmDeleteId={confirmDeleteId}
+              setConfirmDeleteId={setConfirmDeleteId}
+            />
           ))}
         </div>
 

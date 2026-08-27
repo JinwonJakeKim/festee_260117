@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import LoginPromptModal from "../components/LoginPromptModal";
 import ReportPostModal from "../components/ReportPostModal";
+import CommentItem from "@/components/CommentItem";
+import { useCommentActions } from "@/hooks/useCommentActions";
 
 // 안전한 날짜 포맷팅 함수
 const safeFormatDate = (dateString, formatString) => {
@@ -30,7 +32,6 @@ export default function PostDetail() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const postId = urlParams.get('id');
-  const [commentText, setCommentText] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMessage, setLoginModalMessage] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
@@ -52,13 +53,6 @@ export default function PostDetail() {
     enabled: !!postId,
   });
 
-  const { data: comments } = useQuery({
-    queryKey: ['postComments', postId],
-    queryFn: () => base44.entities.Comment.filter({ post_id: postId }),
-    enabled: !!postId,
-    initialData: [],
-  });
-
   // 작성자의 최신 닉네임을 가져오기 위해 searchUsers 함수 사용
   // (post.author_name은 생성 시점 스냅샷이므로 닉네임 변경 시 최신화되지 않음)
   const { data: authorInfo } = useQuery({
@@ -73,31 +67,30 @@ export default function PostDetail() {
   // 작성자 표시명: 최신 닉네임 우선, 없으면 저장된 author_name, 최종 fallback
   const authorDisplayName = authorInfo?.nickname || authorInfo?.full_name || post?.author_name || '사용자';
 
-  const commentMutation = useMutation({
-    mutationFn: async (content) => {
-      if (!user) {
-        setLoginModalMessage("댓글을 작성하려면 로그인이 필요합니다");
-        setShowLoginModal(true);
-        throw new Error("Not logged in");
-      }
-
-      await base44.entities.Comment.create({
-        post_id: postId,
-        user_email: user.email,
-        user_name: user.nickname || user.full_name,
-        content,
-      });
-
-      await base44.entities.Post.update(postId, {
-        comments_count: (post?.comments_count || 0) + 1
-      });
-    },
-    onSuccess: () => {
-      setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['post', postId] });
-    },
+  // 공통 댓글 훅 (Optimistic UI + 작성자 닉네임 동기화 + 수정/삭제)
+  const {
+    comments,
+    commentText,
+    setCommentText,
+    submitComment,
+    isSubmitting,
+    deleteComment,
+    isDeleting,
+    editingCommentId,
+    editText,
+    setEditText,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    isEditing,
+  } = useCommentActions({
+    entityId: postId,
+    entityType: "Post",
+    commentLinkField: "post_id",
+    user,
   });
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const handleComment = () => {
     if (!user) {
@@ -105,9 +98,7 @@ export default function PostDetail() {
       setShowLoginModal(true);
       return;
     }
-    if (commentText.trim()) {
-      commentMutation.mutate(commentText);
-    }
+    submitComment();
   };
 
   const handleLoginRedirect = () => {
@@ -284,7 +275,7 @@ export default function PostDetail() {
             </div>
             <div className="flex items-center gap-1">
               <MessageCircle className="w-5 h-5" />
-              {post.comments_count || 0}
+              {comments.length}
             </div>
           </div>
         </Card>
@@ -302,25 +293,41 @@ export default function PostDetail() {
           />
           <Button
             onClick={handleComment}
-            disabled={!commentText.trim() || commentMutation.isLoading || !user}
+            disabled={!commentText.trim() || isSubmitting || !user}
             className="bg-cyan-500 hover:bg-cyan-600 w-full"
           >
-            <Send className="w-4 h-4 mr-2" />
-            {user ? '댓글 작성' : '로그인이 필요합니다'}
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                등록 중...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                {user ? '댓글 작성' : '로그인이 필요합니다'}
+              </>
+            )}
           </Button>
         </div>
 
         <div className="space-y-3">
           {comments.map((comment) => (
-            <Card key={comment.id} className="bg-gray-900 border-gray-800 p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <div className="font-bold text-white text-sm">{comment.user_name}</div>
-                  <div className="text-xs text-gray-500">{safeFormatDate(comment.created_date, 'yy.MM.dd HH:mm')}</div>
-                </div>
-              </div>
-              <p className="text-gray-300 text-sm">{comment.content}</p>
-            </Card>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              currentUser={user}
+              editingCommentId={editingCommentId}
+              editText={editText}
+              setEditText={setEditText}
+              startEdit={startEdit}
+              cancelEdit={cancelEdit}
+              submitEdit={submitEdit}
+              deleteComment={deleteComment}
+              isEditing={isEditing}
+              isDeleting={isDeleting}
+              confirmDeleteId={confirmDeleteId}
+              setConfirmDeleteId={setConfirmDeleteId}
+            />
           ))}
         </div>
 

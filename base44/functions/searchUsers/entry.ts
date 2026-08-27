@@ -23,7 +23,8 @@ export default async function(req) {
         if (u.email === user.email) return false;
         const emailMatch = u.email && u.email.toLowerCase().includes(q);
         const nameMatch = u.full_name && u.full_name.toLowerCase().includes(q);
-        return emailMatch || nameMatch;
+        const nicknameMatch = u.nickname && u.nickname.toLowerCase().includes(q);
+        return emailMatch || nameMatch || nicknameMatch;
       }).slice(0, 20);
     }
 

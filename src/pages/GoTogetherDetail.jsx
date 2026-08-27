@@ -13,6 +13,8 @@ import { ko } from "date-fns/locale";
 import ReportPostModal from "../components/ReportPostModal";
 import FestivalListItem from "@/components/FestivalListItem";
 import UserSearchModal from "../components/UserSearchModal";
+import CommentItem from "@/components/CommentItem";
+import { useCommentActions } from "@/hooks/useCommentActions";
 import { useLanguage } from "@/lib/useLanguage";
 
 // 안전한 날짜 포맷팅 함수
@@ -32,7 +34,6 @@ export default function GoTogetherDetail() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const postId = urlParams.get('id');
-  const [commentText, setCommentText] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUserSearch, setShowUserSearch] = useState(false);
@@ -152,56 +153,54 @@ export default function GoTogetherDetail() {
     },
   });
 
-  const { data: comments } = useQuery({
-    queryKey: ['postComments', postId],
-    queryFn: () => base44.entities.Comment.filter({ post_id: postId }),
-    enabled: !!postId,
-    initialData: [],
-  });
-
-  const commentMutation = useMutation({
-    mutationFn: async (content) => {
-      await base44.entities.Comment.create({
-        post_id: postId,
-        user_email: user.email,
-        user_name: user.nickname || user.full_name,
-        content,
-      });
-      await base44.entities.Post.update(postId, {
-        comments_count: (post?.comments_count || 0) + 1
-      });
-
+  // 공통 댓글 훅 (Optimistic UI + 작성자 닉네임 동기화 + 수정/삭제 + 알림)
+  const {
+    comments,
+    commentText,
+    setCommentText,
+    submitComment,
+    isSubmitting,
+    deleteComment,
+    isDeleting,
+    editingCommentId,
+    editText,
+    setEditText,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    isEditing,
+  } = useCommentActions({
+    entityId: postId,
+    entityType: "Post",
+    commentLinkField: "post_id",
+    user,
+    onCommentCreated: () => {
       // 알림 생성 (자신의 게시글에 댓글 달 경우 제외)
-      if (post && user && author && post.author_email !== user.email) {
-        const authorSettings = author?.notification_settings || {};
-        if (authorSettings.gotogether_comment !== false) {
-          await base44.entities.Notification.create({
-            user_email: post.author_email,
-            type: 'gotogether_comment',
-            title: '새 댓글',
-            content: `${user.full_name}님이 "${post.title}" 같이가기 게시글에 댓글을 남겼습니다.`,
-            sender_email: user.email,
-            sender_name: user.full_name,
-            sender_profile_image: user.profile_image,
-            link_url: createPageUrl(`GoTogetherDetail?id=${postId}`),
-            related_id: postId,
-          });
-        }
+      if (post && user && post.author_email !== user.email) {
+        const senderName = user.nickname || user.full_name;
+        base44.entities.Notification.create({
+          user_email: post.author_email,
+          type: 'gotogether_comment',
+          title: '새 댓글',
+          content: `${senderName}님이 "${post.title}" 같이가기 게시글에 댓글을 남겼습니다.`,
+          sender_email: user.email,
+          sender_name: senderName,
+          sender_profile_image: user.profile_image,
+          link_url: createPageUrl(`GoTogetherDetail?id=${postId}`),
+          related_id: postId,
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+        }).catch(() => {});
       }
     },
-    onSuccess: () => {
-      setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['post', postId] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
-    },
   });
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
   const handleComment = () => {
-    if (commentText.trim() && user) {
-      commentMutation.mutate(commentText);
-    }
+    if (!user) return;
+    submitComment();
   };
 
   const deletePostMutation = useMutation({
@@ -470,10 +469,17 @@ export default function GoTogetherDetail() {
               />
               <Button
                 onClick={handleComment}
-                disabled={!commentText.trim()}
+                disabled={!commentText.trim() || isSubmitting}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                댓글 작성
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    등록 중...
+                  </span>
+                ) : (
+                  "댓글 작성"
+                )}
               </Button>
             </div>
           )}
@@ -481,15 +487,22 @@ export default function GoTogetherDetail() {
           {/* Comments List */}
           <div className="space-y-3">
             {comments.map((comment) => (
-              <Card key={comment.id} className="bg-gray-900 border-gray-800 p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="font-bold text-white text-sm">{comment.user_name}</div>
-                    <div className="text-xs text-gray-500">{safeFormatDate(comment.created_date, 'yy.MM.dd HH:mm')}</div>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm">{comment.content}</p>
-              </Card>
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                currentUser={user}
+                editingCommentId={editingCommentId}
+                editText={editText}
+                setEditText={setEditText}
+                startEdit={startEdit}
+                cancelEdit={cancelEdit}
+                submitEdit={submitEdit}
+                deleteComment={deleteComment}
+                isEditing={isEditing}
+                isDeleting={isDeleting}
+                confirmDeleteId={confirmDeleteId}
+                setConfirmDeleteId={setConfirmDeleteId}
+              />
             ))}
           </div>
         </div>
