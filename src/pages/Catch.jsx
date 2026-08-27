@@ -15,6 +15,7 @@ import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
 import { proxyImages } from "@/functions/proxyImages";
+import { reverseGeocode } from "@/functions/reverseGeocode";
 
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
@@ -23,6 +24,8 @@ export default function Catch() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [locationAddress, setLocationAddress] = useState("");
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -96,12 +99,29 @@ export default function Catch() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation({ latitude: lat, longitude: lng });
         setIsLoadingLocation(false);
+
+        // Reverse geocoding으로 주소 변환
+        setIsLoadingAddress(true);
+        setLocationAddress("");
+        try {
+          const res = await reverseGeocode({ lat, lng, language });
+          const data = res.data || res;
+          if (data.success && data.address) {
+            setLocationAddress(data.address);
+          } else {
+            setLocationAddress("");
+          }
+        } catch (err) {
+          console.error("Reverse geocoding failed:", err);
+          setLocationAddress("");
+        } finally {
+          setIsLoadingAddress(false);
+        }
       },
       (error) => {
         let errorMessage = t.locationFailPrefix;
@@ -122,6 +142,8 @@ export default function Catch() {
         
         setLocationError(errorMessage);
         setIsLoadingLocation(false);
+        setIsLoadingAddress(false);
+        setLocationAddress("");
         console.error("Geolocation error:", error);
       },
       {
@@ -377,9 +399,28 @@ export default function Catch() {
           )}
           
           {userLocation && !isLoadingLocation && (
-            <div className="flex items-center gap-2 text-green-400 text-sm">
-              <CheckCircle className="w-4 h-4" />
-              {t.locationOk}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle className="w-4 h-4" />
+                {t.locationOk}
+              </div>
+              {isLoadingAddress && (
+                <div className="flex items-center gap-2 text-gray-400 text-xs pl-6">
+                  <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-cyan-400" />
+                  {t.addressLoading}
+                </div>
+              )}
+              {!isLoadingAddress && locationAddress && (
+                <div className="flex items-start gap-2 text-white text-sm pl-6">
+                  <Navigation className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                  <span className="font-medium">{locationAddress}</span>
+                </div>
+              )}
+              {!isLoadingAddress && !locationAddress && userLocation && (
+                <div className="text-gray-500 text-xs pl-6">
+                  {t.addressFallback(userLocation.latitude, userLocation.longitude)}
+                </div>
+              )}
             </div>
           )}
         </Card>

@@ -40,6 +40,9 @@ export const catchTranslations = {
     locationUnknown: "알 수 없는 오류가 발생했습니다.",
     locationUnsupported: "이 브라우저는 위치 서비스를 지원하지 않습니다.",
     locationFailPrefix: "위치 정보를 가져올 수 없습니다. ",
+    addressLoading: "주소 변환 중...",
+    addressFail: "주소를 표시할 수 없어요",
+    addressFallback: (lat, lng) => `위치 확인됨 (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
   },
   en: {
     headerDesc: "Get certified when you're within 500m of a festival!",
@@ -82,6 +85,9 @@ export const catchTranslations = {
     locationUnknown: "An unknown error occurred.",
     locationUnsupported: "This browser doesn't support location services.",
     locationFailPrefix: "Unable to get location. ",
+    addressLoading: "Converting to address...",
+    addressFail: "Unable to show address",
+    addressFallback: (lat, lng) => `Location found (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
   },
   ja: {
     headerDesc: "フェス会場から500m以内にいれば認証できます！",
@@ -124,6 +130,9 @@ export const catchTranslations = {
     locationUnknown: "不明なエラーが発生しました。",
     locationUnsupported: "このブラウザは位置情報サービスに対応していません。",
     locationFailPrefix: "位置情報を取得できません。",
+    addressLoading: "住所に変換中...",
+    addressFail: "住所を表示できません",
+    addressFallback: (lat, lng) => `位置確認 (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
   },
   zh: {
     headerDesc: "在节日会场500m以内即可认证！",
@@ -166,5 +175,8 @@ export const catchTranslations = {
     locationUnknown: "发生未知错误。",
     locationUnsupported: "此浏览器不支持位置服务。",
     locationFailPrefix: "无法获取位置信息。",
+    addressLoading: "正在转换为地址...",
+    addressFail: "无法显示地址",
+    addressFallback: (lat, lng) => `位置已确认 (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
   },
 };
