@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -143,7 +142,7 @@ export default function NearbyCatch() {
         festival_id: festival.id,
         festival_name: festival.name,
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         image_url: festival.thumbnail_url,
         location: `${festival.city}, ${festival.country}`,
         latitude: userLocation.latitude,
