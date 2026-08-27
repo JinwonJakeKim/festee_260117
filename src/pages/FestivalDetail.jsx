@@ -18,6 +18,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useLanguage } from "@/lib/useLanguage";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { detailTranslations } from "@/lib/detailTranslations";
 import FestivalChatbot from "../components/FestivalChatbot";
 import CommentItem from "@/components/CommentItem";
@@ -161,6 +162,7 @@ export default function FestivalDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
   const { language, getLocalizedContent } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const t = detailTranslations[language] || detailTranslations.ko;
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
@@ -447,7 +449,7 @@ export default function FestivalDetail() {
       ? `${safeFormatDate(festival.start_date, 'yyyy.MM.dd')} ~ ${safeFormatDate(festival.end_date, 'MM.dd')}`
       : '날짜 미정';
     
-    const priceInfo = festival.price ? `₩${festival.price.toLocaleString()}` : '무료';
+    const priceInfo = festival.price ? formatCurrency(festival.price) : '무료';
     const summarySnippet = localizedSummary
       ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
       : '';
@@ -915,13 +917,8 @@ export default function FestivalDetail() {
         <div className="text-white text-xl font-bold mb-3">
           {isFreeEntry ? (
             <span className="text-green-400">{t.free}</span>
-          ) : festival.country === 'Japan' && festival.price_yen ? (
-            <div className="flex flex-col gap-1">
-              <span>¥{festival.price_yen.toLocaleString()}</span>
-              <span className="text-sm text-gray-400">(약 ₩{festival.price.toLocaleString()})</span>
-            </div>
           ) : (
-            <span>₩{festival.price.toLocaleString()}</span>
+            <span>{formatCurrency(festival.price)}</span>
           )}
         </div>
 

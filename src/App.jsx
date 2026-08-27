@@ -9,6 +9,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { CurrencyProvider } from '@/lib/CurrencyContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NativeAuthCallback from './pages/NativeAuthCallback';
@@ -65,6 +66,7 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
+        <CurrencyProvider>
         <Router>
           <NavigationTracker />
           <BackButtonExitHandler />
@@ -78,6 +80,7 @@ function App() {
         </Router>
         <Toaster />
         <VisualEditAgent />
+        </CurrencyProvider>
       </QueryClientProvider>
     </AuthProvider>
   )

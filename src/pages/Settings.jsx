@@ -7,13 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import LanguageSelector from "@/components/LanguageSelector";
+import CurrencySelectorModal from "@/components/CurrencySelectorModal";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslation } from "@/components/useTranslation";
 
 export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
+  const { currency } = useCurrency();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -78,6 +82,16 @@ export default function Settings() {
     return labels[code] || '한국어';
   };
 
+  const getCurrencyLabel = (code) => {
+    const labels = {
+      KRW: '₩ KRW',
+      USD: '$ USD',
+      JPY: '¥ JPY',
+      CNY: 'CN¥ CNY',
+    };
+    return labels[code] || '₩ KRW';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -95,6 +109,10 @@ export default function Settings() {
         onClose={() => setShowLanguageModal(false)}
         currentLanguage={language}
         onSelect={handleLanguageChange}
+      />
+      <CurrencySelectorModal
+        isOpen={showCurrencyModal}
+        onClose={() => setShowCurrencyModal(false)}
       />
 
       {/* Header */}
@@ -328,13 +346,16 @@ export default function Settings() {
                 </div>
               </button>
 
-              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => setShowCurrencyModal(true)}
+                className="w-full p-4 flex items-center justify-between hover:bg-gray-800 transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-gray-400" />
                   <span className="text-white">{t('currency')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-sm">{t('krw')}</span>
+                  <span className="text-gray-400 text-sm">{getCurrencyLabel(currency)}</span>
                   <ChevronRight className="w-5 h-5 text-gray-500" />
                 </div>
               </button>
