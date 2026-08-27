@@ -227,6 +227,11 @@ export default function Catch() {
     const containerEl = document.getElementById('catch-history-container');
     if (!containerEl) return;
     try {
+      // 폰트 로드 완료 대기 (텍스트 깨짐 방지)
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      const FONT_STACK = "'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif";
       const images = Array.from(containerEl.querySelectorAll('img'));
       const originalSrcs = images.map((img) => img.src);
       const urlsToConvert = originalSrcs.filter((src) => src && !src.startsWith('data:'));
@@ -256,11 +261,21 @@ export default function Catch() {
 
       const canvas = await html2canvas(containerEl, {
         backgroundColor: '#211e1b',
-        scale: 2,
+        scale: 3,
         useCORS: false,
         allowTaint: false,
         imageTimeout: 15000,
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedContainer = clonedDoc.getElementById('catch-history-container');
+          if (clonedContainer) {
+            clonedContainer.style.fontFamily = FONT_STACK;
+            clonedContainer.style.webkitFontSmoothing = 'antialiased';
+            clonedContainer.querySelectorAll('*').forEach((el) => {
+              el.style.fontFamily = FONT_STACK;
+            });
+          }
+        },
       });
 
       // 원본 src 복원
