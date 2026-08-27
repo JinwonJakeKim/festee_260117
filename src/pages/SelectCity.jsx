@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -197,12 +196,11 @@ export default function SelectCity() {
           <h1 className="text-xl font-bold text-white">거주 도시 선택</h1>
         </div>
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="도시 검색..."
-            className="pl-10 bg-gray-900 border-gray-800 text-white"
+            className="bg-gray-900 border-gray-800 text-white"
           />
         </div>
         

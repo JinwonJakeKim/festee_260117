@@ -113,7 +113,8 @@ export default function MyFollowers() {
 
   // 검색 필터링
   const filteredFollowers = followerUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -136,13 +137,12 @@ export default function MyFollowers() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             type="text"
             placeholder="이름 또는 이메일 검색"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            className="w-full bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
           />
         </div>
       </div>
@@ -170,12 +170,12 @@ export default function MyFollowers() {
                             {follower.profile_image ? (
                               <img
                                 src={follower.profile_image}
-                                alt={follower.full_name}
+                                alt={follower.nickname || follower.full_name}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <span className="text-white font-bold text-lg">
-                                {follower.full_name.charAt(0).toUpperCase()}
+                                {(follower.nickname || follower.full_name).charAt(0).toUpperCase()}
                               </span>
                             )}
                           </div>
@@ -184,7 +184,7 @@ export default function MyFollowers() {
                         <Link to={createPageUrl(`UserProfile?email=${follower.email}`)} className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-white font-bold text-base truncate hover:text-cyan-400 transition-colors">
-                              {follower.full_name}
+                              {follower.nickname || follower.full_name}
                             </h3>
                             {follower.role === 'admin' && (
                               <Badge className="bg-purple-500 text-white text-xs">Admin</Badge>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -121,11 +120,12 @@ export default function Messages() {
     return allUsers
       .filter(u => 
         u.email !== user.email && 
-        u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+        (u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()))
       )
       .map(u => ({
         email: u.email,
-        name: u.full_name,
+        name: u.nickname || u.full_name,
         profileImage: u.profile_image,
         hasConversation: conversations.some(conv => conv.email === u.email),
       }));
@@ -173,12 +173,11 @@ export default function Messages() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="사용자 이름으로 검색..."
-            className="pl-10 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
           />
         </div>
       </div>

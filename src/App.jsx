@@ -9,6 +9,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { CurrencyProvider } from '@/lib/CurrencyContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NativeAuthCallback from './pages/NativeAuthCallback';
@@ -66,20 +67,22 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <NativeAuthListener />
-          <NavigationTracker />
-          <BackButtonExitHandler />
-          <Routes>
-            <Route path="/PrivacyPolicy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
-            <Route path="/privacy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
-            <Route path="/NativeAuthStart" element={<NativeAuthStart />} />
-            <Route path="/NativeAuthCallback" element={<NativeAuthCallback />} />
-            <Route path="*" element={<AuthenticatedApp />} />
-          </Routes>
-        </Router>
-        <Toaster />
-        <VisualEditAgent />
+        <CurrencyProvider>
+          <Router>
+            <NativeAuthListener />
+            <NavigationTracker />
+            <BackButtonExitHandler />
+            <Routes>
+              <Route path="/PrivacyPolicy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
+              <Route path="/privacy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
+              <Route path="/NativeAuthStart" element={<NativeAuthStart />} />
+              <Route path="/NativeAuthCallback" element={<NativeAuthCallback />} />
+              <Route path="*" element={<AuthenticatedApp />} />
+            </Routes>
+          </Router>
+          <Toaster />
+          <VisualEditAgent />
+        </CurrencyProvider>
       </QueryClientProvider>
     </AuthProvider>
   )

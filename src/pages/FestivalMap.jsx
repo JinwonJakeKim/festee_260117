@@ -17,6 +17,7 @@ import L from "leaflet";
 import DateRangeBottomSheet from "@/components/DateRangeBottomSheet";
 import { useLanguage } from "@/lib/useLanguage";
 import { mapTranslations } from "@/lib/mapTranslations";
+import CategoryMultiSelect from "@/components/CategoryMultiSelect";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -164,7 +165,8 @@ export default function FestivalMap() {
   const [isSearching, setIsSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState([20, 0]);
   const [userLocation, setUserLocation] = useState(null);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const toggleCategory = (category) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
@@ -189,7 +191,7 @@ export default function FestivalMap() {
   const festivalsWithLocation = festivals.filter(f => {
     if (!f.latitude || !f.longitude) return false;
     if (f.end_date && new Date(f.end_date) < today) return false;
-    if (categoryFilter !== "all" && f.category !== categoryFilter) return false;
+    if (selectedCategories.length > 0 && !selectedCategories.includes(f.category)) return false;
     if (dateRange.from && dateRange.to) {
       const start = new Date(f.start_date);
       const end = new Date(f.end_date);
@@ -247,7 +249,6 @@ export default function FestivalMap() {
       <div className="bg-black border-b border-gray-800 py-3 px-4 flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -268,22 +269,12 @@ export default function FestivalMap() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
-              <div className="flex items-center gap-1.5 text-xs">
-                <Tag className="w-4 h-4 text-purple-400" />
-                <span>{categoryFilter !== "all" ? categoryFilter : t.categoryLabel}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 text-white">
-              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.categoryAll}</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryMultiSelect
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onToggleCategory={toggleCategory}
+            label={t.categoryLabel}
+          />
 
           <button
             onClick={() => setIsDatePickerOpen(true)}

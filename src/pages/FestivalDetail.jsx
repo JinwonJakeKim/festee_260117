@@ -18,8 +18,11 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useLanguage } from "@/lib/useLanguage";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { detailTranslations } from "@/lib/detailTranslations";
 import FestivalChatbot from "../components/FestivalChatbot";
+import CommentItem from "@/components/CommentItem";
+import { useCommentActions } from "@/hooks/useCommentActions";
 
 // 안전한 날짜 포맷팅 함수 추가
 const safeFormatDate = (dateString, formatString) => {
@@ -159,8 +162,8 @@ export default function FestivalDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const festivalId = urlParams.get('id');
   const { language, getLocalizedContent } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const t = detailTranslations[language] || detailTranslations.ko;
-  const [commentText, setCommentText] = useState("");
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showFreeEntryAlert, setShowFreeEntryAlert] = useState(false);
@@ -198,18 +201,18 @@ export default function FestivalDetail() {
     enabled: !!festivalId,
   });
 
-  const { data: comments } = useQuery({
-    queryKey: ['comments', festivalId],
-    queryFn: () => base44.entities.Comment.filter({ festival_id: festivalId }),
-    enabled: !!festivalId,
-    initialData: [],
-  });
-
   const { data: myLikes } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
     enabled: !!user,
     initialData: [],
+  });
+
+  // 일본 축제 원본 소스 URL (japantravel) 조회
+  const { data: japantravelRaw } = useQuery({
+    queryKey: ['japantravelRaw', festivalId],
+    queryFn: () => base44.entities.JapantravelRawData.filter({ festival_id: festivalId }).then(res => res[0]),
+    enabled: !!festivalId && festival?.country === 'Japan',
   });
 
   const likeMutation = useMutation({
@@ -262,30 +265,95 @@ export default function FestivalDetail() {
     },
   });
 
-  const commentMutation = useMutation({
-    mutationFn: async (content) => {
-      if (!user) {
-        setLoginModalMessage("댓글을 작성하려면 로그인이 필요합니다");
-        setShowLoginModal(true);
-        return;
-      }
-
-      await base44.entities.Comment.create({
-        festival_id: festivalId,
-        user_email: user.email,
-        user_name: user.full_name,
-        content,
-      });
-      await base44.entities.Festival.update(festivalId, {
-        comments_count: (festival?.comments_count || 0) + 1
-      });
-    },
-    onSuccess: () => {
-      setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['comments'] });
-      queryClient.invalidateQueries({ queryKey: ['festival'] });
-    },
+  // 공통 댓글 훅 (Optimistic UI + 작성자 닉네임 동기화 + 수정/삭제)
+  const {
+    comments,
+    commentText,
+    setCommentText,
+    submitComment,
+    isSubmitting,
+    deleteComment,
+    isDeleting,
+    editingCommentId,
+    editText,
+    setEditText,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    isEditing,
+  } = useCommentActions({
+    entityId: festivalId,
+    entityType: "Festival",
+    commentLinkField: "festival_id",
+    user,
   });
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [externalLinkModal, setExternalLinkModal] = useState(null);
+
+  // 여러 전화번호가 붙어 있는 경우 구분자로 분리
+  const formatPhoneNumbers = (phoneStr) => {
+    if (!phoneStr) return phoneStr;
+    const trimmed = phoneStr.trim();
+    // 이미 구분자(쉼표, 슬래시, 줄바꿈, 파이프)가 있는 경우 분리
+    if (/[,/\n|]/.test(trimmed)) {
+      const parts = trimmed.split(/[,/\n|]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length > 1) return parts.join(' / ');
+    }
+    // 하이픈 포함 한국 전화번호 패턴 추출 (예: 031-123-4567)
+    const matches = trimmed.match(/\d{2,3}-\d{3,4}-\d{4}/g);
+    if (matches && matches.length > 1) {
+      return matches.join(' / ');
+    }
+    // 두 전화번호가 구분자 없이 붙어있는 경우 (예: 031-290-3622031-5191-3084)
+    if (trimmed.includes('-')) {
+      const tokens = trimmed.split('-').filter(Boolean);
+      const phones = [];
+      let i = tokens.length;
+      // 끝에서부터 3개 토큰씩 전화번호 추출
+      while (i >= 3) {
+        const last = tokens[i - 1];
+        const mid = tokens[i - 2];
+        const first = tokens[i - 3];
+        if (/^\d{4}$/.test(last) && /^\d{3,4}$/.test(mid) && /^\d{2,3}$/.test(first)) {
+          phones.unshift(`${first}-${mid}-${last}`);
+          i -= 3;
+        } else {
+          break;
+        }
+      }
+      // 남은 토큰이 3개이고 마지막 토큰이 5자리 이상이면 분리 시도
+      if (phones.length > 0 && i === 3) {
+        const [r1, r2, r3] = tokens.slice(0, 3);
+        if (/^\d{2,3}$/.test(r1) && /^\d{3,4}$/.test(r2) && r3.length > 4) {
+          const frontNum = r3.slice(0, 4);
+          const rest = r3.slice(4);
+          if (/^\d{2,3}$/.test(rest)) {
+            phones.unshift(`${r1}-${r2}-${frontNum}`);
+          }
+        }
+      }
+      if (phones.length > 1) {
+        return phones.join(' / ');
+      }
+    }
+    return trimmed;
+  };
+
+  // 외부 링크 클릭 시 확인 모달 표시
+  const handleExternalLinkClick = (e, url) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+    setExternalLinkModal(fullUrl);
+  };
+
+  const confirmExternalLink = () => {
+    if (externalLinkModal) {
+      window.open(externalLinkModal, '_blank', 'noopener,noreferrer');
+    }
+    setExternalLinkModal(null);
+  };
 
   const handleLike = () => {
     if (!user) {
@@ -299,19 +367,13 @@ export default function FestivalDetail() {
     likeMutation.mutate();
   };
 
-  const handleComment = () => {
-    if (commentText.trim() && user) {
-      commentMutation.mutate(commentText);
-    }
-  };
-
   const handleCommentSubmit = () => {
     if (!user) {
       setLoginModalMessage("댓글을 작성하려면 로그인이 필요합니다");
       setShowLoginModal(true);
       return;
     }
-    handleComment();
+    submitComment();
   };
 
   const handleLoginRedirect = () => {
@@ -387,7 +449,7 @@ export default function FestivalDetail() {
       ? `${safeFormatDate(festival.start_date, 'yyyy.MM.dd')} ~ ${safeFormatDate(festival.end_date, 'MM.dd')}`
       : '날짜 미정';
     
-    const priceInfo = festival.price ? `₩${festival.price.toLocaleString()}` : '무료';
+    const priceInfo = festival.price ? formatCurrency(festival.price) : '무료';
     const summarySnippet = localizedSummary
       ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
       : '';
@@ -843,10 +905,10 @@ export default function FestivalDetail() {
           
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
-            target="_blank"
+            onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(festival.access_info, festival.city, festival.country))}
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors"
-            >
+          >
             <MapPin className="w-4 h-4 text-pink-500" />
             <span className="text-sm underline">{localizedCity} {localizedCountry}</span>
           </a>
@@ -855,13 +917,8 @@ export default function FestivalDetail() {
         <div className="text-white text-xl font-bold mb-3">
           {isFreeEntry ? (
             <span className="text-green-400">{t.free}</span>
-          ) : festival.country === 'Japan' && festival.price_yen ? (
-            <div className="flex flex-col gap-1">
-              <span>¥{festival.price_yen.toLocaleString()}</span>
-              <span className="text-sm text-gray-400">(약 ₩{festival.price.toLocaleString()})</span>
-            </div>
           ) : (
-            <span>₩{festival.price.toLocaleString()}</span>
+            <span>{formatCurrency(festival.price)}</span>
           )}
         </div>
 
@@ -920,11 +977,11 @@ export default function FestivalDetail() {
             className="flex items-center gap-2"
           >
             <MessageCircle className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
-            <span className="text-white font-medium">{festival.comments_count || 0}</span>
+            <span className="text-white font-medium">{comments.length}</span>
           </button>
           <a
             href={getGoogleMapsUrl(festival.access_info, festival.city, festival.country)}
-            target="_blank"
+            onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(festival.access_info, festival.city, festival.country))}
             rel="noopener noreferrer"
             className="flex items-center gap-2"
           >
@@ -988,7 +1045,7 @@ export default function FestivalDetail() {
                   <h3 className="text-xl font-bold text-cyan-400">{t.address}</h3>
                   <a
                     href={getGoogleMapsUrl(localizedAccessInfo, festival.city, festival.country)}
-                    target="_blank"
+                    onClick={(e) => handleExternalLinkClick(e, getGoogleMapsUrl(localizedAccessInfo, festival.city, festival.country))}
                     rel="noopener noreferrer"
                     title="Google Maps에서 보기"
                   >
@@ -1027,7 +1084,7 @@ export default function FestivalDetail() {
                   {festival.contact.phone && (
                     <p className="text-gray-300 flex items-center gap-2">
                       <span className="text-cyan-400">📞</span>
-                      {festival.contact.phone}
+                      {formatPhoneNumbers(festival.contact.phone)}
                     </p>
                   )}
                   {festival.contact.email && (
@@ -1046,30 +1103,46 @@ export default function FestivalDetail() {
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.sns}</h3>
                 <div className="flex gap-3">
                   {festival.social_media.facebook && (
-                    <a href={festival.social_media.facebook} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.facebook} onClick={(e) => handleExternalLinkClick(e, festival.social_media.facebook)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                       <span className="text-white font-bold">f</span>
                     </a>
                   )}
                   {festival.social_media.instagram && (
-                    <a href={festival.social_media.instagram} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.instagram} onClick={(e) => handleExternalLinkClick(e, festival.social_media.instagram)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity">
                       <span className="text-white font-bold">📷</span>
                     </a>
                   )}
                   {festival.social_media.twitter && (
-                    <a href={festival.social_media.twitter} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.twitter} onClick={(e) => handleExternalLinkClick(e, festival.social_media.twitter)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-gray-900 border border-gray-700 transition-colors">
                       <span className="text-white font-bold">𝕏</span>
                     </a>
                   )}
                   {festival.social_media.youtube && (
-                    <a href={festival.social_media.youtube} target="_blank" rel="noopener noreferrer"
+                    <a href={festival.social_media.youtube} onClick={(e) => handleExternalLinkClick(e, festival.social_media.youtube)} rel="noopener noreferrer"
                        className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
                       <span className="text-white font-bold">▶</span>
                     </a>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* 축제정보원본 (일본 축제 - japantravel 원본 링크) */}
+            {festival.country === 'Japan' && japantravelRaw?.source_url && (
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.originalSource}</h3>
+                <a
+                  href={japantravelRaw.source_url}
+                  onClick={(e) => handleExternalLinkClick(e, japantravelRaw.source_url)}
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800 max-w-full"
+                >
+                  <ExternalLink className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                  <span className="text-cyan-400 hover:underline truncate">{japantravelRaw.source_url}</span>
+                </a>
               </div>
             )}
 
@@ -1079,7 +1152,7 @@ export default function FestivalDetail() {
                 <h3 className="text-xl font-bold mb-3 text-cyan-400">{t.website}</h3>
                 <a 
                   href={festival.website.startsWith('http') ? festival.website : `https://${festival.website}`}
-                  target="_blank" 
+                  onClick={(e) => handleExternalLinkClick(e, festival.website)}
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors border border-gray-800"
                 >
@@ -1158,24 +1231,38 @@ export default function FestivalDetail() {
           />
           <Button
             onClick={handleCommentSubmit}
-            disabled={!commentText.trim() && user}
+            disabled={!commentText.trim() || isSubmitting || !user}
             className="bg-cyan-500 hover:bg-cyan-600"
           >
-            {user ? t.commentSubmit : t.commentLoginRequired}
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                등록 중...
+              </span>
+            ) : (
+              user ? t.commentSubmit : t.commentLoginRequired
+            )}
           </Button>
         </div>
 
         <div className="space-y-4">
           {comments.map((comment) => (
-            <Card key={comment.id} className="bg-gray-900 border-gray-800 p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="font-bold text-white">{comment.user_name}</div>
-                <div className="text-xs text-gray-500">
-                  {safeFormatDate(comment.created_date, 'yy.MM.dd HH:mm')}
-                </div>
-              </div>
-              <p className="text-gray-300">{comment.content}</p>
-            </Card>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              currentUser={user}
+              editingCommentId={editingCommentId}
+              editText={editText}
+              setEditText={setEditText}
+              startEdit={startEdit}
+              cancelEdit={cancelEdit}
+              submitEdit={submitEdit}
+              deleteComment={deleteComment}
+              isEditing={isEditing}
+              isDeleting={isDeleting}
+              confirmDeleteId={confirmDeleteId}
+              setConfirmDeleteId={setConfirmDeleteId}
+            />
           ))}
         </div>
 
@@ -1464,6 +1551,56 @@ export default function FestivalDetail() {
                 </div>
               </motion.div>
             </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 외부 링크 이동 확인 모달 */}
+      <AnimatePresence>
+        {externalLinkModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4"
+              onClick={() => setExternalLinkModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-sm w-full"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center mb-4">
+                    <ExternalLink className="w-7 h-7 text-cyan-400" />
+                  </div>
+                  <h3 className="text-white text-lg font-bold mb-2">{t.externalLinkNotice}</h3>
+                  <p className="text-gray-400 text-sm mb-6 whitespace-pre-line">
+                    {t.externalLinkConfirm}
+                  </p>
+                  <p className="text-gray-500 text-xs mb-6 truncate max-w-full">
+                    {externalLinkModal}
+                  </p>
+                  <div className="flex gap-3 w-full">
+                    <button
+                      onClick={() => setExternalLinkModal(null)}
+                      className="flex-1 py-3 rounded-xl bg-gray-800 text-white font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      {t.externalLinkCancel}
+                    </button>
+                    <button
+                      onClick={confirmExternalLink}
+                      className="flex-1 py-3 rounded-xl bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
+                    >
+                      {t.externalLinkOpen}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>

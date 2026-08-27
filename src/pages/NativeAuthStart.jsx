@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
+  FESTEE_WEB_ORIGIN,
   NATIVE_AUTH_WEB_STATE_KEY,
-} from '@/lib/nativeAuth';
-
-const FESTEE_WEB_ORIGIN = 'https://festee.org';
+  isValidNativeAuthState,
+} from '@/lib/nativeAuthProtocol';
 
 export default function NativeAuthStart() {
   const [message, setMessage] = useState('로그인 페이지로 이동하는 중입니다...');
@@ -15,15 +15,20 @@ export default function NativeAuthStart() {
 
     window.history.replaceState({}, document.title, pageUrl.pathname);
 
-    if (!isAndroidRequest || !state) {
+    if (!isAndroidRequest || !isValidNativeAuthState(state)) {
       setMessage('유효한 Android 로그인 요청이 아닙니다.');
       return;
     }
 
-    sessionStorage.setItem(
-      NATIVE_AUTH_WEB_STATE_KEY,
-      JSON.stringify({ state, createdAt: Date.now() })
-    );
+    try {
+      sessionStorage.setItem(
+        NATIVE_AUTH_WEB_STATE_KEY,
+        JSON.stringify({ state, createdAt: Date.now() })
+      );
+    } catch {
+      setMessage('로그인 요청을 저장할 수 없습니다. Festee 앱에서 다시 시도해 주세요.');
+      return;
+    }
 
     const callbackUrl = new URL('/NativeAuthCallback', FESTEE_WEB_ORIGIN);
     callbackUrl.searchParams.set('native', 'android');

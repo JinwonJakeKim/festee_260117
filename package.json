@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.43",
-    "@base44/vite-plugin": "^1.0.30",
+    "@base44/sdk": "^0.8.44",
+    "@base44/vite-plugin": "^1.0.32",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",

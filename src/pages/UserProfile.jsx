@@ -47,12 +47,10 @@ export default function UserProfile() {
   const { data: profileUser, isLoading: isLoadingUser, error: userError } = useQuery({
     queryKey: ['profileUser', profileUserEmail],
     queryFn: async () => {
-      console.log('=== 프로필 유저 조회 ===');
-      console.log('이메일:', profileUserEmail);
-      
-      const users = await base44.entities.User.filter({ email: profileUserEmail });
-      console.log('조회된 유저:', users);
-      
+      // 일반 사용자는 User 엔티티 직접 조회 권한이 없으므로 searchUsers 백엔드 함수 사용
+      const res = await base44.functions.invoke('searchUsers', { emails: [profileUserEmail] });
+      const users = res.data?.users || [];
+
       if (!users || users.length === 0) {
         // 유저가 없으면 기본 정보 반환
         return {
@@ -62,11 +60,11 @@ export default function UserProfile() {
           bio: null,
           catches_count: 0,
           recommended_festivals: [],
-          city_verified: false, // Default for missing user
-          home_city: null, // Default for missing user
+          city_verified: false,
+          home_city: null,
         };
       }
-      
+
       return users[0];
     },
     enabled: !!profileUserEmail,
@@ -220,7 +218,7 @@ export default function UserProfile() {
   }
 
   const isOwnProfile = currentUser && currentUser.email === profileUserEmail;
-  const displayName = profileUser.full_name || profileUserEmail.split('@')[0];
+  const displayName = profileUser.nickname || profileUser.full_name || profileUserEmail.split('@')[0];
   const profileImage = profileUser.profile_image;
   const backgroundImage = ranker?.background_image;
   const bio = profileUser.bio || ranker?.bio;

@@ -20,6 +20,7 @@ import HomeHeaderActions from "@/components/HomeHeaderActions";
 
 import HomeChatbot from "../components/HomeChatbot";
 import FestivalListItem from "../components/FestivalListItem";
+import CategoryMultiSelect from "../components/CategoryMultiSelect";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
 import PullToRefresh from "../components/PullToRefresh";
 
@@ -165,7 +166,8 @@ export default function Home() {
   const urlParams = new URLSearchParams(window.location.search);
   
   // URL에서 필터 초기값 읽기
-  const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
+  const [selectedCategories, setSelectedCategories] = useState(urlParams.get('categories') ? urlParams.get('categories').split(',') : []);
+  const toggleCategory = (category) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -204,7 +206,7 @@ export default function Home() {
   const updateUrl = (filters) => {
     const params = new URLSearchParams();
     
-    if (filters.category && filters.category !== 'all') params.set('category', filters.category);
+    if (filters.categories && filters.categories.length > 0) params.set('categories', filters.categories.join(','));
     if (filters.country && filters.country !== 'all') params.set('country', filters.country);
     if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
     if (filters.dateTo) params.set('dateTo', filters.dateTo);
@@ -218,14 +220,14 @@ export default function Home() {
   // 필터 변경 시 URL 업데이트
   useEffect(() => {
     updateUrl({
-      category: categoryFilter,
+      categories: selectedCategories,
       country: countryFilter,
       dateFrom: dateRange.from?.toISOString(),
       dateTo: dateRange.to?.toISOString(),
       tags: selectedTags,
       hidePast: hidePastFestivals
     });
-  }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
+  }, [selectedCategories, countryFilter, dateRange, selectedTags, hidePastFestivals]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -438,7 +440,7 @@ export default function Home() {
   };
 
   const filteredFestivals = festivals.filter(festival => {
-    const categoryMatch = categoryFilter === "all" || festival.category === categoryFilter;
+    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(festival.category);
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     
     const monthFilter = extractMonthFromQuery(searchQuery);
@@ -1026,22 +1028,12 @@ export default function Home() {
               </SelectContent>
             </Select>
 
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Tag className="w-4 h-4 text-purple-400" />
-                  <span>{t.categoryLabel}</span>
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">{t.allCategories}</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategoryMultiSelect
+              categories={categories}
+              selectedCategories={selectedCategories}
+              onToggleCategory={toggleCategory}
+              label={t.categoryLabel}
+            />
 
             <button 
               onClick={() => setIsDatePickerOpen(true)}
@@ -1074,18 +1066,18 @@ export default function Home() {
             </Select>
           </div>
 
-          {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
+          {(selectedTags.length > 0 || selectedCategories.length > 0 || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
             <div className="mb-4 flex items-center gap-2 flex-wrap">
               <span className="text-gray-400 text-xs">{t.activeFilters}</span>
-              {categoryFilter !== "all" && (
-                <Badge 
-                  variant="outline" 
+              {selectedCategories.map(cat => (
+                <Badge
+                  variant="outline"
                   className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer"
-                  onClick={() => setCategoryFilter("all")}
+                  onClick={() => toggleCategory(cat)}
                 >
-                  {categoryFilter} ✕
+                  {cat} ✕
                 </Badge>
-              )}
+              ))}
               {countryFilter !== "all" && (
                 <Badge 
                   variant="outline" 
@@ -1125,7 +1117,7 @@ export default function Home() {
               ))}
               <Button
                 onClick={() => {
-                  setCategoryFilter("all");
+                  setSelectedCategories([]);
                   setCountryFilter("all");
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
@@ -1199,7 +1191,7 @@ export default function Home() {
               <p className="text-gray-500 mb-2">{t.noFestivalsMatch}</p>
               <Button
                 onClick={() => {
-                  setCategoryFilter("all");
+                  setSelectedCategories([]);
                   setCountryFilter("all");
                   setDateRange({ from: null, to: null });
                   setSearchQuery("");
@@ -1305,7 +1297,7 @@ export default function Home() {
                         <div className="relative w-20 h-20 mx-auto mb-3">
                           <img
                             src={user.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
-                            alt={user.full_name}
+                            alt={user.nickname || user.full_name}
                             className="w-full h-full rounded-full object-cover border-2 border-cyan-400"
                           />
                           <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center border-2 border-black">
@@ -1315,7 +1307,7 @@ export default function Home() {
                           </div>
                         </div>
                         <h3 className="text-white font-bold text-sm mb-1 truncate">
-                          {user.full_name}
+                          {user.nickname || user.full_name}
                         </h3>
                         <p className="text-gray-500 text-xs truncate">
                           {user.catches_count || 0} catches

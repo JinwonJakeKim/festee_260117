@@ -25,6 +25,17 @@
       "type": "string",
       "format": "date-time",
       "description": "\uacc4\uc815 \uc0c1\ud0dc \ubcc0\uacbd \uc2dc\uac04"
+    },
+    "preferred_currency": {
+      "type": "string",
+      "enum": [
+        "KRW",
+        "USD",
+        "JPY",
+        "CNY"
+      ],
+      "default": "KRW",
+      "description": "\uc0ac\uc6a9\uc790 \uc120\ud638 \ud1b5\ud654 (\uae30\ubcf8\uac12: KRW)"
     }
   },
   "required": [

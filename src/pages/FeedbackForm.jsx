@@ -140,7 +140,7 @@ ${feedbackData.content}
     
     const feedbackData = {
       user_email: user.email,
-      user_name: user.full_name,
+      user_name: user.nickname || user.full_name,
       category,
       subject: subject.trim(),
       content: content.trim(),
@@ -343,7 +343,7 @@ ${feedbackData.content}
             <h3 className="text-white font-medium mb-2">제출 정보</h3>
             <div className="space-y-1 text-sm">
               <p className="text-gray-400">
-                이름: <span className="text-white">{user.full_name}</span>
+                이름: <span className="text-white">{user.nickname || user.full_name}</span>
               </p>
               <p className="text-gray-400">
                 이메일: <span className="text-white">{user.email}</span>

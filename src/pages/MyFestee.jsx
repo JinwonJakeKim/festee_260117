@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Settings, LogOut, MessageCircle, Star, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,7 @@ export default function MyFestee() {
   const [referralCodeInput, setReferralCodeInput] = useState("");
   const [referralError, setReferralError] = useState("");
   const [referralSuccess, setReferralSuccess] = useState("");
+  const [showCoinInfo, setShowCoinInfo] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -618,6 +619,75 @@ export default function MyFestee() {
         )}
       </AnimatePresence>
 
+      {/* 코인 정보 모달 */}
+      <AnimatePresence>
+        {showCoinInfo && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCoinInfo(false)}
+              className="fixed inset-0 bg-black/80 z-[10000]"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 bg-gray-950 rounded-t-3xl z-[10001] max-h-[85vh] overflow-y-auto pb-24"
+            >
+              <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-yellow-400" />
+                  <h2 className="text-white text-xl font-bold">Festee 코인 안내</h2>
+                </div>
+                <button
+                  onClick={() => setShowCoinInfo(false)}
+                  className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1">Festee 코인이란?</h3>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      Festee 앱 내에서 활동하며 모은 가상 코인입니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-cyan-900/20 to-pink-900/20 border border-cyan-400/30 rounded-lg p-4">
+                  <p className="text-cyan-400 font-bold text-sm mb-3 flex items-center gap-1.5">
+                    <Info className="w-4 h-4" />
+                    사용 예정 서비스
+                  </p>
+                  <p className="text-white leading-relaxed text-sm">
+                    Festee 코인은 추후 앱 내 유료 서비스에 사용 예정입니다.
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-start gap-2 bg-gray-900/50 rounded-lg px-3 py-2">
+                      <span className="text-cyan-400 font-bold text-sm">•</span>
+                      <span className="text-gray-200 text-sm">AI 챗봇 등 프리미엄 기능</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  * 코인 사용 서비스는 순차적으로 추가될 예정이며, 안내 드릴 때까지 조금만 기다려주세요.
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Profile Header - 톱니바퀴 제거 */}
       <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
         <div className="flex items-center justify-between mb-4">
@@ -639,7 +709,7 @@ export default function MyFestee() {
                 </div>
               ) : user.profile_image ? (
                 <>
-                  <img src={user.profile_image} alt={user.full_name} className="w-full h-full object-cover" />
+                  <img src={user.profile_image} alt={user.nickname || user.full_name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Camera className="w-8 h-8 text-white" />
                   </div>
@@ -814,7 +884,14 @@ export default function MyFestee() {
           </Link>
           <div className="text-center">
             <p className="text-white text-2xl font-bold flex items-center justify-center gap-1">
-              {userCoins}
+              {userCoins.toLocaleString()}
+              <button
+                onClick={() => setShowCoinInfo(true)}
+                className="w-4 h-4 rounded-full bg-gray-700 hover:bg-cyan-500 flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="코인 정보"
+              >
+                <Info className="w-3 h-3 text-gray-300" />
+              </button>
             </p>
             <p className="text-gray-400 text-xs">{t.coins}</p>
           </div>

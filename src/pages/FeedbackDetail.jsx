@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -90,7 +89,7 @@ export default function FeedbackDetail() {
       await base44.entities.FeedbackComment.create({
         feedback_id: feedbackId,
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         content,
       });
       await base44.entities.Feedback.update(feedbackId, {

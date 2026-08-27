@@ -1,14 +1,23 @@
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import {
+  FESTEE_WEB_ORIGIN,
+  NATIVE_AUTH_HOST,
+  NATIVE_AUTH_PATH,
+  NATIVE_AUTH_SCHEME,
+  isValidNativeAuthState,
+  isValidNativeAuthTimestamp,
+} from './nativeAuthProtocol';
 
-export const NATIVE_AUTH_SCHEME = 'com.base68e839a7fae23682478cedbe.app';
-export const NATIVE_AUTH_PACKAGE = 'com.base68e839a7fae23682478cedbe.app';
-export const NATIVE_AUTH_HOST = 'auth';
-export const NATIVE_AUTH_PATH = '/callback';
-export const NATIVE_AUTH_WEB_STATE_KEY = 'festee_native_auth_web_state';
-export const NATIVE_AUTH_MAX_AGE_MS = 10 * 60 * 1000;
+export {
+  NATIVE_AUTH_HOST,
+  NATIVE_AUTH_MAX_AGE_MS,
+  NATIVE_AUTH_PACKAGE,
+  NATIVE_AUTH_PATH,
+  NATIVE_AUTH_SCHEME,
+  NATIVE_AUTH_WEB_STATE_KEY,
+} from './nativeAuthProtocol';
 
-const FESTEE_WEB_ORIGIN = 'https://festee.org';
 const NATIVE_AUTH_REQUEST_KEY = 'festee_native_auth_request';
 
 export const isNativeAndroid = () =>
@@ -54,17 +63,12 @@ export const consumeNativeAuthRequest = (state) => {
     return null;
   }
 
-  if (!request || typeof request.createdAt !== 'number') {
+  if (!request || !isValidNativeAuthTimestamp(request.createdAt)) {
     localStorage.removeItem(NATIVE_AUTH_REQUEST_KEY);
     return null;
   }
 
-  if (Date.now() - request.createdAt > NATIVE_AUTH_MAX_AGE_MS) {
-    localStorage.removeItem(NATIVE_AUTH_REQUEST_KEY);
-    return null;
-  }
-
-  if (!state || request.state !== state) return null;
+  if (!isValidNativeAuthState(state) || request.state !== state) return null;
 
   localStorage.removeItem(NATIVE_AUTH_REQUEST_KEY);
   return {
@@ -90,7 +94,7 @@ export const parseNativeAuthCallback = (callbackUrl) => {
 
     const accessToken = url.searchParams.get('access_token');
     const state = url.searchParams.get('state');
-    if (!accessToken || !state) return null;
+    if (!accessToken || !isValidNativeAuthState(state)) return null;
 
     return { accessToken, state };
   } catch {

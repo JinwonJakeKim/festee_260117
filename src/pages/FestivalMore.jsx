@@ -15,6 +15,7 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useFestivalLocalizedContent } from "../components/FestivalLocalizedContent";
 import FestivalListItem from "../components/FestivalListItem";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
+import CategoryMultiSelect from "../components/CategoryMultiSelect";
 
 const removeDuplicateFestivals = (festivals) => {
   const nameMap = new Map();
@@ -84,7 +85,8 @@ export default function FestivalMore() {
   const { getLocalizedContent } = useFestivalLocalizedContent();
   const urlParams = new URLSearchParams(window.location.search);
 
-  const [categoryFilter, setCategoryFilter] = useState(urlParams.get('category') || "all");
+  const [selectedCategories, setSelectedCategories] = useState(urlParams.get('categories') ? urlParams.get('categories').split(',') : []);
+  const toggleCategory = (category) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const [countryFilter, setCountryFilter] = useState(urlParams.get('country') || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState(() => {
@@ -107,7 +109,7 @@ export default function FestivalMore() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (categoryFilter !== "all") params.set('category', categoryFilter);
+    if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
     if (countryFilter !== "all") params.set('country', countryFilter);
     if (dateRange.from) params.set('dateFrom', dateRange.from.toISOString().split('T')[0]);
     if (dateRange.to) params.set('dateTo', dateRange.to.toISOString().split('T')[0]);
@@ -115,7 +117,7 @@ export default function FestivalMore() {
     if (hidePastFestivals) params.set('hidePast', 'true');
     const newUrl = params.toString() ? `?${params.toString()}` : '';
     window.history.replaceState({}, '', createPageUrl('FestivalMore') + newUrl);
-  }, [categoryFilter, countryFilter, dateRange, selectedTags, hidePastFestivals]);
+  }, [selectedCategories, countryFilter, dateRange, selectedTags, hidePastFestivals]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -193,7 +195,7 @@ export default function FestivalMore() {
   const toggleTag = (tag) => { setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]); };
 
   const filteredFestivals = festivals.filter(festival => {
-    const categoryMatch = categoryFilter === "all" || festival.category === categoryFilter;
+    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(festival.category);
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     const monthFilter = extractMonthFromQuery(searchQuery);
     const searchMatch = !searchQuery || (monthFilter !== null
@@ -226,7 +228,7 @@ export default function FestivalMore() {
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
 
   const resetFilters = () => {
-    setCategoryFilter("all");
+    setSelectedCategories([]);
     setCountryFilter("all");
     setDateRange({ from: null, to: null });
     setSearchQuery("");
@@ -287,22 +289,12 @@ export default function FestivalMore() {
             </SelectContent>
           </Select>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className={`w-auto min-w-[80px] rounded-full h-9 border ${categoryFilter !== "all" ? "bg-purple-500/20 border-purple-400 text-purple-400" : "bg-gray-900 border-gray-800 text-white"}`}>
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-4 h-4 text-purple-400" />
-                <span>분류</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 text-white">
-              <SelectItem value="all" className="text-white hover:bg-gray-800 focus:bg-gray-800">전체 카테고리</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category} className="text-white hover:bg-gray-800 focus:bg-gray-800">
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryMultiSelect
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onToggleCategory={toggleCategory}
+            label="분류"
+          />
 
           <button
             onClick={() => setIsDatePickerOpen(true)}
@@ -341,14 +333,14 @@ export default function FestivalMore() {
           </Select>
         </div>
 
-        {(selectedTags.length > 0 || categoryFilter !== "all" || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
+        {(selectedTags.length > 0 || selectedCategories.length > 0 || countryFilter !== "all" || dateRange.from || !hidePastFestivals) && (
           <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-gray-400 text-xs">활성 필터:</span>
-            {categoryFilter !== "all" && (
-              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setCategoryFilter("all")}>
-                {categoryFilter} ✕
+            {selectedCategories.map(cat => (
+              <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => toggleCategory(cat)}>
+                {cat} ✕
               </Badge>
-            )}
+            ))}
             {countryFilter !== "all" && (
               <Badge variant="outline" className="bg-cyan-900/30 text-cyan-400 border-cyan-400/50 cursor-pointer" onClick={() => setCountryFilter("all")}>
                 {getCountryNameInKorean(countryFilter)} ✕

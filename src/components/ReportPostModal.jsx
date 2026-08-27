@@ -46,7 +46,7 @@ export default function ReportPostModal({
         post_author_email: postAuthorEmail,
         post_author_name: postAuthorName,
         reporter_email: user.email,
-        reporter_name: user.full_name,
+        reporter_name: user.nickname || user.full_name,
         reason: selectedReason,
         description: description.trim() || undefined,
       });
@@ -86,7 +86,7 @@ export default function ReportPostModal({
           divider,
           `• 신고 사유 : ${selectedReason}`,
           `• 상세 내용 : ${description.trim() || "(입력되지 않음)"}`,
-          `• 신고자 : ${user.full_name || "(이름 없음)"} (${user.email})`,
+          `• 신고자 : ${user.nickname || user.full_name || "(이름 없음)"} (${user.email})`,
           `• 신고 일시 : ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`,
           ``,
           divider,

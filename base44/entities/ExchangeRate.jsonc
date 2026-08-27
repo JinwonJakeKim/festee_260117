@@ -1,0 +1,47 @@
+{
+  "name": "ExchangeRate",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "\ud658\uc728 \uae30\uc900\uc77c (YYYY-MM-DD)"
+    },
+    "usd_rate": {
+      "type": "number",
+      "description": "1 USD\ub2f9 KRW \ud658\uc728"
+    },
+    "jpy_rate": {
+      "type": "number",
+      "description": "1 JPY\ub2f9 KRW \ud658\uc728"
+    },
+    "cny_rate": {
+      "type": "number",
+      "description": "1 CNY\ub2f9 KRW \ud658\uc728"
+    }
+  },
+  "required": [
+    "date",
+    "usd_rate",
+    "jpy_rate",
+    "cny_rate"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

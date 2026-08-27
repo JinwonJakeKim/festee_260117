@@ -15,7 +15,6 @@ import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
 
-
 export default function Catch() {
   const { language, getLocalizedContent } = useLanguage();
   const t = catchTranslations[language] || catchTranslations.ko;
@@ -23,6 +22,8 @@ export default function Catch() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [locationAddress, setLocationAddress] = useState("");
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -85,10 +86,10 @@ export default function Catch() {
   });
 
   // GPS 위치 가져오기
-  const getUserLocation = () => {
+  const getUserLocation = (useHighAccuracy = true) => {
     setLocationError("");
     setIsLoadingLocation(true);
-    
+
     if (!navigator.geolocation) {
       setLocationError(t.locationUnsupported);
       setIsLoadingLocation(false);
@@ -96,16 +97,44 @@ export default function Catch() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation({ latitude: lat, longitude: lng });
         setIsLoadingLocation(false);
+
+        // Reverse geocoding으로 주소 변환
+        setIsLoadingAddress(true);
+        setLocationAddress("");
+        try {
+          const res = await base44.functions.invoke("reverseGeocode", {
+            lat,
+            lng,
+            language,
+          });
+          const data = res.data || res;
+          if (data.success && data.address) {
+            setLocationAddress(data.address);
+          } else {
+            setLocationAddress("");
+          }
+        } catch (err) {
+          console.error("Reverse geocoding failed:", err);
+          setLocationAddress("");
+        } finally {
+          setIsLoadingAddress(false);
+        }
       },
       (error) => {
+        // 고정밀도 시도에서 타임아웃/실패 시 저정밀도로 자동 재시도
+        if (useHighAccuracy && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE)) {
+          console.warn("High accuracy failed, retrying with low accuracy...", error.code);
+          getUserLocation(false);
+          return;
+        }
+
         let errorMessage = t.locationFailPrefix;
-        
+
         switch(error.code) {
           case error.PERMISSION_DENIED:
             errorMessage += t.locationDenied;
@@ -119,15 +148,17 @@ export default function Catch() {
           default:
             errorMessage += t.locationUnknown;
         }
-        
+
         setLocationError(errorMessage);
         setIsLoadingLocation(false);
+        setIsLoadingAddress(false);
+        setLocationAddress("");
         console.error("Geolocation error:", error);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 20000, // 20초로 증가
-        maximumAge: 30000 // 30초 이내의 캐시된 위치도 허용
+        enableHighAccuracy: useHighAccuracy,
+        timeout: useHighAccuracy ? 15000 : 30000,
+        maximumAge: useHighAccuracy ? 0 : 60000
       }
     );
   };
@@ -150,7 +181,7 @@ export default function Catch() {
         festival_id: festival.id,
         festival_name: getLocalizedContent(festival, 'name'),
         user_email: user.email,
-        user_name: user.full_name,
+        user_name: user.nickname || user.full_name,
         image_url: festival.thumbnail_url,
         location: `${festival.city}, ${festival.country}`,
         latitude: userLocation.latitude,
@@ -205,24 +236,29 @@ export default function Catch() {
     const containerEl = document.getElementById('catch-history-container');
     if (!containerEl) return;
     try {
+      // 폰트 로드 완료 대기 (텍스트 깨짐 방지)
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      const FONT_STACK = "'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif";
       const images = Array.from(containerEl.querySelectorAll('img'));
       const originalSrcs = images.map((img) => img.src);
       const urlsToConvert = originalSrcs.filter((src) => src && !src.startsWith('data:'));
 
       // 백엔드 함수로 모든 이미지를 한 번에 base64로 변환
       if (urlsToConvert.length > 0) {
-  const res = await base44.functions.invoke("proxyImages", {
-    urls: urlsToConvert
-  });
-  const urlToDataUrl = new Map();
-  (res.data?.results || []).forEach((r) => {
-    if (r.dataUrl) urlToDataUrl.set(r.url, r.dataUrl);
-  });
-  images.forEach((img) => {
-    const dataUrl = urlToDataUrl.get(img.src);
-    if (dataUrl) img.src = dataUrl;
-  });
-}
+        const res = await base44.functions.invoke("proxyImages", {
+          urls: urlsToConvert,
+        });
+        const urlToDataUrl = new Map();
+        (res.data?.results || []).forEach((r) => {
+          if (r.dataUrl) urlToDataUrl.set(r.url, r.dataUrl);
+        });
+        images.forEach((img) => {
+          const dataUrl = urlToDataUrl.get(img.src);
+          if (dataUrl) img.src = dataUrl;
+        });
+      }
 
       // 변환된 이미지 로드 대기
       await Promise.all(images.map((img) => {
@@ -236,11 +272,21 @@ export default function Catch() {
 
       const canvas = await html2canvas(containerEl, {
         backgroundColor: '#211e1b',
-        scale: 2,
+        scale: 3,
         useCORS: false,
         allowTaint: false,
         imageTimeout: 15000,
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedContainer = clonedDoc.getElementById('catch-history-container');
+          if (clonedContainer) {
+            clonedContainer.style.fontFamily = FONT_STACK;
+            clonedContainer.style.webkitFontSmoothing = 'antialiased';
+            clonedContainer.querySelectorAll('*').forEach((el) => {
+              el.style.fontFamily = FONT_STACK;
+            });
+          }
+        },
       });
 
       // 원본 src 복원
@@ -336,8 +382,7 @@ export default function Catch() {
         <div className="px-4 py-3">
           <Button
             onClick={handleDownloadImage}
-            variant="outline"
-            className="w-full border-gray-700 text-cyan-400 hover:bg-gray-800 font-bold"
+            className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-bold border-none"
           >
             <Download className="w-4 h-4 mr-2" />
             {t.downloadImage}
@@ -379,9 +424,28 @@ export default function Catch() {
           )}
           
           {userLocation && !isLoadingLocation && (
-            <div className="flex items-center gap-2 text-green-400 text-sm">
-              <CheckCircle className="w-4 h-4" />
-              {t.locationOk}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle className="w-4 h-4" />
+                {t.locationOk}
+              </div>
+              {isLoadingAddress && (
+                <div className="flex items-center gap-2 text-gray-400 text-xs pl-6">
+                  <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-cyan-400" />
+                  {t.addressLoading}
+                </div>
+              )}
+              {!isLoadingAddress && locationAddress && (
+                <div className="flex items-start gap-2 text-white text-sm pl-6">
+                  <Navigation className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                  <span className="font-medium">{locationAddress}</span>
+                </div>
+              )}
+              {!isLoadingAddress && !locationAddress && userLocation && (
+                <div className="text-gray-500 text-xs pl-6">
+                  {t.addressFallback(userLocation.latitude, userLocation.longitude)}
+                </div>
+              )}
             </div>
           )}
         </Card>

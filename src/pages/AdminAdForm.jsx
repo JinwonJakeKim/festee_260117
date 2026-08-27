@@ -382,11 +382,10 @@ export default function AdminAdForm() {
 
           {/* 축제 검색 & 추가 */}
           <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <Input
               value={festivalSearchQuery}
               onChange={(e) => setFestivalSearchQuery(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white pl-9"
+              className="bg-gray-800 border-gray-700 text-white"
               placeholder="축제 이름, 도시, 국가로 검색..."
             />
           </div>

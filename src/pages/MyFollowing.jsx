@@ -81,7 +81,8 @@ export default function MyFollowing() {
 
   // 검색 필터링
   const filteredFollowing = followingUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -104,13 +105,12 @@ export default function MyFollowing() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
             type="text"
             placeholder="이름 또는 이메일 검색"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+            className="w-full bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
           />
         </div>
       </div>
@@ -135,12 +135,12 @@ export default function MyFollowing() {
                           {followingUser.profile_image ? (
                             <img
                               src={followingUser.profile_image}
-                              alt={followingUser.full_name}
+                              alt={followingUser.nickname || followingUser.full_name}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <span className="text-white font-bold text-lg">
-                              {followingUser.full_name.charAt(0).toUpperCase()}
+                              {(followingUser.nickname || followingUser.full_name).charAt(0).toUpperCase()}
                             </span>
                           )}
                         </div>
@@ -149,7 +149,7 @@ export default function MyFollowing() {
                       <Link to={createPageUrl(`UserProfile?email=${followingUser.email}`)} className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-white font-bold text-base truncate hover:text-cyan-400 transition-colors">
-                            {followingUser.full_name}
+                            {followingUser.nickname || followingUser.full_name}
                           </h3>
                           {followingUser.role === 'admin' && (
                             <Badge className="bg-purple-500 text-white text-xs">Admin</Badge>
@@ -164,7 +164,7 @@ export default function MyFollowing() {
                       </Link>
 
                       <Button
-                        onClick={() => handleUnfollow(followingUser.email, followingUser.full_name)}
+                        onClick={() => handleUnfollow(followingUser.email, followingUser.nickname || followingUser.full_name)}
                         disabled={unfollowMutation.isLoading}
                         size="sm"
                         variant="outline"
