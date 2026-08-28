@@ -14,6 +14,7 @@ import { catchTranslations } from "@/lib/catchTranslations";
 import FestivalListItem from "@/components/FestivalListItem";
 import CatchHistoryCardStack from "@/components/CatchHistoryCardStack";
 import NearbyFestivalsSection from "@/components/NearbyFestivalsSection";
+import CatchHistoryGuestHero from "@/components/CatchHistoryGuestHero";
 import { proxyImages } from "@/functions/proxyImages";
 import { reverseGeocode } from "@/functions/reverseGeocode";
 
@@ -341,7 +342,7 @@ export default function Catch() {
         message={t.loginMessage}
       />
 
-      {/* History Card Stack or Header */}
+      {/* Catch History Hero - 로그인/비로그인 동일한 구조 */}
       {user ? (
         <CatchHistoryCardStack
           catches={catches}
@@ -350,27 +351,11 @@ export default function Catch() {
           emptyMessage={t.emptyCardMessage}
         />
       ) : (
-        <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 border-b border-gray-800 px-6 py-8">
-          <div className="text-center mb-6">
-            <motion.div
-              animate={{
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatDelay: 1,
-              }}
-            >
-              <Target className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-            </motion.div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent mb-2">
-              Catch
-            </h1>
-            <p className="text-gray-400">{t.headerDesc}</p>
-          </div>
-        </div>
+        <CatchHistoryGuestHero
+          onLogin={handleLoginRedirect}
+          loginMessage={t.loginForHistory}
+          loginLabel={t.login}
+        />
       )}
 
       {/* Download Button */}
@@ -454,18 +439,20 @@ export default function Catch() {
         catches={catches}
         onCatch={catchMutation.mutate}
         isCatching={catchMutation.isPending}
+        isLoadingLocation={isLoadingLocation}
+        locationError={locationError}
+        onRetryLocation={getUserLocation}
         t={t}
       />
 
-      {/* My Catch History - Festival Card Format */}
-      <div className="px-4 py-6">
-        <h2 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-cyan-400" />
-          {t.myCatch(catches.length)}
-        </h2>
-
-        {user ? (
-          catchFestivals.length > 0 ? (
+      {/* My Catch History - 로그인 사용자만 표시 (비로그인은 상단 Hero에서 로그인 유도) */}
+      {user && (
+        <div className="px-4 py-6">
+          <h2 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-cyan-400" />
+            {t.myCatch(catches.length)}
+          </h2>
+          {catchFestivals.length > 0 ? (
             <div className="space-y-1">
               {catchFestivals.map((festival, i) => (
                 <FestivalListItem
@@ -485,20 +472,9 @@ export default function Catch() {
               <p className="text-gray-500 mb-3">{t.noMyCatch}</p>
               <p className="text-gray-600 text-sm">{t.beFirst}</p>
             </Card>
-          )
-        ) : (
-          <Card className="bg-gray-900 border-gray-800 p-12 text-center">
-            <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 mb-3">{t.loginForHistory}</p>
-            <Button
-              onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
-            >
-              {t.login}
-            </Button>
-          </Card>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <Card className="mx-4 mb-6 bg-gray-900 border-gray-800 p-6">
         <h3 className="text-white font-bold mb-3 flex items-center gap-2">
