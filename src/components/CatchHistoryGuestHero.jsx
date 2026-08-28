@@ -109,10 +109,12 @@ export default function CatchHistoryGuestHero({ onLogin, loginMessage, loginLabe
                 transition={{ delay: index * 0.08, duration: 0.4 }}
               >
                 <div className="catch-stack-ctx rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#EADCC9', opacity: 0.45 }}>
-                  <div className="text-center pt-3 pb-2">
-                    <span className="text-base font-black tracking-[0.2em] text-black">
-                      CATCH
-                    </span>
+                  <div className="h-11 flex items-center justify-center">
+                    {index === 0 && (
+                      <span className="text-base font-black tracking-[0.2em] text-black">
+                        CATCH
+                      </span>
+                    )}
                   </div>
                   <div className="px-3 pb-3">
                     <div className="rounded-lg bg-gray-400/30" style={{ aspectRatio: '1/1' }} />
