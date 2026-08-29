@@ -155,14 +155,14 @@ export default function FestivalMap() {
     window.scrollTo(0, 0);
   }, []);
 
-  const { data: festivals, isLoading } = useQuery({
+  const { data: festivalsData, isLoading } = useQuery({
     queryKey: ['festivals'],
     queryFn: async () => {
       const allFestivals = await base44.entities.Festival.list();
       return removeDuplicateFestivals(allFestivals);
     },
-    initialData: [],
   });
+  const festivals = festivalsData || [];
 
   const { data: mapsKeyResult, isLoading: isLoadingMapsKey } = useQuery({
     queryKey: ['googleMapsApiKey'],
