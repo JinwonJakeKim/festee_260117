@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { APIProvider, Map as GoogleMap, Marker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
@@ -46,27 +46,16 @@ function MapMoveController({ request }) {
   return null;
 }
 
-function LocateButton({ userLocation, locationErrorMessage }) {
-  const map = useMap();
-
-  const handleClick = () => {
-    if (userLocation && map) {
-      map.panTo({ lat: userLocation[0], lng: userLocation[1] });
-      map.setZoom(13);
-    } else {
-      alert(locationErrorMessage);
-    }
-  };
-
+function LocateButton({ onLocate }) {
   return (
     <button
-      onClick={handleClick}
+      onClick={onLocate}
       className="absolute z-20"
       style={{
         bottom: '90px',
         right: '12px',
-        width: '44px',
-        height: '44px',
+        width: '48px',
+        height: '48px',
         borderRadius: '50%',
         backgroundColor: '#fff',
         border: 'none',
@@ -204,20 +193,49 @@ export default function FestivalMap() {
     return true;
   });
 
-  React.useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          setMapMoveRequest({ center: [latitude, longitude], zoom: null });
-        },
-        (error) => {
-          console.log("위치 정보를 가져올 수 없습니다:", error);
+  const isLocatingRef = useRef(false);
+
+  // 현재 위치 요청: 고정밀 우선 요청 → TIMEOUT/POSITION_UNAVAILABLE 시 저정밀 fallback
+  const requestUserLocation = React.useCallback(() => {
+    if (!navigator.geolocation) return;
+    if (isLocatingRef.current) return; // 중복 요청 방지
+    isLocatingRef.current = true;
+
+    const onSuccess = (position) => {
+      const { latitude, longitude } = position.coords;
+      setUserLocation([latitude, longitude]);
+      setMapMoveRequest({ center: [latitude, longitude], zoom: 13 });
+      isLocatingRef.current = false;
+    };
+
+    const onFallbackError = (error) => {
+      console.log("위치 정보를 가져올 수 없습니다:", error);
+      isLocatingRef.current = false;
+      if (error.code === error.PERMISSION_DENIED) {
+        alert(t.locationError);
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (error) => {
+        if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(
+            onSuccess,
+            onFallbackError,
+            { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 }
+          );
+        } else {
+          onFallbackError(error);
         }
-      );
-    }
-  }, []);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }, [t.locationError]);
+
+  React.useEffect(() => {
+    requestUserLocation();
+  }, [requestUserLocation]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -303,7 +321,15 @@ export default function FestivalMap() {
               defaultCenter={DEFAULT_CENTER}
               defaultZoom={DEFAULT_ZOOM}
               gestureHandling="greedy"
-              disableDefaultUI={false}
+              disableDefaultUI={true}
+              mapTypeControl={true}
+              mapTypeControlOptions={{ position: 1 /* TOP_LEFT */ }}
+              zoomControl={false}
+              streetViewControl={false}
+              fullscreenControl={false}
+              rotateControl={false}
+              scaleControl={false}
+              keyboardShortcuts={false}
               style={{ width: '100%', height: '100%' }}
               onClick={() => { setSelectedFestival(null); setSelectedUserMarker(false); }}
             >
@@ -377,7 +403,7 @@ export default function FestivalMap() {
                 </InfoWindow>
               )}
 
-              <LocateButton userLocation={userLocation} locationErrorMessage={t.locationError} />
+              <LocateButton onLocate={requestUserLocation} />
             </GoogleMap>
           </APIProvider>
         ) : (
