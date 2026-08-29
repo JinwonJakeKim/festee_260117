@@ -175,7 +175,7 @@ export default function FestivalMap() {
     initialData: [],
   });
 
-  const { data: mapsKeyResult, isLoading: isLoadingMapsKey, error: mapsKeyQueryError } = useQuery({
+  const { data: mapsKeyResult, isLoading: isLoadingMapsKey } = useQuery({
     queryKey: ['googleMapsApiKey'],
     queryFn: async () => {
       const res = await base44.functions.invoke('getGoogleMapsApiKey', {});
@@ -183,7 +183,6 @@ export default function FestivalMap() {
     },
     staleTime: Infinity,
   });
-  if (mapsKeyQueryError) console.error('mapsKeyQueryError', mapsKeyQueryError);
   const mapsApiKey = mapsKeyResult?.success ? mapsKeyResult.apiKey : null;
 
   const categories = [...new Set(festivals.map(f => f.category).filter(Boolean))];
@@ -296,7 +295,6 @@ export default function FestivalMap() {
             <Card className="bg-gray-800 border-gray-700 p-8 text-center">
               <MapPin className="w-16 h-16 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400">{t.mapLoadError}</p>
-              <p className="text-red-400 text-xs mt-2">{mapsKeyQueryError ? String(mapsKeyQueryError.message || mapsKeyQueryError) : JSON.stringify(mapsKeyResult)}</p>
             </Card>
           </div>
         ) : festivalsWithLocation.length > 0 ? (
