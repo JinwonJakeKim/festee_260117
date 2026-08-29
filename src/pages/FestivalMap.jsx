@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { APIProvider, Map as GoogleMap, Marker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
@@ -45,27 +45,17 @@ function MapMoveController({ request }) {
   return null;
 }
 
-function LocateButton({ userLocation, locationErrorMessage }) {
-  const map = useMap();
-
-  const handleClick = () => {
-    if (userLocation && map) {
-      map.panTo({ lat: userLocation[0], lng: userLocation[1] });
-      map.setZoom(13);
-    } else {
-      alert(locationErrorMessage);
-    }
-  };
-
+function LocateButton({ onLocate, isLocating }) {
   return (
     <button
-      onClick={handleClick}
+      onClick={onLocate}
+      disabled={isLocating}
       className="absolute z-20"
       style={{
-        bottom: '90px',
-        right: '12px',
-        width: '44px',
-        height: '44px',
+        top: '64px',
+        right: '10px',
+        width: '40px',
+        height: '40px',
         borderRadius: '50%',
         backgroundColor: '#fff',
         border: 'none',
@@ -73,7 +63,8 @@ function LocateButton({ userLocation, locationErrorMessage }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: 'pointer',
+        cursor: isLocating ? 'wait' : 'pointer',
+        opacity: isLocating ? 0.65 : 1,
       }}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -154,6 +145,7 @@ export default function FestivalMap() {
   const [isSearching, setIsSearching] = useState(false);
   const [mapMoveRequest, setMapMoveRequest] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
   const [selectedFestival, setSelectedFestival] = useState(null);
   const [selectedUserMarker, setSelectedUserMarker] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -203,20 +195,81 @@ export default function FestivalMap() {
     return true;
   });
 
-  React.useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          setMapMoveRequest({ center: [latitude, longitude], zoom: null });
-        },
-        (error) => {
-          console.log("위치 정보를 가져올 수 없습니다:", error);
-        }
-      );
+  const isLocatingRef = useRef(false);
+
+  // 현재 위치 요청: 고정밀 우선 요청 → TIMEOUT/POSITION_UNAVAILABLE 시 저정밀 fallback
+  const requestUserLocation = React.useCallback(({ showError = false } = {}) => {
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported", {
+        code: null,
+        message: "navigator.geolocation is unavailable",
+      });
+      if (showError) alert(t.locationError);
+      return;
     }
-  }, []);
+    if (isLocatingRef.current) return; // 중복 요청 방지
+    isLocatingRef.current = true;
+    setIsLocating(true);
+
+    const finish = () => {
+      isLocatingRef.current = false;
+      setIsLocating(false);
+    };
+
+    const onSuccess = (position) => {
+      const { latitude, longitude } = position.coords;
+      setUserLocation([latitude, longitude]);
+      setMapMoveRequest({ center: [latitude, longitude], zoom: 13 });
+      finish();
+    };
+
+    const handleFinalError = (error, useHighAccuracy) => {
+      console.error("Geolocation request failed", {
+        code: error.code,
+        message: error.message,
+        enableHighAccuracy: useHighAccuracy,
+      });
+      finish();
+
+      if (!showError) return;
+
+      if (error.code === error.PERMISSION_DENIED) {
+        alert(t.locationPermissionDenied);
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        alert(t.locationUnavailable);
+      } else if (error.code === error.TIMEOUT) {
+        alert(t.locationTimeout);
+      } else {
+        alert(t.locationError);
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (error) => {
+        console.error("Geolocation request failed", {
+          code: error.code,
+          message: error.message,
+          enableHighAccuracy: true,
+        });
+
+        if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(
+            onSuccess,
+            (fallbackError) => handleFinalError(fallbackError, false),
+            { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 }
+          );
+        } else {
+          handleFinalError(error, true);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }, [t]);
+
+  React.useEffect(() => {
+    requestUserLocation();
+  }, [requestUserLocation]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -378,7 +431,10 @@ export default function FestivalMap() {
                 </InfoWindow>
               )}
 
-              <LocateButton userLocation={userLocation} locationErrorMessage={t.locationError} />
+              <LocateButton
+                onLocate={() => requestUserLocation({ showError: true })}
+                isLocating={isLocating}
+              />
             </GoogleMap>
           </APIProvider>
         ) : (
