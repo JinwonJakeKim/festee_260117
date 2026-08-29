@@ -1,31 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { APIProvider, Map as GoogleMap, Marker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Heart, Search, Tag } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { MapPin, Calendar, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { geocodePlace } from "@/functions/geocodePlace";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import DateRangeBottomSheet from "@/components/DateRangeBottomSheet";
 import { useLanguage } from "@/lib/useLanguage";
 import { mapTranslations } from "@/lib/mapTranslations";
 import CategoryMultiSelect from "@/components/CategoryMultiSelect";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+const FESTIVAL_MARKER_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCAzMCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTUgMEMxMC4xIDAgNiA0LjEgNiA5YzAgNS4yIDkgMjAgOSAyMHM5LTE0LjggOS0yMGMwLTQuOS00LjEtOS05LTl6bTAgMTJjLTEuNyAwLTMtMS4zLTMtM3MxLjMtMyAzLTMgMyAxLjMgMyAzLTEuMyAzLTMgM3oiIGZpbGw9IiNFRjQ0NDQiLz4KPC9zdmc+';
+
+const USER_LOCATION_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSI4IiBmaWxsPSIjMDA5OEZGIiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=';
+
+const DEFAULT_CENTER = { lat: 20, lng: 0 };
+const DEFAULT_ZOOM = 13;
 
 const safeFormatDate = (dateString, formatString) => {
   if (!dateString) return '';
@@ -38,65 +34,58 @@ const safeFormatDate = (dateString, formatString) => {
   }
 };
 
-const festivalIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCAzMCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTUgMEMxMC4xIDAgNiA0LjEgNiA5YzAgNS4yIDkgMjAgOSAyMHM5LTE0LjggOS0yMGMwLTQuOS00LjEtOS05LTl6bTAgMTJjLTEuNyAwLTMtMS4zLTMtM3MxLjMtMyAzLTMgMyAxLjMgMyAzLTEuMyAzLTMgM3oiIGZpbGw9IiNFRjQ0NDQiLz4KPC9zdmc+',
-  iconSize: [30, 45],
-  iconAnchor: [15, 45],
-  popupAnchor: [0, -45],
-});
-
-
-function MapController({ center }) {
+// mapMoveRequest 변경 시 지도를 해당 좌표(및 zoom)로 이동시킴
+function MapMoveController({ request }) {
   const map = useMap();
-  React.useEffect(() => {
-    if (center) {
-      map.setView(center, map.getZoom());
-    }
-  }, [center, map]);
+  useEffect(() => {
+    if (!map || !request?.center) return;
+    const [lat, lng] = request.center;
+    map.panTo({ lat, lng });
+    if (request.zoom) map.setZoom(request.zoom);
+  }, [request, map]);
   return null;
 }
 
-function LocateButton({ userLocation, onLocate, locationError }) {
+function LocateButton({ userLocation, locationErrorMessage }) {
   const map = useMap();
 
   const handleClick = () => {
-    if (userLocation) {
-      map.setView(userLocation, 13);
-      onLocate();
+    if (userLocation && map) {
+      map.panTo({ lat: userLocation[0], lng: userLocation[1] });
+      map.setZoom(13);
     } else {
-      alert(locationError);
+      alert(locationErrorMessage);
     }
   };
 
   return (
-    <div className="leaflet-bottom leaflet-right" style={{ zIndex: 1000 }}>
-      <div className="leaflet-control" style={{ marginBottom: '80px', marginRight: '12px' }}>
-        <button
-          onClick={handleClick}
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-            border: 'none',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="3.5" fill="#0098FF"/>
-            <circle cx="12" cy="12" r="6.5" stroke="#0098FF" strokeWidth="2" fill="none"/>
-            <line x1="12" y1="2" x2="12" y2="5.5" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="12" y1="18.5" x2="12" y2="22" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="2" y1="12" x2="5.5" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="18.5" y1="12" x2="22" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </div>
+    <button
+      onClick={handleClick}
+      className="absolute z-20"
+      style={{
+        bottom: '90px',
+        right: '12px',
+        width: '44px',
+        height: '44px',
+        borderRadius: '50%',
+        backgroundColor: '#fff',
+        border: 'none',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="3.5" fill="#0098FF"/>
+        <circle cx="12" cy="12" r="6.5" stroke="#0098FF" strokeWidth="2" fill="none"/>
+        <line x1="12" y1="2" x2="12" y2="5.5" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="12" y1="18.5" x2="12" y2="22" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="2" y1="12" x2="5.5" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="18.5" y1="12" x2="22" y2="12" stroke="#0098FF" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    </button>
   );
 }
 
@@ -164,8 +153,10 @@ export default function FestivalMap() {
   const t = mapTranslations[language] || mapTranslations.ko;
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [mapCenter, setMapCenter] = useState([20, 0]);
+  const [mapMoveRequest, setMapMoveRequest] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [selectedFestival, setSelectedFestival] = useState(null);
+  const [selectedUserMarker, setSelectedUserMarker] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const toggleCategory = (category) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const [dateRange, setDateRange] = useState({ from: null, to: null });
@@ -183,6 +174,16 @@ export default function FestivalMap() {
     },
     initialData: [],
   });
+
+  const { data: mapsKeyResult, isLoading: isLoadingMapsKey } = useQuery({
+    queryKey: ['googleMapsApiKey'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getGoogleMapsApiKey', {});
+      return res.data;
+    },
+    staleTime: Infinity,
+  });
+  const mapsApiKey = mapsKeyResult?.success ? mapsKeyResult.apiKey : null;
 
   const categories = [...new Set(festivals.map(f => f.category).filter(Boolean))];
 
@@ -209,7 +210,7 @@ export default function FestivalMap() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation([latitude, longitude]);
-          setMapCenter([latitude, longitude]);
+          setMapMoveRequest({ center: [latitude, longitude], zoom: null });
         },
         (error) => {
           console.log("위치 정보를 가져올 수 없습니다:", error);
@@ -224,7 +225,7 @@ export default function FestivalMap() {
     try {
       const result = await geocodePlace({ query: searchQuery });
       if (result?.data?.success) {
-        setMapCenter([result.data.latitude, result.data.longitude]);
+        setMapMoveRequest({ center: [result.data.latitude, result.data.longitude], zoom: null });
       } else {
         alert(t.searchError);
       }
@@ -232,14 +233,6 @@ export default function FestivalMap() {
       alert(t.searchFail);
     } finally {
       setIsSearching(false);
-    }
-  };
-
-  const handleMyLocation = () => {
-    if (userLocation) {
-      setMapCenter(userLocation);
-    } else {
-      alert(t.locationError);
     }
   };
 
@@ -289,90 +282,104 @@ export default function FestivalMap() {
             dateRange={dateRange}
             onApply={(range) => setDateRange(range)}
           />
-
-
         </div>
       </div>
 
       <div className="flex-1 relative" style={{ height: 'calc(100vh - 220px)' }}>
-        {isLoading ? (
+        {isLoading || isLoadingMapsKey ? (
           <div className="flex items-center justify-center h-full bg-gray-900">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400" />
           </div>
+        ) : !mapsApiKey ? (
+          <div className="flex items-center justify-center h-full bg-gray-900">
+            <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+              <MapPin className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400">{t.mapLoadError}</p>
+            </Card>
+          </div>
         ) : festivalsWithLocation.length > 0 ? (
-          <MapContainer
-            center={mapCenter}
-            zoom={13}
-            className="h-full w-full"
-            style={{ background: '#ffffff' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
-            />
-            <MapController center={mapCenter} />
-            <LocateButton userLocation={userLocation} onLocate={() => setMapCenter(userLocation)} locationError={t.locationError} />
+          <APIProvider apiKey={mapsApiKey}>
+            <GoogleMap
+              defaultCenter={DEFAULT_CENTER}
+              defaultZoom={DEFAULT_ZOOM}
+              gestureHandling="greedy"
+              disableDefaultUI={false}
+              style={{ width: '100%', height: '100%' }}
+              onClick={() => { setSelectedFestival(null); setSelectedUserMarker(false); }}
+            >
+              <MapMoveController request={mapMoveRequest} />
 
-            {userLocation && (
-              <Marker
-                position={userLocation}
-                icon={new L.Icon({
-                  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSI4IiBmaWxsPSIjMDA5OEZGIiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=',
-                  iconSize: [20, 20],
-                  iconAnchor: [10, 10],
-                })}
-              >
-                <Popup className="custom-popup">
+              {userLocation && (
+                <Marker
+                  position={{ lat: userLocation[0], lng: userLocation[1] }}
+                  icon={USER_LOCATION_ICON}
+                  onClick={() => setSelectedUserMarker(true)}
+                />
+              )}
+
+              {selectedUserMarker && userLocation && (
+                <InfoWindow
+                  position={{ lat: userLocation[0], lng: userLocation[1] }}
+                  onCloseClick={() => setSelectedUserMarker(false)}
+                >
                   <div className="bg-gray-900 p-2 rounded">
                     <p className="text-white text-sm font-bold">{t.myLocation}</p>
                   </div>
-                </Popup>
-              </Marker>
-            )}
+                </InfoWindow>
+              )}
 
-            {festivalsWithLocation.map((festival) => (
-              <Marker
-                key={festival.id}
-                position={[festival.latitude, festival.longitude]}
-                icon={festivalIcon}
-              >
-                <Popup className="custom-popup">
-                  <Link to={createPageUrl(`FestivalDetail?id=${festival.id}`)}>
+              {festivalsWithLocation.map((festival) => (
+                <Marker
+                  key={festival.id}
+                  position={{ lat: festival.latitude, lng: festival.longitude }}
+                  icon={FESTIVAL_MARKER_ICON}
+                  onClick={() => setSelectedFestival(festival)}
+                />
+              ))}
+
+              {selectedFestival && (
+                <InfoWindow
+                  position={{ lat: selectedFestival.latitude, lng: selectedFestival.longitude }}
+                  onCloseClick={() => setSelectedFestival(null)}
+                >
+                  <Link to={createPageUrl(`FestivalDetail?id=${selectedFestival.id}`)}>
                     <div className="min-w-[200px] bg-gray-900 p-3 rounded-lg">
-                      {festival.thumbnail_url && (
+                      {selectedFestival.thumbnail_url && (
                         <img
-                          src={festival.thumbnail_url}
-                          alt={festival.name}
+                          src={selectedFestival.thumbnail_url}
+                          alt={getFestivalName(selectedFestival, language)}
                           className="w-full h-32 object-cover rounded-lg mb-2"
                         />
                       )}
-                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(festival, language)}</h3>
+                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(selectedFestival, language)}</h3>
                       <div className="space-y-1 text-sm">
                         <div className="flex items-center gap-2 text-gray-300">
                           <MapPin className="w-4 h-4 text-cyan-400" />
-                          {getLocalizedCity(festival, language)}, {getLocalizedCountry(festival, language)}
+                          {getLocalizedCity(selectedFestival, language)}, {getLocalizedCountry(selectedFestival, language)}
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Calendar className="w-4 h-4 text-pink-500" />
-                          {safeFormatDate(festival.start_date, language === 'ko' ? 'M월 d일' : 'MMM d')}
+                          {safeFormatDate(selectedFestival.start_date, language === 'ko' ? 'M월 d일' : 'MMM d')}
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Heart className="w-4 h-4 text-pink-500" />
-                          {festival.likes_count || 0} {t.likes}
+                          {selectedFestival.likes_count || 0} {t.likes}
                         </div>
                       </div>
                       <Badge className="mt-2 bg-cyan-500 text-white">
-                        {language === 'en' ? festival.category_en || festival.category
-                          : language === 'ja' ? festival.category_jp || festival.category
-                          : language === 'zh' ? festival.category_zh || festival.category
-                          : festival.category}
+                        {language === 'en' ? selectedFestival.category_en || selectedFestival.category
+                          : language === 'ja' ? selectedFestival.category_jp || selectedFestival.category
+                          : language === 'zh' ? selectedFestival.category_zh || selectedFestival.category
+                          : selectedFestival.category}
                       </Badge>
                     </div>
                   </Link>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                </InfoWindow>
+              )}
+
+              <LocateButton userLocation={userLocation} locationErrorMessage={t.locationError} />
+            </GoogleMap>
+          </APIProvider>
         ) : (
           <div className="flex items-center justify-center h-full bg-gray-900">
             <Card className="bg-gray-800 border-gray-700 p-8 text-center">
@@ -404,25 +411,6 @@ export default function FestivalMap() {
         .festival-map-search-input {
           padding-left: 3rem !important;
           padding-right: 4rem !important;
-        }
-
-        /* Leaflet controls should be below buttons */
-        .leaflet-control-container {
-          z-index: 100 !important;
-        }
-        .leaflet-pane {
-          z-index: 1 !important;
-        }
-        
-        /* Zoom control styling */
-        .leaflet-control-zoom a {
-          background-color: #1f2937 !important; /* Tailwind gray-800 */
-          color: white !important;
-          border: 1px solid #374151 !important; /* Tailwind gray-700 */
-        }
-        
-        .leaflet-control-zoom a:hover {
-          background-color: #374151 !important; /* Tailwind gray-700 */
         }
       `}</style>
     </div>
