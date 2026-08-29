@@ -52,10 +52,10 @@ function LocateButton({ onLocate }) {
       onClick={onLocate}
       className="absolute z-20"
       style={{
-        bottom: '90px',
-        right: '12px',
-        width: '48px',
-        height: '48px',
+        top: '64px',
+        right: '10px',
+        width: '40px',
+        height: '40px',
         borderRadius: '50%',
         backgroundColor: '#fff',
         border: 'none',
@@ -321,15 +321,7 @@ export default function FestivalMap() {
               defaultCenter={DEFAULT_CENTER}
               defaultZoom={DEFAULT_ZOOM}
               gestureHandling="greedy"
-              disableDefaultUI={true}
-              mapTypeControl={true}
-              mapTypeControlOptions={{ position: 1 /* TOP_LEFT */ }}
-              zoomControl={false}
-              streetViewControl={false}
-              fullscreenControl={false}
-              rotateControl={false}
-              scaleControl={false}
-              keyboardShortcuts={false}
+              disableDefaultUI={false}
               style={{ width: '100%', height: '100%' }}
               onClick={() => { setSelectedFestival(null); setSelectedUserMarker(false); }}
             >
