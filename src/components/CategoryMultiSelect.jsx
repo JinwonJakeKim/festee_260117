@@ -1,5 +1,6 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Tag } from "lucide-react";
 
 export default function CategoryMultiSelect({ categories, selectedCategories, onToggleCategory, label }) {
@@ -21,20 +22,27 @@ export default function CategoryMultiSelect({ categories, selectedCategories, on
           <span>{activeCount > 0 ? `${label} (${activeCount})` : label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="bg-gray-900 border-gray-800 w-auto p-0">
+      <PopoverContent
+        className="bg-gray-900 border-gray-800 w-auto p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="flex flex-wrap gap-2 p-3 max-w-[280px]">
           {items.map(({ value, label: lbl }) => (
-            <Badge
+            <button
               key={value}
+              type="button"
               onClick={() => onToggleCategory(value)}
-              className={`cursor-pointer select-none ${
+              className={cn(
+                badgeVariants(),
+                "cursor-pointer select-none",
                 selectedCategories.includes(value)
                   ? "bg-cyan-400 text-black"
                   : "bg-gray-800 text-white"
-              }`}
+              )}
             >
               {lbl}
-            </Badge>
+            </button>
           ))}
         </div>
       </PopoverContent>
