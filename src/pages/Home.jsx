@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Heart, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Star, Plane, Globe, Tag, Send, Play, Calendar, X, AlertCircle, ArrowUpDown, Info } from "lucide-react";
 import { useLanguage } from "@/lib/useLanguage";
 import { homeTranslations } from "@/lib/homeTranslations";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import HomeHeaderActions from "@/components/HomeHeaderActions";
 
 import HomeChatbot from "../components/HomeChatbot";
-import FestivalListItem from "../components/FestivalListItem";
+import FestivalRankingChart from "../components/FestivalRankingChart";
 import CategoryMultiSelect from "../components/CategoryMultiSelect";
 import DateRangeBottomSheet from "../components/DateRangeBottomSheet";
 import PullToRefresh from "../components/PullToRefresh";
@@ -655,8 +655,6 @@ export default function Home() {
   const [isJumping, setIsJumping] = useState(false);
   const bannerContainerRef = useRef(null);
   const [bannerContainerWidth, setBannerContainerWidth] = useState(Math.min(window.innerWidth, 640));
-  const chartWrapperRef = useRef(null);
-  const [chartPageWidth, setChartPageWidth] = useState(Math.min(window.innerWidth, 896));
 
   useEffect(() => {
     const updateWidth = () => {
@@ -670,20 +668,6 @@ export default function Home() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', updateWidth);
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateChartWidth = () => {
-      if (chartWrapperRef.current) {
-        setChartPageWidth(chartWrapperRef.current.clientWidth);
-      }
-    };
-    const raf = requestAnimationFrame(updateChartWidth);
-    window.addEventListener('resize', updateChartWidth);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', updateChartWidth);
     };
   }, []);
 
@@ -1134,77 +1118,22 @@ export default function Home() {
               )}
 
           {/* Festival List - 5개씩 4페이지 가로 스크롤, 20위까지 */}
-          <div className="relative group">
-            <div className="overflow-x-auto scrollbar-hide" ref={chartWrapperRef}>
-              <div className="flex" style={{ width: 'max-content' }}>
-                {[0, 1, 2, 3].map((pageIdx) => (
-                  <div key={pageIdx} className="flex pr-4" style={{ width: chartPageWidth > 680 ? Math.round(chartPageWidth * 0.8) : chartPageWidth, flexShrink: 0 }}>
-                    {/* 현재 페이지 아이템 */}
-                    <div className="space-y-1 flex-1 min-w-0">
-                      {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
-                        <FestivalListItem
-                          key={festival.id}
-                          festival={festival}
-                          index={pageIdx * 5 + i}
-                          isLiked={myLikes.some(like => like.festival_id === festival.id)}
-                          onLike={(id) => likeMutation.mutate(id)}
-                          getLocalizedContent={getLocalizedContent}
-                          language={language}
-                        />
-                      ))}
-                    </div>
-
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 데스크톱 호버 시 좌우 네비게이션 화살표 */}
-            <button
-              onClick={() => {
-                const el = chartWrapperRef.current;
-                if (!el) return;
-                const pageW = chartPageWidth > 680 ? Math.round(chartPageWidth * 0.8) : chartPageWidth;
-                el.scrollBy({ left: -(pageW + 16), behavior: 'smooth' });
-              }}
-              className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-black items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-105"
-              aria-label="이전 순위"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => {
-                const el = chartWrapperRef.current;
-                if (!el) return;
-                const pageW = chartPageWidth > 680 ? Math.round(chartPageWidth * 0.8) : chartPageWidth;
-                el.scrollBy({ left: (pageW + 16), behavior: 'smooth' });
-              }}
-              className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-black items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-105"
-              aria-label="다음 순위"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
-
-          {filteredFestivals.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-2">{t.noFestivalsMatch}</p>
-              <Button
-                onClick={() => {
-                  setSelectedCategories([]);
-                  setCountryFilter("all");
-                  setDateRange({ from: null, to: null });
-                  setSearchQuery("");
-                  setSelectedTags([]);
-                  setHidePastFestivals(true);
-                }}
-                variant="outline"
-                className="bg-gray-900 text-white border-gray-800 hover:bg-gray-800"
-              >
-                {t.resetFilters}
-              </Button>
-            </div>
-          )}
+          <FestivalRankingChart
+            filteredFestivals={filteredFestivals}
+            myLikes={myLikes}
+            onLike={(id) => likeMutation.mutate(id)}
+            getLocalizedContent={getLocalizedContent}
+            language={language}
+            t={t}
+            onResetFilters={() => {
+              setSelectedCategories([]);
+              setCountryFilter("all");
+              setDateRange({ from: null, to: null });
+              setSearchQuery("");
+              setSelectedTags([]);
+              setHidePastFestivals(true);
+            }}
+          />
           </div>
 
 
