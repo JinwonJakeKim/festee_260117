@@ -37,8 +37,8 @@ export default function CategoryMultiSelect({ categories, selectedCategories, on
                 badgeVariants(),
                 "cursor-pointer select-none",
                 selectedCategories.includes(value)
-                  ? "bg-cyan-400 text-black"
-                  : "bg-gray-800 text-white"
+                  ? "bg-cyan-400 text-black hover:bg-cyan-400 hover:text-black"
+                  : "bg-gray-800 text-white hover:bg-gray-800 hover:text-white"
               )}
             >
               {lbl}
