@@ -430,6 +430,31 @@ export default function FestivalMap() {
           padding-left: 3rem !important;
           padding-right: 4rem !important;
         }
+        .gm-style-iw-c {
+          padding: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-radius: 12px !important;
+          max-width: none !important;
+        }
+        .gm-style-iw-d {
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+        .gm-style-iw-t::after {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        .gm-style-iw-tc {
+          display: none !important;
+        }
+        button.gm-ui-hover-effect {
+          top: 4px !important;
+          right: 4px !important;
+        }
+        button.gm-ui-hover-effect span {
+          background-color: #fff !important;
+        }
       `}</style>
     </div>
   );
