@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NativeAuthCallback from './pages/NativeAuthCallback';
 import NativeAuthStart from './pages/NativeAuthStart';
+import AdminVisitEuropeExtraction from './pages/AdminVisitEuropeExtraction';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         {Object.entries(Pages).map(([path, Page]) => (
           <Route key={path} path={`/${path}`} element={<Page />} />
         ))}
+        <Route path="/AdminVisitEuropeExtraction" element={<AdminVisitEuropeExtraction />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </LayoutWrapper>
