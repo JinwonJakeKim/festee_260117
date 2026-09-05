@@ -10,6 +10,19 @@ function getKoreaTime() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
 }
 
+// 일본 축제와 동일한 규칙: 명시적 이벤트 키워드가 없으면 festival 추가, 도시명이 없으면 추가
+const EXPLICIT_EVENT_KEYWORDS = ['festival', 'festivals', 'fest', 'fete', 'fair', 'fairs', 'parade', 'parades', 'marathon', 'marathons', 'show', 'shows', 'exhibition', 'exhibitions', 'expo', 'carnival', 'competition', 'competitions'];
+function buildEuropeYoutubeQuery(name, city) {
+  if (!name) return name;
+  let cleaned = name.replace(/[:\-\/]/g, ' ').replace(/\s*20\d{2}\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  const lowerCleaned = cleaned.toLowerCase();
+  const hasExplicitKeyword = EXPLICIT_EVENT_KEYWORDS.some(kw => lowerCleaned.includes(kw));
+  if (!hasExplicitKeyword) cleaned = `${cleaned} festival`;
+  const cityLower = (city || '').toLowerCase();
+  if (cityLower && !lowerCleaned.includes(cityLower)) cleaned = `${cleaned} ${city}`;
+  return cleaned;
+}
+
 async function findDuplicateFestival(base44, rawData) {
   if (!rawData.source_country || !rawData.source_city || !rawData.source_start_date) return null;
   const candidates = await base44.asServiceRole.entities.Festival.filter({
@@ -101,6 +114,56 @@ async function processSingleRecord(base44, rawDataId) {
     };
   });
 
+  // ===== 기존 Festival 조회 (YouTube/유저 인터랙션 보존용, JapanTravel과 동일한 방식) =====
+  let existingFestivalRecord = null;
+  if (rawData.festival_id) {
+    const byId = await base44.asServiceRole.entities.Festival.filter({ id: rawData.festival_id });
+    if (byId[0]) existingFestivalRecord = byId[0];
+  }
+
+  // ===== YouTube 검색 (JapanTravel과 동일하게 fetchYoutubeVideos 재사용, 원문명 우선) =====
+  let videoUrl = existingFestivalRecord?.video_url || null;
+  let videoChannelName = existingFestivalRecord?.video_channel_name || '';
+  let youtubeShortUrls = [];
+  let shortsViewsTotal = 0;
+  let finalHighlightViews = 0;
+
+  const ytToday = new Date().toISOString().split('T')[0];
+  const ytLogs = await base44.asServiceRole.entities.ApiUsageLog.filter({ api_name: 'youtube_data_api', date: ytToday }).catch(() => []);
+  const ytCount = ytLogs[0]?.count || 0;
+
+  if (ytCount >= 95) {
+    console.warn(`[VisitEurope Transform] ⛔ YouTube API 일일 한도 초과 (${ytCount}/95) - 영상 검색 스킵, 축제는 계속 생성`);
+  } else {
+    const searchQuery = buildEuropeYoutubeQuery(rawData.source_title, rawData.source_city);
+    console.log(`[VisitEurope Transform] 🎬 YouTube search (원문명 우선): "${searchQuery}"`);
+    const ytResult = await base44.functions.invoke('fetchYoutubeVideos', {
+      festivalName: searchQuery,
+      searchHighlightVideo: true,
+      searchShorts: true,
+      relevanceLanguage: 'en',
+    }).catch(e => {
+      console.error(`[VisitEurope Transform] fetchYoutubeVideos error: ${e.message}`);
+      return { data: { success: false } };
+    });
+
+    if (ytResult.data?.success) {
+      videoUrl = ytResult.data.highlightVideoUrl ?? '';
+      videoChannelName = ytResult.data.highlightVideoUrl ? (ytResult.data.highlightVideoChannelName || '') : '';
+      finalHighlightViews = ytResult.data.highlightViews || 0;
+      const shortsScores = ytResult.data.shortsScores || [];
+      const shortsLLM = ytResult.data.shortsLLMRelevances || [];
+      const shortsUrlsRaw = ytResult.data.shortsUrls || [];
+      const shortsViewsList = ytResult.data.shortsViewsList || [];
+      youtubeShortUrls = shortsUrlsRaw.filter((_, i) => (shortsScores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N').slice(0, 5);
+      shortsViewsTotal = shortsViewsList.reduce((sum, v, i) => sum + ((shortsScores[i] || 0) >= 2 && (shortsLLM[i] || 'SKIP') !== 'N' ? v : 0), 0);
+      console.log(`[VisitEurope Transform] ✓ YouTube result: highlight=${videoUrl ? '✓' : '✗'}, shorts=${youtubeShortUrls.length}개`);
+    } else {
+      console.warn(`[VisitEurope Transform] ⚠️ fetchYoutubeVideos 실패 또는 결과 없음 - 축제는 영상 없이 생성됨`);
+    }
+  }
+  const finalPopularity = finalHighlightViews + shortsViewsTotal;
+
   const [googleTranslateResult, llmData] = await Promise.all([googleTranslatePromise, llmPromise]);
 
   let translated = llmData;
@@ -164,9 +227,15 @@ async function processSingleRecord(base44, rawDataId) {
     image_gallery_urls: rawData.source_image_url ? [{ originimgurl: rawData.source_image_url, smallimageurl: rawData.source_image_url, imgname: rawData.source_title }] : [],
     website: rawData.website || null,
 
-    likes_count: 0,
-    catches_count: 0,
-    comments_count: 0,
+    video_url: videoUrl,
+    video_channel_name: videoChannelName,
+    youtube_shorts_urls: youtubeShortUrls,
+    shorts_views_5_total: shortsViewsTotal,
+    popularity: finalPopularity,
+
+    likes_count: existingFestivalRecord?.likes_count || 0,
+    catches_count: existingFestivalRecord?.catches_count || 0,
+    comments_count: existingFestivalRecord?.comments_count || 0,
     update_time: now,
   };
 

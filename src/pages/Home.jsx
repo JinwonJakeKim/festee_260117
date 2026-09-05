@@ -266,7 +266,8 @@ export default function Home() {
   const { data: rawFestivals, isLoading } = useQuery({
     queryKey: ['rawFestivals'],
     queryFn: async () => {
-      const allFestivals = await base44.entities.Festival.list('-popularity', 500);
+      // 전체 축제를 가져와야 '업데이트순' 등 popularity 외 정렬 시에도 신규/저인기 축제가 누락되지 않음
+      const allFestivals = await base44.entities.Festival.list('-popularity', 5000);
       return allFestivals;
     },
     staleTime: 0,
