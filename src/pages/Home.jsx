@@ -266,8 +266,8 @@ export default function Home() {
   const { data: rawFestivals, isLoading } = useQuery({
     queryKey: ['rawFestivals'],
     queryFn: async () => {
-      // 전체 축제를 가져와야 '업데이트순' 등 popularity 외 정렬 시에도 신규/저인기 축제가 누락되지 않음
-      const allFestivals = await base44.entities.Festival.list('-popularity', 5000);
+      // 인기 축제 상위 N개: 하단 캐러셀(나라별/카테고리별 인기 섹션)과 국가 필터 목록의 데이터 소스
+      const allFestivals = await base44.entities.Festival.list('-popularity', 2000);
       return allFestivals;
     },
     staleTime: 0,
@@ -278,6 +278,25 @@ export default function Home() {
     if (!rawFestivals) return [];
     return removeDuplicateFestivals(rawFestivals.filter(f => f.show !== 'N'));
   }, [rawFestivals]);
+
+  // 축제차트 전용: 선택된 정렬 기준을 DB Query 자체에 반영해, Festival 수가 늘어나도
+  // (조회 limit에 안 걸려) 항상 정확한 정렬 결과가 나오도록 함.
+  // '인기순'은 위 rawFestivals가 이미 popularity로 정렬되어 있으므로 재사용, 나머지만 추가 조회.
+  const CHART_SORT_FIELD = { popularity: '-popularity', likes: '-likes_count', date: 'start_date', updated: '-updated_date' };
+  const CHART_FETCH_LIMIT = 300;
+
+  const { data: chartFestivalsRaw } = useQuery({
+    queryKey: ['chartFestivals', sortOrder],
+    queryFn: () => base44.entities.Festival.list(CHART_SORT_FIELD[sortOrder], CHART_FETCH_LIMIT),
+    enabled: sortOrder !== 'popularity',
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const chartFestivals = useMemo(() => {
+    const source = sortOrder === 'popularity' ? rawFestivals : (chartFestivalsRaw || rawFestivals);
+    if (!source) return [];
+    return removeDuplicateFestivals(source.filter(f => f.show !== 'N'));
+  }, [sortOrder, rawFestivals, chartFestivalsRaw]);
 
   const { data: flightTimes = [] } = useQuery({
     queryKey: ['flightTimes'],
@@ -440,7 +459,7 @@ export default function Home() {
     setIsDatePickerOpen(false);
   };
 
-  const filteredFestivals = festivals.filter(festival => {
+  const filteredFestivals = chartFestivals.filter(festival => {
     const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(festival.category);
     const countryMatch = countryFilter === "all" || festival.country === countryFilter;
     
@@ -473,13 +492,8 @@ export default function Home() {
       (festival.end_date && new Date(festival.end_date) >= today);
     
     return categoryMatch && countryMatch && searchMatch && dateMatch && tagsMatch && pastFestivalMatch;
-  }).sort((a, b) => {
-    if (sortOrder === "popularity") return (b.popularity || 0) - (a.popularity || 0);
-    if (sortOrder === "likes") return (b.likes_count || 0) - (a.likes_count || 0);
-    if (sortOrder === "date") return new Date(a.start_date || 0) - new Date(b.start_date || 0);
-    if (sortOrder === "updated") return new Date(b.updated_date || 0) - new Date(a.updated_date || 0);
-    return 0;
   });
+  // 정렬은 위 chartFestivals 조회 시 DB Query(Festival.list)에서 이미 sortOrder 기준으로 처리됨
 
   const banners = useMemo(() => {
     const makeFestivalBanner = (festival) => ({
