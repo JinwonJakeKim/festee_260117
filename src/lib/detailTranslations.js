@@ -37,6 +37,7 @@ export const detailTranslations = {
     externalLinkOpen: "이동",
     infoAccuracyNotice: "축제 정보는 다양한 출처를 바탕으로 제공되며, 실제 정보와 일부 차이가 있거나 주최측 사정에 따라 변경될 수 있습니다. 방문 전 공식 홈페이지에서 최신 정보를 꼭 확인해주세요.",
     share: "공유하기",
+    checkPrice: "가격 확인 필요",
   },
   en: {
     dateUnset: "Date TBD",

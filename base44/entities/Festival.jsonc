@@ -333,6 +333,16 @@
       "type": "number",
       "description": "\uac00\uaca9 (\uc6d0)"
     },
+    "price_status": {
+      "type": "string",
+      "enum": [
+        "free",
+        "paid",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "\uac00\uaca9 \uc0c1\ud0dc: free(\ubb34\ub8cc\ub85c \uba85\uc2dc\ub428), paid(\uc2e4\uc81c \uac00\uaca9 \ud655\uc778\ub428), unknown(\ubb34\ub8cc/\uc720\ub8cc \uc5ec\ubd80 \ud655\uc778 \ubd88\uac00). \uc774 \ud544\ub4dc\uac00 \ube44\uc5b4\uc788\ub294 \uae30\uc874(legacy, \ube44-JapanTravel) \ucd95\uc81c\ub294 price \uac12\uc758 truthy/falsy\ub85c \uae30\uc874 \ubc29\uc2dd\ub300\ub85c \ud310\ub2e8 (\ud558\uc704 \ud638\ud658 \uc720\uc9c0)."
+    },
     "price_yen": {
       "type": "number",
       "description": "\uac00\uaca9 (\uc5d4\ud654, japantravel \ucd94\ucd9c \ucd95\uc81c\uc6a9)"

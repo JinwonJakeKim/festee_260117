@@ -278,14 +278,13 @@ Write only the summary, nothing else.`,
     }
 
     // ===== 가격 =====
-    let priceYen = article.event_general_price || article.price || article.admission || null;
+    // 0을 유효한 값으로 취급하고, "무료"와 "미확인"을 명확히 구분한다 (article.event_general_price || ... 방식 금지)
+    const priceResult = determinePriceStatus(article, html);
+    const priceStatus = priceResult.status; // 'free' | 'paid' | 'unknown'
+    let priceYen = priceResult.priceYen;
     let priceDetails = article.price_details || article.price_info || null;
-    if (priceYen && typeof priceYen === 'string') {
-      const m = priceYen.match(/[\d,]+/);
-      priceYen = m ? parseInt(m[0].replace(/,/g, '')) : null;
-    } else if (priceYen && typeof priceYen === 'number') {
-      // already numeric
-    }
+
+    console.log(`[Japantravel Price] event_free: ${article.event_free} | event_general_price: ${article.event_general_price} | source: ${priceResult.source} | status: ${priceStatus} | price_yen: ${priceYen}`);
 
     // ===== 기타 =====
     // websites는 언어코드 키 객체 (예: {"ja": "https://...", "en": "https://..."})
@@ -341,6 +340,7 @@ Write only the summary, nothing else.`,
       video_url: videoUrl,
       image_gallery_urls: imageGalleryUrls,
       website: website || null,
+      price_status: priceStatus,
       price_yen: priceYen,
       price_details: priceDetails,
       opening_hours: openingHours,
@@ -519,4 +519,98 @@ function parseDateString(dateString) {
 
 function capitalize(str) {
   return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ===== 가격 판정 (free / paid / unknown) =====
+// 우선순위: 1) article.event_free  2) article.event_general_price(0도 유효값으로 취급)
+//          3) article의 다른 가격 필드  4) JSON-LD Event.offers  5) 렌더링된 [title="Price"] (fallback/validation 용도)
+// "모르는 가격을 무료라고 표시하지 않는다"가 핵심 원칙: 근거가 없으면 반드시 unknown.
+function determinePriceStatus(article, html) {
+  const FREE_TEXT_PATTERN = /\b(free entry|free admission|admission free|no admission fee|free of charge)\b/i;
+  const FREE_TEXT_PATTERN_JA = /(無料|入場無料)/;
+
+  const parseNumericPrice = (val) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const m = val.match(/[\d,]+(?:\.\d+)?/);
+      if (m) return parseFloat(m[0].replace(/,/g, ''));
+    }
+    return null;
+  };
+
+  // 1순위: article.event_free 명시
+  if (article.event_free === true) {
+    const gp = parseNumericPrice(article.event_general_price);
+    return { status: 'free', priceYen: (typeof gp === 'number' && !isNaN(gp)) ? gp : 0, source: 'article.event_free' };
+  }
+
+  // 2순위: article.event_general_price - undefined/null 여부를 명시적으로 판정 (0을 버리지 않음)
+  const hasEventGeneralPrice = article.event_general_price !== null && article.event_general_price !== undefined;
+  if (hasEventGeneralPrice) {
+    const gp = parseNumericPrice(article.event_general_price);
+    if (typeof gp === 'number' && !isNaN(gp) && gp > 0) {
+      return { status: 'paid', priceYen: gp, source: 'article.event_general_price' };
+    }
+    // gp === 0이지만 event_free !== true → 무조건 free로 단정하지 않고 다른 source를 계속 확인
+  }
+
+  // 3순위: article의 다른 가격 관련 필드 (price / admission / price_details / price_info)
+  const candidateFields = [article.price, article.admission, article.price_details, article.price_info];
+  for (const field of candidateFields) {
+    if (typeof field === 'string' && field.trim()) {
+      if (FREE_TEXT_PATTERN.test(field) || FREE_TEXT_PATTERN_JA.test(field)) {
+        return { status: 'free', priceYen: 0, source: 'article price field (explicit free text)' };
+      }
+      const val = parseNumericPrice(field);
+      if (typeof val === 'number' && !isNaN(val) && val > 0) {
+        return { status: 'paid', priceYen: val, source: 'article price field (numeric)' };
+      }
+    } else if (typeof field === 'number' && field > 0) {
+      return { status: 'paid', priceYen: field, source: 'article price field (numeric)' };
+    }
+  }
+
+  // 4순위: JSON-LD Event.offers.price / priceCurrency
+  try {
+    const jsonLdBlocks = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const block of jsonLdBlocks) {
+      const inner = block.match(/>([\s\S]*?)<\/script>/i);
+      if (!inner) continue;
+      let data;
+      try {
+        data = JSON.parse(inner[1]);
+      } catch {
+        continue;
+      }
+      const candidates = Array.isArray(data) ? data : (data['@graph'] ? data['@graph'] : [data]);
+      for (const node of candidates) {
+        const offer = node?.offers;
+        if (!offer) continue;
+        const offerObj = Array.isArray(offer) ? offer[0] : offer;
+        const offerPrice = parseNumericPrice(offerObj?.price);
+        if (typeof offerPrice === 'number' && !isNaN(offerPrice) && offerPrice > 0) {
+          return { status: 'paid', priceYen: offerPrice, source: 'JSON-LD Event.offers.price' };
+        }
+        // offers.price === 0 하나만으로는 free 확정하지 않음 (article.event_free가 더 강한 근거)
+      }
+    }
+  } catch (e) {
+    console.warn('[Japantravel Price] JSON-LD parse error:', e.message);
+  }
+
+  // 5순위(fallback/validation 용도): 렌더링된 Information > [title="Price"] row
+  const priceRowMatch = html.match(/title=["']Price["'][^>]*>([\s\S]{0,300}?)<\/div>/i);
+  if (priceRowMatch) {
+    const rowText = priceRowMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (/\bfree\b/i.test(rowText)) {
+      return { status: 'free', priceYen: 0, source: 'Information[title="Price"] (Free)' };
+    }
+    const val = parseNumericPrice(rowText);
+    if (typeof val === 'number' && !isNaN(val) && val > 0) {
+      return { status: 'paid', priceYen: val, source: 'Information[title="Price"] (numeric)' };
+    }
+  }
+
+  // 어떤 source에서도 무료/유료를 확인할 수 없음 → 반드시 unknown (0이나 free로 임의 처리 금지)
+  return { status: 'unknown', priceYen: null, source: 'none' };
 }

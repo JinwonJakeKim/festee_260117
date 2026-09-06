@@ -683,8 +683,14 @@ country와 city를 4개 언어로 번역해주세요. 고유명사(도시명)는
       return s + ((firstResultScores[i] || 0) >= 2 && llm !== 'N' ? v : 0);
     }, 0),
     website: (festivalData.website && !festivalData.website.includes('japantravel.co.jp') && !festivalData.website.includes('japantravel.com')) ? festivalData.website : null,
-    price: festivalData.price_yen ? Math.round(festivalData.price_yen * 9.5) : 0,
-    price_yen: festivalData.price_yen || null,
+    // price_status가 Single Source of Truth: unknown을 절대 0원으로 변환하지 않는다
+    price_status: festivalData.price_status || 'unknown',
+    price: festivalData.price_status === 'paid'
+      ? Math.round((festivalData.price_yen || 0) * 9.5)
+      : (festivalData.price_status === 'free' ? 0 : null),
+    price_yen: festivalData.price_status === 'paid'
+      ? (festivalData.price_yen || null)
+      : (festivalData.price_status === 'free' ? (festivalData.price_yen || 0) : null),
     price_details: festivalData.price_details,
     organizer: festivalData.organizer,
     contact: festivalData.contact,
