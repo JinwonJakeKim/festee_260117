@@ -1238,7 +1238,7 @@ export default function FestivalDetail() {
           />
           <Button
             onClick={handleCommentSubmit}
-            disabled={!commentText.trim() || isSubmitting || !user}
+            disabled={user ? (!commentText.trim() || isSubmitting) : false}
             className="bg-cyan-500 hover:bg-cyan-600"
           >
             {isSubmitting ? (
