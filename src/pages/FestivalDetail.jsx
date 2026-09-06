@@ -1163,12 +1163,6 @@ export default function FestivalDetail() {
               </div>
             )}
 
-            {/* 축제정보 최신성/정확성 안내 */}
-            <div className="flex items-start gap-2 pt-4 border-t border-gray-800">
-              <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-              <p className="text-gray-500 text-xs leading-relaxed">{t.infoAccuracyNotice}</p>
-            </div>
-
             {/* Shorts 섹션 */}
             {festival.youtube_shorts_urls && festival.youtube_shorts_urls.length > 0 && (
               <ShortsSection
@@ -1197,6 +1191,12 @@ export default function FestivalDetail() {
               </div>
             </div>
           )}
+
+          {/* 축제정보 최신성/정확성 안내 */}
+          <div className="flex items-start gap-2 mt-6 pt-4 border-t border-gray-800">
+            <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+            <p className="text-gray-500 text-xs leading-relaxed">{t.infoAccuracyNotice}</p>
+          </div>
 
           {/* 일정 */}
           {festival.schedule && festival.schedule.length > 0 && (
