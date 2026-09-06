@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play, Youtube } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MessageCircle, Star, MapPin, Calendar, ExternalLink, Map, Target, X, Images, ChevronRight, Music, Palette, Brush, Utensils, Trophy, Check, AlertCircle, Play, Youtube, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -951,7 +951,7 @@ export default function FestivalDetail() {
           </div>
         )}
 
-        <div className="flex items-center gap-6 py-3 border-y border-gray-800">
+        <div className="flex items-center gap-4 py-3 border-y border-gray-800">
           <button 
             onClick={handleLike}
             className="flex items-center gap-2"
@@ -992,11 +992,12 @@ export default function FestivalDetail() {
               <Target className="w-6 h-6 text-gray-400 hover:text-pink-500 transition-colors" />
             </button>
           </Link>
-          <button 
+          <button
             onClick={handleShare}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-900 border border-gray-800 hover:border-cyan-400/50 transition-colors"
           >
-            <Share2 className="w-6 h-6 text-gray-400 hover:text-cyan-400 transition-colors" />
+            <Share2 className="w-5 h-5 text-gray-400" />
+            <span className="text-white text-sm font-medium whitespace-nowrap">{t.share}</span>
           </button>
         </div>
       </div>
@@ -1190,6 +1191,12 @@ export default function FestivalDetail() {
               </div>
             </div>
           )}
+
+          {/* 축제정보 최신성/정확성 안내 */}
+          <div className="flex items-start gap-2 mt-6 pt-4 border-t border-gray-800">
+            <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+            <p className="text-gray-500 text-xs leading-relaxed">{t.infoAccuracyNotice}</p>
+          </div>
 
           {/* 일정 */}
           {festival.schedule && festival.schedule.length > 0 && (
