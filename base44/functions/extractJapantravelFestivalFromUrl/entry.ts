@@ -359,9 +359,13 @@ Write only the summary, nothing else.`,
     if (existing && existing.length > 0) {
       const updateData = { ...rawDataRecord };
       delete updateData.create_time;
+      // 재추출 시 기존 Festival 연결과 변환 상태를 보존한다.
+      // 가격 재검증 때문에 festival_id가 null로 덮이거나 processed 레코드가 다시 pending으로 바뀌면 안 된다.
+      updateData.festival_id = existing[0].festival_id || null;
+      updateData.processing_status = existing[0].processing_status || rawDataRecord.processing_status;
       updateData.update_time = getKoreaTime();
       savedRecord = await base44.asServiceRole.entities.JapantravelRawData.update(existing[0].id, updateData);
-      console.log(`[Japantravel] ✅ Updated: ${savedRecord.id}`);
+      console.log(`[Japantravel] ✅ Updated: ${savedRecord.id} (festival_id preserved: ${updateData.festival_id || 'none'})`);
     } else {
       savedRecord = await base44.asServiceRole.entities.JapantravelRawData.create(rawDataRecord);
       console.log(`[Japantravel] ✅ Created: ${savedRecord.id}`);
