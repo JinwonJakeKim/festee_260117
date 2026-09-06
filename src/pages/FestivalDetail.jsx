@@ -429,9 +429,17 @@ export default function FestivalDetail() {
     return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
   };
 
-  const isFreeEntry = !festival?.price || festival.price === 0;
+  // price_status가 Single Source of Truth: "가격을 찾지 못했다"와 "무료라고 확인했다"는 다른 의미.
+  // price_status가 없는 legacy(비-JapanTravel) 축제는 기존 price truthy/falsy 방식으로 하위 호환 처리.
+  const priceStatus = festival?.price_status || (festival?.price ? 'paid' : 'free');
+  const isFreeEntry = priceStatus === 'free';
+  const isPriceUnknown = priceStatus === 'unknown';
 
   const handleTicketButtonClick = () => {
+    if (isPriceUnknown) {
+      // 가격 미확인 축제는 무료 alert를 띄우지 않음
+      return;
+    }
     if (isFreeEntry) {
       setShowFreeEntryAlert(true);
       setTimeout(() => {
@@ -449,7 +457,7 @@ export default function FestivalDetail() {
       ? `${safeFormatDate(festival.start_date, 'yyyy.MM.dd')} ~ ${safeFormatDate(festival.end_date, 'MM.dd')}`
       : '날짜 미정';
     
-    const priceInfo = festival.price ? formatCurrency(festival.price) : '무료';
+    const priceInfo = isPriceUnknown ? '가격 확인 필요' : (isFreeEntry ? '무료' : formatCurrency(festival.price));
     const summarySnippet = localizedSummary
       ? localizedSummary.substring(0, 80) + (localizedSummary.length > 80 ? '...' : '')
       : '';
@@ -915,7 +923,9 @@ export default function FestivalDetail() {
         </div>
 
         <div className="text-white text-xl font-bold mb-3">
-          {isFreeEntry ? (
+          {isPriceUnknown ? (
+            <span className="text-gray-400">{t.checkPrice}</span>
+          ) : isFreeEntry ? (
             <span className="text-green-400">{t.free}</span>
           ) : (
             <span>{formatCurrency(festival.price)}</span>

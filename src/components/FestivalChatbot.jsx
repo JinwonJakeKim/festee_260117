@@ -79,6 +79,7 @@ export default function FestivalChatbot({ festival }) {
           end_date: festival.end_date,
           category: festival.category,
           price: festival.price,
+          price_status: festival.price_status,
           summary: festival.summary_ko || festival.summary,
           description: festival.description_ko || festival.description,
           highlights: festival.highlights_ko || festival.highlights,

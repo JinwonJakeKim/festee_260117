@@ -77,6 +77,7 @@ export const detailTranslations = {
     externalLinkOpen: "Open",
     infoAccuracyNotice: "Festival information is compiled from various sources and may differ from the latest official information or change at the organizer's discretion. Please check the official website for the latest information before your visit.",
     share: "Share",
+    checkPrice: "Check price",
   },
   ja: {
     dateUnset: "日程未定",
@@ -116,6 +117,7 @@ export const detailTranslations = {
     externalLinkOpen: "開く",
     infoAccuracyNotice: "フェスティバル情報はさまざまな情報源をもとに提供しており、実際の最新情報と一部異なる場合や、主催者の都合により変更される場合があります。訪問前に公式サイトで最新情報をご確認ください。",
     share: "共有",
+    checkPrice: "料金要確認",
   },
   zh: {
     dateUnset: "日期待定",
@@ -155,5 +157,6 @@ export const detailTranslations = {
     externalLinkOpen: "打开",
     infoAccuracyNotice: "节庆信息基于多种来源整理提供，可能与最新官方信息存在部分差异，也可能因主办方安排而发生变更。出行前请务必通过官方网站确认最新信息。",
     share: "分享",
+    checkPrice: "价格待确认",
   },
 };
