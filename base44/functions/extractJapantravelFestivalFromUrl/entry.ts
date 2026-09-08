@@ -361,8 +361,8 @@ Write only the summary, nothing else.`,
       delete updateData.create_time;
       // 재추출 시 기존 Festival 연결과 변환 상태를 보존한다.
       // 가격 재검증 때문에 festival_id가 null로 덮이거나 processed 레코드가 다시 pending으로 바뀌면 안 된다.
-      updateData.festival_id = existing[0].festival_id || null;
-      updateData.processing_status = existing[0].processing_status || rawDataRecord.processing_status;
+      updateData.festival_id = existing[0].festival_id ?? null;
+      updateData.processing_status = existing[0].processing_status ?? rawDataRecord.processing_status;
       updateData.update_time = getKoreaTime();
       savedRecord = await base44.asServiceRole.entities.JapantravelRawData.update(existing[0].id, updateData);
       console.log(`[Japantravel] ✅ Updated: ${savedRecord.id} (festival_id preserved: ${updateData.festival_id || 'none'})`);
@@ -530,7 +530,7 @@ function capitalize(str) {
 //          3) article의 다른 가격 필드  4) JSON-LD Event.offers  5) 렌더링된 [title="Price"] (fallback/validation 용도)
 // "모르는 가격을 무료라고 표시하지 않는다"가 핵심 원칙: 근거가 없으면 반드시 unknown.
 function determinePriceStatus(article, html) {
-  const FREE_TEXT_PATTERN = /\b(free entry|free admission|admission free|no admission fee|free of charge)\b/i;
+  const FREE_TEXT_PATTERN = /\b(free|free entry|free admission|admission free|no admission fee|free of charge)\b/i;
   const FREE_TEXT_PATTERN_JA = /(無料|入場無料)/;
 
   const parseNumericPrice = (val) => {
@@ -603,10 +603,12 @@ function determinePriceStatus(article, html) {
   }
 
   // 5순위(fallback/validation 용도): 렌더링된 Information > [title="Price"] row
-  const priceRowMatch = html.match(/title=["']Price["'][^>]*>([\s\S]{0,300}?)<\/div>/i);
-  if (priceRowMatch) {
-    const rowText = priceRowMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    if (/\bfree\b/i.test(rowText)) {
+  // Price row는 아이콘(<svg>...</svg>, 수백~수천자의 path 데이터)과 값이 같은 div 안에 있어
+  // 고정 글자수(예: 300자) 컷은 svg를 다 못 지나쳐 값에 도달하기 전에 잘릴 수 있다.
+  // → svg 블록을 먼저 제거한 뒤, Price row를 감싸는 첫 </div> 까지를 값으로 본다.
+  const rowText = extractPriceRowText(html);
+  if (rowText) {
+    if (/\bfree\b/i.test(rowText) || FREE_TEXT_PATTERN_JA.test(rowText)) {
       return { status: 'free', priceYen: 0, source: 'Information[title="Price"] (Free)' };
     }
     const val = parseNumericPrice(rowText);
@@ -617,4 +619,22 @@ function determinePriceStatus(article, html) {
 
   // 어떤 source에서도 무료/유료를 확인할 수 없음 → 반드시 unknown (0이나 free로 임의 처리 금지)
   return { status: 'unknown', priceYen: null, source: 'none' };
+}
+
+// Information > [title="Price"] row의 실제 표시값(예: "Free", "¥500")을 추출한다.
+// title="Price"가 붙은 div는 semantic attribute라 UI 클래스명 변경에 영향을 받지 않지만,
+// 그 안에 아이콘 svg(긴 path 데이터 포함)가 값보다 먼저 등장하므로 svg를 제거한 뒤
+// 해당 row를 감싸는 첫 </div> 까지를 값 텍스트로 취급해야 한다.
+function extractPriceRowText(html) {
+  const titleMatch = html.match(/title=["']Price["']/i);
+  if (!titleMatch) return null;
+  const afterTitleIdx = titleMatch.index + titleMatch[0].length;
+  const closeBracketIdx = html.indexOf('>', afterTitleIdx);
+  if (closeBracketIdx === -1) return null;
+  let windowHtml = html.substring(closeBracketIdx + 1, closeBracketIdx + 1 + 5000);
+  windowHtml = windowHtml.replace(/<svg[\s\S]*?<\/svg>/gi, '');
+  const closeDivIdx = windowHtml.search(/<\/div>/i);
+  const segment = closeDivIdx >= 0 ? windowHtml.substring(0, closeDivIdx) : windowHtml.substring(0, 500);
+  const text = segment.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return text || null;
 }
