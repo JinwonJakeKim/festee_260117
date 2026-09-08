@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import TourApiExtractionLogSection from "@/components/admin/TourApiExtractionLogSection";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -160,6 +161,7 @@ export default function AdminTourAPI() {
         alert(`✅ ${response.data.raw_data_saved}개의 원본 데이터를 저장했습니다.\n- 새로 생성: ${response.data.new_records}개\n- 업데이트: ${response.data.updated_records}개\n\n이제 "원본 데이터 관리" 탭에서 변환 작업을 진행하세요.`);
         setFetchResults(response.data);
         refetchRawData();
+        queryClient.invalidateQueries({ queryKey: ['tourApiExtractionLogs'] });
         setSelectedTab("manage");
       } else {
         alert(`조회 중 오류가 발생했습니다:\n\n${response.data.message || response.data.error || '알 수 없는 오류'}`);
@@ -505,6 +507,8 @@ export default function AdminTourAPI() {
                 </Button>
               </div>
             </Card>
+
+            <TourApiExtractionLogSection />
           </TabsContent>
 
           {/* 원본 데이터 관리 탭 */}
