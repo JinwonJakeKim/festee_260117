@@ -304,6 +304,12 @@ export default function Catch() {
     }
   };
 
+  // 오늘부터 미래(진행중 포함)에 열리는 축제만 근처 검색 대상으로 제한 (과거 축제는 캐치 불가하므로 제외)
+  const futureFestivals = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return festivals.filter(f => !f.end_date || f.end_date >= todayStr);
+  }, [festivals]);
+
   // 캐치한 축제들을 FestivalListItem용 축제 객체로 변환
   const catchFestivals = useMemo(() => {
     const festivalMap = new Map();
@@ -435,7 +441,7 @@ export default function Catch() {
       {/* Nearby Festivals - Catch Section */}
       <NearbyFestivalsSection
         userLocation={userLocation}
-        festivals={festivals}
+        festivals={futureFestivals}
         catches={catches}
         onCatch={catchMutation.mutate}
         isCatching={catchMutation.isPending}
