@@ -50,7 +50,7 @@ export default function Catch() {
 
   const { data: festivals = [] } = useQuery({
     queryKey: ['festivals'],
-    queryFn: () => base44.entities.Festival.list('-popularity', 5000),
+    queryFn: () => base44.entities.Festival.list('-popularity', 100000),
     staleTime: 1000 * 60 * 5,
   });
 
