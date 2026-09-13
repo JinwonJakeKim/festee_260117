@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import VisitEuropeRawDataTab from "@/components/admin/VisitEuropeRawDataTab";
+import VisitEuropeExtractTab from "@/components/admin/VisitEuropeExtractTab";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader2, Search, ShieldAlert } from "lucide-react";
@@ -228,54 +229,15 @@ export default function AdminVisitEuropeExtraction() {
           </TabsContent>
 
           <TabsContent value="extract" className="mt-4 space-y-4">
-            <Card className="bg-gray-900 border-gray-800 p-6">
-              <h3 className="text-white font-bold text-lg mb-4">단일 URL 상세정보 추출</h3>
-              <div className="space-y-4">
-                <input
-                  type="url"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  placeholder="https://visiteurope.com/event/madeira-wine-festival"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                  disabled={isExtracting}
-                />
-                <Button
-                  onClick={handleExtract}
-                  disabled={isExtracting || !urlInput.trim()}
-                  className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-base font-bold"
-                >
-                  {isExtracting ? (
-                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" />축제 정보 추출 중...</>
-                  ) : (
-                    <><ExternalLink className="w-5 h-5 mr-2" />축제 정보 추출 시작</>
-                  )}
-                </Button>
-              </div>
-            </Card>
-
-            {discoveredCount > 0 && (
-              <Card className="bg-gray-900 border-gray-800 p-4">
-                <h3 className="text-white font-bold mb-3">발견된 이벤트 (상세추출 대기)</h3>
-                <div className="space-y-2">
-                  {rawDataList.filter(r => r.extract_status === 'pending').map(item => (
-                    <div key={item.id} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-white text-sm font-medium truncate">{item.source_title}</p>
-                        <p className="text-gray-500 text-xs truncate">{item.source_city}, {item.source_country} · {item.source_url}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => { setUrlInput(item.source_url); extractMutation.mutate(item.source_url); }}
-                        disabled={extractMutation.isPending}
-                        className="bg-purple-500 hover:bg-purple-600 whitespace-nowrap ml-2"
-                      >
-                        상세 추출
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+            <VisitEuropeExtractTab
+              urlInput={urlInput}
+              setUrlInput={setUrlInput}
+              handleExtract={handleExtract}
+              isExtracting={isExtracting}
+              rawDataList={rawDataList}
+              queryClient={queryClient}
+              deleteRawDataMutation={deleteRawDataMutation}
+            />
           </TabsContent>
 
           <TabsContent value="rawdata" className="mt-4 space-y-4">
