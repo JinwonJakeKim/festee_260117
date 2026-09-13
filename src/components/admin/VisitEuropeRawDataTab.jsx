@@ -59,7 +59,7 @@ export default function VisitEuropeRawDataTab({
           <li>✓ 상세 추출이 완료된 데이터만 변환 가능합니다 ("발견만 됨" 상태는 상세 추출 탭에서 먼저 처리하세요)</li>
           <li>✓ 이름+국가+도시+시작일 기준으로 기존 Festival과 중복 여부를 검사합니다</li>
           <li>✓ 자동 번역(한/영/일/중) 및 카테고리 분류가 적용됩니다</li>
-          <li>✓ 좌표(위도/경도) 정보가 없으면 도시 중심좌표로 임의 대체하지 않고 "위치정보 확인 필요" 상태로 남습니다</li>
+          <li>✓ 정확한 venue 좌표가 없으면 exact→city→region→country 순으로 대표 위치를 자동 탐색하며, 정확도(location_accuracy)를 함께 저장합니다</li>
         </ul>
       </Card>
 
@@ -77,8 +77,8 @@ export default function VisitEuropeRawDataTab({
           <div className="flex items-start gap-2 mb-3">
             <LocateFixed className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
             <p className="text-orange-300 text-xs">
-              {needsLocationList.length}개 Festival이 위치정보(latitude/longitude) 없이 생성되어 지도에 표시되지 않습니다.
-              정확한 장소가 확인되는 경우에만 좌표를 채우고, 그렇지 않으면 pending 상태로 유지됩니다.
+              {needsLocationList.length}개 Festival이 위치정보 없이 생성되어 지도에 표시되지 않습니다.
+              exact venue를 우선 시도하고, 없으면 city→region→country 순으로 대표 위치를 찾아 지도에 표시합니다 (정확도는 별도 저장).
             </p>
           </div>
           <Button
@@ -163,6 +163,9 @@ export default function VisitEuropeRawDataTab({
                     </Badge>
                     {item.location_status === 'needs_verification' && (
                       <Badge variant="outline" className="text-orange-400 border-orange-400 text-xs">위치정보 확인 필요</Badge>
+                    )}
+                    {item.location_status === 'approx_confirmed' && (
+                      <Badge variant="outline" className="text-amber-400 border-amber-400 text-xs">대표 위치 ({item.location_accuracy}){item.location_display_name ? `: ${item.location_display_name}` : ''}</Badge>
                     )}
                     {item.festival_id && <Badge variant="outline" className="text-green-400 border-green-400 text-xs">Festival 연결됨</Badge>}
                   </div>
