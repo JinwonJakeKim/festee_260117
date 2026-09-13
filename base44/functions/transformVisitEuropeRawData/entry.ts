@@ -218,9 +218,12 @@ async function processSingleRecord(base44, rawDataId) {
     date_status: rawData.date_status || 'confirmed',
 
     // VisitEurope는 정확한 좌표를 제공하지 않으므로 도시 중심좌표로 임의 대체하지 않고 미확인 상태로 둠
+    // (좌표가 없으면 Festival 생성 직후 enrichVisitEuropeFestivalLocation이 exact→city→region→country 순으로 자동 보강함)
     latitude: rawData.latitude || null,
     longitude: rawData.longitude || null,
     geocoding_status: (rawData.latitude && rawData.longitude) ? 'success' : 'pending',
+    location_accuracy: (rawData.latitude && rawData.longitude) ? 'exact' : undefined,
+    location_display_name: (rawData.latitude && rawData.longitude) ? null : undefined,
     access_info: `${rawData.source_city || ''}, ${rawData.source_country || ''}`.replace(/^, /, ''),
 
     thumbnail_url: rawData.source_image_url,
