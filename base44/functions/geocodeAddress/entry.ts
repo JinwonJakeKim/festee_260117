@@ -106,7 +106,10 @@ Deno.serve(async (req) => {
         success: true,
         latitude: location.lat,
         longitude: location.lng,
-        formatted_address: formattedAddress
+        formatted_address: formattedAddress,
+        types: data.results[0].types || [],
+        location_type: data.results[0].geometry.location_type || null,
+        partial_match: data.results[0].partial_match || false
       });
     } else {
       console.log(`[Geocoding] ❌ Failed: ${data.status}`);

@@ -254,6 +254,17 @@ async function processSingleRecord(base44, rawDataId) {
   });
 
   console.log(`[VisitEurope Transform] ✓ Festival saved: ${festival.id}`);
+
+  // ===== 위치정보 보강: 정확한 좌표가 없으면 기존 geocodeAddress 재사용해 시도 (도시 중심좌표 임의 대체 없음) =====
+  if (!festivalPayload.latitude || !festivalPayload.longitude) {
+    try {
+      const enrichResult = await base44.functions.invoke('enrichVisitEuropeFestivalLocation', { festivalId: festival.id });
+      console.log(`[VisitEurope Transform] Location enrich: resolved=${enrichResult.data?.resolved}`);
+    } catch (e) {
+      console.warn(`[VisitEurope Transform] Location enrich failed: ${e.message}`);
+    }
+  }
+
   return { rawDataId, success: true, festivalId: festival.id, festivalName: festivalPayload.name_original };
 }
 

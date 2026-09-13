@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database, ExternalLink, AlertTriangle } from "lucide-react";
+import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database, ExternalLink, AlertTriangle, LocateFixed } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,12 +26,16 @@ export default function VisitEuropeRawDataTab({
   handleDelete,
   handleSelectItem,
   queryClient,
+  enrichLocationMutation,
+  handleBulkLocationEnrich,
+  locationEnrichProgress,
 }) {
   const pendingList = rawDataList.filter(r => r.processing_status === 'pending' && r.extract_status === 'processed');
   const discoveredOnlyList = rawDataList.filter(r => r.extract_status === 'pending');
   const processedList = rawDataList.filter(r => r.processing_status === 'processed');
   const duplicateList = rawDataList.filter(r => r.processing_status === 'duplicate');
   const failedList = rawDataList.filter(r => r.processing_status === 'failed' || r.extract_status === 'failed');
+  const needsLocationList = rawDataList.filter(r => r.festival_id && r.location_status === 'needs_verification');
 
   return (
     <div className="space-y-4">
@@ -65,6 +69,29 @@ export default function VisitEuropeRawDataTab({
           <p className="text-yellow-300 text-xs">
             {discoveredOnlyList.length}개 항목은 목록에서 발견만 되었고 상세 추출이 되지 않았습니다. "상세 추출" 탭에서 먼저 처리해주세요.
           </p>
+        </Card>
+      )}
+
+      {needsLocationList.length > 0 && (
+        <Card className="bg-orange-900/10 border-orange-400/30 p-4">
+          <div className="flex items-start gap-2 mb-3">
+            <LocateFixed className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+            <p className="text-orange-300 text-xs">
+              {needsLocationList.length}개 Festival이 위치정보(latitude/longitude) 없이 생성되어 지도에 표시되지 않습니다.
+              정확한 장소가 확인되는 경우에만 좌표를 채우고, 그렇지 않으면 pending 상태로 유지됩니다.
+            </p>
+          </div>
+          <Button
+            onClick={handleBulkLocationEnrich}
+            disabled={locationEnrichProgress?.isRunning}
+            className="w-full bg-gradient-to-r from-orange-500 to-cyan-500 hover:from-orange-600 hover:to-cyan-600 font-bold"
+          >
+            {locationEnrichProgress?.isRunning ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />위치정보 재조회 중... ({locationEnrichProgress.current}/{locationEnrichProgress.total})</>
+            ) : (
+              <><LocateFixed className="w-4 h-4 mr-2" />위치정보 확인 필요 {needsLocationList.length}개 일괄 재조회</>
+            )}
+          </Button>
         </Card>
       )}
 
@@ -148,9 +175,22 @@ export default function VisitEuropeRawDataTab({
                   </div>
                   {item.error_message && <p className="text-red-400 text-xs mt-2 bg-red-900/20 p-2 rounded">❌ {item.error_message}</p>}
                 </div>
-                <Button onClick={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate([item.id]); }} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex flex-col gap-2">
+                  {item.festival_id && item.location_status === 'needs_verification' && (
+                    <Button
+                      onClick={() => enrichLocationMutation.mutate(item.festival_id)}
+                      disabled={enrichLocationMutation.isPending}
+                      size="sm"
+                      className="bg-orange-500 hover:bg-orange-600 whitespace-nowrap"
+                      title="위치 재조회"
+                    >
+                      <LocateFixed className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button onClick={() => { if (confirm('이 원본 데이터를 삭제하시겠습니까?')) deleteRawDataMutation.mutate([item.id]); }} size="sm" variant="outline" className="border-gray-700 text-red-400 hover:bg-red-900/20">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

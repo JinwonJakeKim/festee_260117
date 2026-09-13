@@ -101,6 +101,39 @@ export default function AdminVisitEuropeExtraction() {
     },
   });
 
+  const [locationEnrichProgress, setLocationEnrichProgress] = useState({ isRunning: false, current: 0, total: 0, resolved: 0, pending: 0 });
+
+  const enrichLocationMutation = useMutation({
+    mutationFn: async (festivalId) => {
+      const { data } = await base44.functions.invoke('enrichVisitEuropeFestivalLocation', { festivalId });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visitEuropeRawData'] });
+      queryClient.invalidateQueries({ queryKey: ['festivals'] });
+    },
+  });
+
+  const handleBulkLocationEnrich = async () => {
+    const targets = rawDataList.filter(r => r.festival_id && r.location_status === 'needs_verification');
+    if (targets.length === 0) { alert('위치정보 확인이 필요한 항목이 없습니다'); return; }
+    setLocationEnrichProgress({ isRunning: true, current: 0, total: targets.length, resolved: 0, pending: 0 });
+    let resolved = 0, pending = 0;
+    for (let i = 0; i < targets.length; i++) {
+      try {
+        const { data } = await base44.functions.invoke('enrichVisitEuropeFestivalLocation', { festivalId: targets[i].festival_id });
+        if (data?.resolved) resolved++; else pending++;
+      } catch (e) {
+        pending++;
+      }
+      setLocationEnrichProgress(prev => ({ ...prev, current: i + 1, resolved, pending }));
+    }
+    queryClient.invalidateQueries({ queryKey: ['visitEuropeRawData'] });
+    queryClient.invalidateQueries({ queryKey: ['festivals'] });
+    setLocationEnrichProgress(prev => ({ ...prev, isRunning: false }));
+    alert(`위치정보 재조회 완료: 확인됨 ${resolved}개, 보류 ${pending}개`);
+  };
+
   const handleDiscover = async () => {
     setIsDiscovering(true);
     try {
@@ -251,6 +284,9 @@ export default function AdminVisitEuropeExtraction() {
               handleDelete={handleDelete}
               handleSelectItem={handleSelectItem}
               queryClient={queryClient}
+              enrichLocationMutation={enrichLocationMutation}
+              handleBulkLocationEnrich={handleBulkLocationEnrich}
+              locationEnrichProgress={locationEnrichProgress}
             />
           </TabsContent>
         </Tabs>
