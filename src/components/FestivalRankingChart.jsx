@@ -46,6 +46,16 @@ export default function FestivalRankingChart({
     el.scrollBy({ left: direction * (pageWidth + pageGap), behavior: 'smooth' });
   };
 
+  // 마우스 휠(세로 스크롤)을 가로 스크롤로 변환 (데스크톱에서 휠로 좌우 이동 가능하도록)
+  const handleWheel = (e) => {
+    const el = chartWrapperRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    }
+  };
+
   const pageCount = Math.max(1, Math.ceil(filteredFestivals.length / 5));
 
   return (
@@ -53,6 +63,7 @@ export default function FestivalRankingChart({
       <div
         className="overflow-x-auto scrollbar-hide snap-x snap-mandatory"
         ref={chartWrapperRef}
+        onWheel={handleWheel}
       >
         <div className="flex" style={{ width: 'max-content' }}>
           {Array.from({ length: pageCount }).map((_, pageIdx) => (
