@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useLanguage } from "@/lib/useLanguage";
+import CatchCardImage from "@/components/CatchCardImage";
 
 export default function CatchHistoryCardStack({ catches, festivals, catchCount, emptyMessage }) {
   const { getLocalizedContent } = useLanguage();
@@ -190,8 +191,9 @@ export default function CatchHistoryCardStack({ catches, festivals, catchCount, 
                       </div>
                       <div className="px-3 pb-3">
                         <div className="rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
-                          <img
-                            src={catchItem.image_url || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'}
+                          <CatchCardImage
+                            catchImageUrl={catchItem.image_url}
+                            festivalThumbnailUrl={festival?.thumbnail_url}
                             alt={catchItem.festival_name}
                             className="w-full h-full object-cover"
                           />

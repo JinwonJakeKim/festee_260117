@@ -18,6 +18,10 @@ export const mapTranslations = {
     mapLoadError: "지도를 불러올 수 없습니다",
     likes: "좋아요",
     festivalsCount: (n) => `${n}개 축제`,
+    approxBadge: "대표 위치",
+    approxNoteCity: "정확한 행사장 정보가 없어 도시 대표 위치를 표시합니다",
+    approxNoteRegion: "이 축제는 지역 내 여러 장소에서 진행되어 지역 대표 위치를 표시합니다",
+    approxNoteCountry: "정확한 개최 장소 정보가 없어 국가 대표 위치를 표시합니다",
   },
   en: {
     searchPlaceholder: "Search a place (e.g. Osaka, Tokyo, Seoul)",
@@ -38,6 +42,10 @@ export const mapTranslations = {
     mapLoadError: "Unable to load the map",
     likes: "Likes",
     festivalsCount: (n) => `${n} Festivals`,
+    approxBadge: "Approximate location",
+    approxNoteCity: "No exact venue found - showing the city's representative location",
+    approxNoteRegion: "This festival takes place across multiple venues in the region - showing the region's representative location",
+    approxNoteCountry: "No exact venue found - showing the country's representative location",
   },
   ja: {
     searchPlaceholder: "地名を検索 (例: 大阪、東京、ソウル)",
@@ -58,6 +66,10 @@ export const mapTranslations = {
     mapLoadError: "地図を読み込めません",
     likes: "いいね",
     festivalsCount: (n) => `${n}件のフェス`,
+    approxBadge: "代表位置",
+    approxNoteCity: "正確な会場情報がないため、都市の代表位置を表示しています",
+    approxNoteRegion: "このフェスは地域内の複数の場所で開催されるため、地域の代表位置を表示しています",
+    approxNoteCountry: "正確な開催場所情報がないため、国の代表位置を表示しています",
   },
   zh: {
     searchPlaceholder: "搜索地名（例：大阪、东京、首尔）",
@@ -78,5 +90,9 @@ export const mapTranslations = {
     mapLoadError: "无法加载地图",
     likes: "点赞",
     festivalsCount: (n) => `${n}个节日`,
+    approxBadge: "代表位置",
+    approxNoteCity: "暂无确切场馆信息，显示该城市的代表位置",
+    approxNoteRegion: "该节日在该地区多个场所举办，显示该地区的代表位置",
+    approxNoteCountry: "暂无确切举办地信息，显示该国家的代表位置",
   },
 };

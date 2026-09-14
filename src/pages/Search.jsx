@@ -430,11 +430,22 @@ export default function Search() {
            selectedTags.every(tag => festival.tags_ko.includes(tag)));
         if (!matchesTags) return false;
 
-        // 가격 필터
-        const festivalPrice = festival.price || 0;
-        const matchesPrice = priceRange[1] === 500000 ? festivalPrice >= priceRange[0] :
-          (festivalPrice >= priceRange[0] && festivalPrice <= priceRange[1]);
-        if (!matchesPrice) return false;
+        // 가격 필터: price_status를 Single Source of Truth로 사용.
+        // unknown은 무료 필터에도, 유료 range에도 포함하지 않는다 (단, 필터가 기본값이면 전체 통과).
+        // price_status가 없는 legacy(비-JapanTravel) 축제는 기존 price truthy/falsy 방식으로 하위 호환 처리.
+        const isPriceFilterActive = priceRange[0] !== 0 || priceRange[1] !== 500000;
+        if (isPriceFilterActive) {
+          const festivalPriceStatus = festival.price_status || (festival.price ? 'paid' : 'free');
+          if (festivalPriceStatus === 'unknown') return false;
+          if (festivalPriceStatus === 'free') {
+            if (priceRange[0] !== 0) return false;
+          } else {
+            const festivalPrice = festival.price || 0;
+            const matchesPrice = priceRange[1] === 500000 ? festivalPrice >= priceRange[0] :
+              (festivalPrice >= priceRange[0] && festivalPrice <= priceRange[1]);
+            if (!matchesPrice) return false;
+          }
+        }
 
         // 별점 필터
         const festivalStarRating = getStarRating(festival);

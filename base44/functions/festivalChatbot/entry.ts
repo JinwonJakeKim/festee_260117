@@ -13,11 +13,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'question과 festivalData가 필요합니다' }, { status: 400 });
     }
     
+    // 가격 안내 문구 생성: price_status를 Single Source of Truth로 사용.
+    // "가격을 찾지 못했다"와 "무료라고 확인했다"는 다른 의미이므로, price의 truthy/falsy만으로 무료를 단정하지 않는다.
+    // price_status가 없는 legacy(비-JapanTravel) 데이터는 기존 방식(truthy 판단)으로 하위 호환 처리.
+    const buildPriceAnswer = (fd) => {
+      if (fd.price_status === 'free') return '무료 입장 가능합니다.';
+      if (fd.price_status === 'paid') {
+        return fd.price ? `입장료는 ₩${fd.price.toLocaleString()}입니다.` : '유료 입장이지만 정확한 가격은 확인되지 않았습니다.';
+      }
+      if (fd.price_status === 'unknown') {
+        return '가격 정보가 아직 확인되지 않았습니다. 공식 홈페이지에서 확인해주세요.';
+      }
+      // legacy fallback
+      return fd.price ? `입장료는 ₩${fd.price.toLocaleString()}입니다.` : '무료 입장 가능합니다.';
+    };
+
     // FAQ 처리 - LLM 호출 없이 바로 답변
     const faqPatterns = [
       { pattern: /언제|날짜|기간/i, answer: `${festivalData.name}는 ${festivalData.start_date}부터 ${festivalData.end_date}까지 진행됩니다.` },
       { pattern: /어디|장소|위치/i, answer: `${festivalData.name}는 ${festivalData.city}, ${festivalData.country}에서 열립니다.` },
-      { pattern: /가격|입장료|비용|얼마/i, answer: festivalData.price ? `입장료는 ₩${festivalData.price.toLocaleString()}입니다.` : '무료 입장 가능합니다.' },
+      { pattern: /가격|입장료|비용|얼마/i, answer: buildPriceAnswer(festivalData) },
       { pattern: /카테고리|종류|타입/i, answer: festivalData.category ? `${festivalData.category} 축제입니다.` : '축제 카테고리 정보가 없습니다.' },
     ];
     
@@ -33,7 +48,7 @@ Deno.serve(async (req) => {
 위치: ${festivalData.city}, ${festivalData.country}
 기간: ${festivalData.start_date} - ${festivalData.end_date}
 카테고리: ${festivalData.category || '정보 없음'}
-가격: ${festivalData.price ? `₩${festivalData.price.toLocaleString()}` : '무료'}
+가격: ${buildPriceAnswer(festivalData)}
 ${festivalData.summary ? `요약: ${festivalData.summary}` : ''}
 ${festivalData.description ? `설명: ${festivalData.description.substring(0, 500)}` : ''}
 ${festivalData.highlights && festivalData.highlights.length > 0 ? `하이라이트: ${festivalData.highlights.join(', ')}` : ''}

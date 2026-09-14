@@ -84,9 +84,19 @@
       "type": "string",
       "description": "\uacf5\uc2dd \uc6f9\uc0ac\uc774\ud2b8"
     },
+    "price_status": {
+      "type": "string",
+      "enum": [
+        "free",
+        "paid",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "\uac00\uaca9 \uc0c1\ud0dc: free(\ubb34\ub8cc\ub85c \uba85\uc2dc\ub428), paid(\uc2e4\uc81c \uac00\uaca9 \ud655\uc778\ub428), unknown(\ubb34\ub8cc/\uc720\ub8cc \uc5ec\ubd80 \ud655\uc778 \ubd88\uac00). price_yen\uc758 truthy/falsy\ub9cc\uc73c\ub85c \ud310\ub2e8\ud558\uc9c0 \uc54a\uace0 \uc774 \ud544\ub4dc\ub97c Single Source of Truth\ub85c \uc0ac\uc6a9."
+    },
     "price_yen": {
       "type": "number",
-      "description": "\uac00\uaca9 (\uc5d4\ud654)"
+      "description": "\uac00\uaca9 (\uc5d4\ud654). price_status\uac00 paid\uc77c \ub54c\ub9cc \uc2e4\uc81c \uac00\uaca9\uc744 \uc758\ubbf8\ud558\uba70, free\uc77c \ub54c\ub294 0, unknown\uc77c \ub54c\ub294 null."
     },
     "price_details": {
       "type": "string",

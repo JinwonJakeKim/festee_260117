@@ -17,6 +17,9 @@ import CategoryMultiSelect from "@/components/CategoryMultiSelect";
 
 const FESTIVAL_MARKER_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCAzMCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTUgMEMxMC4xIDAgNiA0LjEgNiA5YzAgNS4yIDkgMjAgOSAyMHM5LTE0LjggOS0yMGMwLTQuOS00LjEtOS05LTl6bTAgMTJjLTEuNyAwLTMtMS4zLTMtM3MxLjMtMyAzLTMgMyAxLjMgMyAzLTEuMyAzLTMgM3oiIGZpbGw9IiNFRjQ0NDQiLz4KPC9zdmc+';
 
+// 정확한 venue가 아닌 대표 위치(city/region/country)용 마커 - 색상만 다르게 구분 (모양은 동일하게 유지)
+const APPROX_MARKER_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCAzMCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTUgMEMxMC4xIDAgNiA0LjEgNiA5YzAgNS4yIDkgMjAgOSAyMHM5LTE0LjggOS0yMGMwLTQuOS00LjEtOS05LTl6bTAgMTJjLTEuNyAwLTMtMS4zLTMtM3MxLjMtMyAzLTMgMyAxLjMgMyAzLTEuMyAzLTMgM3oiIGZpbGw9IiNGNTk3MEIiLz4KPC9zdmc+';
+
 const USER_LOCATION_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSI4IiBmaWxsPSIjMDA5OEZGIiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=';
 
 const DEFAULT_CENTER = { lat: 20, lng: 0 };
@@ -382,14 +385,17 @@ export default function FestivalMap() {
                 </InfoWindow>
               )}
 
-              {festivalsWithLocation.map((festival) => (
-                <Marker
-                  key={festival.id}
-                  position={{ lat: festival.latitude, lng: festival.longitude }}
-                  icon={FESTIVAL_MARKER_ICON}
-                  onClick={() => setSelectedFestival(festival)}
-                />
-              ))}
+              {festivalsWithLocation.map((festival) => {
+                const isApprox = festival.location_accuracy && festival.location_accuracy !== 'exact';
+                return (
+                  <Marker
+                    key={festival.id}
+                    position={{ lat: festival.latitude, lng: festival.longitude }}
+                    icon={isApprox ? APPROX_MARKER_ICON : FESTIVAL_MARKER_ICON}
+                    onClick={() => setSelectedFestival(festival)}
+                  />
+                );
+              })}
 
               {selectedFestival && (
                 <InfoWindow
@@ -404,6 +410,16 @@ export default function FestivalMap() {
                           alt={getFestivalName(selectedFestival, language)}
                           className="w-full h-32 object-cover rounded-lg mb-2"
                         />
+                      )}
+                      {selectedFestival.location_accuracy && selectedFestival.location_accuracy !== 'exact' && (
+                        <div className="mb-2 px-2 py-1 rounded bg-amber-500/15 border border-amber-500/40">
+                          <p className="text-amber-400 text-xs font-bold">📍 {t.approxBadge}{selectedFestival.location_display_name ? `: ${selectedFestival.location_display_name}` : ''}</p>
+                          <p className="text-amber-300/80 text-[11px] mt-0.5">
+                            {selectedFestival.location_accuracy === 'city' && t.approxNoteCity}
+                            {selectedFestival.location_accuracy === 'region' && t.approxNoteRegion}
+                            {selectedFestival.location_accuracy === 'country' && t.approxNoteCountry}
+                          </p>
+                        </div>
                       )}
                       <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(selectedFestival, language)}</h3>
                       <div className="space-y-1 text-sm">
@@ -458,6 +474,12 @@ export default function FestivalMap() {
             <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
             <span className="text-white text-sm">{t.myLocation}</span>
             </div>
+            {festivalsWithLocation.some(f => f.location_accuracy && f.location_accuracy !== 'exact') && (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-amber-500 rounded-full"></div>
+                <span className="text-white text-sm">{t.approxBadge}</span>
+              </div>
+            )}
           </div>
           <Badge variant="outline" className="text-cyan-400 border-cyan-400">
             {t.festivalsCount(festivalsWithLocation.length)}
@@ -468,6 +490,31 @@ export default function FestivalMap() {
         .festival-map-search-input {
           padding-left: 3rem !important;
           padding-right: 4rem !important;
+        }
+        .gm-style-iw-c {
+          padding: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-radius: 12px !important;
+          max-width: none !important;
+        }
+        .gm-style-iw-d {
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+        .gm-style-iw-t::after {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        .gm-style-iw-tc {
+          display: none !important;
+        }
+        button.gm-ui-hover-effect {
+          top: 4px !important;
+          right: 4px !important;
+        }
+        button.gm-ui-hover-effect span {
+          background-color: #fff !important;
         }
       `}</style>
     </div>

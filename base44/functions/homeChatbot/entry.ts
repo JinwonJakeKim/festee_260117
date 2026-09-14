@@ -117,7 +117,11 @@ Deno.serve(async (req) => {
     const festivalListText = festivals.map(f => {
       const name = f.name_ko || f.name_en || f.name_original || '이름 없음';
       const dateStr = f.start_date && f.end_date ? `${f.start_date} ~ ${f.end_date}` : '날짜 미정';
-      const priceStr = f.price ? `${f.price.toLocaleString()}원` : '무료/미정';
+      // price_status를 Single Source of Truth로 사용 (무료/유료/미확인을 명확히 구분, legacy는 하위호환 유지)
+      const priceStr = f.price_status === 'free' ? '무료'
+        : f.price_status === 'paid' ? `${(f.price || 0).toLocaleString()}원`
+        : f.price_status === 'unknown' ? '가격 확인 필요'
+        : (f.price ? `${f.price.toLocaleString()}원` : '무료/미정');
       const tags = f.tags_ko?.join(', ') || '';
       const summary = f.summary_ko ? f.summary_ko.substring(0, 100) : '';
       const popularity = f.popularity || 0;

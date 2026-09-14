@@ -117,6 +117,7 @@ export default function HomeChatbot({ festivals = [] }) {
         start_date: f.start_date,
         end_date: f.end_date,
         price: f.price,
+        price_status: f.price_status,
         tags_ko: f.tags_ko,
         summary_ko: f.summary_ko,
         likes_count: f.likes_count,

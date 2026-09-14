@@ -1,11 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
+  let base44;
+  let user = null;
   try {
-    const base44 = createClientFromRequest(req);
+    base44 = createClientFromRequest(req);
     
     const authHeader = req.headers.get('Authorization');
-    let user = null;
     if (authHeader) {
       try { user = await base44.auth.me(); } catch (e) { user = null; }
     }
@@ -29,10 +31,27 @@ Deno.serve(async (req) => {
       console.log(`[TourAPI] Auto-calculated next month: ${targetYear}년 ${targetMonth}월`);
     }
     
+    const targetMonthStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+    const logExtraction = async (status, extra = {}) => {
+      try {
+        await base44.asServiceRole.entities.TourApiExtractionLog.create({
+          initiated_by: user?.email || 'system',
+          area_code: areaCode || 'all',
+          target_month: targetMonthStr,
+          status,
+          duration_ms: Date.now() - startTime,
+          ...extra,
+        });
+      } catch (e) {
+        console.error('[TourAPI] Failed to save extraction log:', e.message);
+      }
+    };
+
     const apiKey = Deno.env.get("TOUR_API_KEY");
     
     if (!apiKey) {
       console.error('[TourAPI] API Key not found in environment');
+      await logExtraction('failed', { error_message: 'API Key not configured', message: 'TourAPI 인증키가 설정되지 않았습니다.' });
       return Response.json({
         success: false,
         error: 'API Key not configured',
@@ -95,6 +114,7 @@ Deno.serve(async (req) => {
       
     } catch (fetchError) {
       console.error('[TourAPI] Fetch error:', fetchError);
+      await logExtraction('failed', { error_message: fetchError.message, message: 'TourAPI 서버에 연결할 수 없습니다.' });
       return Response.json({
         success: false,
         error: 'Network error',
@@ -105,6 +125,7 @@ Deno.serve(async (req) => {
     
     if (responseText.trim().startsWith('<?xml') || responseText.trim().startsWith('<!DOCTYPE')) {
       console.error('[TourAPI] Invalid response format');
+      await logExtraction('failed', { error_message: 'Invalid Response', message: 'API가 XML 또는 HTML로 응답했습니다.' });
       return Response.json({
         success: false,
         error: 'Invalid Response',
@@ -119,6 +140,7 @@ Deno.serve(async (req) => {
       console.log(`[TourAPI] ✓ JSON parsed successfully`);
     } catch (parseError) {
       console.error('[TourAPI] JSON parse error:', parseError);
+      await logExtraction('failed', { error_message: parseError.message, message: 'API 응답을 JSON으로 파싱할 수 없습니다.' });
       return Response.json({
         success: false,
         error: 'Invalid JSON response',
@@ -147,6 +169,7 @@ Deno.serve(async (req) => {
         '33': '서비스키 등록 해지',
       };
       
+      await logExtraction('failed', { error_message: `API Error: ${resultCode}`, message: `TourAPI 오류 [${resultCode}]: ${errorMessages[resultCode] || resultMsg}` });
       return Response.json({
         success: false,
         error: `API Error: ${resultCode}`,
@@ -157,6 +180,7 @@ Deno.serve(async (req) => {
     
     if (!searchData.response?.body?.items?.item) {
       console.log('[TourAPI] No festivals found');
+      await logExtraction('success', { raw_data_saved: 0, new_records: 0, updated_records: 0, message: '조건에 맞는 축제를 찾을 수 없습니다.' });
       return Response.json({
         success: true,
         raw_data_saved: 0,
@@ -282,6 +306,14 @@ Deno.serve(async (req) => {
     console.log(`[TourAPI] Updated records (no change): ${savedRawData.filter(r => !r.isNew && !r.needsReprocessing).length}`);
     console.log(`[TourAPI] Updated records (needs reprocessing): ${savedRawData.filter(r => !r.isNew && r.needsReprocessing).length}`);
     
+    const resultMessage = `${savedRawData.length}개의 원본 데이터를 저장했습니다. 이제 변환 작업을 진행하세요.`;
+    await logExtraction('success', {
+      raw_data_saved: savedRawData.length,
+      new_records: savedRawData.filter(r => r.isNew).length,
+      updated_records: savedRawData.filter(r => !r.isNew).length,
+      message: resultMessage,
+    });
+
     return Response.json({
       success: true,
       raw_data_saved: savedRawData.length,
@@ -289,12 +321,27 @@ Deno.serve(async (req) => {
       updated_records: savedRawData.filter(r => !r.isNew).length,
       reprocessing_needed: savedRawData.filter(r => !r.isNew && r.needsReprocessing).length,
       raw_data_ids: savedRawData.map(r => r.id),
-      message: `${savedRawData.length}개의 원본 데이터를 저장했습니다. 이제 변환 작업을 진행하세요.`,
+      message: resultMessage,
       errors: errors.length > 0 ? errors : undefined
     });
     
   } catch (error) {
     console.error('[TourAPI] Function error:', error);
+    if (base44) {
+      try {
+        await base44.asServiceRole.entities.TourApiExtractionLog.create({
+          initiated_by: user?.email || 'system',
+          area_code: 'unknown',
+          target_month: 'unknown',
+          status: 'failed',
+          duration_ms: Date.now() - startTime,
+          error_message: error.message || '알 수 없는 오류',
+          message: 'TourAPI 연동 중 오류가 발생했습니다.',
+        });
+      } catch (e) {
+        console.error('[TourAPI] Failed to save extraction log (outer catch):', e.message);
+      }
+    }
     return Response.json({ 
       success: false,
       error: error.message || '알 수 없는 오류',

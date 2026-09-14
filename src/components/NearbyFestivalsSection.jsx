@@ -31,10 +31,8 @@ export default function NearbyFestivalsSection({
   const nearbyFestivals = useMemo(() => {
     if (!userLocation) return [];
     const caughtIds = new Set(catches.map(c => c.festival_id));
-    const todayStr = new Date().toISOString().split('T')[0];
     return festivals
       .filter(f => f.latitude && f.longitude && f.show !== 'N')
-      .filter(f => !f.end_date || f.end_date >= todayStr)
       .map(f => ({
         ...f,
         distance: calcDistance(userLocation.latitude, userLocation.longitude, f.latitude, f.longitude),
