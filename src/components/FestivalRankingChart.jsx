@@ -69,7 +69,9 @@ export default function FestivalRankingChart({
     }
   };
 
-  const pageCount = Math.max(1, Math.ceil(filteredFestivals.length / 5));
+  // 홈 화면 축제차트는 최대 20개까지만 표시 (더보기 버튼으로 전체 목록 이동)
+  const chartFestivals = filteredFestivals.slice(0, 20);
+  const pageCount = Math.max(1, Math.ceil(chartFestivals.length / 5));
 
   return (
     <div className="relative group">
@@ -92,7 +94,7 @@ export default function FestivalRankingChart({
             >
               {/* 현재 페이지 아이템 */}
               <div className="space-y-1 flex-1 min-w-0">
-                {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
+                {chartFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
                   <FestivalListItem
                     key={festival.id}
                     festival={festival}
@@ -135,7 +137,7 @@ export default function FestivalRankingChart({
         </div>
       )}
 
-      {filteredFestivals.length === 0 && (
+      {chartFestivals.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-2">{t.noFestivalsMatch}</p>
           <Button
