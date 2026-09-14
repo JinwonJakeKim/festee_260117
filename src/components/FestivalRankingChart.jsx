@@ -19,12 +19,25 @@ export default function FestivalRankingChart({
 }) {
   const chartWrapperRef = useRef(null);
   const [chartPageWidth, setChartPageWidth] = useState(Math.min(window.innerWidth, 896));
+  const [scrollProgress, setScrollProgress] = useState({ thumbWidthPct: 100, thumbLeftPct: 0 });
+
+  const updateScrollProgress = () => {
+    const el = chartWrapperRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) {
+      setScrollProgress({ thumbWidthPct: 100, thumbLeftPct: 0 });
+      return;
+    }
+    const thumbWidthPct = (el.clientWidth / el.scrollWidth) * 100;
+    const thumbLeftPct = (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (100 - thumbWidthPct);
+    setScrollProgress({ thumbWidthPct, thumbLeftPct });
+  };
 
   useEffect(() => {
     const updateChartWidth = () => {
       if (chartWrapperRef.current) {
         setChartPageWidth(chartWrapperRef.current.clientWidth);
       }
+      updateScrollProgress();
     };
     const raf = requestAnimationFrame(updateChartWidth);
     window.addEventListener('resize', updateChartWidth);
@@ -64,6 +77,7 @@ export default function FestivalRankingChart({
         className="overflow-x-auto scrollbar-hide snap-x snap-mandatory"
         ref={chartWrapperRef}
         onWheel={handleWheel}
+        onScroll={updateScrollProgress}
       >
         <div className="flex" style={{ width: 'max-content' }}>
           {Array.from({ length: pageCount }).map((_, pageIdx) => (
@@ -110,6 +124,16 @@ export default function FestivalRankingChart({
       >
         <ChevronRight className="w-6 h-6" />
       </button>
+
+      {/* 실제 스크롤 위치를 보여주는 커스텀 스크롤바 */}
+      {scrollProgress.thumbWidthPct < 100 && (
+        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-800">
+          <div
+            className="h-1.5 rounded-full bg-cyan-400"
+            style={{ width: `${scrollProgress.thumbWidthPct}%`, marginLeft: `${scrollProgress.thumbLeftPct}%` }}
+          />
+        </div>
+      )}
 
       {filteredFestivals.length === 0 && (
         <div className="text-center py-12">
