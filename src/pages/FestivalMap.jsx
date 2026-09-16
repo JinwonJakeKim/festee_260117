@@ -403,7 +403,7 @@ export default function FestivalMap() {
                   onCloseClick={() => setSelectedFestival(null)}
                 >
                   <Link to={createPageUrl(`FestivalDetail?id=${selectedFestival.id}`)}>
-                    <div className="min-w-[200px] bg-gray-900 p-3 rounded-lg">
+                    <div className="w-[220px] bg-gray-900 p-3 rounded-lg">
                       {selectedFestival.thumbnail_url && (
                         <img
                           src={selectedFestival.thumbnail_url}
@@ -413,19 +413,19 @@ export default function FestivalMap() {
                       )}
                       {selectedFestival.location_accuracy && selectedFestival.location_accuracy !== 'exact' && (
                         <div className="mb-2 px-2 py-1 rounded bg-amber-500/15 border border-amber-500/40">
-                          <p className="text-amber-400 text-xs font-bold">📍 {t.approxBadge}{selectedFestival.location_display_name ? `: ${selectedFestival.location_display_name}` : ''}</p>
-                          <p className="text-amber-300/80 text-[11px] mt-0.5">
+                          <p className="text-amber-400 text-xs font-bold break-words">📍 {t.approxBadge}{selectedFestival.location_display_name ? `: ${selectedFestival.location_display_name}` : ''}</p>
+                          <p className="text-amber-300/80 text-[11px] mt-0.5 break-words">
                             {selectedFestival.location_accuracy === 'city' && t.approxNoteCity}
                             {selectedFestival.location_accuracy === 'region' && t.approxNoteRegion}
                             {selectedFestival.location_accuracy === 'country' && t.approxNoteCountry}
                           </p>
                         </div>
                       )}
-                      <h3 className="font-bold text-base mb-2 text-white">{getFestivalName(selectedFestival, language)}</h3>
+                      <h3 className="font-bold text-base mb-2 text-white break-words">{getFestivalName(selectedFestival, language)}</h3>
                       <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2 text-gray-300">
-                          <MapPin className="w-4 h-4 text-cyan-400" />
-                          {getLocalizedCity(selectedFestival, language)}, {getLocalizedCountry(selectedFestival, language)}
+                        <div className="flex items-center gap-2 text-gray-300 break-words">
+                          <MapPin className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                          <span>{getLocalizedCity(selectedFestival, language)}, {getLocalizedCountry(selectedFestival, language)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Calendar className="w-4 h-4 text-pink-500" />
@@ -496,7 +496,7 @@ export default function FestivalMap() {
           background: transparent !important;
           box-shadow: none !important;
           border-radius: 12px !important;
-          max-width: none !important;
+          max-width: 220px !important;
         }
         .gm-style-iw-d {
           padding: 0 !important;
