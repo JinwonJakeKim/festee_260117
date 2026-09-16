@@ -19,12 +19,25 @@ export default function FestivalRankingChart({
 }) {
   const chartWrapperRef = useRef(null);
   const [chartPageWidth, setChartPageWidth] = useState(Math.min(window.innerWidth, 896));
+  const [scrollProgress, setScrollProgress] = useState({ thumbWidthPct: 100, thumbLeftPct: 0 });
+
+  const updateScrollProgress = () => {
+    const el = chartWrapperRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) {
+      setScrollProgress({ thumbWidthPct: 100, thumbLeftPct: 0 });
+      return;
+    }
+    const thumbWidthPct = (el.clientWidth / el.scrollWidth) * 100;
+    const thumbLeftPct = (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (100 - thumbWidthPct);
+    setScrollProgress({ thumbWidthPct, thumbLeftPct });
+  };
 
   useEffect(() => {
     const updateChartWidth = () => {
       if (chartWrapperRef.current) {
         setChartPageWidth(chartWrapperRef.current.clientWidth);
       }
+      updateScrollProgress();
     };
     const raf = requestAnimationFrame(updateChartWidth);
     window.addEventListener('resize', updateChartWidth);
@@ -46,13 +59,27 @@ export default function FestivalRankingChart({
     el.scrollBy({ left: direction * (pageWidth + pageGap), behavior: 'smooth' });
   };
 
-  const pageCount = Math.max(1, Math.ceil(filteredFestivals.length / 5));
+  // 마우스 휠(세로 스크롤)을 가로 스크롤로 변환 (데스크톱에서 휠로 좌우 이동 가능하도록)
+  const handleWheel = (e) => {
+    const el = chartWrapperRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    }
+  };
+
+  // 홈 화면 축제차트는 최대 20개까지만 표시 (더보기 버튼으로 전체 목록 이동)
+  const chartFestivals = filteredFestivals.slice(0, 20);
+  const pageCount = Math.max(1, Math.ceil(chartFestivals.length / 5));
 
   return (
     <div className="relative group">
       <div
         className="overflow-x-auto scrollbar-hide snap-x snap-mandatory"
         ref={chartWrapperRef}
+        onWheel={handleWheel}
+        onScroll={updateScrollProgress}
       >
         <div className="flex" style={{ width: 'max-content' }}>
           {Array.from({ length: pageCount }).map((_, pageIdx) => (
@@ -67,7 +94,7 @@ export default function FestivalRankingChart({
             >
               {/* 현재 페이지 아이템 */}
               <div className="space-y-1 flex-1 min-w-0">
-                {filteredFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
+                {chartFestivals.slice(pageIdx * 5, pageIdx * 5 + 5).map((festival, i) => (
                   <FestivalListItem
                     key={festival.id}
                     festival={festival}
@@ -100,7 +127,17 @@ export default function FestivalRankingChart({
         <ChevronRight className="w-6 h-6" />
       </button>
 
-      {filteredFestivals.length === 0 && (
+      {/* 실제 스크롤 위치를 보여주는 커스텀 스크롤바 */}
+      {scrollProgress.thumbWidthPct < 100 && (
+        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-800">
+          <div
+            className="h-1.5 rounded-full bg-cyan-400"
+            style={{ width: `${scrollProgress.thumbWidthPct}%`, marginLeft: `${scrollProgress.thumbLeftPct}%` }}
+          />
+        </div>
+      )}
+
+      {chartFestivals.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-2">{t.noFestivalsMatch}</p>
           <Button
