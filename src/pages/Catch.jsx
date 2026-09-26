@@ -187,6 +187,11 @@ export default function Catch() {
         longitude: userLocation.longitude,
       });
 
+      base44.analytics.track({
+        eventName: 'catch_created',
+        properties: { festival_id: festival.id }
+      });
+
       // 축제의 캐치 카운트 증가
       await base44.entities.Festival.update(festival.id, {
         catches_count: (festival.catches_count || 0) + 1

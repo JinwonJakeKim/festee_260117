@@ -201,6 +201,15 @@ export default function FestivalDetail() {
     enabled: !!festivalId,
   });
 
+  useEffect(() => {
+    if (festival) {
+      base44.analytics.track({
+        eventName: 'festival_detail_viewed',
+        properties: { festival_id: festival.id, festival_name: festival.name_ko || festival.name_original || festival.name || '' }
+      });
+    }
+  }, [festival?.id]);
+
   const { data: myLikes } = useQuery({
     queryKey: ['myLikes', user?.email],
     queryFn: () => user ? base44.entities.FestivalLike.filter({ user_email: user.email }) : [],
