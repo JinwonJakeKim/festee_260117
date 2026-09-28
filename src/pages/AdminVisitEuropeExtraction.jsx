@@ -52,7 +52,7 @@ export default function AdminVisitEuropeExtraction() {
         alert(`발견 실패: ${data.error}`);
       }
     },
-    onError: (error) => alert('이벤트 발견 중 오류가 발생했습니다: ' + error.message),
+    onError: (error) => alert('이벤트 발견 중 오류가 발생했습니다 (페이지가 많으면 1~2분 정도 걸릴 수 있습니다): ' + error.message),
   });
 
   const extractMutation = useMutation({
@@ -236,7 +236,7 @@ export default function AdminVisitEuropeExtraction() {
             <Card className="bg-gray-900 border-gray-800 p-6">
               <h3 className="text-white font-bold text-lg mb-2">이벤트 목록 발견</h3>
               <p className="text-gray-400 text-sm mb-4">
-                https://visiteurope.com/events 첫 페이지에서 이벤트 후보(제목/국가/도시/날짜/링크)를 최대 20개까지 가져옵니다.
+                https://visiteurope.com/events 의 "See more" 페이지네이션을 끝까지 따라가며 전체 이벤트 후보(제목/국가/도시/날짜/링크)를 가져옵니다.
                 각 후보는 아직 상세 정보가 없으므로 "상세 추출" 탭에서 개별적으로 처리해야 합니다.
               </p>
               <Button
