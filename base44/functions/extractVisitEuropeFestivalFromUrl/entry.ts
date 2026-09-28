@@ -145,6 +145,10 @@ export default async function(req) {
     let savedRecord;
     if (existing && existing.length > 0) {
       savedRecord = await base44.asServiceRole.entities.VisitEuropeRawData.update(existing[0].id, rawDataRecord);
+      // 동일 source_url 중복 레코드가 남아있으면 방치된 채 영구 대기중 상태로 남으므로 함께 삭제
+      for (let i = 1; i < existing.length; i++) {
+        await base44.asServiceRole.entities.VisitEuropeRawData.delete(existing[i].id);
+      }
     } else {
       savedRecord = await base44.asServiceRole.entities.VisitEuropeRawData.create({ ...rawDataRecord, create_time: now });
     }
