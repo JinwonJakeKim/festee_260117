@@ -1,0 +1,45 @@
+{
+  "name": "VisitEurope_RawData_Transform_Auto",
+  "description": "VisitEuropeRawData \uc911 \uc0c1\uc138\ucd94\ucd9c \uc644\ub8cc(extract_status=processed) + \ubcc0\ud658 \ubbf8\uc644\ub8cc(processing_status=pending) \ub370\uc774\ud130\ub97c 5\ubd84\ub9c8\ub2e4 1\uac1c\uc529 \uc790\ub3d9 \ubcc0\ud658. \ub300\uc0c1\uc774 0\uac1c\uba74 \uc790\ub3d9\ud654 \ube44\ud65c\uc131\ud654, YouTube API \uc81c\ud55c \uc2dc \ub2e4\uc74c \ub0a0 19:00 KST\uc5d0 \uc7ac\uac1c (\ud568\uc218 \ub0b4\uc5d0\uc11c resume_at \uc81c\uc5b4). AutomationSetting(automation_name='visiteurope_transform')\uc774 \ud65c\uc131\ud654\ub418\uc5b4 \uc788\uc744 \ub54c\ub9cc \ub3d9\uc791 - \uad00\ub9ac\uc790\uac00 \uc218\ub3d9\uc73c\ub85c \ud65c\uc131\ud654\ud574\uc57c \ud569\ub2c8\ub2e4.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "Asia/Seoul",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-09-28T09:00:00Z",
+      "ends_type": "after_count",
+      "ends_on_date": null,
+      "ends_after_count": 100000
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "visiteurope_rawdata_transform_auto",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "transform_one": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoTransformPendingVisitEuropeData",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "VisitEurope \ucd95\uc81c \ubcc0\ud658 \uc2e4\ud589",
+            "description": "\uc0c1\uc138\ucd94\ucd9c \uc644\ub8cc + \ubcc0\ud658 \ub300\uae30 \ub370\uc774\ud130 1\uac1c \ubcc0\ud658 (5\ubd84\ub9c8\ub2e4)"
+          }
+        }
+      }
+    ]
+  }
+}

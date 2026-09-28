@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database, ExternalLink, AlertTriangle, LocateFixed } from "lucide-react";
+import { RefreshCw, Trash2, CheckSquare, Square, Loader2, Calendar, MapPin, Database, ExternalLink, AlertTriangle, LocateFixed, Bot } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,9 @@ export default function VisitEuropeRawDataTab({
   enrichLocationMutation,
   handleBulkLocationEnrich,
   locationEnrichProgress,
+  isAutoTransformActive,
+  activateAutoTransformMutation,
+  deactivateAutoTransformMutation,
 }) {
   const pendingList = rawDataList.filter(r => r.processing_status === 'pending' && r.extract_status === 'processed');
   const discoveredOnlyList = rawDataList.filter(r => r.extract_status === 'pending');
@@ -61,6 +64,24 @@ export default function VisitEuropeRawDataTab({
           <li>✓ 자동 번역(한/영/일/중) 및 카테고리 분류가 적용됩니다</li>
           <li>✓ 정확한 venue 좌표가 없으면 exact→city→region→country 순으로 대표 위치를 자동 탐색하며, 정확도(location_accuracy)를 함께 저장합니다</li>
         </ul>
+      </Card>
+
+      <Card className="bg-purple-900/20 border-purple-400/30 p-4">
+        <h3 className="text-white font-bold mb-2 flex items-center gap-2"><Bot className="w-5 h-5 text-purple-400" />RawData 자동 변환 (Workflow)</h3>
+        <p className="text-gray-400 text-sm mb-3">
+          활성화하면 상세추출이 완료되고 아직 변환되지 않은 RawData를 5분마다 1개씩 자동으로 Festival로 변환합니다 (JapanTravel과 동일한 방식).
+          대기 데이터가 0개가 되면 자동으로 비활성화됩니다.
+        </p>
+        {isAutoTransformActive ? (
+          <Button onClick={() => deactivateAutoTransformMutation.mutate()} disabled={deactivateAutoTransformMutation.isPending} className="w-full bg-gray-700 hover:bg-gray-600 font-bold">
+            {deactivateAutoTransformMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />비활성화 중...</> : '자동 변환 비활성화'}
+          </Button>
+        ) : (
+          <Button onClick={() => activateAutoTransformMutation.mutate()} disabled={activateAutoTransformMutation.isPending} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-bold">
+            {activateAutoTransformMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />활성화 중...</> : <><RefreshCw className="w-4 h-4 mr-2" />자동 변환 활성화 (7일)</>}
+          </Button>
+        )}
+        {isAutoTransformActive && <p className="text-cyan-400 text-xs text-center mt-2">⏱️ 5분 간격으로 자동 변환이 진행 중입니다 (최대 7일).</p>}
       </Card>
 
       {discoveredOnlyList.length > 0 && (

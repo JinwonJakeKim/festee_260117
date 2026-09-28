@@ -31,6 +31,38 @@ export default function AdminVisitEuropeExtraction() {
     initialData: [],
   });
 
+  const { data: automationSettings } = useQuery({
+    queryKey: ['visitEuropeAutomationSetting'],
+    queryFn: () => base44.entities.AutomationSetting.filter({ automation_name: 'visiteurope_transform' }, '-updated_date', 1),
+    initialData: [],
+  });
+  const automationSetting = automationSettings[0];
+  const isAutoTransformActive = !!(automationSetting?.is_active && automationSetting?.active_until && new Date(automationSetting.active_until).getTime() > Date.now());
+
+  const activateAutoTransformMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await base44.functions.invoke('activateAutomationForRun', { automation_name: 'visiteurope_transform', ttl_days: 7 });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visitEuropeAutomationSetting'] });
+      alert('자동 변환이 활성화되었습니다. 5분마다 대기중인 RawData 1개씩 자동 변환됩니다. (7일 후 자동 만료)');
+    },
+    onError: (error) => alert('자동화 활성화 중 오류가 발생했습니다: ' + error.message),
+  });
+
+  const deactivateAutoTransformMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await base44.functions.invoke('setAutomationActive', { automation_name: 'visiteurope_transform' });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visitEuropeAutomationSetting'] });
+      alert('자동 변환이 비활성화되었습니다.');
+    },
+    onError: (error) => alert('자동화 비활성화 중 오류가 발생했습니다: ' + error.message),
+  });
+
   React.useEffect(() => {
     if (!userLoading && (!user || user.role !== 'admin')) {
       alert('관리자 권한이 필요합니다');
@@ -287,6 +319,9 @@ export default function AdminVisitEuropeExtraction() {
               enrichLocationMutation={enrichLocationMutation}
               handleBulkLocationEnrich={handleBulkLocationEnrich}
               locationEnrichProgress={locationEnrichProgress}
+              isAutoTransformActive={isAutoTransformActive}
+              activateAutoTransformMutation={activateAutoTransformMutation}
+              deactivateAutoTransformMutation={deactivateAutoTransformMutation}
             />
           </TabsContent>
         </Tabs>
