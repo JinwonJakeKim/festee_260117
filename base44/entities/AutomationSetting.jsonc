@@ -24,6 +24,10 @@
     "last_started_by": {
       "type": "string",
       "description": "\ub9c8\uc9c0\ub9c9\uc73c\ub85c \ud65c\uc131\ud654\ud55c \uad00\ub9ac\uc790 \uc774\uba54\uc77c"
+    },
+    "scheduler_token": {
+      "type": "string",
+      "description": "\uc2a4\ucf00\uc904\ub7ec(\uc6cc\ud06c\ud50c\ub85c\uc6b0) \ud638\ucd9c \uac80\uc99d\uc6a9 \ud1a0\ud070 (automation_name=scheduler_auth \ub808\ucf54\ub4dc\uc5d0\ub9cc \uc0ac\uc6a9)"
     }
   },
   "required": [
