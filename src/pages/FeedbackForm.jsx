@@ -11,6 +11,13 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+const esc = (v) => String(v ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 export default function FeedbackForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -55,15 +62,15 @@ export default function FeedbackForm() {
           </tr>
           <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; width: 120px;">카테고리:</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">${feedbackData.category}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(feedbackData.category)}</td>
           </tr>
           <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">제목:</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">${feedbackData.subject}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(feedbackData.subject)}</td>
           </tr>
           <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">작성자:</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">${feedbackData.user_name} (${feedbackData.user_email})</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(feedbackData.user_name)} (${esc(feedbackData.user_email)})</td>
           </tr>
         </table>
       </div>
@@ -71,21 +78,21 @@ export default function FeedbackForm() {
       <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #555; margin-top: 0;">💬 피드백 내용</h3>
         <p style="white-space: pre-wrap; background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-${feedbackData.content}
+${esc(feedbackData.content)}
         </p>
       </div>
       
       ${feedbackData.screenshot_url ? `
       <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #555; margin-top: 0;">📸 첨부 스크린샷</h3>
-        <img src="${feedbackData.screenshot_url}" alt="스크린샷" style="max-width: 100%; border-radius: 5px; border: 1px solid #ddd;" />
+        <img src="${esc(feedbackData.screenshot_url)}" alt="스크린샷" style="max-width: 100%; border-radius: 5px; border: 1px solid #ddd;" />
       </div>
       ` : ''}
       
       <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #555; margin-top: 0;">🔧 기기 정보</h3>
         <p style="font-size: 12px; color: #666; background-color: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all;">
-          ${feedbackData.device_info}
+          ${esc(feedbackData.device_info)}
         </p>
       </div>
       
@@ -102,7 +109,7 @@ ${feedbackData.content}
       await base44.integrations.Core.SendEmail({
         from_name: 'Festee 피드백',
         to: 'kjwcap59@gmail.com',
-        subject: `[Festee 피드백${feedbackData.is_public ? ' - 공개' : ' - 비공개'}] ${feedbackData.category} - ${feedbackData.subject}`,
+        subject: `[Festee 피드백${feedbackData.is_public ? ' - 공개' : ' - 비공개'}] ${esc(feedbackData.category)} - ${esc(feedbackData.subject)}`,
         body: emailBody
       });
     },

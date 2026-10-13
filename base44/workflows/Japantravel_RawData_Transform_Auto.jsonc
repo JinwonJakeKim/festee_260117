@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "autoTransformPendingRawData",
-            "args": {}
+            "args": {
+              "scheduler_token": "aa70d6fba7d652453af48b3a0c39ef656d80226c51bfdd64480d4744560471d9"
+            }
           },
           "then": "end",
           "x-base44": {

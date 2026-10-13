@@ -13,15 +13,17 @@ export default async function(req) {
 
     let result;
     if (emails && Array.isArray(emails) && emails.length > 0) {
-      result = allUsers.filter(u => emails.includes(u.email));
+      const wanted = emails.slice(0, 50);
+      result = allUsers.filter(u => wanted.includes(u.email));
     } else {
       const q = (query || '').toLowerCase().trim();
-      if (!q) {
+      if (q.length < 2) {
         return Response.json({ users: [] });
       }
       result = allUsers.filter(u => {
         if (u.email === user.email) return false;
-        const emailMatch = u.email && u.email.toLowerCase().includes(q);
+        // 이메일은 부분 일치가 아닌 정확히 일치할 때만 매칭 (이메일 수집 방지)
+        const emailMatch = u.email && u.email.toLowerCase() === q;
         const nameMatch = u.full_name && u.full_name.toLowerCase().includes(q);
         const nicknameMatch = u.nickname && u.nickname.toLowerCase().includes(q);
         return emailMatch || nameMatch || nicknameMatch;

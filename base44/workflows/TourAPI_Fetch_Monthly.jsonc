@@ -32,7 +32,8 @@
           "with": {
             "function_name": "fetchTourFestivals",
             "args": {
-              "areaCode": "all"
+              "areaCode": "all",
+              "scheduler_token": "aa70d6fba7d652453af48b3a0c39ef656d80226c51bfdd64480d4744560471d9"
             }
           },
           "then": "end",

@@ -20,6 +20,30 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Geocoding API key not configured' });
     }
 
+    // 월간 사용량 제한 (reverseGeocode/geocodeAddress와 공유)
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const logs = await base44.asServiceRole.entities.ApiUsageLog.filter({ api_name: 'google_geocoding_api' });
+    const monthlyUsage = logs
+      .filter(log => log.date && log.date.startsWith(currentMonth))
+      .reduce((sum, log) => sum + (log.count || 0), 0);
+    if (monthlyUsage >= 10000) {
+      return Response.json({ success: false, error: 'GEOCODING_API_LIMIT_REACHED' }, { status: 429 });
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const todayLog = logs.find(log => log.date === today);
+    if (todayLog) {
+      await base44.asServiceRole.entities.ApiUsageLog.update(todayLog.id, { count: (todayLog.count || 0) + 1 });
+    } else {
+      await base44.asServiceRole.entities.ApiUsageLog.create({
+        api_name: 'google_geocoding_api',
+        date: today,
+        count: 1,
+        limit: 10000,
+        console_url: 'https://console.cloud.google.com/google/maps-apis/quotas'
+      });
+    }
+
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
     const response = await fetch(geocodeUrl);
     const data = await response.json();

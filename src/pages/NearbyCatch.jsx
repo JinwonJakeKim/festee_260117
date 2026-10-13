@@ -138,19 +138,11 @@ export default function NearbyCatch() {
 
   const catchMutation = useMutation({
     mutationFn: async (festival) => {
-      await base44.entities.Catch.create({
+      await base44.functions.invoke('createCatch', {
         festival_id: festival.id,
         festival_name: festival.name,
-        user_email: user.email,
-        user_name: user.nickname || user.full_name,
-        image_url: festival.thumbnail_url,
-        location: `${festival.city}, ${festival.country}`,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
-      });
-
-      await base44.entities.Festival.update(festival.id, {
-        catches_count: (festival.catches_count || 0) + 1
       });
 
       const currentCatches = user.catches_count || 0;

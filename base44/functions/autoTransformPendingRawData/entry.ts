@@ -1,3 +1,4 @@
+import { denyUnlessScheduler } from '../../shared/schedulerAuth.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
@@ -10,6 +11,7 @@ Deno.serve(async (req) => {
     // 워크플로우(스케줄러) 호출은 Authorization 헤더가 없고 base44.auth.me()가 null을 반환합니다.
     // 앱 사용자가 직접 호출한 경우에만 관리자 권한을 검사합니다.
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) { const denied = await denyUnlessScheduler(req, base44); if (denied) return denied; }
     let user = null;
     if (authHeader) {
       try { user = await base44.auth.me(); } catch (e) { user = null; }

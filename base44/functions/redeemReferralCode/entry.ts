@@ -49,9 +49,9 @@ Deno.serve(async (req) => {
       referred_email: currentUser.email
     });
 
-    const alreadyUsedThisCode = existingReferrals.some(r => r.referrer_code === trimmedCode);
-    if (alreadyUsedThisCode) {
-      return Response.json({ error: '이미 사용한 추천 코드입니다' }, { status: 400 });
+    // 사용자당 1회만 추천 코드 사용 가능
+    if (existingReferrals.length > 0) {
+      return Response.json({ error: '이미 추천 코드를 사용했습니다' }, { status: 400 });
     }
 
     // 3. 모든 사용자 조회하여 추천 코드가 일치하는 사용자 찾기
@@ -70,7 +70,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: '유효하지 않은 추천 코드입니다' }, { status: 404 });
     }
 
-    // 4. 추천인과 피추천인에게 코인 지급
+    // 4. 먼저 ReferralLog를 서비스 권한으로 생성 (중복 방지 키 역할)
+    const log = await base44.asServiceRole.entities.ReferralLog.create({
+      referrer_email: referrer.email,
+      referrer_name: referrer.full_name,
+      referrer_code: trimmedCode,
+      referred_email: currentUser.email,
+      referred_name: currentUser.full_name,
+      coins_awarded: 500,
+      status: 'completed'
+    });
+
+    // 동시 요청 방지: 같은 사용자의 로그가 2개 이상이면 가장 먼저 생성된 것만 유효
+    const logs = await base44.asServiceRole.entities.ReferralLog.filter({
+      referred_email: currentUser.email
+    }, 'created_date', 5);
+    if (logs.length > 1 && logs[0].id !== log.id) {
+      await base44.asServiceRole.entities.ReferralLog.delete(log.id);
+      return Response.json({ error: '이미 추천 코드를 사용했습니다' }, { status: 400 });
+    }
+
+    // 5. 추천인과 피추천인에게 코인 지급
     const referrerCurrentCoins = referrer.coins || 0;
     const referredCurrentCoins = currentUser.coins || 0;
 
@@ -80,17 +100,6 @@ Deno.serve(async (req) => {
 
     await base44.asServiceRole.entities.User.update(currentUser.id, {
       coins: referredCurrentCoins + 500
-    });
-
-    // 5. ReferralLog 생성
-    await base44.entities.ReferralLog.create({
-      referrer_email: referrer.email,
-      referrer_name: referrer.full_name,
-      referrer_code: trimmedCode,
-      referred_email: currentUser.email,
-      referred_name: currentUser.full_name,
-      coins_awarded: 500,
-      status: 'completed'
     });
 
     return Response.json({

@@ -176,13 +176,9 @@ export default function Catch() {
       }
 
       // Catch 생성
-      await base44.entities.Catch.create({
+      await base44.functions.invoke('createCatch', {
         festival_id: festival.id,
         festival_name: getLocalizedContent(festival, 'name'),
-        user_email: user.email,
-        user_name: user.nickname || user.full_name,
-        image_url: festival.thumbnail_url,
-        location: `${festival.city}, ${festival.country}`,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
       });
@@ -190,11 +186,6 @@ export default function Catch() {
       base44.analytics.track({
         eventName: 'catch_created',
         properties: { festival_id: festival.id }
-      });
-
-      // 축제의 캐치 카운트 증가
-      await base44.entities.Festival.update(festival.id, {
-        catches_count: (festival.catches_count || 0) + 1
       });
 
       // 유저의 캐치 카운트 증가

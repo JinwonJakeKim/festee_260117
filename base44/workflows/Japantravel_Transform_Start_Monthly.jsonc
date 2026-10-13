@@ -33,7 +33,8 @@
             "function_name": "activateAutomationForRun",
             "args": {
               "automation_name": "japantravel_transform",
-              "ttl_days": 7
+              "ttl_days": 7,
+              "scheduler_token": "aa70d6fba7d652453af48b3a0c39ef656d80226c51bfdd64480d4744560471d9"
             }
           },
           "then": "end",

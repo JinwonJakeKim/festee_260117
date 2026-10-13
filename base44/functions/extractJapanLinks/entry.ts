@@ -1,3 +1,4 @@
+import { denyUnlessScheduler } from '../../shared/schedulerAuth.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
@@ -15,6 +16,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) { const denied = await denyUnlessScheduler(req, base44); if (denied) return denied; }
     let user = null;
     if (authHeader) {
       try { user = await base44.auth.me(); } catch (e) { user = null; }
