@@ -28,12 +28,17 @@ export default async function(req: Request) {
   <div style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 6px;">${esc(c)}</div>
 </div>`;
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    const result = await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: 'Festee 문의',
       to,
       subject: `[Festee 문의] ${t}`,
       body: html,
+      category: 'transactional',
     });
+    console.log('SendEmail result', JSON.stringify(result));
+    if (result && result.success === false) {
+      return Response.json({ error: `메일 발송 실패: ${result.reason || ''} ${result.message || ''}` }, { status: 502 });
+    }
 
     return Response.json({ success: true });
   } catch (error) {
