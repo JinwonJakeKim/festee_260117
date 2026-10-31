@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User, Camera, Settings, LogOut, MessageCircle, Star, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock, Info } from "lucide-react";
+import { User, Camera, Settings, LogOut, MessageCircle, Star, ChevronRight, MapPin, Sparkles, Edit2, Check, X, Copy, Share2, Gift, Lock, Info, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -491,6 +491,12 @@ export default function MyFestee() {
       label: t.privacy,
       link: "/PrivacyPolicy",
       icon: Lock,
+      bgColor: "bg-gray-700",
+    },
+    {
+      label: t.inquiry || "문의",
+      link: "/Inquiry",
+      icon: Mail,
       bgColor: "bg-gray-700",
     },
   ].filter(item => !item.adminOnly || user.role === 'admin');

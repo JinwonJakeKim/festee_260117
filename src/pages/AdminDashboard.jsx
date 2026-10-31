@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { updateShortsViewsTotal } from "@/functions/updateShortsViewsTotal";
 import { ArrowLeft, Plus, Star, MessageSquare, Image as ImageIcon, Edit, Trash2, Link as LinkIcon, Globe, CheckSquare, Square, X, AlertCircle, CheckCircle2, Loader2, Search, GripVertical, Zap, Flag } from "lucide-react";
 import AdminReportsTab from "@/components/admin/AdminReportsTab";
+import InquirySettingsTab from "@/components/admin/InquirySettingsTab";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -591,7 +592,7 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="px-4 py-4">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="w-full bg-gray-900 grid grid-cols-6">
+          <TabsList className="w-full bg-gray-900 grid grid-cols-7">
             <TabsTrigger value="festivals" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               축제 관리
             </TabsTrigger>
@@ -610,6 +611,9 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="api" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
               API
+            </TabsTrigger>
+            <TabsTrigger value="inquiry" className="data-[state=active]:bg-cyan-400 data-[state=active]:text-black text-xs">
+              문의
             </TabsTrigger>
           </TabsList>
 
@@ -1493,6 +1497,10 @@ export default function AdminDashboard() {
           {/* 신고 관리 탭 */}
           <TabsContent value="reports" className="mt-4">
             <AdminReportsTab user={user} />
+          </TabsContent>
+
+          <TabsContent value="inquiry" className="mt-4">
+            <InquirySettingsTab />
           </TabsContent>
         </Tabs>
       </div>

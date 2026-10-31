@@ -15,6 +15,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import NativeAuthCallback from './pages/NativeAuthCallback';
 import NativeAuthStart from './pages/NativeAuthStart';
 import AdminVisitEuropeExtraction from './pages/AdminVisitEuropeExtraction';
+import Inquiry from './pages/Inquiry';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
           <Route key={path} path={`/${path}`} element={<Page />} />
         ))}
         <Route path="/AdminVisitEuropeExtraction" element={<AdminVisitEuropeExtraction />} />
+        <Route path="/Inquiry" element={<Inquiry />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </LayoutWrapper>
