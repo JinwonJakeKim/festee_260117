@@ -512,7 +512,7 @@ export default function Home() {
     }));
   }, [festivals, getLocalizedContent]);
   const categories = ["음악", "문화", "예술", "음식", "스포츠", "지역축제", "기타"];
-  const quickFilters = ["연인과", "Kpop", "불꽃놀이", "반려동물", "가족과", "여름", "무료"];
+  const quickFilters = ["연인과", "Kpop", "불꽃놀이", "반려동물", "가족과", "겨울", "무료"];
 
   const nearbyFestivals = useMemo(() => {
     if (!user?.home_city || !festivals.length || !flightTimes.length) return [];
@@ -565,15 +565,15 @@ export default function Home() {
       .slice(0, 10);
   }, [festivals]);
 
-  const summerFestivals = useMemo(() => {
+  const winterFestivals = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const summerKeywords = ['여름', '불꽃', '불꽃놀이', 'summer', 'fireworks', '花火', '夏', '烟花', '夏祭り'];
+    const winterKeywords = ['겨울', '눈꽃', '눈축제', '얼음', '빙어', '송어', '스키', '크리스마스', '일루미네이션', '루미나리에', '점등', '윈터', '트리', 'winter', 'snow', 'ice ', 'christmas', 'illumination', 'xmas', 'lantern', '冬', '雪', '氷', 'イルミネーション', 'クリスマス', '冰', '圣诞', '灯会'];
     return festivals
       .filter(f => {
         const name = (f.name_ko || f.name_original || f.name_en || '').toLowerCase();
         const tags = (f.tags_ko || []).join(' ');
-        const hasKeyword = summerKeywords.some(kw => name.includes(kw.toLowerCase()) || tags.includes(kw));
+        const hasKeyword = winterKeywords.some(kw => name.includes(kw.toLowerCase()) || tags.includes(kw));
         const isUpcoming = f.end_date && new Date(f.end_date) >= today;
         return hasKeyword && isUpcoming;
       })
@@ -1407,14 +1407,14 @@ export default function Home() {
         )}
       </div>
 
-      {summerFestivals.length > 0 && (
+      {winterFestivals.length > 0 && (
         <div className="max-w-screen-sm md:max-w-5xl mx-auto mb-8">
           <h2 className="text-white text-2xl font-bold mb-4 px-4">
-            {t.summerFestivals}
+            {t.winterFestivals}
           </h2>
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-4 pb-4 px-4">
-              {summerFestivals.map((festival) => {
+              {winterFestivals.map((festival) => {
                 const localizedName = getLocalizedContent(festival, 'name');
                 return (
                   <Link
